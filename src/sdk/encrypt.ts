@@ -1,5 +1,4 @@
 import { getAddress, isAddress } from 'ethers';
-import createKeccakHash from 'keccak';
 import {
   TfheCompactPublicKey,
   CompactCiphertextList,
@@ -15,8 +14,12 @@ import {
   toHexString,
 } from '../utils';
 import { ENCRYPTION_TYPES } from './encryptionTypes';
+import { compute_handles } from './handles';
 
 type EncryptionTypes = keyof typeof ENCRYPTION_TYPES;
+const currentCiphertextVersion = () => {
+  return 0;
+};
 
 // defined in fhevm-relayer/src/input_http_listener.rs
 export type HttpzRelayerInputProofResponse = {
@@ -42,11 +45,12 @@ export type ZKInput = {
   addAddress: (value: string) => ZKInput;
   getBits: () => number[];
   _getClosestPP: () => EncryptionTypes;
-  _prove: () => Promise<Buffer>;
-  _verify: (ciphertext: Buffer) => Promise<{
+  _prove: () => Uint8Array;
+  _verify: (ciphertext: Uint8Array) => Promise<{
     handles: Uint8Array[];
     inputProof: Uint8Array;
   }>;
+  _handles: () => Uint8Array[];
   encrypt: () => Promise<{
     handles: Uint8Array[];
     inputProof: Uint8Array;
@@ -95,6 +99,8 @@ export const createEncryptedInput =
     const publicKey: TfheCompactPublicKey = tfheCompactPublicKey;
     const bits: EncryptionTypes[] = [];
     const builder = CompactCiphertextList.builder(publicKey);
+    let ciphertextWithZKProof: Uint8Array = new Uint8Array(); // updated in `_prove`
+    let nbCiphertextWithZKProof: number = 0; // use to invalidate ciphertextWithZKProof, e.g. add is called between 2 `encrypt`
     const checkLimit = (added: number) => {
       if (bits.reduce((acc, val) => acc + Math.max(2, val), 0) + added > 2048) {
         throw Error(
@@ -243,7 +249,14 @@ export const createEncryptedInput =
         }
         return closestPP;
       },
-      async _prove() {
+      _prove() {
+        // _prove is cached, also used for function `handles`
+        if (
+          ciphertextWithZKProof.length > 0 &&
+          nbCiphertextWithZKProof == bits.length
+        ) {
+          return ciphertextWithZKProof;
+        }
         const closestPP = this._getClosestPP();
         const pp = publicParams[closestPP]!.publicParams;
         const buffContract = fromHexString(contractAddress);
@@ -262,18 +275,18 @@ export const createEncryptedInput =
           auxData,
           ZkComputeLoad.Verify,
         );
-
-        const ciphertext = Buffer.from(
-          encrypted.safe_serialize(SERIALIZED_SIZE_LIMIT_CIPHERTEXT),
+        ciphertextWithZKProof = encrypted.safe_serialize(
+          SERIALIZED_SIZE_LIMIT_CIPHERTEXT,
         );
-        return ciphertext;
+        nbCiphertextWithZKProof = bits.length;
+        return ciphertextWithZKProof;
       },
-      async _verify(ciphertext: Buffer) {
+      async _verify(ciphertext: Uint8Array) {
         // https://github.com/zama-ai/fhevm-relayer/blob/978b08f62de060a9b50d2c6cc19fd71b5fb8d873/src/input_http_listener.rs#L13C1-L22C1
         const payload = {
           contractAddress: getAddress(contractAddress),
           userAddress: getAddress(userAddress),
-          ciphertextWithZkpok: ciphertext.toString('hex'),
+          ciphertextWithZkpok: Buffer.from(ciphertext).toString('hex'),
           contractChainId: '0x' + chainId.toString(16),
         };
         const options = {
@@ -308,10 +321,26 @@ export const createEncryptedInput =
           });
         }
 
+        const handles = this._handles();
         // Note that the hex strings returned by the relayer do have have the 0x prefix
-        let handles: Uint8Array[] = [];
         if (json.response.handles && json.response.handles.length > 0) {
-          handles = json.response.handles.map(fromHexString);
+          const response_handles = json.response.handles.map(fromHexString);
+          if (handles.length != response_handles.length) {
+            throw new Error(
+              `Incorrect Handles list sizes: (expected) ${handles.length} != ${response_handles.length} (received)`,
+            );
+          }
+          for (let index = 0; index < handles.length; index++) {
+            let handle = handles[index];
+            let response_handle = response_handles[index];
+            let expected = Buffer.from(handle).toString('hex');
+            let current = Buffer.from(response_handle).toString('hex');
+            if (expected !== current) {
+              throw new Error(
+                `Incorrect Handle ${index}: (expected) ${expected} != ${current} (received)`,
+              );
+            }
+          }
         }
 
         const signatures = json.response.signatures;
@@ -329,9 +358,18 @@ export const createEncryptedInput =
           inputProof: fromHexString(inputProof),
         };
       },
+      _handles() {
+        return compute_handles(
+          this._prove(),
+          bits,
+          aclContractAddress,
+          chainId,
+          currentCiphertextVersion(),
+        );
+      },
       async encrypt() {
         let start = Date.now();
-        const ciphertext = await this._prove();
+        const ciphertextWithZKProof = await this._prove();
         console.log(
           `Encrypting and proving in ${
             Math.round((Date.now() - start) / 100) / 10
@@ -339,7 +377,7 @@ export const createEncryptedInput =
         );
 
         start = Date.now();
-        const verification = await this._verify(ciphertext);
+        const verification = await this._verify(ciphertextWithZKProof);
         console.log(
           `Verifying in ${Math.round((Date.now() - start) / 100) / 10}s`,
         );
