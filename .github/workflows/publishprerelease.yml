@@ -20,3 +20,4 @@ jobs:
           token: ${{ secrets.NPM_TOKEN }}
           provenance: true
           tag: prerelease
+          access: public

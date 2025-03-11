@@ -19,3 +19,4 @@ jobs:
         with:
           token: ${{ secrets.NPM_TOKEN }}
           provenance: true
+          access: public
