@@ -1,6 +1,6 @@
 import { isAddress } from 'ethers';
 import {
-  FhevmInstanceConfig,
+  HTTPZInstanceConfig,
   getChainId,
   getKMSSigners,
   getProvider,
@@ -18,7 +18,7 @@ import { generateKeypair, createEIP712, EIP712 } from './keypair';
 import { userDecryptRequest } from './userDecrypt';
 import { publicDecryptRequest } from './publicDecrypt';
 
-export type FhevmInstance = {
+export type HTTPZInstance = {
   createEncryptedInput: (
     contractAddress: string,
     userAddress: string,
@@ -59,8 +59,8 @@ export type FhevmInstance = {
 export { generateKeypair, createEIP712 } from './keypair';
 
 export const createInstance = async (
-  config: FhevmInstanceConfig,
-): Promise<FhevmInstance> => {
+  config: HTTPZInstanceConfig,
+): Promise<HTTPZInstance> => {
   const { publicKey, kmsContractAddress, aclContractAddress } = config;
 
   if (!kmsContractAddress || !isAddress(kmsContractAddress)) {
