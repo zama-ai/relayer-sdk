@@ -1,5 +1,5 @@
 <p align="center">
-<img width=600 src="https://github.com/zama-ai/httpz-js/assets/1384478/b0696934-3eee-44af-a2db-8e77094a40b6" />
+<img width=600 src="https://github.com/user-attachments/assets/6173e401-7c1b-4911-9731-ca2eb436e85f" />
 </p>
 <hr/>
 <p align="center">
