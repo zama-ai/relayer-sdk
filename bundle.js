@@ -1,12 +1,12 @@
 const waitForFunction =
   (functionName) =>
   async (...params) => {
-    if (window && window.fhevmjs) {
-      return window.fhevmjs[functionName](...params);
+    if (window && window.httpz) {
+      return window.httpz[functionName](...params);
     }
   };
 
-const initFhevm = waitForFunction('initFhevm');
+const initHTTPZ = waitForFunction('initHTTPZ');
 const createInstance = waitForFunction('createInstance');
 
-export { initFhevm, createInstance };
+export { initHTTPZ, createInstance };

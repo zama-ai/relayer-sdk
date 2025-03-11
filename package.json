@@ -1,13 +1,13 @@
 {
-  "name": "fhevmjs",
-  "version": "0.7.0-7",
-  "description": "fhEVM SDK for blockchain using TFHE",
+  "name": "@httpz/sdk",
+  "version": "0.1.0-0",
+  "description": "HTTPZ SDK",
   "main": "lib/node.js",
   "types": "lib/node/node.d.ts",
   "browser": "lib/web.js",
   "type": "module",
   "bin": {
-    "fhevm": "bin/fhevm.js"
+    "httpz": "bin/httpz.js"
   },
   "exports": {
     ".": {
@@ -42,14 +42,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/zama-ai/fhevmjs.git"
+    "url": "git+https://github.com/zama-ai/httpz-js.git"
   },
   "author": "",
   "license": "BSD-3-Clause-Clear",
   "bugs": {
-    "url": "https://github.com/zama-ai/fhevmjs/issues"
+    "url": "https://github.com/zama-ai/httpz-js/issues"
   },
-  "homepage": "https://github.com/zama-ai/fhevmjs#readme",
+  "homepage": "https://github.com/zama-ai/httpz-js#readme",
   "dependencies": {
     "bigint-buffer": "^1.1.5",
     "commander": "^11.0.0",

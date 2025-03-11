@@ -14,5 +14,5 @@ jobs:
           node-version: 20.x
       - run: npm ci
       - run: npm test
-      - run: BASE_PATH=https://cdn.zama.ai/fhevmjs/$(node -p "require('./package.json').version")/ npm run build
+      - run: BASE_PATH=https://cdn.zama.ai/httpz/$(node -p "require('./package.json').version")/ npm run build
       # todo push on S3
