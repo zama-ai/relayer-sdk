@@ -11,6 +11,18 @@ const aclABI = [
   'function persistAllowed(uint256 handle, address account) view returns (bool)',
 ];
 
+export type CtHandleContractPair = {
+  ctHandle: bigint;
+  contractAddress: string;
+};
+
+export type RequestValidity = {
+  /// @notice The start timestamp of the user decryption request
+  startTimestamp: bigint;
+  /// @notice The duration in days for the user decryption to be processed
+  durationDays: bigint;
+};
+
 export const userDecryptRequest =
   (
     kmsSignatures: string[],
@@ -21,35 +33,73 @@ export const userDecryptRequest =
     provider: ethers.JsonRpcProvider | ethers.BrowserProvider,
   ) =>
   async (
-    handle: bigint,
+    handles: CtHandleContractPair[],
     privateKey: string,
     publicKey: string,
     signature: string,
-    contractAddress: string,
+    contractAddresses: string[],
     userAddress: string,
-  ) => {
+    startTimestamp: RequestValidity['startTimestamp'],
+    durationDays: RequestValidity['durationDays'],
+  ): Promise<bigint[]> => {
     const acl = new ethers.Contract(aclContractAddress, aclABI, provider);
-    const userAllowed = await acl.persistAllowed(handle, userAddress);
-    const contractAllowed = await acl.persistAllowed(handle, contractAddress);
-    if (!userAllowed) {
-      throw new Error('User is not authorized to reencrypt this handle!');
-    }
-    if (!contractAllowed) {
-      throw new Error(
-        'dApp contract is not authorized to reencrypt this handle!',
+    const verifications = handles.map(async ({ ctHandle, contractAddress }) => {
+      const userAllowed = await acl.persistAllowed(ctHandle, userAddress);
+      const contractAllowed = await acl.persistAllowed(
+        ctHandle,
+        contractAddress,
       );
-    }
-    if (userAddress === contractAddress) {
-      throw new Error(
-        'userAddress should not be equal to contractAddress when requesting reencryption!',
-      );
-    }
+      if (!userAllowed) {
+        throw new Error('User is not authorized to reencrypt this handle!');
+      }
+      if (!contractAllowed) {
+        throw new Error(
+          'dApp contract is not authorized to reencrypt this handle!',
+        );
+      }
+      if (userAddress === contractAddress) {
+        throw new Error(
+          'userAddress should not be equal to contractAddress when requesting reencryption!',
+        );
+      }
+    });
+
+    Promise.all(verifications).catch((e) => {
+      throw e;
+    });
+
+    /*
+
+    	@curl -X POST http://127.0.0.1:3000/user-decrypt \
+-H "Content-Type: application/json" \
+-d '{"signature": "cEc0e9723bF28D2A2C867108cC4C3A38a011d4D1",
+    "userAddress": "0xcEc0e9723bF28D2A2C867108cC4C3A38a011d4D1",
+    "enc_key": "a5e1defb98EFe38EBb2D958CEe052410247F4c80",
+    "ct_handle": "a5e1defb98EFe38EBb2D958CEe052410247F4c802410247F4c8010247F4c8076",
+    "contractAddress": "0xa5e1defb98EFe38EBb2D958CEe052410247F4c80",
+    "chainId": "1234"}'
+
+     CtHandleContractPair[] calldata ctHandleContractPairs,
+        RequestValidity calldata requestValidity,
+        uint256 contractsChainId,
+        address[] calldata contractAddresses,
+        address userAddress,
+        bytes calldata publicKey,
+        bytes calldata signature
+    */
     const payloadForRequest = {
+      ctHandleContractPairs: handles.map((h) => {
+        return {
+          ctHandle: h.ctHandle.toString(16).padStart(64, '0'),
+          contractAddress: h.contractAddress,
+        };
+      }),
+      requestValidity: { startTimestamp, durationDays },
+      contractsChainId: chainId,
+      contractAddresses: contractAddresses.map((c) => getAddress(c)),
+      userAddress: getAddress(userAddress),
       signature: signature.replace(/^(0x)/, ''),
-      client_address: getAddress(userAddress),
-      enc_key: publicKey.replace(/^(0x)/, ''),
-      ciphertext_handle: handle.toString(16).padStart(64, '0'),
-      eip712_verifying_contract: getAddress(contractAddress),
+      publicKey: publicKey.replace(/^(0x)/, ''),
     };
     const options = {
       method: 'POST',
@@ -70,7 +120,7 @@ export const userDecryptRequest =
     let response;
     let json;
     try {
-      response = await fetch(`${relayerUrl}reencrypt`, options);
+      response = await fetch(`${relayerUrl}user-decrypt`, options);
       if (!response.ok) {
         throw new Error(
           `Reencrypt failed: relayer respond with HTTP code ${response.status}`,
@@ -106,15 +156,17 @@ export const userDecryptRequest =
         name: 'Authorization token',
         version: '1',
         chain_id: chainIdArrayBE,
-        verifying_contract: contractAddress,
+        verifying_contract: kmsContractAddress,
         salt: null,
       };
       // Duplicate payloadForRequest and replace ciphertext_handle with ciphertext_digest.
-      const { ciphertext_handle, ...p } = payloadForRequest;
       // TODO check all ciphertext digests are all the same
       const payloadForVerification = {
-        ...p,
-        ciphertext_digest: json.response[0].ciphertext_digest,
+        signature,
+        client_address: userAddress,
+        enc_key: pubKey,
+        ciphertext_handles: handles.map((h) => h.ctHandle),
+        eip712_verifying_contract: kmsContractAddress,
       };
 
       const decryption = process_reencryption_resp_from_js(
@@ -127,7 +179,7 @@ export const userDecryptRequest =
         true,
       );
 
-      return bytesToBigInt(decryption[0].bytes);
+      return decryption.map((d) => bytesToBigInt(d.bytes));
     } catch (e) {
       throw new Error('An error occured during decryption', { cause: e });
     }

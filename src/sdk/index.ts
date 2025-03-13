@@ -15,7 +15,7 @@ import {
 import { PublicParams, ZKInput } from './encrypt';
 import { createEncryptedInput } from './encrypt';
 import { generateKeypair, createEIP712, EIP712 } from './keypair';
-import { userDecryptRequest } from './userDecrypt';
+import { CtHandleContractPair, userDecryptRequest } from './userDecrypt';
 import { publicDecryptRequest } from './publicDecrypt';
 
 export type HTTPZInstance = {
@@ -31,24 +31,15 @@ export type HTTPZInstance = {
   ) => EIP712;
   publicDecrypt: (handle: bigint) => Promise<bigint>;
   userDecrypt: (
-    handle: bigint,
+    handle: CtHandleContractPair[],
     privateKey: string,
     publicKey: string,
     signature: string,
-    contractAddress: string,
+    contractAddresses: string[],
     userAddress: string,
-  ) => Promise<bigint>;
-  /**
-   * @deprecated This method is replaced by userDecrypt, using same parameters
-   */
-  reencrypt: (
-    handle: bigint,
-    privateKey: string,
-    publicKey: string,
-    signature: string,
-    contractAddress: string,
-    userAddress: string,
-  ) => Promise<bigint>;
+    startTimestamp: bigint,
+    durationDays: bigint,
+  ) => Promise<bigint[]>;
   getPublicKey: () => { publicKeyId: string; publicKey: Uint8Array } | null;
   getPublicParams: (bits: keyof PublicParams) => {
     publicParams: Uint8Array;
@@ -117,12 +108,6 @@ export const createInstance = async (
     createEIP712: createEIP712(chainId),
     publicDecrypt,
     userDecrypt,
-    reencrypt(...params) {
-      console.warn(
-        "Warning: 'reencrypt' is deprecated and will be removed in future versions. Please use 'userDecrypt' instead, which accepts the same parameters.",
-      );
-      return userDecrypt(...params);
-    },
     getPublicKey: () =>
       publicKeyData.publicKey
         ? {
