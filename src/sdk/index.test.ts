@@ -36,7 +36,6 @@ describe('index', () => {
       },
       networkUrl: 'https://network.com/',
     });
-    expect(instance.reencrypt).toBeDefined();
     expect(instance.createEIP712).toBeDefined();
     expect(instance.generateKeypair).toBeDefined();
     expect(instance.createEncryptedInput).toBeDefined();
