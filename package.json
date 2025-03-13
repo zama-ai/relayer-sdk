@@ -1,6 +1,6 @@
 {
   "name": "@httpz/sdk",
-  "version": "0.7.0-8",
+  "version": "0.7.0-9",
   "description": "HTTPZ SDK",
   "main": "lib/node.js",
   "types": "lib/node/node.d.ts",
