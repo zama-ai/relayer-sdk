@@ -14,7 +14,12 @@ import {
 } from '../utils';
 import { PublicParams, ZKInput } from './encrypt';
 import { createEncryptedInput } from './encrypt';
-import { generateKeypair, createEIP712, EIP712, createEIP712UserDecrypt } from './keypair';
+import {
+  generateKeypair,
+  createEIP712,
+  EIP712,
+  createEIP712UserDecrypt,
+} from './keypair';
 import { CtHandleContractPair, userDecryptRequest } from './userDecrypt';
 import { publicDecryptRequest } from './publicDecrypt';
 
@@ -36,7 +41,7 @@ export type HTTPZInstance = {
     contractAddresses: string[],
     contractsChainId: string | number,
     startTimestamp: string,
-    durationDays: string | number
+    durationDays: string | number,
   ) => EIP712;
   publicDecrypt: (handle: bigint) => Promise<bigint>;
   userDecrypt: (
@@ -56,7 +61,11 @@ export type HTTPZInstance = {
   } | null;
 };
 
-export { generateKeypair, createEIP712, createEIP712UserDecrypt } from './keypair';
+export {
+  generateKeypair,
+  createEIP712,
+  createEIP712UserDecrypt,
+} from './keypair';
 
 export const createInstance = async (
   config: HTTPZInstanceConfig,
@@ -122,16 +131,17 @@ export const createInstance = async (
       contractAddresses: string[],
       contractsChainId: string | number,
       startTimestamp: string,
-      durationDays: string | number
-    ) => createEIP712UserDecrypt(
-      gatewayChainId,
-      verifyingContract,
-      publicKey,
-      contractAddresses,
-      contractsChainId,
-      startTimestamp,
-      durationDays.toString()
-    ),
+      durationDays: string | number,
+    ) =>
+      createEIP712UserDecrypt(
+        gatewayChainId,
+        verifyingContract,
+        publicKey,
+        contractAddresses,
+        contractsChainId,
+        startTimestamp,
+        durationDays.toString(),
+      ),
     publicDecrypt,
     userDecrypt,
     getPublicKey: () =>

@@ -16,7 +16,7 @@ export type EIP712 = {
     verifyingContract: string;
     version: string;
   };
-  message: any
+  message: any;
   primaryType: string;
   types: {
     [key: string]: EIP712Type[];
@@ -72,11 +72,10 @@ export const createEIP712 =
     return msgParams;
   };
 
-
-  /**
+/**
  * Creates an EIP712 structure specifically for user decrypt requests
- * 
- * @param chainId The chain ID where the contract is deployed
+ *
+ * @param gatewayChainId The chain ID of the gateway
  * @param verifyingContract The address of the contract that will verify the signature
  * @param publicKey The user's public key as a hex string or Uint8Array
  * @param contractAddresses Array of contract addresses that can access the decryption
@@ -95,43 +94,46 @@ export const createEIP712UserDecrypt = (
   durationDays: bigint | string,
 ): EIP712 => {
   if (!isAddress(verifyingContract)) {
-    throw new Error("Invalid verifying contract address.");
+    throw new Error('Invalid verifying contract address.');
   }
 
   // Format the public key based on its type
-  const formattedPublicKey = typeof publicKey === 'string'
-    ? (publicKey.startsWith('0x') ? publicKey : `0x${publicKey}`)
-    : publicKey;
+  const formattedPublicKey =
+    typeof publicKey === 'string'
+      ? publicKey.startsWith('0x')
+        ? publicKey
+        : `0x${publicKey}`
+      : publicKey;
 
   // Convert timestamps to strings if they're bigints
-  const formattedStartTimestamp = typeof startTimestamp === 'bigint' 
-    ? startTimestamp.toString() 
-    : startTimestamp;
-  
-  const formattedDurationDays = typeof durationDays === 'bigint' 
-    ? durationDays.toString() 
-    : durationDays;
+  const formattedStartTimestamp =
+    typeof startTimestamp === 'bigint'
+      ? startTimestamp.toString()
+      : startTimestamp;
+
+  const formattedDurationDays =
+    typeof durationDays === 'bigint' ? durationDays.toString() : durationDays;
 
   return {
     types: {
       EIP712Domain: [
-        { name: "name", type: "string" },
-        { name: "version", type: "string" },
-        { name: "chainId", type: "uint256" },
-        { name: "verifyingContract", type: "address" },
+        { name: 'name', type: 'string' },
+        { name: 'version', type: 'string' },
+        { name: 'chainId', type: 'uint256' },
+        { name: 'verifyingContract', type: 'address' },
       ],
       UserDecryptRequestVerification: [
-        { name: "publicKey", type: "bytes" },
-        { name: "contractAddresses", type: "address[]" },
-        { name: "contractsChainId", type: "uint256" },
-        { name: "startTimestamp", type: "uint256" },
-        { name: "durationDays", type: "uint256" },
+        { name: 'publicKey', type: 'bytes' },
+        { name: 'contractAddresses', type: 'address[]' },
+        { name: 'contractsChainId', type: 'uint256' },
+        { name: 'startTimestamp', type: 'uint256' },
+        { name: 'durationDays', type: 'uint256' },
       ],
     },
-    primaryType: "EIP712UserDecryptRequest",
+    primaryType: 'EIP712UserDecryptRequest',
     domain: {
-      name: "DecryptionManager",
-      version: "1",
+      name: 'DecryptionManager',
+      version: '1',
       chainId: gatewayChainId,
       verifyingContract,
     },
