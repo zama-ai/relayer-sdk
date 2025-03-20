@@ -66,8 +66,10 @@ describe('User Decryption Request', () => {
     // Before it was UserDecryptionRequestVerification
     const typeDefinition =
       'EIP712UserDecryptRequest(bytes publicKey,address[] contractAddresses,uint256 contractsChainId,uint256 startTimestamp,uint256 durationDays)';
-    expect(ethers.keccak256(ethers.toUtf8Bytes(typeDefinition))).toBe("0x0e00510175e72dedf518f1316a1bf0031fa5e2daf706fe5ded235ce3e6b15675")
-   
+    expect(ethers.keccak256(ethers.toUtf8Bytes(typeDefinition))).toBe(
+      '0x0e00510175e72dedf518f1316a1bf0031fa5e2daf706fe5ded235ce3e6b15675',
+    );
+
     expect(ethers.TypedDataEncoder.hashDomain(typedData.domain)).toBe(
       '0x7a154f71815825be57bf13243442f8a5bac787c840b57d9ecc5e57998f96ef60',
     );
@@ -91,7 +93,5 @@ describe('User Decryption Request', () => {
     //   raw bytes32 (hex): 0x6711d094949d201fcd74a06cdaa5e7a51886545f31345ce4c9b1b973a86afbdb
     // ➡️ DebugBytes: publicKey Value (hex): 0x2000000000000000f119229d0276d44fe73c32889f140f64ffeb8d4b0b4e898edf6bd1edc119062e
     // ➡️ DebugBytes: signature given Value (hex): 0xf4302335d9b837a09091506a1eb2ed87453566463a3feb7fb73e11aea0101c002417bc312314b8773f257d9fba35bcfe4196e0a6cb9659cd5ceebd97817e2ece1b
-   
   });
 });
-
