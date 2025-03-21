@@ -74,25 +74,54 @@ export const getKeysFromRelayer = async (
       }
 
       const publicKeyResponse = await fetch(pubKeyUrl);
-      const publicKey = await publicKeyResponse.arrayBuffer();
+      if (!publicKeyResponse.ok) {
+        throw new Error(
+          `HTTP error! status: ${publicKeyResponse.status} on ${publicKeyResponse.url}`,
+        );
+      }
+      const publicKey = await publicKeyResponse.bytes();
+
       const publicParamsUrl = data.response.crs['2048'].urls[0];
       const publicParamsId = data.response.crs['2048'].data_id;
-      const publicParams2048 = await (
-        await fetch(publicParamsUrl)
-      ).arrayBuffer();
+
+      const publicParams2048Response = await fetch(publicParamsUrl);
+      if (!publicParams2048Response.ok) {
+        throw new Error(
+          `HTTP error! status: ${publicParams2048Response.status} on ${publicParams2048Response.url}`,
+        );
+      }
+      const publicParams2048 = await publicParams2048Response.bytes();
+
+      let pub_key;
+      try {
+        pub_key = TfheCompactPublicKey.safe_deserialize(
+          publicKey,
+          SERIALIZED_SIZE_LIMIT_PK,
+        );
+      } catch (e) {
+        throw new Error('Invalid public key (deserialization failed)', {
+          cause: e,
+        });
+      }
+
+      let crs;
+      try {
+        crs = CompactPkeCrs.safe_deserialize(
+          new Uint8Array(publicParams2048),
+          SERIALIZED_SIZE_LIMIT_CRS,
+        );
+      } catch (e) {
+        throw new Error('Invalid crs (deserialization failed)', {
+          cause: e,
+        });
+      }
 
       const result = {
-        publicKey: TfheCompactPublicKey.safe_deserialize(
-          new Uint8Array(publicKey),
-          SERIALIZED_SIZE_LIMIT_PK,
-        ),
+        publicKey: pub_key,
         publicKeyId,
         publicParams: {
           2048: {
-            publicParams: CompactPkeCrs.safe_deserialize(
-              new Uint8Array(publicParams2048),
-              SERIALIZED_SIZE_LIMIT_CRS,
-            ),
+            publicParams: crs,
             publicParamsId,
           },
         },
