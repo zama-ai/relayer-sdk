@@ -27,7 +27,7 @@ describe('index', () => {
     const publicParamsId = publicParams[2048].publicParamsId;
     const instance = await createInstance({
       aclContractAddress: '0x4c102C7cA99d3079fEFF08114d3bad888b9794d9',
-      kmsContractAddress: '0x325ea1b59F28e9e1C51d3B5b47b7D3965CC5D8C8',
+      kmsGateway: '0x325ea1b59F28e9e1C51d3B5b47b7D3965CC5D8C8',
       chainId: 1234,
       publicKey: { data: serializedPublicKey, id: publicKeyId },
       publicParams: {
@@ -53,7 +53,7 @@ describe('index', () => {
     await expect(
       createInstance({
         aclContractAddress: '0x4c102C7cA99d3079fEFF08114d3bad888b9794d9',
-        kmsContractAddress: '0x325ea1b59F28e9e1C51d3B5b47b7D3965CC5D8C8',
+        kmsGateway: '0x325ea1b59F28e9e1C51d3B5b47b7D3965CC5D8C8',
         chainId: BigInt(1234) as any,
         publicKey: { data: serializedPublicKey, id: publicKeyId },
         publicParams: {
@@ -66,7 +66,7 @@ describe('index', () => {
     await expect(
       createInstance({
         aclContractAddress: '0x4c102C7cA99d3079fEFF08114d3bad888b9794d9',
-        kmsContractAddress: '0x325ea1b59F28e9e1C51d3B5b47b7D3965CC5D8C8',
+        kmsGateway: '0x325ea1b59F28e9e1C51d3B5b47b7D3965CC5D8C8',
         chainId: 9000,
         publicKey: { data: 43 as any, id: publicKeyId },
       }),

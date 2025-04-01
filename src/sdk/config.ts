@@ -17,7 +17,7 @@ import { CompactPkeCrs, TfheCompactPublicKey } from 'node-tfhe';
 import { abi } from '../abi/kmsVerifier.json';
 
 export type HTTPZInstanceConfig = {
-  kmsContractAddress: string;
+  kmsGateway: string;
   aclContractAddress: string;
   chainId?: number;
   relayerUrl?: string;
@@ -112,7 +112,7 @@ export const getKMSSigners = async (
   provider: Provider,
   config: HTTPZInstanceConfig,
 ): Promise<string[]> => {
-  const kmsContract = new Contract(config.kmsContractAddress, abi, provider);
+  const kmsContract = new Contract(config.kmsGateway, abi, provider);
   const signers: string[] = await kmsContract.getSigners();
   return signers;
 };
