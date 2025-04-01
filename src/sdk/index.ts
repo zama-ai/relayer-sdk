@@ -55,9 +55,9 @@ export { generateKeypair, createEIP712 } from './keypair';
 export const createInstance = async (
   config: HTTPZInstanceConfig,
 ): Promise<HTTPZInstance> => {
-  const { publicKey, kmsGateway, aclContractAddress } = config;
+  const { publicKey, verifyingContractAddress, aclContractAddress } = config;
 
-  if (!kmsGateway || !isAddress(kmsGateway)) {
+  if (!verifyingContractAddress || !isAddress(verifyingContractAddress)) {
     throw new Error('KMS contract address is not valid or empty');
   }
 
@@ -84,7 +84,7 @@ export const createInstance = async (
   const userDecrypt = userDecryptRequest(
     kmsSigners,
     chainId,
-    kmsGateway,
+    verifyingContractAddress,
     aclContractAddress,
     cleanURL(config.relayerUrl),
     provider,
@@ -93,7 +93,7 @@ export const createInstance = async (
   const publicDecrypt = publicDecryptRequest(
     kmsSigners,
     chainId,
-    kmsGateway,
+    verifyingContractAddress,
     aclContractAddress,
     cleanURL(config.relayerUrl),
     provider,

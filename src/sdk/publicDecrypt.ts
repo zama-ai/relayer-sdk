@@ -15,7 +15,7 @@ export const publicDecryptRequest =
   (
     kmsSignatures: string[],
     chainId: number,
-    kmsGateway: string,
+    verifyingContractAddress: string,
     aclContractAddress: string,
     relayerUrl: string,
     provider: ethers.JsonRpcProvider | ethers.BrowserProvider,

@@ -27,7 +27,7 @@ export const userDecryptRequest =
   (
     kmsSignatures: string[],
     chainId: number,
-    kmsGateway: string,
+    verifyingContractAddress: string,
     aclContractAddress: string,
     relayerUrl: string,
     provider: ethers.JsonRpcProvider | ethers.BrowserProvider,
@@ -156,7 +156,7 @@ export const userDecryptRequest =
         name: 'Authorization token',
         version: '1',
         chain_id: chainIdArrayBE,
-        verifying_contract: kmsGateway,
+        verifying_contract: verifyingContractAddress,
         salt: null,
       };
       // Duplicate payloadForRequest and replace ciphertext_handle with ciphertext_digest.
@@ -166,7 +166,7 @@ export const userDecryptRequest =
         client_address: userAddress,
         enc_key: pubKey,
         ciphertext_handles: handles.map((h) => h.ctHandle),
-        eip712_verifying_contract: kmsGateway,
+        eip712_verifying_contract: verifyingContractAddress,
       };
 
       const decryption = process_reencryption_resp_from_js(
