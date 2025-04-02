@@ -57,13 +57,18 @@ export const createInstance = async (
 ): Promise<HTTPZInstance> => {
   const {
     publicKey,
+    kmsContractAddress,
     verifyingContractAddress,
     aclContractAddress,
     gatewayChainId,
   } = config;
 
-  if (!verifyingContractAddress || !isAddress(verifyingContractAddress)) {
+  if (!kmsContractAddress || !isAddress(kmsContractAddress)) {
     throw new Error('KMS contract address is not valid or empty');
+  }
+
+  if (!verifyingContractAddress || !isAddress(verifyingContractAddress)) {
+    throw new Error('Verifying contract address is not valid or empty');
   }
 
   if (!aclContractAddress || !isAddress(aclContractAddress)) {

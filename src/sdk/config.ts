@@ -18,6 +18,7 @@ import { abi } from '../abi/kmsVerifier.json';
 
 export type HTTPZInstanceConfig = {
   verifyingContractAddress: string;
+  kmsContractAddress: string;
   aclContractAddress: string;
   gatewayChainId: number;
   chainId?: number;
@@ -113,11 +114,7 @@ export const getKMSSigners = async (
   provider: Provider,
   config: HTTPZInstanceConfig,
 ): Promise<string[]> => {
-  const kmsContract = new Contract(
-    config.verifyingContractAddress,
-    abi,
-    provider,
-  );
+  const kmsContract = new Contract(config.kmsContractAddress, abi, provider);
   const signers: string[] = await kmsContract.getSigners();
   return signers;
 };
