@@ -20,6 +20,7 @@ describe('reencrypt', () => {
   it('get reencryption for handle', async () => {
     const reencrypt = userDecryptRequest(
       [],
+      54321,
       9000,
       '0x8ba1f109551bd432803012645ac136ddd64dba72',
       '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',

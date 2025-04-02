@@ -26,15 +26,16 @@ describe('index', () => {
 
     const publicParamsId = publicParams[2048].publicParamsId;
     const instance = await createInstance({
+      gatewayChainId: 54321,
       aclContractAddress: '0x4c102C7cA99d3079fEFF08114d3bad888b9794d9',
       kmsContractAddress: '0x325ea1b59F28e9e1C51d3B5b47b7D3965CC5D8C8',
+      verifyingContractAddress: '0x325ea1b59F28e9e1C51d3B5b47b7D3965CC5D8C8',
       chainId: 1234,
-      publicKey: serializedPublicKey,
-      publicKeyId,
+      publicKey: { data: serializedPublicKey, id: publicKeyId },
       publicParams: {
         2048: { publicParams: serializedPublicParams, publicParamsId },
       },
-      networkUrl: 'https://network.com/',
+      network: 'https://network.com/',
     });
     expect(instance.createEIP712).toBeDefined();
     expect(instance.generateKeypair).toBeDefined();
@@ -53,25 +54,27 @@ describe('index', () => {
     const publicParamsId = publicParams[2048].publicParamsId;
     await expect(
       createInstance({
+        gatewayChainId: 54321,
         aclContractAddress: '0x4c102C7cA99d3079fEFF08114d3bad888b9794d9',
         kmsContractAddress: '0x325ea1b59F28e9e1C51d3B5b47b7D3965CC5D8C8',
+        verifyingContractAddress: '0x325ea1b59F28e9e1C51d3B5b47b7D3965CC5D8C8',
         chainId: BigInt(1234) as any,
-        publicKey: serializedPublicKey,
-        publicKeyId,
+        publicKey: { data: serializedPublicKey, id: publicKeyId },
         publicParams: {
           2048: { publicParams: serializedPublicParams, publicParamsId },
         },
-        networkUrl: 'https://',
+        network: 'https://',
       }),
     ).rejects.toThrow('chainId must be a number');
 
     await expect(
       createInstance({
+        gatewayChainId: 54321,
         aclContractAddress: '0x4c102C7cA99d3079fEFF08114d3bad888b9794d9',
         kmsContractAddress: '0x325ea1b59F28e9e1C51d3B5b47b7D3965CC5D8C8',
+        verifyingContractAddress: '0x325ea1b59F28e9e1C51d3B5b47b7D3965CC5D8C8',
         chainId: 9000,
-        publicKey: 43 as any,
-        publicKeyId,
+        publicKey: { data: 43 as any, id: publicKeyId },
       }),
     ).rejects.toThrow('publicKey must be a Uint8Array');
   });

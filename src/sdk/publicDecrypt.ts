@@ -14,8 +14,9 @@ const aclABI = [
 export const publicDecryptRequest =
   (
     kmsSignatures: string[],
+    gatewayChainId: number,
     chainId: number,
-    kmsContractAddress: string,
+    verifyingContractAddress: string,
     aclContractAddress: string,
     relayerUrl: string,
     provider: ethers.JsonRpcProvider | ethers.BrowserProvider,
