@@ -43,6 +43,9 @@ export const userDecryptRequest =
     startTimestamp: RequestValidity['startTimestamp'],
     durationDays: RequestValidity['durationDays'],
   ): Promise<bigint[]> => {
+    console.log('gatewayChainId', gatewayChainId);
+    console.log('chainId', chainId);
+    console.log('verifyingContractAddress', verifyingContractAddress);
     const acl = new ethers.Contract(aclContractAddress, aclABI, provider);
     const verifications = handles.map(async ({ ctHandle, contractAddress }) => {
       const userAllowed = await acl.persistAllowed(ctHandle, userAddress);
@@ -95,8 +98,11 @@ export const userDecryptRequest =
           contractAddress: h.contractAddress,
         };
       }),
-      requestValidity: { startTimestamp, durationDays },
-      contractsChainId: chainId,
+      requestValidity: {
+        startTimestamp: startTimestamp.toString(), // Convert to string
+        durationDays: durationDays.toString(), // Convert to string
+      },
+      contractsChainId: chainId.toString(), // Convert to string
       contractAddresses: contractAddresses.map((c) => getAddress(c)),
       userAddress: getAddress(userAddress),
       signature: signature.replace(/^(0x)/, ''),
@@ -151,10 +157,10 @@ export const userDecryptRequest =
     try {
       const buffer = new ArrayBuffer(32);
       const view = new DataView(buffer);
-      view.setUint32(28, chainId, false);
+      view.setUint32(28, gatewayChainId, false);
       const chainIdArrayBE = new Uint8Array(buffer);
       const eip712Domain = {
-        name: 'Authorization token',
+        name: 'DecryptionManager',
         version: '1',
         chain_id: chainIdArrayBE,
         verifying_contract: verifyingContractAddress,
@@ -165,8 +171,10 @@ export const userDecryptRequest =
       const payloadForVerification = {
         signature,
         client_address: userAddress,
-        enc_key: pubKey,
-        ciphertext_handles: handles.map((h) => h.ctHandle),
+        enc_key: publicKey,
+        ciphertext_handles: handles.map((h) =>
+          h.ctHandle.toString(16).padStart(64, '0'),
+        ),
         eip712_verifying_contract: verifyingContractAddress,
       };
 
@@ -180,7 +188,9 @@ export const userDecryptRequest =
         true,
       );
 
-      return decryption.map((d) => bytesToBigInt(d.bytes));
+      return decryption.map((d: { bytes: Uint8Array<ArrayBufferLike> }) =>
+        bytesToBigInt(d.bytes),
+      );
     } catch (e) {
       throw new Error('An error occured during decryption', { cause: e });
     }
