@@ -33,6 +33,7 @@ export const userDecryptRequest =
     provider: ethers.JsonRpcProvider | ethers.BrowserProvider,
   ) =>
   async (
+    verifyingContract: string,
     handles: CtHandleContractPair[],
     privateKey: string,
     publicKey: string,
@@ -157,21 +158,34 @@ export const userDecryptRequest =
       view.setUint32(28, chainId, false);
       const chainIdArrayBE = new Uint8Array(buffer);
       const eip712Domain = {
-        name: 'Authorization token',
+        name: 'DecryptionManager',
         version: '1',
         chain_id: chainIdArrayBE,
-        verifying_contract: kmsContractAddress,
+        verifying_contract: verifyingContract,
         salt: null,
       };
+      console.log(eip712Domain);
       // Duplicate payloadForRequest and replace ciphertext_handle with ciphertext_digest.
       // TODO check all ciphertext digests are all the same
       const payloadForVerification = {
         signature,
         client_address: userAddress,
-        enc_key: pubKey,
-        ciphertext_handles: handles.map((h) => h.ctHandle),
-        eip712_verifying_contract: kmsContractAddress,
+        enc_key: publicKey,
+        ciphertext_handles: handles.map((h) => h.ctHandle.toString(16)),
+        eip712_verifying_contract: verifyingContract,
       };
+
+      console.log("payloadForVerification");
+      console.log(payloadForVerification);
+      console.log("json.response");
+      console.log(json.response);
+      console.log(eip712Domain);
+      console.log("eip712Domain");
+      console.log("1,0 for Kelong");
+      console.log(json.response[0].signature.length);
+      console.log("1,1");
+      console.log(json.response[0].payload.length);
+      console.log("1,2");
 
       const decryption = process_reencryption_resp_from_js(
         client,
@@ -180,7 +194,7 @@ export const userDecryptRequest =
         json.response,
         pubKey,
         privKey,
-        true,
+        false,
       );
 
       return decryption.map((d) => bytesToBigInt(d.bytes));

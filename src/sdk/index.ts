@@ -45,6 +45,7 @@ export type HTTPZInstance = {
   ) => EIP712;
   publicDecrypt: (handle: bigint) => Promise<bigint>;
   userDecrypt: (
+    verifyingContract: string,
     handle: CtHandleContractPair[],
     privateKey: string,
     publicKey: string,

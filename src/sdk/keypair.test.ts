@@ -13,6 +13,7 @@ describe('token', () => {
 
     expect(keypair.publicKey.length).toBe(80);
     expect(keypair.privateKey.length).toBe(80);
+    console.log(keypair);
 
     let pkBuf = cryptobox_pk_to_u8vec(
       u8vec_to_cryptobox_pk(fromHexString(keypair.publicKey)),
@@ -24,6 +25,8 @@ describe('token', () => {
     );
     expect(40).toBe(skBuf.length);
   });
+
+  
 
   it('create a valid EIP712', async () => {
     const keypair = generateKeypair();
