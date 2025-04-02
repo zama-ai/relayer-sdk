@@ -26,6 +26,7 @@ export type RequestValidity = {
 export const userDecryptRequest =
   (
     kmsSignatures: string[],
+    gatewayChainId: number,
     chainId: number,
     verifyingContractAddress: string,
     aclContractAddress: string,

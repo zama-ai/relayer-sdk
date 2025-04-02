@@ -14,6 +14,7 @@ const aclABI = [
 export const publicDecryptRequest =
   (
     kmsSignatures: string[],
+    gatewayChainId: number,
     chainId: number,
     verifyingContractAddress: string,
     aclContractAddress: string,

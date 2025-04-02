@@ -19,6 +19,7 @@ import { abi } from '../abi/kmsVerifier.json';
 export type HTTPZInstanceConfig = {
   verifyingContractAddress: string;
   aclContractAddress: string;
+  gatewayChainId: number;
   chainId?: number;
   relayerUrl?: string;
   network?: Eip1193Provider | string;

@@ -26,6 +26,7 @@ describe('index', () => {
 
     const publicParamsId = publicParams[2048].publicParamsId;
     const instance = await createInstance({
+      gatewayChainId: 54321,
       aclContractAddress: '0x4c102C7cA99d3079fEFF08114d3bad888b9794d9',
       verifyingContractAddress: '0x325ea1b59F28e9e1C51d3B5b47b7D3965CC5D8C8',
       chainId: 1234,
@@ -52,6 +53,7 @@ describe('index', () => {
     const publicParamsId = publicParams[2048].publicParamsId;
     await expect(
       createInstance({
+        gatewayChainId: 54321,
         aclContractAddress: '0x4c102C7cA99d3079fEFF08114d3bad888b9794d9',
         verifyingContractAddress: '0x325ea1b59F28e9e1C51d3B5b47b7D3965CC5D8C8',
         chainId: BigInt(1234) as any,
@@ -65,6 +67,7 @@ describe('index', () => {
 
     await expect(
       createInstance({
+        gatewayChainId: 54321,
         aclContractAddress: '0x4c102C7cA99d3079fEFF08114d3bad888b9794d9',
         verifyingContractAddress: '0x325ea1b59F28e9e1C51d3B5b47b7D3965CC5D8C8',
         chainId: 9000,

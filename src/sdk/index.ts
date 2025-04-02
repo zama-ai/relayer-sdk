@@ -17,9 +17,9 @@ import { createEncryptedInput } from './encrypt';
 import { generateKeypair, createEIP712, EIP712 } from './keypair';
 import { CtHandleContractPair, userDecryptRequest } from './userDecrypt';
 import { publicDecryptRequest } from './publicDecrypt';
-// import fetchRetry from 'fetch-retry';
+import fetchRetry from 'fetch-retry';
 
-// global.fetch = fetchRetry(global.fetch, { retries: 5, retryDelay: 500 });
+global.fetch = fetchRetry(global.fetch, { retries: 5, retryDelay: 500 });
 
 export type HTTPZInstance = {
   createEncryptedInput: (
@@ -55,7 +55,12 @@ export { generateKeypair, createEIP712 } from './keypair';
 export const createInstance = async (
   config: HTTPZInstanceConfig,
 ): Promise<HTTPZInstance> => {
-  const { publicKey, verifyingContractAddress, aclContractAddress } = config;
+  const {
+    publicKey,
+    verifyingContractAddress,
+    aclContractAddress,
+    gatewayChainId,
+  } = config;
 
   if (!verifyingContractAddress || !isAddress(verifyingContractAddress)) {
     throw new Error('KMS contract address is not valid or empty');
@@ -83,6 +88,7 @@ export const createInstance = async (
   const kmsSigners = await getKMSSigners(provider, config);
   const userDecrypt = userDecryptRequest(
     kmsSigners,
+    gatewayChainId,
     chainId,
     verifyingContractAddress,
     aclContractAddress,
@@ -92,6 +98,7 @@ export const createInstance = async (
 
   const publicDecrypt = publicDecryptRequest(
     kmsSigners,
+    gatewayChainId,
     chainId,
     verifyingContractAddress,
     aclContractAddress,
@@ -108,7 +115,7 @@ export const createInstance = async (
       publicParamsData,
     ),
     generateKeypair,
-    createEIP712: createEIP712(chainId),
+    createEIP712: createEIP712(gatewayChainId),
     publicDecrypt,
     userDecrypt,
     getPublicKey: () =>
