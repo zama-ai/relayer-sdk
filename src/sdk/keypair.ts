@@ -72,14 +72,52 @@ export const createEIP712 =
     const formattedDurationDays =
       typeof durationDays === 'number' ? durationDays.toString() : durationDays;
 
-    const eip: EIP712 = {
+    const EIP712Domain = [
+      { name: 'name', type: 'string' },
+      { name: 'version', type: 'string' },
+      { name: 'chainId', type: 'uint256' },
+      { name: 'verifyingContract', type: 'address' },
+    ];
+
+    const domain = {
+      name: 'DecryptionManager',
+      version: '1',
+      chainId: gatewayChainId,
+      verifyingContract,
+    };
+
+    if (delegatedAccount) {
+      return {
+        types: {
+          EIP712Domain,
+          DelegatedUserDecryptRequestVerification: [
+            { name: 'publicKey', type: 'bytes' },
+            { name: 'contractAddresses', type: 'address[]' },
+            { name: 'contractsChainId', type: 'uint256' },
+            { name: 'startTimestamp', type: 'uint256' },
+            { name: 'durationDays', type: 'uint256' },
+            {
+              name: 'delegatedAccount',
+              type: 'address',
+            },
+          ],
+        },
+        primaryType: 'DelegatedUserDecryptRequestVerification',
+        domain,
+        message: {
+          publicKey: formattedPublicKey,
+          contractAddresses,
+          contractsChainId,
+          startTimestamp: formattedStartTimestamp,
+          durationDays: formattedDurationDays,
+          delegatedAccount: delegatedAccount,
+        },
+      };
+    }
+
+    return {
       types: {
-        EIP712Domain: [
-          { name: 'name', type: 'string' },
-          { name: 'version', type: 'string' },
-          { name: 'chainId', type: 'uint256' },
-          { name: 'verifyingContract', type: 'address' },
-        ],
+        EIP712Domain,
         UserDecryptRequestVerification: [
           { name: 'publicKey', type: 'bytes' },
           { name: 'contractAddresses', type: 'address[]' },
@@ -89,12 +127,7 @@ export const createEIP712 =
         ],
       },
       primaryType: 'UserDecryptRequestVerification',
-      domain: {
-        name: 'DecryptionManager',
-        version: '1',
-        chainId: gatewayChainId,
-        verifyingContract,
-      },
+      domain,
       message: {
         publicKey: formattedPublicKey,
         contractAddresses,
@@ -103,15 +136,6 @@ export const createEIP712 =
         durationDays: formattedDurationDays,
       },
     };
-
-    if (delegatedAccount) {
-      eip.message.delegatedAccount = delegatedAccount;
-      eip.types.UserDecryptRequestVerification.push({
-        name: 'delegatedAccount',
-        type: 'address',
-      });
-    }
-    return eip;
   };
 
 export const generateKeypair = () => {
