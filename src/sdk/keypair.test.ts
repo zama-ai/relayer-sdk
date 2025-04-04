@@ -73,7 +73,7 @@ describe('token', () => {
     expect(eip712.message.delegatedAccount).toBe(
       '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
     );
-    expect(eip712.primaryType).toBe('UserDecryptRequestVerification');
+    expect(eip712.primaryType).toBe('DelegatedUserDecryptRequestVerification');
 
     /* 
      { name: 'publicKey', type: 'bytes' },
@@ -83,38 +83,48 @@ describe('token', () => {
           { name: 'durationDays', type: 'uint256' },
           { name: 'delegatedAccount', type: 'address' },
            */
-    expect(eip712.types.UserDecryptRequestVerification.length).toBe(6);
+    expect(eip712.types.DelegatedUserDecryptRequestVerification.length).toBe(6);
 
-    expect(eip712.types.UserDecryptRequestVerification[0].name).toBe(
+    expect(eip712.types.DelegatedUserDecryptRequestVerification[0].name).toBe(
       'publicKey',
     );
-    expect(eip712.types.UserDecryptRequestVerification[0].type).toBe('bytes');
-    expect(eip712.types.UserDecryptRequestVerification[1].name).toBe(
+    expect(eip712.types.DelegatedUserDecryptRequestVerification[0].type).toBe(
+      'bytes',
+    );
+    expect(eip712.types.DelegatedUserDecryptRequestVerification[1].name).toBe(
       'contractAddresses',
     );
-    expect(eip712.types.UserDecryptRequestVerification[1].type).toBe(
+    expect(eip712.types.DelegatedUserDecryptRequestVerification[1].type).toBe(
       'address[]',
     );
 
-    expect(eip712.types.UserDecryptRequestVerification[2].name).toBe(
+    expect(eip712.types.DelegatedUserDecryptRequestVerification[2].name).toBe(
       'contractsChainId',
     );
-    expect(eip712.types.UserDecryptRequestVerification[2].type).toBe('uint256');
+    expect(eip712.types.DelegatedUserDecryptRequestVerification[2].type).toBe(
+      'uint256',
+    );
 
-    expect(eip712.types.UserDecryptRequestVerification[3].name).toBe(
+    expect(eip712.types.DelegatedUserDecryptRequestVerification[3].name).toBe(
       'startTimestamp',
     );
-    expect(eip712.types.UserDecryptRequestVerification[3].type).toBe('uint256');
+    expect(eip712.types.DelegatedUserDecryptRequestVerification[3].type).toBe(
+      'uint256',
+    );
 
-    expect(eip712.types.UserDecryptRequestVerification[4].name).toBe(
+    expect(eip712.types.DelegatedUserDecryptRequestVerification[4].name).toBe(
       'durationDays',
     );
-    expect(eip712.types.UserDecryptRequestVerification[4].type).toBe('uint256');
+    expect(eip712.types.DelegatedUserDecryptRequestVerification[4].type).toBe(
+      'uint256',
+    );
 
-    expect(eip712.types.UserDecryptRequestVerification[5].name).toBe(
+    expect(eip712.types.DelegatedUserDecryptRequestVerification[5].name).toBe(
       'delegatedAccount',
     );
-    expect(eip712.types.UserDecryptRequestVerification[5].type).toBe('address');
+    expect(eip712.types.DelegatedUserDecryptRequestVerification[5].type).toBe(
+      'address',
+    );
   });
 
   it('create invalid EIP712', async () => {
