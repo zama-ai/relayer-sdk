@@ -23,55 +23,6 @@ export type EIP712 = {
   };
 };
 
-export const createEIP712 =
-  (chainId: number) =>
-  (publicKey: string, verifyingContract: string, delegatedAccount?: string) => {
-    if (!isAddress(verifyingContract))
-      throw new Error('Invalid contract address.');
-    if (delegatedAccount && !isAddress(delegatedAccount))
-      throw new Error('Invalid delegated account.');
-    const msgParams: EIP712 = {
-      types: {
-        // This refers to the domain the contract is hosted on.
-        EIP712Domain: [
-          { name: 'name', type: 'string' },
-          { name: 'version', type: 'string' },
-          { name: 'chainId', type: 'uint256' },
-          { name: 'verifyingContract', type: 'address' },
-        ],
-        // Refer to primaryType.
-        Reencrypt: [{ name: 'publicKey', type: 'bytes' }],
-      },
-      // This defines the message you're proposing the user to sign, is dapp-specific, and contains
-      // anything you want. There are no required fields. Be as explicit as possible when building out
-      // the message schema.
-      // This refers to the keys of the following types object.
-      primaryType: 'Reencrypt',
-      domain: {
-        // Give a user-friendly name to the specific contract you're signing for.
-        name: 'Authorization token',
-        // This identifies the latest version.
-        version: '1',
-        // This defines the network, in this case, Mainnet.
-        chainId,
-        // // Add a verifying contract to make sure you're establishing contracts with the proper entity.
-        verifyingContract,
-      },
-      message: {
-        publicKey: `0x${publicKey}`,
-      },
-    };
-
-    if (delegatedAccount) {
-      msgParams.message.delegatedAccount = delegatedAccount;
-      msgParams.types.Reencrypt.push({
-        name: 'delegatedAccount',
-        type: 'address',
-      });
-    }
-    return msgParams;
-  };
-
 /**
  * Creates an EIP712 structure specifically for user decrypt requests
  *
@@ -84,68 +35,108 @@ export const createEIP712 =
  * @param durationDays How many days the decryption permission remains valid
  * @returns EIP712 typed data structure for user decryption
  */
-export const createEIP712UserDecrypt = (
-  gatewayChainId: number,
-  verifyingContract: string,
-  publicKey: string | Uint8Array,
-  contractAddresses: string[],
-  contractsChainId: string | number,
-  startTimestamp: bigint | string,
-  durationDays: bigint | string,
-): EIP712 => {
-  if (!isAddress(verifyingContract)) {
-    throw new Error('Invalid verifying contract address.');
-  }
+export const createEIP712 =
+  (gatewayChainId: number, verifyingContract: string) =>
+  (
+    publicKey: string | Uint8Array,
+    contractAddresses: string[],
+    contractsChainId: string | number,
+    startTimestamp: string | number,
+    durationDays: string | number,
+    delegatedAccount?: string,
+  ): EIP712 => {
+    if (delegatedAccount && !isAddress(delegatedAccount))
+      throw new Error('Invalid delegated account.');
 
-  // Format the public key based on its type
-  const formattedPublicKey =
-    typeof publicKey === 'string'
-      ? publicKey.startsWith('0x')
-        ? publicKey
-        : `0x${publicKey}`
-      : publicKey;
+    if (!isAddress(verifyingContract)) {
+      throw new Error('Invalid verifying contract address.');
+    }
 
-  // Convert timestamps to strings if they're bigints
-  const formattedStartTimestamp =
-    typeof startTimestamp === 'bigint'
-      ? startTimestamp.toString()
-      : startTimestamp;
+    if (!contractAddresses.every((c) => isAddress(c))) {
+      throw new Error('Invalid contract address.');
+    }
+    // Format the public key based on its type
+    const formattedPublicKey =
+      typeof publicKey === 'string'
+        ? publicKey.startsWith('0x')
+          ? publicKey
+          : `0x${publicKey}`
+        : publicKey;
 
-  const formattedDurationDays =
-    typeof durationDays === 'bigint' ? durationDays.toString() : durationDays;
+    // Convert timestamps to strings if they're bigints
+    const formattedStartTimestamp =
+      typeof startTimestamp === 'number'
+        ? startTimestamp.toString()
+        : startTimestamp;
 
-  return {
-    types: {
-      EIP712Domain: [
-        { name: 'name', type: 'string' },
-        { name: 'version', type: 'string' },
-        { name: 'chainId', type: 'uint256' },
-        { name: 'verifyingContract', type: 'address' },
-      ],
-      UserDecryptRequestVerification: [
-        { name: 'publicKey', type: 'bytes' },
-        { name: 'contractAddresses', type: 'address[]' },
-        { name: 'contractsChainId', type: 'uint256' },
-        { name: 'startTimestamp', type: 'uint256' },
-        { name: 'durationDays', type: 'uint256' },
-      ],
-    },
-    primaryType: 'EIP712UserDecryptRequest',
-    domain: {
+    const formattedDurationDays =
+      typeof durationDays === 'number' ? durationDays.toString() : durationDays;
+
+    const EIP712Domain = [
+      { name: 'name', type: 'string' },
+      { name: 'version', type: 'string' },
+      { name: 'chainId', type: 'uint256' },
+      { name: 'verifyingContract', type: 'address' },
+    ];
+
+    const domain = {
       name: 'DecryptionManager',
       version: '1',
       chainId: gatewayChainId,
       verifyingContract,
-    },
-    message: {
-      publicKey: formattedPublicKey,
-      contractAddresses,
-      contractsChainId,
-      startTimestamp: formattedStartTimestamp,
-      durationDays: formattedDurationDays,
-    },
+    };
+
+    if (delegatedAccount) {
+      return {
+        types: {
+          EIP712Domain,
+          DelegatedUserDecryptRequestVerification: [
+            { name: 'publicKey', type: 'bytes' },
+            { name: 'contractAddresses', type: 'address[]' },
+            { name: 'contractsChainId', type: 'uint256' },
+            { name: 'startTimestamp', type: 'uint256' },
+            { name: 'durationDays', type: 'uint256' },
+            {
+              name: 'delegatedAccount',
+              type: 'address',
+            },
+          ],
+        },
+        primaryType: 'DelegatedUserDecryptRequestVerification',
+        domain,
+        message: {
+          publicKey: formattedPublicKey,
+          contractAddresses,
+          contractsChainId,
+          startTimestamp: formattedStartTimestamp,
+          durationDays: formattedDurationDays,
+          delegatedAccount: delegatedAccount,
+        },
+      };
+    }
+
+    return {
+      types: {
+        EIP712Domain,
+        UserDecryptRequestVerification: [
+          { name: 'publicKey', type: 'bytes' },
+          { name: 'contractAddresses', type: 'address[]' },
+          { name: 'contractsChainId', type: 'uint256' },
+          { name: 'startTimestamp', type: 'uint256' },
+          { name: 'durationDays', type: 'uint256' },
+        ],
+      },
+      primaryType: 'UserDecryptRequestVerification',
+      domain,
+      message: {
+        publicKey: formattedPublicKey,
+        contractAddresses,
+        contractsChainId,
+        startTimestamp: formattedStartTimestamp,
+        durationDays: formattedDurationDays,
+      },
+    };
   };
-};
 
 export const generateKeypair = () => {
   const keypair = cryptobox_keygen();
