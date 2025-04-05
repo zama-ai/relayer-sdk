@@ -16,13 +16,6 @@ export type CtHandleContractPair = {
   contractAddress: string;
 };
 
-export type RequestValidity = {
-  /// @notice The start timestamp of the user decryption request
-  startTimestamp: bigint;
-  /// @notice The duration in days for the user decryption to be processed
-  durationDays: bigint;
-};
-
 export const userDecryptRequest =
   (
     kmsSignatures: string[],
@@ -40,8 +33,8 @@ export const userDecryptRequest =
     signature: string,
     contractAddresses: string[],
     userAddress: string,
-    startTimestamp: RequestValidity['startTimestamp'],
-    durationDays: RequestValidity['durationDays'],
+    startTimestamp: string | number,
+    durationDays: string | number,
   ): Promise<bigint[]> => {
     console.log('gatewayChainId', gatewayChainId);
     console.log('chainId', chainId);
@@ -72,25 +65,6 @@ export const userDecryptRequest =
       throw e;
     });
 
-    /*
-
-    	@curl -X POST http://127.0.0.1:3000/user-decrypt \
--H "Content-Type: application/json" \
--d '{"signature": "cEc0e9723bF28D2A2C867108cC4C3A38a011d4D1",
-    "userAddress": "0xcEc0e9723bF28D2A2C867108cC4C3A38a011d4D1",
-    "enc_key": "a5e1defb98EFe38EBb2D958CEe052410247F4c80",
-    "ct_handle": "a5e1defb98EFe38EBb2D958CEe052410247F4c802410247F4c8010247F4c8076",
-    "contractAddress": "0xa5e1defb98EFe38EBb2D958CEe052410247F4c80",
-    "chainId": "1234"}'
-
-     CtHandleContractPair[] calldata ctHandleContractPairs,
-        RequestValidity calldata requestValidity,
-        uint256 contractsChainId,
-        address[] calldata contractAddresses,
-        address userAddress,
-        bytes calldata publicKey,
-        bytes calldata signature
-    */
     const payloadForRequest = {
       ctHandleContractPairs: handles.map((h) => {
         return {

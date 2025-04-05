@@ -41,8 +41,8 @@ export type HTTPZInstance = {
     signature: string,
     contractAddresses: string[],
     userAddress: string,
-    startTimestamp: bigint,
-    durationDays: bigint,
+    startTimestamp: string | number,
+    durationDays: string | number,
   ) => Promise<bigint[]>;
   getPublicKey: () => { publicKeyId: string; publicKey: Uint8Array } | null;
   getPublicParams: (bits: keyof PublicParams) => {
