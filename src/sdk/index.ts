@@ -30,7 +30,6 @@ export type HTTPZInstance = {
   createEIP712: (
     publicKey: string,
     contractAddresses: string[],
-    contractsChainId: string | number,
     startTimestamp: string | number,
     durationDays: string | number,
   ) => EIP712;
@@ -122,7 +121,11 @@ export const createInstance = async (
       publicParamsData,
     ),
     generateKeypair,
-    createEIP712: createEIP712(gatewayChainId, verifyingContractAddress),
+    createEIP712: createEIP712(
+      gatewayChainId,
+      verifyingContractAddress,
+      chainId,
+    ),
     publicDecrypt,
     userDecrypt,
     getPublicKey: () =>
