@@ -31,10 +31,10 @@ describe('token', () => {
     const eip712 = createEIP712(
       1234,
       '0x8ba1f109551bd432803012645ac136ddd64dba72',
+      12345,
     )(
       keypair.publicKey,
       ['0x8ba1f109551bd432803012645ac136ddd64dba72'],
-      1,
       Date.now(),
       86400,
     );
@@ -57,10 +57,10 @@ describe('token', () => {
     const eip712 = createEIP712(
       1234,
       '0x8ba1f109551bd432803012645ac136ddd64dba72',
+      12345,
     )(
       keypair.publicKey,
       ['0x8ba1f109551bd432803012645ac136ddd64dba72'],
-      1,
       Date.now(),
       86400,
       '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
@@ -131,19 +131,17 @@ describe('token', () => {
     const keypair = generateKeypair();
 
     expect(() =>
-      createEIP712(1234, '0x8ba1f109551bd432803012645ac136ddd64dba72')(
+      createEIP712(1234, '0x8ba1f109551bd432803012645ac136ddd64dba72', 12345)(
         keypair.publicKey,
         ['99'],
-        1,
         Date.now(),
         86400,
       ),
     ).toThrow('Invalid contract address.');
     expect(() =>
-      createEIP712(1234, '0x8ba1f109551bd432803012645ac136ddd64dba72')(
+      createEIP712(1234, '0x8ba1f109551bd432803012645ac136ddd64dba72', 12345)(
         keypair.publicKey,
         ['0x8ba1f109551bd432803012645ac136ddd64dba72'],
-        1,
         Date.now(),
         86400,
         '99',

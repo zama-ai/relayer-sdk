@@ -30,7 +30,6 @@ export type HTTPZInstance = {
   createEIP712: (
     publicKey: string,
     contractAddresses: string[],
-    contractsChainId: string | number,
     startTimestamp: string | number,
     durationDays: string | number,
   ) => EIP712;
@@ -42,8 +41,8 @@ export type HTTPZInstance = {
     signature: string,
     contractAddresses: string[],
     userAddress: string,
-    startTimestamp: bigint,
-    durationDays: bigint,
+    startTimestamp: string | number,
+    durationDays: string | number,
   ) => Promise<bigint[]>;
   getPublicKey: () => { publicKeyId: string; publicKey: Uint8Array } | null;
   getPublicParams: (bits: keyof PublicParams) => {
@@ -122,7 +121,11 @@ export const createInstance = async (
       publicParamsData,
     ),
     generateKeypair,
-    createEIP712: createEIP712(gatewayChainId, verifyingContractAddress),
+    createEIP712: createEIP712(
+      gatewayChainId,
+      verifyingContractAddress,
+      chainId,
+    ),
     publicDecrypt,
     userDecrypt,
     getPublicKey: () =>
