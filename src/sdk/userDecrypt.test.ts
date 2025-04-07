@@ -4,7 +4,7 @@ import { ethers } from 'ethers';
 
 // fetchMock.mockGlobal();
 
-fetchMock.post('https://test-relayer.net/reencrypt', {
+fetchMock.post('https://test-relayer.net/v1/user-decrypt', {
   status: 'success',
   response: {},
 });
