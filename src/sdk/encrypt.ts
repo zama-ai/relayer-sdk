@@ -296,7 +296,7 @@ export const createEncryptedInput =
           },
           body: JSON.stringify(payload),
         };
-        const url = `${relayer_url}/input-proof`;
+        const url = `${relayer_url}/v1/input-proof`;
         let json: HttpzRelayerInputProofResponse;
         try {
           const response = await fetch(url, options);

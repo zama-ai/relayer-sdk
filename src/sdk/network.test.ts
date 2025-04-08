@@ -82,7 +82,7 @@ const payload: RelayerKeys = {
   status: 'success',
 };
 
-fetchMock.get('https://test-relayer.net/keyurl', payload);
+fetchMock.get('https://test-relayer.net/v1/keyurl', payload);
 
 fetchMock.get(
   'https://s3.amazonaws.com/bucket-name-1/PUB-p1/PublicKey/408d8cbaa51dece7f782fe04ba0b1c1d017b1088',

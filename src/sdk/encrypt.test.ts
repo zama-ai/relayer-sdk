@@ -17,7 +17,7 @@ const auto_mock = (input: ZKInput) => {
     handles: handles,
     signatures: ['dead3232'],
   };
-  fetchMock.postOnce(`${relayer_url}/input-proof`, {
+  fetchMock.postOnce(`${relayer_url}/v1/input-proof`, {
     options: options,
     response: response,
   });
