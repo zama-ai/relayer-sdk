@@ -6,6 +6,8 @@ import { fromHexString } from '../utils';
 
 type EncryptionBitwidths = keyof typeof ENCRYPTION_TYPES;
 
+const MAX_UINT64 = BigInt('18446744073709551615'); // 2^64 - 1
+
 const compute_handles = (
   ciphertextWithZKProof: Uint8Array,
   bitwidths: EncryptionBitwidths[],
@@ -35,7 +37,18 @@ const compute_handles = (
       .digest();
     const dataInput = new Uint8Array(32);
     dataInput.set(handleHash, 0);
-    dataInput.set([encryptionIndex, encryptionType, ciphertextVersion], 29);
+
+    // Check if chainId exceeds 8 bytes
+    if (BigInt(chainId) > MAX_UINT64) {
+      throw new Error('ChainId exceeds maximum allowed value (8 bytes)'); // httpz assumes chainID is only taking up to 8 bytes
+    }
+
+    const chainId8Bytes = chainId32Bytes.slice(24, 32);
+    dataInput[21] = encryptionIndex;
+    chainId8Bytes.copy(dataInput, 22);
+    dataInput[30] = encryptionType;
+    dataInput[31] = ciphertextVersion;
+
     return dataInput;
   });
   return handles;
