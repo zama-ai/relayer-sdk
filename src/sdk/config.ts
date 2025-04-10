@@ -14,7 +14,8 @@ import {
   SERIALIZED_SIZE_LIMIT_CRS,
 } from '../utils';
 import { CompactPkeCrs, TfheCompactPublicKey } from 'node-tfhe';
-import { abi } from '../abi/kmsVerifier.json';
+
+const abiKmsVerifier = ['function getKmsSigners() view returns (address[])'];
 
 export type HTTPZInstanceConfig = {
   verifyingContractAddress: string;
@@ -114,7 +115,11 @@ export const getKMSSigners = async (
   provider: Provider,
   config: HTTPZInstanceConfig,
 ): Promise<string[]> => {
-  const kmsContract = new Contract(config.kmsContractAddress, abi, provider);
-  const signers: string[] = await kmsContract.getSigners();
+  const kmsContract = new Contract(
+    config.kmsContractAddress,
+    abiKmsVerifier,
+    provider,
+  );
+  const signers: string[] = await kmsContract.getKmsSigners();
   return signers;
 };
