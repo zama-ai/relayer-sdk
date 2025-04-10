@@ -12,7 +12,7 @@ jest.mock('ethers', () => ({
   }),
   isAddress: () => true,
   Contract: () => ({
-    getSigners: () => ['0x4c102C7cA99d3079fEFF08114d3bad888b9794d9'],
+    getKmsSigners: () => ['0x4c102C7cA99d3079fEFF08114d3bad888b9794d9'],
   }),
 }));
 
