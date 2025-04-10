@@ -115,6 +115,6 @@ export const getKMSSigners = async (
   config: HTTPZInstanceConfig,
 ): Promise<string[]> => {
   const kmsContract = new Contract(config.kmsContractAddress, abi, provider);
-  const signers: string[] = await kmsContract.getSigners();
+  const signers: string[] = await kmsContract.getKmsSigners();
   return signers;
 };
