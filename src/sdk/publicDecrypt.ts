@@ -1,4 +1,4 @@
-import { bytesToBigInt, fromHexString } from '../utils';
+import { bytesToBigInt, fromHexString, toHexString } from '../utils';
 import {
   u8vec_to_cryptobox_pk,
   new_client,
@@ -21,9 +21,12 @@ export const publicDecryptRequest =
     relayerUrl: string,
     provider: ethers.JsonRpcProvider | ethers.BrowserProvider,
   ) =>
-  async (handle: bigint) => {
+  async (_handle: Uint8Array | string) => {
+    const handle =
+      typeof _handle === 'string' ? fromHexString(_handle) : _handle;
+
     const payloadForRequest = {
-      ciphertext_handle: handle.toString(16).padStart(64, '0'),
+      ciphertext_handle: toHexString(handle),
     };
     const options = {
       method: 'POST',

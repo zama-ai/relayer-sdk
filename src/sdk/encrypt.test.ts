@@ -3,9 +3,9 @@ import { createEncryptedInput, ZKInput } from './encrypt';
 import { publicKey, publicKeyId, publicParams } from '../test';
 import fetchMock from '@fetch-mock/core';
 
-const relayer_url = 'https://test-httpz-relayer';
+const relayerUrl = 'https://test-httpz-relayer';
 
-const auto_mock = (input: ZKInput) => {
+const autoMock = (input: ZKInput) => {
   const ciphertextWithZKProof = Buffer.from(input._prove()).toString('hex');
   const options = {
     params: { ciphertextWithZkpok: ciphertextWithZKProof },
@@ -17,7 +17,7 @@ const auto_mock = (input: ZKInput) => {
     handles: handles,
     signatures: ['dead3232'],
   };
-  fetchMock.postOnce(`${relayer_url}/v1/input-proof`, {
+  fetchMock.postOnce(`${relayerUrl}/v1/input-proof`, {
     options: options,
     response: response,
   });
@@ -28,7 +28,7 @@ describe('encrypt', () => {
     const input = createEncryptedInput(
       '0x325ea1b59F28e9e1C51d3B5b47b7D3965CC5D8C8',
       1234,
-      relayer_url,
+      relayerUrl,
       publicKey,
       publicParams,
     )(
@@ -44,7 +44,7 @@ describe('encrypt', () => {
     input.add128(BigInt(233938932390));
     input.addAddress('0xa5e1defb98EFe38EBb2D958CEe052410247F4c80');
     input.add256(BigInt('2339389323922393930'));
-    auto_mock(input);
+    autoMock(input);
     const { inputProof, handles } = await input.encrypt();
     expect(inputProof).toBeDefined();
     expect(handles.length).toBe(9);
@@ -65,7 +65,7 @@ describe('encrypt', () => {
     const input = createEncryptedInput(
       '0x325ea1b59F28e9e1C51d3B5b47b7D3965CC5D8C8',
       1234,
-      relayer_url,
+      relayerUrl,
       publicKey,
       publicParams,
     )(
@@ -73,7 +73,7 @@ describe('encrypt', () => {
       '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
     );
     input.add128(BigInt(0));
-    auto_mock(input);
+    autoMock(input);
     const { inputProof, handles } = await input.encrypt();
     expect(inputProof).toBeDefined();
     expect(handles.length).toBe(1);
@@ -93,7 +93,7 @@ describe('encrypt', () => {
     const input = createEncryptedInput(
       '0x325ea1b59F28e9e1C51d3B5b47b7D3965CC5D8C8',
       1234,
-      relayer_url,
+      relayerUrl,
       publicKey,
       publicParams,
     )(
@@ -103,7 +103,7 @@ describe('encrypt', () => {
     const data = new Uint8Array(256);
     data.set([255], 63);
     input.addBytes256(data);
-    auto_mock(input);
+    autoMock(input);
     const { handles, inputProof } = await input.encrypt();
     expect(inputProof).toBeDefined();
     expect(handles.length).toBe(1);
@@ -124,7 +124,7 @@ describe('encrypt', () => {
       createEncryptedInput(
         '0x325ea1b59F28e9e1C51d3B5b47b7D3965CC5D8C8',
         1234,
-        relayer_url,
+        relayerUrl,
         publicKey,
         publicParams,
       )('0xa5e1defb98EFe38EBb2D958CEe052410247F4c80', '0'),
@@ -133,7 +133,7 @@ describe('encrypt', () => {
       createEncryptedInput(
         '0x325ea1b59F28e9e1C51d3B5b47b7D3965CC5D8C8',
         1234,
-        relayer_url,
+        relayerUrl,
         publicKey,
         publicParams,
       )('0x0', '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80'),
@@ -143,7 +143,7 @@ describe('encrypt', () => {
       createEncryptedInput(
         '0x325ea1b59F28e9e1C51d3B5b47b7D3965CC5D8C8',
         1234,
-        relayer_url,
+        relayerUrl,
         publicKey,
         publicParams,
       )(
@@ -155,7 +155,7 @@ describe('encrypt', () => {
     const input = createEncryptedInput(
       '0x325ea1b59F28e9e1C51d3B5b47b7D3965CC5D8C8',
       1234,
-      relayer_url,
+      relayerUrl,
       publicKey,
       publicParams,
     )(
@@ -201,7 +201,7 @@ describe('encrypt', () => {
     const input2 = createEncryptedInput(
       '0x325ea1b59F28e9e1C51d3B5b47b7D3965CC5D8C8',
       1234,
-      relayer_url,
+      relayerUrl,
       publicKey,
       publicParams,
     )(
@@ -218,7 +218,7 @@ describe('encrypt', () => {
     const input = createEncryptedInput(
       '0x325ea1b59F28e9e1C51d3B5b47b7D3965CC5D8C8',
       1234,
-      relayer_url,
+      relayerUrl,
       publicKey,
       publicParams,
     )(
@@ -226,11 +226,11 @@ describe('encrypt', () => {
       '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
     );
     input.add128(BigInt(0));
-    auto_mock(input);
+    autoMock(input);
     const input2 = createEncryptedInput(
       '0x325ea1b59F28e9e1C51d3B5b47b7D3965CC5D8C8',
       1234,
-      relayer_url,
+      relayerUrl,
       publicKey,
       publicParams,
     )(
@@ -248,7 +248,7 @@ describe('encrypt', () => {
     const input = createEncryptedInput(
       '0x325ea1b59F28e9e1C51d3B5b47b7D3965CC5D8C8',
       1234,
-      relayer_url,
+      relayerUrl,
       publicKey,
       publicParams,
     )(
@@ -256,11 +256,11 @@ describe('encrypt', () => {
       '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
     );
     input.add128(BigInt(1));
-    auto_mock(input);
+    autoMock(input);
     const input2 = createEncryptedInput(
       '0x325ea1b59F28e9e1C51d3B5b47b7D3965CC5D8C8',
       1234,
-      relayer_url,
+      relayerUrl,
       publicKey,
       publicParams,
     )(

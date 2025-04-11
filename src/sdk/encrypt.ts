@@ -14,7 +14,7 @@ import {
   toHexString,
 } from '../utils';
 import { ENCRYPTION_TYPES } from './encryptionTypes';
-import { compute_handles } from './handles';
+import { computeHandles } from './handles';
 
 type EncryptionTypes = keyof typeof ENCRYPTION_TYPES;
 const currentCiphertextVersion = () => {
@@ -359,7 +359,7 @@ export const createEncryptedInput =
         };
       },
       _handles() {
-        return compute_handles(
+        return computeHandles(
           this._prove(),
           bits,
           aclContractAddress,

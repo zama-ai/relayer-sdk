@@ -11,8 +11,13 @@ const aclABI = [
   'function persistAllowed(uint256 handle, address account) view returns (bool)',
 ];
 
+export type CtHandleContractPairParam = {
+  ctHandle: Uint8Array | string;
+  contractAddress: string;
+};
+
 export type CtHandleContractPair = {
-  ctHandle: bigint;
+  ctHandle: Uint8Array;
   contractAddress: string;
 };
 
@@ -27,7 +32,7 @@ export const userDecryptRequest =
     provider: ethers.JsonRpcProvider | ethers.BrowserProvider,
   ) =>
   async (
-    handles: CtHandleContractPair[],
+    _handles: CtHandleContractPairParam[],
     privateKey: string,
     publicKey: string,
     signature: string,
@@ -39,6 +44,14 @@ export const userDecryptRequest =
     console.log('gatewayChainId', gatewayChainId);
     console.log('chainId', chainId);
     console.log('verifyingContractAddress', verifyingContractAddress);
+
+    // Casting handles if string
+    const handles: CtHandleContractPair[] = _handles.map((h) => ({
+      ctHandle:
+        typeof h.ctHandle === 'string' ? fromHexString(h.ctHandle) : h.ctHandle,
+      contractAddress: h.contractAddress,
+    }));
+
     const acl = new ethers.Contract(aclContractAddress, aclABI, provider);
     const verifications = handles.map(async ({ ctHandle, contractAddress }) => {
       const userAllowed = await acl.persistAllowed(ctHandle, userAddress);
@@ -66,12 +79,7 @@ export const userDecryptRequest =
     });
 
     const payloadForRequest = {
-      ctHandleContractPairs: handles.map((h) => {
-        return {
-          ctHandle: h.ctHandle.toString(16).padStart(64, '0'),
-          contractAddress: h.contractAddress,
-        };
-      }),
+      ctHandleContractPairs: handles,
       requestValidity: {
         startTimestamp: startTimestamp.toString(), // Convert to string
         durationDays: durationDays.toString(), // Convert to string
@@ -146,9 +154,7 @@ export const userDecryptRequest =
         signature,
         client_address: userAddress,
         enc_key: publicKey,
-        ciphertext_handles: handles.map((h) =>
-          h.ctHandle.toString(16).replace(/^0x/, '').padStart(64, '0'),
-        ),
+        ciphertext_handles: handles.map((h) => h.ctHandle),
         eip712_verifying_contract: verifyingContractAddress,
       };
 
