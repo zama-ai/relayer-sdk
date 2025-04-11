@@ -61,7 +61,7 @@ export const userDecryptRequest =
       }
     });
 
-    Promise.all(verifications).catch((e) => {
+    await Promise.all(verifications).catch((e) => {
       throw e;
     });
 
