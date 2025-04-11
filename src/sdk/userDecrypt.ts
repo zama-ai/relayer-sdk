@@ -147,7 +147,7 @@ export const userDecryptRequest =
         client_address: userAddress,
         enc_key: publicKey,
         ciphertext_handles: handles.map((h) =>
-          h.ctHandle.toString(16).padStart(64, '0'),
+          h.ctHandle.toString(16).replace(/^0x/, '').padStart(64, '0'),
         ),
         eip712_verifying_contract: verifyingContractAddress,
       };
