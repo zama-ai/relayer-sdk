@@ -8,7 +8,7 @@ import {
 import { ethers, getAddress } from 'ethers';
 
 const aclABI = [
-  'function persistAllowed(uint256 handle, address account) view returns (bool)',
+  'function persistAllowed(bytes32 handle, address account) view returns (bool)',
 ];
 
 export type CtHandleContractPairParam = {
