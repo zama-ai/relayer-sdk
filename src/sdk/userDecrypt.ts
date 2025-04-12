@@ -8,7 +8,7 @@ import {
 import { ethers, getAddress } from 'ethers';
 
 const aclABI = [
-  'function persistAllowed(uint256 handle, address account) view returns (bool)',
+  'function persistAllowed(bytes32 handle, address account) view returns (bool)',
 ];
 
 export type CtHandleContractPairParam = {
@@ -17,7 +17,7 @@ export type CtHandleContractPairParam = {
 };
 
 export type CtHandleContractPair = {
-  ctHandle: Uint8Array;
+  ctHandle: Uint8Array | string;
   contractAddress: string;
 };
 
@@ -44,11 +44,11 @@ export const userDecryptRequest =
     console.log('gatewayChainId', gatewayChainId);
     console.log('chainId', chainId);
     console.log('verifyingContractAddress', verifyingContractAddress);
+    console.log('cthandles', _handles);
 
-    // Casting handles if string
+    // Casting handles to uint8array is not needed because relayer expects hex string
     const handles: CtHandleContractPair[] = _handles.map((h) => ({
-      ctHandle:
-        typeof h.ctHandle === 'string' ? fromHexString(h.ctHandle) : h.ctHandle,
+      ctHandle: h.ctHandle,
       contractAddress: h.contractAddress,
     }));
 
@@ -154,7 +154,9 @@ export const userDecryptRequest =
         signature,
         client_address: userAddress,
         enc_key: publicKey,
-        ciphertext_handles: handles.map((h) => h.ctHandle),
+        ciphertext_handles: handles.map(h => 
+          (typeof h.ctHandle === 'string' ? h.ctHandle.replace(/^0x/, '') : h.ctHandle)
+      ),
         eip712_verifying_contract: verifyingContractAddress,
       };
 
