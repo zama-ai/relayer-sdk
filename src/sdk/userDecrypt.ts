@@ -157,8 +157,10 @@ export const userDecryptRequest =
         signature,
         client_address: userAddress,
         enc_key: publicKey.replace(/^0x/, ''),
-        ciphertext_handles: handles.map(h => 
-          (typeof h.ctHandle === 'string' ? h.ctHandle.replace(/^0x/, '') : h.ctHandle)
+        ciphertext_handles: handles.map((h) =>
+          typeof h.ctHandle === 'string'
+            ? h.ctHandle.replace(/^0x/, '')
+            : h.ctHandle,
         ),
         eip712_verifying_contract: verifyingContractAddress,
       };
