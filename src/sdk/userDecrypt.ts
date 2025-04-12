@@ -50,8 +50,8 @@ export const userDecryptRequest =
     const handles: CtHandleContractPair[] = _handles.map((h) => ({
       ctHandle:
         typeof h.ctHandle === 'string'
-          ? toHexString(fromHexString(h.ctHandle))
-          : toHexString(h.ctHandle),
+          ? '0x' + toHexString(fromHexString(h.ctHandle))
+          : '0x' + toHexString(h.ctHandle),
       contractAddress: h.contractAddress,
     }));
 
@@ -156,10 +156,13 @@ export const userDecryptRequest =
       const payloadForVerification = {
         signature,
         client_address: userAddress,
-        enc_key: publicKey,
-        ciphertext_handles: handles.map((h) => h.ctHandle),
+        enc_key: publicKey.replace(/^0x/, ''),
+        ciphertext_handles: handles.map(h => 
+          (typeof h.ctHandle === 'string' ? h.ctHandle.replace(/^0x/, '') : h.ctHandle)
+        ),
         eip712_verifying_contract: verifyingContractAddress,
       };
+      console.log(payloadForVerification);
 
       const decryption = process_reencryption_resp_from_js(
         client,
