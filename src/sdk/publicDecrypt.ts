@@ -23,10 +23,12 @@ export const publicDecryptRequest =
   ) =>
   async (_handle: Uint8Array | string) => {
     const handle =
-      typeof _handle === 'string' ? fromHexString(_handle) : _handle;
+      typeof _handle === 'string'
+        ? toHexString(fromHexString(_handle))
+        : toHexString(_handle);
 
     const payloadForRequest = {
-      ciphertext_handle: toHexString(handle),
+      ciphertext_handle: handle,
     };
     const options = {
       method: 'POST',

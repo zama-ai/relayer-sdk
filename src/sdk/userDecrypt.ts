@@ -1,4 +1,4 @@
-import { bytesToBigInt, fromHexString } from '../utils';
+import { bytesToBigInt, fromHexString, toHexString } from '../utils';
 import {
   u8vec_to_cryptobox_pk,
   new_client,
@@ -17,7 +17,7 @@ export type CtHandleContractPairParam = {
 };
 
 export type CtHandleContractPair = {
-  ctHandle: Uint8Array;
+  ctHandle: string;
   contractAddress: string;
 };
 
@@ -44,11 +44,14 @@ export const userDecryptRequest =
     console.log('gatewayChainId', gatewayChainId);
     console.log('chainId', chainId);
     console.log('verifyingContractAddress', verifyingContractAddress);
+    console.log('cthandles', _handles);
 
     // Casting handles if string
     const handles: CtHandleContractPair[] = _handles.map((h) => ({
       ctHandle:
-        typeof h.ctHandle === 'string' ? fromHexString(h.ctHandle) : h.ctHandle,
+        typeof h.ctHandle === 'string'
+          ? toHexString(fromHexString(h.ctHandle))
+          : toHexString(h.ctHandle),
       contractAddress: h.contractAddress,
     }));
 
