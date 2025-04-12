@@ -50,8 +50,8 @@ export const userDecryptRequest =
     const handles: CtHandleContractPair[] = _handles.map((h) => ({
       ctHandle:
         typeof h.ctHandle === 'string'
-          ? toHexString(fromHexString(h.ctHandle))
-          : toHexString(h.ctHandle),
+          ? '0x' + toHexString(fromHexString(h.ctHandle))
+          : '0x' + toHexString(h.ctHandle),
       contractAddress: h.contractAddress,
     }));
 
