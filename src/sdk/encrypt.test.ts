@@ -36,7 +36,6 @@ describe('encrypt', () => {
       '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
     );
     input.addBool(false);
-    input.add4(2);
     input.add8(BigInt(43));
     input.add16(BigInt(87));
     input.add32(BigInt(2339389323));
@@ -47,7 +46,7 @@ describe('encrypt', () => {
     autoMock(input);
     const { inputProof, handles } = await input.encrypt();
     expect(inputProof).toBeDefined();
-    expect(handles.length).toBe(9);
+    expect(handles.length).toBe(8);
     // const compactList = ProvenCompactCiphertextList.safe_deserialize(
     //   buffer.inputProof,
     //   BigInt(1024 * 1024 * 512),
@@ -170,9 +169,6 @@ describe('encrypt', () => {
     );
     expect(() => input.addBool(29393 as any)).toThrow(
       'The value must be 1 or 0.',
-    );
-    expect(() => input.add4(29393)).toThrow(
-      'The value exceeds the limit for 4bits integer (15)',
     );
     expect(() => input.add8(2 ** 8)).toThrow(
       'The value exceeds the limit for 8bits integer (255)',

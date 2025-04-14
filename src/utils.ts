@@ -35,8 +35,11 @@ export const fromHexString = (hexString: string): Uint8Array => {
   return Uint8Array.from(arr.map((byte) => parseInt(byte, 16)));
 };
 
-export const toHexString = (bytes: Uint8Array) =>
-  bytes.reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), '');
+export const toHexString = (bytes: Uint8Array, with0x = false) =>
+  `${with0x ? '0x' : ''}${bytes.reduce(
+    (str, byte) => str + byte.toString(16).padStart(2, '0'),
+    '',
+  )}`;
 
 export const bigIntToBytes64 = (value: bigint) => {
   return new Uint8Array(toBufferBE(value, 64));
