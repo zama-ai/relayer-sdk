@@ -8,7 +8,7 @@ type EncryptionBitwidths = keyof typeof ENCRYPTION_TYPES;
 
 const MAX_UINT64 = BigInt('18446744073709551615'); // 2^64 - 1
 
-const compute_handles = (
+export const computeHandles = (
   ciphertextWithZKProof: Uint8Array,
   bitwidths: EncryptionBitwidths[],
   aclContractAddress: string,
@@ -53,5 +53,3 @@ const compute_handles = (
   });
   return handles;
 };
-
-export { compute_handles };

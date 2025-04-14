@@ -15,7 +15,7 @@ import {
 import { PublicParams, ZKInput } from './encrypt';
 import { createEncryptedInput } from './encrypt';
 import { generateKeypair, createEIP712, EIP712 } from './keypair';
-import { CtHandleContractPair, userDecryptRequest } from './userDecrypt';
+import { CtHandleContractPairParam, userDecryptRequest } from './userDecrypt';
 import { publicDecryptRequest } from './publicDecrypt';
 import fetchRetry from 'fetch-retry';
 
@@ -33,9 +33,9 @@ export type HTTPZInstance = {
     startTimestamp: string | number,
     durationDays: string | number,
   ) => EIP712;
-  publicDecrypt: (handle: bigint) => Promise<bigint>;
+  publicDecrypt: (handle: string | Uint8Array) => Promise<bigint>;
   userDecrypt: (
-    handle: CtHandleContractPair[],
+    handle: CtHandleContractPairParam[],
     privateKey: string,
     publicKey: string,
     signature: string,

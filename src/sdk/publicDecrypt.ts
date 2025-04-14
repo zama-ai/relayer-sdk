@@ -1,4 +1,4 @@
-import { bytesToBigInt, fromHexString } from '../utils';
+import { bytesToBigInt, fromHexString, toHexString } from '../utils';
 import {
   u8vec_to_cryptobox_pk,
   new_client,
@@ -8,7 +8,7 @@ import {
 import { ethers, getAddress } from 'ethers';
 
 const aclABI = [
-  'function persistAllowed(uint256 handle, address account) view returns (bool)',
+  'function persistAllowed(bytes32 handle, address account) view returns (bool)',
 ];
 
 export const publicDecryptRequest =
@@ -21,9 +21,14 @@ export const publicDecryptRequest =
     relayerUrl: string,
     provider: ethers.JsonRpcProvider | ethers.BrowserProvider,
   ) =>
-  async (handle: bigint) => {
+  async (_handle: Uint8Array | string) => {
+    const handle =
+      typeof _handle === 'string'
+        ? toHexString(fromHexString(_handle))
+        : toHexString(_handle);
+
     const payloadForRequest = {
-      ciphertext_handle: handle.toString(16).padStart(64, '0'),
+      ciphertext_handle: handle,
     };
     const options = {
       method: 'POST',

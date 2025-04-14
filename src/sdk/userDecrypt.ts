@@ -1,4 +1,4 @@
-import { bytesToBigInt, fromHexString } from '../utils';
+import { bytesToBigInt, fromHexString, toHexString } from '../utils';
 import {
   u8vec_to_cryptobox_pk,
   new_client,
@@ -8,11 +8,16 @@ import {
 import { ethers, getAddress } from 'ethers';
 
 const aclABI = [
-  'function persistAllowed(uint256 handle, address account) view returns (bool)',
+  'function persistAllowed(bytes32 handle, address account) view returns (bool)',
 ];
 
+export type CtHandleContractPairParam = {
+  ctHandle: Uint8Array | string;
+  contractAddress: string;
+};
+
 export type CtHandleContractPair = {
-  ctHandle: bigint;
+  ctHandle: string;
   contractAddress: string;
 };
 
@@ -27,7 +32,7 @@ export const userDecryptRequest =
     provider: ethers.JsonRpcProvider | ethers.BrowserProvider,
   ) =>
   async (
-    handles: CtHandleContractPair[],
+    _handles: CtHandleContractPairParam[],
     privateKey: string,
     publicKey: string,
     signature: string,
@@ -39,6 +44,17 @@ export const userDecryptRequest =
     console.log('gatewayChainId', gatewayChainId);
     console.log('chainId', chainId);
     console.log('verifyingContractAddress', verifyingContractAddress);
+    console.log('cthandles', _handles);
+
+    // Casting handles if string
+    const handles: CtHandleContractPair[] = _handles.map((h) => ({
+      ctHandle:
+        typeof h.ctHandle === 'string'
+          ? '0x' + toHexString(fromHexString(h.ctHandle))
+          : '0x' + toHexString(h.ctHandle),
+      contractAddress: h.contractAddress,
+    }));
+
     const acl = new ethers.Contract(aclContractAddress, aclABI, provider);
     const verifications = handles.map(async ({ ctHandle, contractAddress }) => {
       const userAllowed = await acl.persistAllowed(ctHandle, userAddress);
@@ -66,12 +82,7 @@ export const userDecryptRequest =
     });
 
     const payloadForRequest = {
-      ctHandleContractPairs: handles.map((h) => {
-        return {
-          ctHandle: h.ctHandle.toString(16).padStart(64, '0'),
-          contractAddress: h.contractAddress,
-        };
-      }),
+      ctHandleContractPairs: handles,
       requestValidity: {
         startTimestamp: startTimestamp.toString(), // Convert to string
         durationDays: durationDays.toString(), // Convert to string
@@ -145,12 +156,15 @@ export const userDecryptRequest =
       const payloadForVerification = {
         signature,
         client_address: userAddress,
-        enc_key: publicKey,
+        enc_key: publicKey.replace(/^0x/, ''),
         ciphertext_handles: handles.map((h) =>
-          h.ctHandle.toString(16).replace(/^0x/, '').padStart(64, '0'),
+          typeof h.ctHandle === 'string'
+            ? h.ctHandle.replace(/^0x/, '')
+            : h.ctHandle,
         ),
         eip712_verifying_contract: verifyingContractAddress,
       };
+      console.log(payloadForVerification);
 
       const decryption = process_reencryption_resp_from_js(
         client,
