@@ -49,7 +49,7 @@ export type ZKInput = {
     handles: Uint8Array[];
     inputProof: Uint8Array;
   }>;
-  _handles: () => Uint8Array[];
+  _handles: (ciphertext: Uint8Array) => Uint8Array[];
   encrypt: () => Promise<{
     handles: Uint8Array[];
     inputProof: Uint8Array;
@@ -313,7 +313,7 @@ export const createEncryptedInput =
           });
         }
 
-        const handles = this._handles();
+        const handles = this._handles(ciphertext);
         // Note that the hex strings returned by the relayer do have have the 0x prefix
         if (json.response.handles && json.response.handles.length > 0) {
           const response_handles = json.response.handles.map(fromHexString);
@@ -350,9 +350,9 @@ export const createEncryptedInput =
           inputProof: fromHexString(inputProof),
         };
       },
-      _handles() {
+      _handles(ciphertext: Uint8Array) {
         return computeHandles(
-          this._prove(),
+          ciphertext,
           bits,
           aclContractAddress,
           chainId,
@@ -361,7 +361,7 @@ export const createEncryptedInput =
       },
       async encrypt() {
         let start = Date.now();
-        const ciphertextWithZKProof = await this._prove();
+        const ciphertextWithZKProof = this._prove();
         console.log(
           `Encrypting and proving in ${
             Math.round((Date.now() - start) / 100) / 10

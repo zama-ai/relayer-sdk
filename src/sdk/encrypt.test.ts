@@ -6,12 +6,15 @@ import fetchMock from '@fetch-mock/core';
 const relayerUrl = 'https://test-httpz-relayer';
 
 const autoMock = (input: ZKInput) => {
-  const ciphertextWithZKProof = Buffer.from(input._prove()).toString('hex');
+  const ciphertextWithZKProof = input._prove();
+  const ciphertextWithZKProofString = Buffer.from(
+    ciphertextWithZKProof,
+  ).toString('hex');
   const options = {
-    params: { ciphertextWithZkpok: ciphertextWithZKProof },
+    params: { ciphertextWithZkpok: ciphertextWithZKProofString },
   };
   const handles = input
-    ._handles()
+    ._handles(ciphertextWithZKProof)
     .map((handle: Uint8Array) => Buffer.from(handle).toString('hex'));
   const response = {
     handles: handles,
