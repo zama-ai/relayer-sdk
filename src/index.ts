@@ -30,6 +30,11 @@ import fetchRetry from 'fetch-retry';
 
 global.fetch = fetchRetry(global.fetch, { retries: 5, retryDelay: 500 });
 
+export { generateKeypair, createEIP712, EIP712 } from './sdk/keypair';
+export { RelayerEncryptedInput } from './relayer/sendEncryption';
+export { CtHandleContractPairParam } from './relayer/userDecrypt';
+export { PublicParams } from './sdk/encrypt';
+
 export type HTTPZInstance = {
   createEncryptedInput: (
     contractAddress: string,
@@ -59,9 +64,6 @@ export type HTTPZInstance = {
     publicParamsId: string;
   } | null;
 };
-
-export { generateKeypair, createEIP712 } from './sdk/keypair';
-export { RelayerEncryptedInput } from './relayer/sendEncryption';
 
 export const createInstance = async (
   config: HTTPZInstanceConfig,
