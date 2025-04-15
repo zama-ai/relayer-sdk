@@ -39,7 +39,7 @@ const autoMock = (input: RelayerEncryptedInput) => {
 };
 
 describe('encrypt', () => {
-  it('encrypt/decrypt', async () => {
+  it('encrypt', async () => {
     const input = createRelayerEncryptedInput(
       aclContractAddress,
       chainId,
@@ -64,7 +64,7 @@ describe('encrypt', () => {
     expect(handles.length).toBe(8);
   }, 60000);
 
-  it('encrypt/decrypt one 0 value', async () => {
+  it('encrypt one 0 value', async () => {
     const input = createRelayerEncryptedInput(
       aclContractAddress,
       chainId,
@@ -82,7 +82,7 @@ describe('encrypt', () => {
     expect(handles.length).toBe(1);
   });
 
-  it('encrypt/decrypt one 2048 value', async () => {
+  it('encrypt one 2048 value', async () => {
     const input = createRelayerEncryptedInput(
       aclContractAddress,
       chainId,

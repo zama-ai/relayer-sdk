@@ -2,7 +2,7 @@ import { createEncryptedInput, EncryptedInput } from './encrypt';
 import { publicKey, publicKeyId, publicParams } from '../test';
 
 describe('encrypt', () => {
-  it('encrypt/decrypt', async () => {
+  it('encrypt', async () => {
     const input = createEncryptedInput({
       aclContractAddress: '0x325ea1b59F28e9e1C51d3B5b47b7D3965CC5D8C8',
       chainId: 1234,
@@ -23,7 +23,7 @@ describe('encrypt', () => {
     expect(ciphertext.length).toBe(20098);
   }, 60000);
 
-  it('encrypt/decrypt one 0 value', async () => {
+  it('encrypt one 0 value', async () => {
     const input = createEncryptedInput({
       aclContractAddress: '0x325ea1b59F28e9e1C51d3B5b47b7D3965CC5D8C8',
       chainId: 1234,
@@ -37,7 +37,7 @@ describe('encrypt', () => {
     expect(ciphertext.length).toBe(18914);
   });
 
-  it('encrypt/decrypt one 2048 value', async () => {
+  it('encrypt one 2048 value', async () => {
     const input = createEncryptedInput({
       aclContractAddress: '0x325ea1b59F28e9e1C51d3B5b47b7D3965CC5D8C8',
       chainId: 1234,
