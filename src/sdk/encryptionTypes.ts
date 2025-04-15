@@ -1,6 +1,5 @@
 export const ENCRYPTION_TYPES = {
   1: 0, // ebool takes 2 encrypted bits
-  4: 1,
   8: 2,
   16: 3,
   32: 4,

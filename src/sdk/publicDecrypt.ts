@@ -24,8 +24,8 @@ export const publicDecryptRequest =
   async (_handle: Uint8Array | string) => {
     const handle =
       typeof _handle === 'string'
-        ? toHexString(fromHexString(_handle))
-        : toHexString(_handle);
+        ? toHexString(fromHexString(_handle), true)
+        : toHexString(_handle, true);
 
     const payloadForRequest = {
       ciphertext_handle: handle,

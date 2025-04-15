@@ -31,8 +31,7 @@ export type HttpzRelayerInputProofResponse = {
 };
 
 export type ZKInput = {
-  addBool: (value: boolean) => ZKInput;
-  add4: (value: number | bigint) => ZKInput;
+  addBool: (value: boolean | number | bigint) => ZKInput;
   add8: (value: number | bigint) => ZKInput;
   add16: (value: number | bigint) => ZKInput;
   add32: (value: number | bigint) => ZKInput;
@@ -50,7 +49,7 @@ export type ZKInput = {
     handles: Uint8Array[];
     inputProof: Uint8Array;
   }>;
-  _handles: () => Uint8Array[];
+  _handles: (ciphertext: Uint8Array) => Uint8Array[];
   encrypt: () => Promise<{
     handles: Uint8Array[];
     inputProof: Uint8Array;
@@ -132,13 +131,6 @@ export const createEncryptedInput =
         checkLimit(2);
         builder.push_boolean(!!value);
         bits.push(1); // ebool takes 2 encrypted bits
-        return this;
-      },
-      add4(value: number | bigint) {
-        checkEncryptedValue(value, 4);
-        checkLimit(4);
-        builder.push_u4(Number(value));
-        bits.push(4);
         return this;
       },
       add8(value: number | bigint) {
@@ -321,7 +313,7 @@ export const createEncryptedInput =
           });
         }
 
-        const handles = this._handles();
+        const handles = this._handles(ciphertext);
         // Note that the hex strings returned by the relayer do have have the 0x prefix
         if (json.response.handles && json.response.handles.length > 0) {
           const response_handles = json.response.handles.map(fromHexString);
@@ -358,9 +350,9 @@ export const createEncryptedInput =
           inputProof: fromHexString(inputProof),
         };
       },
-      _handles() {
+      _handles(ciphertext: Uint8Array) {
         return computeHandles(
-          this._prove(),
+          ciphertext,
           bits,
           aclContractAddress,
           chainId,
@@ -369,7 +361,7 @@ export const createEncryptedInput =
       },
       async encrypt() {
         let start = Date.now();
-        const ciphertextWithZKProof = await this._prove();
+        const ciphertextWithZKProof = this._prove();
         console.log(
           `Encrypting and proving in ${
             Math.round((Date.now() - start) / 100) / 10

@@ -92,25 +92,6 @@ export const createInstance = async (
   const publicParamsData = await getPublicParams(config);
 
   const kmsSigners = await getKMSSigners(provider, config);
-  const userDecrypt = userDecryptRequest(
-    kmsSigners,
-    gatewayChainId,
-    chainId,
-    verifyingContractAddress,
-    aclContractAddress,
-    cleanURL(config.relayerUrl),
-    provider,
-  );
-
-  const publicDecrypt = publicDecryptRequest(
-    kmsSigners,
-    gatewayChainId,
-    chainId,
-    verifyingContractAddress,
-    aclContractAddress,
-    cleanURL(config.relayerUrl),
-    provider,
-  );
 
   return {
     createEncryptedInput: createEncryptedInput(
@@ -126,8 +107,24 @@ export const createInstance = async (
       verifyingContractAddress,
       chainId,
     ),
-    publicDecrypt,
-    userDecrypt,
+    publicDecrypt: publicDecryptRequest(
+      kmsSigners,
+      gatewayChainId,
+      chainId,
+      verifyingContractAddress,
+      aclContractAddress,
+      cleanURL(config.relayerUrl),
+      provider,
+    ),
+    userDecrypt: userDecryptRequest(
+      kmsSigners,
+      gatewayChainId,
+      chainId,
+      verifyingContractAddress,
+      aclContractAddress,
+      cleanURL(config.relayerUrl),
+      provider,
+    ),
     getPublicKey: () =>
       publicKeyData.publicKey
         ? {
