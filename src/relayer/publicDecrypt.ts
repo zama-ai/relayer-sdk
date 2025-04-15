@@ -1,11 +1,5 @@
-import { bytesToBigInt, fromHexString, toHexString } from '../utils';
-import {
-  u8vec_to_cryptobox_pk,
-  new_client,
-  process_reencryption_resp_from_js,
-  u8vec_to_cryptobox_sk,
-} from 'node-tkms';
-import { ethers, getAddress } from 'ethers';
+import { fromHexString, toHexString } from '../utils';
+import { ethers } from 'ethers';
 
 const aclABI = [
   'function persistAllowed(bytes32 handle, address account) view returns (bool)',

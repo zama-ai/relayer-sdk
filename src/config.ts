@@ -5,14 +5,13 @@ import {
   JsonRpcProvider,
   Provider,
 } from 'ethers';
-import { PublicParams } from './encrypt';
-import { getKeysFromRelayer } from './network';
+import { PublicParams } from './sdk/encrypt';
+import { getKeysFromRelayer } from './relayer/network';
 import {
-  fromHexString,
   cleanURL,
   SERIALIZED_SIZE_LIMIT_PK,
   SERIALIZED_SIZE_LIMIT_CRS,
-} from '../utils';
+} from './utils';
 import { CompactPkeCrs, TfheCompactPublicKey } from 'node-tfhe';
 
 const abiKmsVerifier = ['function getKmsSigners() view returns (address[])'];

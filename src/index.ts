@@ -11,21 +11,32 @@ import {
   cleanURL,
   SERIALIZED_SIZE_LIMIT_CRS,
   SERIALIZED_SIZE_LIMIT_PK,
-} from '../utils';
-import { PublicParams, ZKInput } from './encrypt';
-import { createEncryptedInput } from './encrypt';
-import { generateKeypair, createEIP712, EIP712 } from './keypair';
-import { CtHandleContractPairParam, userDecryptRequest } from './userDecrypt';
-import { publicDecryptRequest } from './publicDecrypt';
+} from './utils';
+
+import { HandleContractPair, userDecryptRequest } from './relayer/userDecrypt';
+import {
+  createRelayerEncryptedInput,
+  RelayerEncryptedInput,
+} from './relayer/sendEncryption';
+import { publicDecryptRequest } from './relayer/publicDecrypt';
+
+import { PublicParams } from './sdk/encrypt';
+import { generateKeypair, createEIP712, EIP712 } from './sdk/keypair';
+
 import fetchRetry from 'fetch-retry';
 
 global.fetch = fetchRetry(global.fetch, { retries: 5, retryDelay: 500 });
+
+export { generateKeypair, createEIP712, EIP712 } from './sdk/keypair';
+export { RelayerEncryptedInput } from './relayer/sendEncryption';
+export { HandleContractPair } from './relayer/userDecrypt';
+export { PublicParams } from './sdk/encrypt';
 
 export type HTTPZInstance = {
   createEncryptedInput: (
     contractAddress: string,
     userAddress: string,
-  ) => ZKInput;
+  ) => RelayerEncryptedInput;
   generateKeypair: () => { publicKey: string; privateKey: string };
   createEIP712: (
     publicKey: string,
@@ -35,7 +46,7 @@ export type HTTPZInstance = {
   ) => EIP712;
   publicDecrypt: (handle: string | Uint8Array) => Promise<bigint>;
   userDecrypt: (
-    handle: CtHandleContractPairParam[],
+    handles: HandleContractPair[],
     privateKey: string,
     publicKey: string,
     signature: string,
@@ -50,8 +61,6 @@ export type HTTPZInstance = {
     publicParamsId: string;
   } | null;
 };
-
-export { generateKeypair, createEIP712 } from './keypair';
 
 export const createInstance = async (
   config: HTTPZInstanceConfig,
@@ -94,7 +103,7 @@ export const createInstance = async (
   const kmsSigners = await getKMSSigners(provider, config);
 
   return {
-    createEncryptedInput: createEncryptedInput(
+    createEncryptedInput: createRelayerEncryptedInput(
       aclContractAddress,
       chainId,
       cleanURL(config.relayerUrl),
