@@ -61,6 +61,7 @@ export type HTTPZInstance = {
 };
 
 export { generateKeypair, createEIP712 } from './sdk/keypair';
+export { RelayerEncryptedInput } from './relayer/sendEncryption';
 
 export const createInstance = async (
   config: HTTPZInstanceConfig,
