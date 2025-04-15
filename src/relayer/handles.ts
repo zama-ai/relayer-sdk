@@ -1,7 +1,7 @@
 import { toBufferBE } from 'bigint-buffer';
 import createHash from 'keccak';
 
-import { ENCRYPTION_TYPES } from './encryptionTypes';
+import { ENCRYPTION_TYPES } from '../sdk/encryptionTypes';
 import { fromHexString } from '../utils';
 
 type EncryptionBitwidths = keyof typeof ENCRYPTION_TYPES;

@@ -1,10 +1,6 @@
 import { createInstance } from './index';
-import { publicKey, publicKeyId, publicParams } from '../test';
-import {
-  bytesToHex,
-  SERIALIZED_SIZE_LIMIT_CRS,
-  SERIALIZED_SIZE_LIMIT_PK,
-} from '../utils';
+import { publicKey, publicKeyId, publicParams } from './test';
+import { SERIALIZED_SIZE_LIMIT_CRS, SERIALIZED_SIZE_LIMIT_PK } from './utils';
 
 jest.mock('ethers', () => ({
   JsonRpcProvider: () => ({
