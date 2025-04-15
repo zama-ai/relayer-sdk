@@ -11,12 +11,12 @@ const aclABI = [
   'function persistAllowed(bytes32 handle, address account) view returns (bool)',
 ];
 
-export type CtHandleContractPairParam = {
+export type HandleContractPair = {
   ctHandle: Uint8Array | string;
   contractAddress: string;
 };
 
-export type CtHandleContractPair = {
+export type HandleContractPairRelayer = {
   ctHandle: string;
   contractAddress: string;
 };
@@ -32,7 +32,7 @@ export const userDecryptRequest =
     provider: ethers.JsonRpcProvider | ethers.BrowserProvider,
   ) =>
   async (
-    _handles: CtHandleContractPairParam[],
+    _handles: HandleContractPair[],
     privateKey: string,
     publicKey: string,
     signature: string,
@@ -47,7 +47,7 @@ export const userDecryptRequest =
     console.log('cthandles', _handles);
 
     // Casting handles if string
-    const handles: CtHandleContractPair[] = _handles.map((h) => ({
+    const handles: HandleContractPairRelayer[] = _handles.map((h) => ({
       ctHandle:
         typeof h.ctHandle === 'string'
           ? toHexString(fromHexString(h.ctHandle), true)
@@ -82,7 +82,7 @@ export const userDecryptRequest =
     });
 
     const payloadForRequest = {
-      ctHandleContractPairs: handles,
+      HandleContractPairs: handles,
       requestValidity: {
         startTimestamp: startTimestamp.toString(), // Convert to string
         durationDays: durationDays.toString(), // Convert to string

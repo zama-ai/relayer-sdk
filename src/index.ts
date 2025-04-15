@@ -13,10 +13,7 @@ import {
   SERIALIZED_SIZE_LIMIT_PK,
 } from './utils';
 
-import {
-  CtHandleContractPairParam,
-  userDecryptRequest,
-} from './relayer/userDecrypt';
+import { HandleContractPair, userDecryptRequest } from './relayer/userDecrypt';
 import {
   createRelayerEncryptedInput,
   RelayerEncryptedInput,
@@ -32,7 +29,7 @@ global.fetch = fetchRetry(global.fetch, { retries: 5, retryDelay: 500 });
 
 export { generateKeypair, createEIP712, EIP712 } from './sdk/keypair';
 export { RelayerEncryptedInput } from './relayer/sendEncryption';
-export { CtHandleContractPairParam } from './relayer/userDecrypt';
+export { HandleContractPair } from './relayer/userDecrypt';
 export { PublicParams } from './sdk/encrypt';
 
 export type HTTPZInstance = {
@@ -49,7 +46,7 @@ export type HTTPZInstance = {
   ) => EIP712;
   publicDecrypt: (handle: string | Uint8Array) => Promise<bigint>;
   userDecrypt: (
-    handle: CtHandleContractPairParam[],
+    handle: HandleContractPair[],
     privateKey: string,
     publicKey: string,
     signature: string,
