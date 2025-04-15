@@ -51,14 +51,13 @@
   },
   "homepage": "https://github.com/zama-ai/httpz-js#readme",
   "dependencies": {
-    "bigint-buffer": "^1.1.5",
     "commander": "^11.0.0",
     "ethers": "^6.13.4",
     "fetch-retry": "^6.0.0",
     "keccak": "^3.0.4",
-    "node-tfhe": "^1.0.0",
+    "node-tfhe": "^1.1.2",
     "node-tkms": "0.11.0-rc6",
-    "tfhe": "^1.0.0",
+    "tfhe": "^1.1.2",
     "tkms": "0.11.0-rc6",
     "wasm-feature-detect": "^1.8.0"
   },

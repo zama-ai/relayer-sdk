@@ -1,4 +1,3 @@
-import { toBufferBE } from 'bigint-buffer';
 import createHash from 'keccak';
 
 import { ENCRYPTION_TYPES } from '../sdk/encryptionTypes';
@@ -23,9 +22,8 @@ export const computeHandles = (
   const aclContractAddress20Bytes = Buffer.from(
     fromHexString(aclContractAddress),
   );
-  const chainId32Bytes = Buffer.from(
-    new Uint8Array(toBufferBE(BigInt(chainId), 32)),
-  );
+  const hex = chainId.toString(16).padStart(64, '0'); // 64 hex chars = 32 bytes
+  const chainId32Bytes = Buffer.from(hex, 'hex');
   const handles = bitwidths.map((bitwidth, encryptionIndex) => {
     const encryptionType = ENCRYPTION_TYPES[bitwidth];
     const encryptionIndex1Byte = Buffer.from([encryptionIndex]);
