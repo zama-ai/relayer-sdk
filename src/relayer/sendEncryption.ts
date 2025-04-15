@@ -1,9 +1,5 @@
 import { getAddress, isAddress } from 'ethers';
-import {
-  TfheCompactPublicKey,
-  CompactCiphertextList,
-  CompactPkeCrs,
-} from 'node-tfhe';
+import { TfheCompactPublicKey, CompactPkeCrs } from 'node-tfhe';
 
 import { fromHexString, numberToHex, toHexString } from '../utils';
 import {
