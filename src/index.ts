@@ -27,7 +27,7 @@ import fetchRetry from 'fetch-retry';
 
 global.fetch = fetchRetry(global.fetch, { retries: 5, retryDelay: 500 });
 
-export { generateKeypair, createEIP712, EIP712 } from './sdk/keypair';
+export { generateKeypair, createEIP712, EIP712, EIP712Type } from './sdk/keypair';
 export { RelayerEncryptedInput } from './relayer/sendEncryption';
 export { HandleContractPair } from './relayer/userDecrypt';
 export { PublicParams } from './sdk/encrypt';
