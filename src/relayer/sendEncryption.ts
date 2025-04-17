@@ -14,7 +14,7 @@ export const currentCiphertextVersion = () => {
   return 0;
 };
 
-export type HttpzRelayerInputProofResponse = {
+export type FhevmRelayerInputProofResponse = {
   response: {
     handles: string[];
     signatures: string[];
@@ -81,12 +81,12 @@ export const createRelayerEncryptedInput =
           body: JSON.stringify(payload),
         };
         const url = `${relayerUrl}/v1/input-proof`;
-        let json: HttpzRelayerInputProofResponse;
+        let json: FhevmRelayerInputProofResponse;
         try {
           const response = await fetch(url, options);
           if (!response.ok) {
             throw new Error(
-              `Httpz-relayer didn't response correctly. Bad status ${
+              `Relayer didn't response correctly. Bad status ${
                 response.statusText
               }. Content: ${await response.text()}`,
             );
@@ -94,13 +94,12 @@ export const createRelayerEncryptedInput =
           try {
             json = await response.json();
           } catch (e) {
-            throw new Error(
-              "Httpz-relayer didn't response correctly. Bad JSON.",
-              { cause: e },
-            );
+            throw new Error("Relayer didn't response correctly. Bad JSON.", {
+              cause: e,
+            });
           }
         } catch (e) {
-          throw new Error("Httpz-relayer didn't response correctly.", {
+          throw new Error("Relayer didn't response correctly.", {
             cause: e,
           });
         }

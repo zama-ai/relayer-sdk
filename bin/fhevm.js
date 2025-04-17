@@ -18,7 +18,7 @@ const getInstance = async (networkUrl) => {
     _instance = await createInstance({ networkUrl });
   } catch (e) {
     return throwError(
-      `This network (${networkUrl}) doesn't seem to use HTTPZ or use an incompatible version.`,
+      `This network (${networkUrl}) doesn't seem to use Fhevm or use an incompatible version.`,
     );
   }
   return _instance;

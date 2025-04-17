@@ -10,8 +10,8 @@ export default defineConfig({
   base: basePath,
   build: {
     lib: {
-      name: 'httpz',
-      fileName: 'httpz',
+      name: 'fhevm',
+      fileName: 'fhevm',
       entry: ['lib/web.js'],
     },
     outDir: 'bundle',

@@ -38,7 +38,7 @@ export const computeHandles = (
 
     // Check if chainId exceeds 8 bytes
     if (BigInt(chainId) > MAX_UINT64) {
-      throw new Error('ChainId exceeds maximum allowed value (8 bytes)'); // httpz assumes chainID is only taking up to 8 bytes
+      throw new Error('ChainId exceeds maximum allowed value (8 bytes)'); // fhevm assumes chainID is only taking up to 8 bytes
     }
 
     const chainId8Bytes = chainId32Bytes.slice(24, 32);
