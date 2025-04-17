@@ -1,8 +1,8 @@
 ---
-name: 🐛 HTTPZ SDK Bug report
-about: Use this template to report issues encountered while using the HTTPZ SDK for interacting with HTTPZ smart contracts.
+name: 🐛 fhevm SDK Bug report
+about: Use this template to report issues encountered while using the fhevm SDK for interacting with Fhevm smart contracts.
 title: ''
-labels: bug, httpz
+labels: bug, fhevm
 assignees: ''
 ---
 
@@ -24,7 +24,7 @@ Fill in the relevant environment details where the issue was observed:
 
 - **Browser**: [e.g., Chrome v90, Firefox v88]
 - **Node.js Version**: [e.g., `v14.17.0`]
-- **`httpz SDK` Version**: [e.g., `v0.2.1`]
+- **`fhevm SDK` Version**: [e.g., `v0.2.1`]
 - **Package Manager**: [npm, yarn, pnpm]
 - **Network Configuration**:
   - **Chain ID**: [e.g., `9000`]
@@ -51,4 +51,4 @@ If applicable, include links to any related documentation or reference materials
 
 ---
 
-By including these details, we can ensure a faster and more accurate resolution for your issue. Thank you for helping improve HTTPZ SDK!
+By including these details, we can ensure a faster and more accurate resolution for your issue. Thank you for helping improve fhevm SDK!

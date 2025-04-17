@@ -49,7 +49,7 @@ export default [
     input: 'src/web.ts',
     output: {
       file: 'lib/web.js',
-      name: 'httpz',
+      name: 'fhevm',
       format: 'es',
     },
     plugins: [
@@ -76,7 +76,7 @@ export default [
     input: 'src/node.ts',
     output: {
       file: 'lib/node.cjs',
-      name: 'httpz',
+      name: 'fhevm',
       format: 'cjs',
     },
     plugins: [...nodePlugins],

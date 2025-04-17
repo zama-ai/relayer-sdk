@@ -10,7 +10,7 @@ import { threads } from 'wasm-feature-detect';
 
 let initialized = false;
 
-export const initHTTPZ = async ({
+export const initFhevm = async ({
   tfheParams,
   kmsParams,
   thread,

@@ -1,13 +1,13 @@
 {
-  "name": "@httpz/sdk",
-  "version": "0.7.0-19",
-  "description": "HTTPZ SDK",
+  "name": "@fhevm/sdk",
+  "version": "0.7.0-20",
+  "description": "fhevm SDK",
   "main": "lib/node.js",
   "types": "lib/node/node.d.ts",
   "browser": "lib/web.js",
   "type": "module",
   "bin": {
-    "httpz": "bin/httpz.js"
+    "fhevm": "bin/fhevm.js"
   },
   "exports": {
     ".": {
@@ -42,14 +42,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/zama-ai/httpz-js.git"
+    "url": "git+https://github.com/zama-ai/fhevm-js.git"
   },
   "author": "",
   "license": "BSD-3-Clause-Clear",
   "bugs": {
-    "url": "https://github.com/zama-ai/httpz-js/issues"
+    "url": "https://github.com/zama-ai/fhevm-js/issues"
   },
-  "homepage": "https://github.com/zama-ai/httpz-js#readme",
+  "homepage": "https://github.com/zama-ai/fhevm-js#readme",
   "dependencies": {
     "bigint-buffer": "^1.1.5",
     "commander": "^11.0.0",
