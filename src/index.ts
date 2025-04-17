@@ -1,6 +1,6 @@
 import { isAddress } from 'ethers';
 import {
-  HTTPZInstanceConfig,
+  FhevmInstanceConfig,
   getChainId,
   getKMSSigners,
   getProvider,
@@ -32,7 +32,7 @@ export { RelayerEncryptedInput } from './relayer/sendEncryption';
 export { HandleContractPair } from './relayer/userDecrypt';
 export { PublicParams } from './sdk/encrypt';
 
-export type HTTPZInstance = {
+export type FhevmInstance = {
   createEncryptedInput: (
     contractAddress: string,
     userAddress: string,
@@ -63,8 +63,8 @@ export type HTTPZInstance = {
 };
 
 export const createInstance = async (
-  config: HTTPZInstanceConfig,
-): Promise<HTTPZInstance> => {
+  config: FhevmInstanceConfig,
+): Promise<FhevmInstance> => {
   const {
     publicKey,
     kmsContractAddress,

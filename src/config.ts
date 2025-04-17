@@ -16,7 +16,7 @@ import { CompactPkeCrs, TfheCompactPublicKey } from 'node-tfhe';
 
 const abiKmsVerifier = ['function getKmsSigners() view returns (address[])'];
 
-export type HTTPZInstanceConfig = {
+export type FhevmInstanceConfig = {
   verifyingContractAddress: string;
   kmsContractAddress: string;
   aclContractAddress: string;
@@ -31,7 +31,7 @@ export type HTTPZInstanceConfig = {
   };
 };
 
-export const getProvider = (config: HTTPZInstanceConfig) => {
+export const getProvider = (config: FhevmInstanceConfig) => {
   if (typeof config.network === 'string') {
     return new JsonRpcProvider(config.network);
   } else if (config.network) {
@@ -44,7 +44,7 @@ export const getProvider = (config: HTTPZInstanceConfig) => {
 
 export const getChainId = async (
   provider: Provider,
-  config: HTTPZInstanceConfig,
+  config: FhevmInstanceConfig,
 ): Promise<number> => {
   if (config.chainId && typeof config.chainId === 'number') {
     return config.chainId;
@@ -57,7 +57,7 @@ export const getChainId = async (
 };
 
 export const getTfheCompactPublicKey = async (
-  config: HTTPZInstanceConfig,
+  config: FhevmInstanceConfig,
 ): Promise<{ publicKey: TfheCompactPublicKey; publicKeyId: string }> => {
   if (config.relayerUrl && !config.publicKey) {
     const inputs = await getKeysFromRelayer(cleanURL(config.relayerUrl));
@@ -83,7 +83,7 @@ export const getTfheCompactPublicKey = async (
 };
 
 export const getPublicParams = async (
-  config: HTTPZInstanceConfig,
+  config: FhevmInstanceConfig,
 ): Promise<PublicParams> => {
   if (config.relayerUrl && !config.publicParams) {
     const inputs = await getKeysFromRelayer(cleanURL(config.relayerUrl));
@@ -112,7 +112,7 @@ export const getPublicParams = async (
 
 export const getKMSSigners = async (
   provider: Provider,
-  config: HTTPZInstanceConfig,
+  config: FhevmInstanceConfig,
 ): Promise<string[]> => {
   const kmsContract = new Contract(
     config.kmsContractAddress,

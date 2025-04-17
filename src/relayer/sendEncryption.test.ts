@@ -9,7 +9,7 @@ import fetchMock from '@fetch-mock/core';
 import { computeHandles } from './handles';
 import { fromHexString, toHexString } from '../utils';
 
-const relayerUrl = 'https://test-httpz-relayer';
+const relayerUrl = 'https://test-fhevm-relayer';
 const aclContractAddress = '0x325ea1b59F28e9e1C51d3B5b47b7D3965CC5D8C8';
 const chainId = 1234;
 
