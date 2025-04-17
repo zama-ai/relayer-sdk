@@ -228,7 +228,7 @@ export const createEncryptedInput = ({
       const buffContract = fromHexString(contractAddress);
       const buffUser = fromHexString(userAddress);
       const buffAcl = fromHexString(aclContractAddress);
-      const buffChainId = fromHexString(chainId.toString(16));
+      const buffChainId = fromHexString(chainId.toString(16).padStart(64, '0'));
       const auxData = new Uint8Array(
         buffContract.length + buffUser.length + buffAcl.length + 32, // buffChainId.length,
       );
