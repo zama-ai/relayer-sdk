@@ -57,7 +57,10 @@ export const createRelayerEncryptedInput =
     tfheCompactPublicKey: TfheCompactPublicKey,
     publicParams: PublicParams,
   ) =>
-  (contractAddress: string, userAddress: string): RelayerEncryptedInputInternal => {
+  (
+    contractAddress: string,
+    userAddress: string,
+  ): RelayerEncryptedInputInternal => {
     if (!isAddress(contractAddress)) {
       throw new Error('Contract address is not a valid address.');
     }
