@@ -22,8 +22,23 @@ export type FhevmRelayerInputProofResponse = {
   status: string;
 };
 
-export type RelayerEncryptedInput = Omit<EncryptedInput, 'encrypt'> & {
+export type RelayerEncryptedInputInternal = RelayerEncryptedInput & {
   _input: EncryptedInput;
+};
+
+export type RelayerEncryptedInput = {
+  addBool: (value: boolean | number | bigint) => RelayerEncryptedInput;
+  add8: (value: number | bigint) => RelayerEncryptedInput;
+  add16: (value: number | bigint) => RelayerEncryptedInput;
+  add32: (value: number | bigint) => RelayerEncryptedInput;
+  add64: (value: number | bigint) => RelayerEncryptedInput;
+  add128: (value: number | bigint) => RelayerEncryptedInput;
+  add256: (value: number | bigint) => RelayerEncryptedInput;
+  addBytes64: (value: Uint8Array) => RelayerEncryptedInput;
+  addBytes128: (value: Uint8Array) => RelayerEncryptedInput;
+  addBytes256: (value: Uint8Array) => RelayerEncryptedInput;
+  addAddress: (value: string) => RelayerEncryptedInput;
+  getBits: () => EncryptionTypes[];
   encrypt: () => Promise<{
     handles: Uint8Array[];
     inputProof: Uint8Array;
@@ -42,7 +57,10 @@ export const createRelayerEncryptedInput =
     tfheCompactPublicKey: TfheCompactPublicKey,
     publicParams: PublicParams,
   ) =>
-  (contractAddress: string, userAddress: string): RelayerEncryptedInput => {
+  (
+    contractAddress: string,
+    userAddress: string,
+  ): RelayerEncryptedInputInternal => {
     if (!isAddress(contractAddress)) {
       throw new Error('Contract address is not a valid address.');
     }
@@ -61,8 +79,54 @@ export const createRelayerEncryptedInput =
     });
 
     return {
-      ...input,
       _input: input,
+      addBool(value: number | bigint | boolean) {
+        input.addBool(value);
+        return this;
+      },
+      add8(value: number | bigint) {
+        input.add8(value);
+        return this;
+      },
+      add16(value: number | bigint) {
+        input.add16(value);
+        return this;
+      },
+      add32(value: number | bigint) {
+        input.add32(value);
+        return this;
+      },
+      add64(value: number | bigint) {
+        input.add64(value);
+        return this;
+      },
+      add128(value: number | bigint) {
+        input.add128(value);
+        return this;
+      },
+      add256(value: number | bigint) {
+        input.add256(value);
+        return this;
+      },
+      addBytes64(value: Uint8Array) {
+        input.addBytes64(value);
+        return this;
+      },
+      addBytes128(value: Uint8Array) {
+        input.addBytes128(value);
+        return this;
+      },
+      addBytes256(value: Uint8Array) {
+        input.addBytes256(value);
+        return this;
+      },
+      addAddress(value: string) {
+        input.addAddress(value);
+        return this;
+      },
+      getBits(): EncryptionTypes[] {
+        return input.getBits();
+      },
       encrypt: async () => {
         const bits = input.getBits();
         const ciphertext = input.encrypt();
