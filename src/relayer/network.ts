@@ -80,7 +80,13 @@ export const getKeysFromRelayer = async (
         );
       }
 
-      const publicKey = await publicKeyResponse.bytes();
+      let publicKey: Uint8Array;
+      if (typeof publicKeyResponse.bytes === 'function') {
+        // bytes is not widely supported yet
+        publicKey = await publicKeyResponse.bytes();
+      } else {
+        publicKey = new Uint8Array(await publicKeyResponse.arrayBuffer());
+      }
 
       const publicParamsUrl = data.response.crs['2048'].urls[0];
       const publicParamsId = data.response.crs['2048'].data_id;
