@@ -145,7 +145,7 @@ export const userDecryptRequest =
       view.setUint32(28, gatewayChainId, false);
       const chainIdArrayBE = new Uint8Array(buffer);
       const eip712Domain = {
-        name: 'DecryptionManager',
+        name: 'Decryption',
         version: '1',
         chain_id: chainIdArrayBE,
         verifying_contract: verifyingContractAddress,

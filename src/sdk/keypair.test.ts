@@ -40,7 +40,7 @@ describe('token', () => {
     );
 
     expect(eip712.domain.chainId).toBe(1234);
-    expect(eip712.domain.name).toBe('DecryptionManager');
+    expect(eip712.domain.name).toBe('Decryption');
     expect(eip712.domain.version).toBe('1');
     expect(eip712.message.publicKey).toBe(`0x${keypair.publicKey}`);
     expect(eip712.primaryType).toBe('UserDecryptRequestVerification');
@@ -67,7 +67,7 @@ describe('token', () => {
     );
 
     expect(eip712.domain.chainId).toBe(1234);
-    expect(eip712.domain.name).toBe('DecryptionManager');
+    expect(eip712.domain.name).toBe('Decryption');
     expect(eip712.domain.version).toBe('1');
     expect(eip712.message.publicKey).toBe(`0x${keypair.publicKey}`);
     expect(eip712.message.delegatedAccount).toBe(

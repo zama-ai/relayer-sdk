@@ -83,7 +83,7 @@ export const createEIP712 =
     ];
 
     const domain = {
-      name: 'DecryptionManager',
+      name: 'Decryption',
       version: '1',
       chainId: gatewayChainId,
       verifyingContract,
