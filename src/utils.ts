@@ -4,7 +4,7 @@ export const SERIALIZED_SIZE_LIMIT_CRS = BigInt(1024 * 1024 * 512);
 
 export const cleanURL = (url: string | undefined) => {
   if (!url) return '';
-  return new URL(url).href;
+  return url.endsWith('/') ? url.slice(0, -1) : url;
 };
 
 export const numberToHex = (num: number) => {
