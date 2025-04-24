@@ -35,7 +35,7 @@ export const publicDecryptRequest =
     let response;
     let json;
     try {
-      response = await fetch(`${relayerUrl}v1/public-decrypt`, options);
+      response = await fetch(`${relayerUrl}/v1/public-decrypt`, options);
       if (!response.ok) {
         throw new Error(
           `Reencrypt failed: relayer respond with HTTP code ${response.status}`,

@@ -43,7 +43,7 @@ export const getKeysFromRelayer = async (
     return keyurlCache[url];
   }
   try {
-    const response = await fetch(`${url}v1/keyurl`);
+    const response = await fetch(`${url}/v1/keyurl`);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }

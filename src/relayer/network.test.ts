@@ -96,7 +96,7 @@ fetchMock.get(
 
 describe('network', () => {
   it('getInputsFromRelayer', async () => {
-    const material = await getKeysFromRelayer('https://test-relayer.net/');
+    const material = await getKeysFromRelayer('https://test-relayer.net');
 
     expect(
       material.publicKey.safe_serialize(SERIALIZED_SIZE_LIMIT_PK),

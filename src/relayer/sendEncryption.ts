@@ -144,7 +144,7 @@ export const createRelayerEncryptedInput =
           },
           body: JSON.stringify(payload),
         };
-        const url = `${relayerUrl}v1/input-proof`;
+        const url = `${relayerUrl}/v1/input-proof`;
         let json: FhevmRelayerInputProofResponse;
         try {
           const response = await fetch(url, options);
