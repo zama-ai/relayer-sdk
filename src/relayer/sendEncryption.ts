@@ -134,7 +134,7 @@ export const createRelayerEncryptedInput =
         const payload = {
           contractAddress: getAddress(contractAddress),
           userAddress: getAddress(userAddress),
-          ciphertextWithZkpok: toHexString(ciphertext),
+          ciphertextWithInputVerification: toHexString(ciphertext),
           contractChainId: '0x' + chainId.toString(16),
         };
         const options = {
