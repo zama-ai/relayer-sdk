@@ -1,6 +1,6 @@
 {
   "name": "@fhevm/sdk",
-  "version": "0.7.0-25",
+  "version": "0.7.0-26",
   "description": "fhevm SDK",
   "main": "lib/node.js",
   "types": "lib/node/node.d.ts",
