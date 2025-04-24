@@ -16,12 +16,12 @@ const chainId = 1234;
 const autoMock = (input: RelayerEncryptedInput) => {
   fetchMock.postOnce(`${relayerUrl}/v1/input-proof`, (params: any) => {
     const body = JSON.parse(params.options.body);
-    const ciphertextWithZkpok: string = body.ciphertextWithZkpok;
+    const ciphertextWithInputVerification: string = body.ciphertextWithInputVerification;
     const options = {
-      params: { ciphertextWithZkpok },
+      params: { ciphertextWithInputVerification },
     };
     const handles = computeHandles(
-      fromHexString(ciphertextWithZkpok),
+      fromHexString(ciphertextWithInputVerification),
       input.getBits(),
       aclContractAddress,
       chainId,
@@ -238,9 +238,9 @@ describe('encrypt', () => {
     input.add128(BigInt(1));
     fetchMock.postOnce(`${relayerUrl}/v1/input-proof`, (params: any) => {
       const body = JSON.parse(params.options.body);
-      const ciphertextWithZkpok: string = body.ciphertextWithZkpok;
+      const ciphertextWithInputVerification: string = body.ciphertextWithInputVerification;
       const options = {
-        params: { ciphertextWithZkpok },
+        params: { ciphertextWithInputVerification },
       };
       return {
         options: options,
