@@ -112,7 +112,7 @@ export const userDecryptRequest =
     let response;
     let json;
     try {
-      response = await fetch(`${relayerUrl}/v1/user-decrypt`, options);
+      response = await fetch(`${relayerUrl}v1/user-decrypt`, options);
       if (!response.ok) {
         throw new Error(
           `Reencrypt failed: relayer respond with HTTP code ${response.status}`,
