@@ -82,7 +82,7 @@ export const userDecryptRequest =
     });
 
     const payloadForRequest = {
-      HandleContractPairs: handles,
+      ctHandleContractPairs: handles,
       requestValidity: {
         startTimestamp: startTimestamp.toString(), // Convert to string
         durationDays: durationDays.toString(), // Convert to string
