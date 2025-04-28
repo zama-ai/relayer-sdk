@@ -1,6 +1,6 @@
 {
   "name": "@fhevm/sdk",
-  "version": "0.7.0-26",
+  "version": "0.7.0-27",
   "description": "fhevm SDK",
   "main": "lib/node.js",
   "types": "lib/node/node.d.ts",
@@ -56,9 +56,9 @@
     "fetch-retry": "^6.0.0",
     "keccak": "^3.0.4",
     "node-tfhe": "^1.1.2",
-    "node-tkms": "0.11.0-rc8",
+    "node-tkms": "0.11.0-rc9",
     "tfhe": "^1.1.2",
-    "tkms": "0.11.0-rc8",
+    "tkms": "0.11.0-rc9",
     "wasm-feature-detect": "^1.8.0"
   },
   "devDependencies": {
