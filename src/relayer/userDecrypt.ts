@@ -2,7 +2,7 @@ import { bytesToBigInt, fromHexString, toHexString } from '../utils';
 import {
   u8vec_to_cryptobox_pk,
   new_client,
-  process_reencryption_resp_from_js,
+  process_user_decryption_resp_from_js,
   u8vec_to_cryptobox_sk,
 } from 'node-tkms';
 import { ethers, getAddress } from 'ethers';
@@ -63,16 +63,16 @@ export const userDecryptRequest =
         contractAddress,
       );
       if (!userAllowed) {
-        throw new Error('User is not authorized to reencrypt this handle!');
+        throw new Error('User is not authorized to user decrypt this handle!');
       }
       if (!contractAllowed) {
         throw new Error(
-          'dApp contract is not authorized to reencrypt this handle!',
+          'dApp contract is not authorized to user decrypt this handle!',
         );
       }
       if (userAddress === contractAddress) {
         throw new Error(
-          'userAddress should not be equal to contractAddress when requesting reencryption!',
+          'userAddress should not be equal to contractAddress when requesting user decryption!',
         );
       }
     });
@@ -115,24 +115,26 @@ export const userDecryptRequest =
       response = await fetch(`${relayerUrl}/v1/user-decrypt`, options);
       if (!response.ok) {
         throw new Error(
-          `Reencrypt failed: relayer respond with HTTP code ${response.status}`,
+          `User decrypt failed: relayer respond with HTTP code ${response.status}`,
         );
       }
     } catch (e) {
-      throw new Error("Reencrypt failed: Relayer didn't respond", { cause: e });
+      throw new Error("User decrypt failed: Relayer didn't respond", {
+        cause: e,
+      });
     }
 
     try {
       json = await response.json();
     } catch (e) {
-      throw new Error("Reencrypt failed: Relayer didn't return a JSON", {
+      throw new Error("User decrypt failed: Relayer didn't return a JSON", {
         cause: e,
       });
     }
 
     if (json.status === 'failure') {
       throw new Error(
-        "Reencrypt failed: the reencryption didn't succeed for an unknown reason",
+        "User decrypt failed: the user decryption didn't succeed for an unknown reason",
         { cause: json },
       );
     }
@@ -162,7 +164,7 @@ export const userDecryptRequest =
       };
       console.log(payloadForVerification);
 
-      const decryption = process_reencryption_resp_from_js(
+      const decryption = process_user_decryption_resp_from_js(
         client,
         payloadForVerification,
         eip712Domain,
