@@ -16,9 +16,9 @@ const userKeypair = {
     '0x20000000000000001c0922c8007e42e2c5f1e6d3221c03703c868cf17636724fe43fb49383a4dfe4',
 };
 
-describe('reencrypt', () => {
-  it('get reencryption for handle', async () => {
-    const reencrypt = userDecryptRequest(
+describe('userDecrypt', () => {
+  it('get user decryption for handle', async () => {
+    const userDecrypt = userDecryptRequest(
       [],
       54321,
       9000,
@@ -27,7 +27,7 @@ describe('reencrypt', () => {
       'https://test-relayer.net/',
       new ethers.JsonRpcProvider('https://devnet.zama.ai'),
     );
-    // const result = await reencrypt(
+    // const result = await userDecrypt(
     //   BigInt(3333),
     //   userKeypair.privateKey,
     //   userKeypair.publicKey,

@@ -7,8 +7,8 @@ fetchMock.post('https://test-relayer.net/v1/public-decrypt', {
   response: {},
 });
 
-describe('reencrypt', () => {
-  it('get reencryption for handle', async () => {
+describe('publicDecrypt', () => {
+  it('get public decryption for handle', async () => {
     const public_decrypt = publicDecryptRequest(
       [],
       54321,

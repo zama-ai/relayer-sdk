@@ -12,7 +12,7 @@ Provide a clear and detailed description of the issue encountered.
 
 ### **Expected Behavior**
 
-A clear and concise description of the expected behavior (e.g., successful encryption of parameters, correct reencryption result, accurate balance retrieval).
+A clear and concise description of the expected behavior (e.g., successful encryption of parameters, correct user decryption result, accurate balance retrieval).
 
 ### **Screenshots / Logs**
 
