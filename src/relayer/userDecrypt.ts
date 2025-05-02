@@ -5,11 +5,11 @@ import {
   process_user_decryption_resp_from_js,
   u8vec_to_cryptobox_sk,
 } from 'node-tkms';
-import { ethers, getAddress } from 'ethers';
+import { ethers, getAddress, Interface } from 'ethers';
 
-const aclABI = [
+const aclABI = new Interface([
   'function persistAllowed(bytes32 handle, address account) view returns (bool)',
-];
+]);
 
 export type HandleContractPair = {
   ctHandle: Uint8Array | string;
@@ -63,16 +63,18 @@ export const userDecryptRequest =
         contractAddress,
       );
       if (!userAllowed) {
-        throw new Error('User is not authorized to user decrypt this handle!');
+        throw new Error(
+          `User ${userAddress} is not authorized to user decrypt handle ${ctHandle}!`,
+        );
       }
       if (!contractAllowed) {
         throw new Error(
-          'dApp contract is not authorized to user decrypt this handle!',
+          `dapp contract ${contractAddress} is not authorized to user decrypt handle ${ctHandle}!`,
         );
       }
       if (userAddress === contractAddress) {
         throw new Error(
-          'userAddress should not be equal to contractAddress when requesting user decryption!',
+          `userAddress ${userAddress} should not be equal to contractAddress when requesting reencryption!`,
         );
       }
     });

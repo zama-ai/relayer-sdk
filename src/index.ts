@@ -3,6 +3,7 @@ import {
   FhevmInstanceConfig,
   getChainId,
   getKMSSigners,
+  getKMSSignersThreshold,
   getProvider,
   getPublicParams,
   getTfheCompactPublicKey,
@@ -49,7 +50,7 @@ export type FhevmInstance = {
     startTimestamp: string | number,
     durationDays: string | number,
   ) => EIP712;
-  publicDecrypt: (handle: string | Uint8Array) => Promise<bigint>;
+  publicDecrypt: (handles: (string | Uint8Array)[]) => Promise<any>;
   userDecrypt: (
     handles: HandleContractPair[],
     privateKey: string,
@@ -107,6 +108,8 @@ export const createInstance = async (
 
   const kmsSigners = await getKMSSigners(provider, config);
 
+  const thresholdSigners = await getKMSSignersThreshold(provider, config);
+
   return {
     createEncryptedInput: createRelayerEncryptedInput(
       aclContractAddress,
@@ -123,8 +126,8 @@ export const createInstance = async (
     ),
     publicDecrypt: publicDecryptRequest(
       kmsSigners,
+      thresholdSigners,
       gatewayChainId,
-      chainId,
       verifyingContractAddress,
       aclContractAddress,
       cleanURL(config.relayerUrl),
