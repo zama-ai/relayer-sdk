@@ -74,7 +74,7 @@ export const userDecryptRequest =
       }
       if (userAddress === contractAddress) {
         throw new Error(
-          `userAddress ${userAddress} should not be equal to contractAddress when requesting reencryption!`,
+          `userAddress ${userAddress} should not be equal to contractAddress when requesting user decryption!`,
         );
       }
     });

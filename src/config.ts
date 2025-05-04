@@ -14,7 +14,10 @@ import {
 } from './utils';
 import { CompactPkeCrs, TfheCompactPublicKey } from 'node-tfhe';
 
-const abiKmsVerifier = ['function getKmsSigners() view returns (address[])','function getThreshold() view returns (uint256)'];
+const abiKmsVerifier = [
+  'function getKmsSigners() view returns (address[])',
+  'function getThreshold() view returns (uint256)',
+];
 
 export type FhevmInstanceConfig = {
   verifyingContractAddress: string;
