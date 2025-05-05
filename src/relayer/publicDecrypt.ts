@@ -94,7 +94,7 @@ const CiphertextType: Record<number, 'bool' | 'uint256' | 'address' | 'bytes'> =
 function deserializeDecryptedResult(
   handles: string[],
   decryptedResult: string,
-): Record<string, DecryptedResults> {
+): DecryptedResults {
   let typesList: number[] = [];
   for (const handle of handles) {
     const hexPair = handle.slice(-4, -2).toLowerCase();
@@ -122,7 +122,7 @@ function deserializeDecryptedResult(
   // strip dummy first/last element
   const rawValues = decoded.slice(1, 1 + typesList.length);
 
-  let results: Record<string, DecryptedResults> = {};
+  let results: DecryptedResults = {};
   handles.forEach((handle, idx) => (results[handle] = rawValues[idx]));
 
   return results;
@@ -139,13 +139,31 @@ export const publicDecryptRequest =
     provider: ethers.JsonRpcProvider | ethers.BrowserProvider,
   ) =>
   async (_handles: (Uint8Array | string)[]) => {
-    const handles = _handles.map((handle) =>
-      typeof handle === 'string'
-        ? toHexString(fromHexString(handle), true)
-        : toHexString(handle, true),
-    );
-
     const acl = new ethers.Contract(aclContractAddress, aclABI, provider);
+
+    let handles: string[];
+    try {
+      handles = await Promise.all(
+        _handles.map(async (_handle) => {
+          const handle =
+            typeof _handle === 'string'
+              ? toHexString(fromHexString(_handle), true)
+              : toHexString(_handle, true);
+
+          const isAllowedForDecryption = await acl.isAllowedForDecryption(
+            handle,
+          );
+          if (!isAllowedForDecryption) {
+            throw new Error(
+              `Handle ${handle} is not allowed for public decryption!`,
+            );
+          }
+          return handle;
+        }),
+      );
+    } catch (e) {
+      throw e;
+    }
 
     const verifications = handles.map(async (ctHandle) => {
       const isAllowedForDecryption = await acl.isAllowedForDecryption(ctHandle);
@@ -228,7 +246,7 @@ export const publicDecryptRequest =
       const recoveredAddress = ethers.verifyTypedData(
         domain,
         types,
-        { ctHandles: handles, decryptedResult: decryptedResult },
+        { ctHandles: handles, decryptedResult },
         sig,
       );
       return recoveredAddress;

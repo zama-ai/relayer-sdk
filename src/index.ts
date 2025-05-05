@@ -55,7 +55,7 @@ export type FhevmInstance = {
   ) => EIP712;
   publicDecrypt: (
     handles: (string | Uint8Array)[],
-  ) => Promise<Record<string, DecryptedResults>>;
+  ) => Promise<DecryptedResults>;
   userDecrypt: (
     handles: HandleContractPair[],
     privateKey: string,
