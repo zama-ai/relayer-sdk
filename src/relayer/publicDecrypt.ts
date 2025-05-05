@@ -178,7 +178,7 @@ export const publicDecryptRequest =
       response = await fetch(`${relayerUrl}/v1/public-decrypt`, options);
       if (!response.ok) {
         throw new Error(
-          `User decrypt failed: relayer respond with HTTP code ${response.status}`,
+          `Public decrypt failed: relayer respond with HTTP code ${response.status}`,
         );
       }
     } catch (e) {
