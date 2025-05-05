@@ -1,9 +1,9 @@
 import { fromHexString, toHexString } from '../utils';
-import { ethers, Interface } from 'ethers';
+import { ethers } from 'ethers';
 
-const aclABI = new Interface([
+const aclABI = [
   'function isAllowedForDecryption(bytes32 handle) view returns (bool)',
-]);
+];
 
 function isThresholdReached(
   kmsSigners: string[],

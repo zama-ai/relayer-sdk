@@ -5,11 +5,11 @@ import {
   process_user_decryption_resp_from_js,
   u8vec_to_cryptobox_sk,
 } from 'node-tkms';
-import { ethers, getAddress, Interface } from 'ethers';
+import { ethers, getAddress } from 'ethers';
 
-const aclABI = new Interface([
+const aclABI = [
   'function persistAllowed(bytes32 handle, address account) view returns (bool)',
-]);
+];
 
 export type HandleContractPair = {
   ctHandle: Uint8Array | string;
