@@ -14,7 +14,10 @@ import {
 } from './utils';
 import { CompactPkeCrs, TfheCompactPublicKey } from 'node-tfhe';
 
-const abiKmsVerifier = ['function getKmsSigners() view returns (address[])'];
+const abiKmsVerifier = [
+  'function getKmsSigners() view returns (address[])',
+  'function getThreshold() view returns (uint256)',
+];
 
 export type FhevmInstanceConfig = {
   verifyingContractAddress: string;
@@ -121,4 +124,17 @@ export const getKMSSigners = async (
   );
   const signers: string[] = await kmsContract.getKmsSigners();
   return signers;
+};
+
+export const getKMSSignersThreshold = async (
+  provider: Provider,
+  config: FhevmInstanceConfig,
+): Promise<number> => {
+  const kmsContract = new Contract(
+    config.kmsContractAddress,
+    abiKmsVerifier,
+    provider,
+  );
+  const threshold: bigint = await kmsContract.getThreshold();
+  return Number(threshold); // threshold is always supposed to fit in a number
 };

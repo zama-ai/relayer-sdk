@@ -9,6 +9,7 @@ jest.mock('ethers', () => ({
   isAddress: () => true,
   Contract: () => ({
     getKmsSigners: () => ['0x4c102C7cA99d3079fEFF08114d3bad888b9794d9'],
+    getThreshold: () => BigInt(1),
   }),
 }));
 

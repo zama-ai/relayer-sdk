@@ -63,16 +63,18 @@ export const userDecryptRequest =
         contractAddress,
       );
       if (!userAllowed) {
-        throw new Error('User is not authorized to user decrypt this handle!');
+        throw new Error(
+          `User ${userAddress} is not authorized to user decrypt handle ${ctHandle}!`,
+        );
       }
       if (!contractAllowed) {
         throw new Error(
-          'dApp contract is not authorized to user decrypt this handle!',
+          `dapp contract ${contractAddress} is not authorized to user decrypt handle ${ctHandle}!`,
         );
       }
       if (userAddress === contractAddress) {
         throw new Error(
-          'userAddress should not be equal to contractAddress when requesting user decryption!',
+          `userAddress ${userAddress} should not be equal to contractAddress when requesting user decryption!`,
         );
       }
     });
