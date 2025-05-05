@@ -1,5 +1,5 @@
 import { fromHexString, toHexString } from '../utils';
-import { ethers } from 'ethers';
+import { ethers, AbiCoder } from 'ethers';
 
 const aclABI = [
   'function isAllowedForDecryption(bytes32 handle) view returns (bool)',
@@ -72,6 +72,58 @@ function checkEncryptedBits(handles: string[]) {
     }
   }
   return total;
+}
+
+const CiphertextType: Record<number, 'bool' | 'uint256' | 'address' | 'bytes'> =
+  {
+    0: 'bool',
+    2: 'uint256',
+    3: 'uint256',
+    4: 'uint256',
+    5: 'uint256',
+    6: 'uint256',
+    7: 'address',
+    8: 'uint256',
+    9: 'bytes',
+    10: 'bytes',
+    11: 'bytes',
+  };
+
+function deserializeDecryptedResult(
+  handles: string[],
+  decryptedResult: string,
+): Record<string, any> {
+  let typesList: number[] = [];
+  for (const handle of handles) {
+    const hexPair = handle.slice(-4, -2).toLowerCase();
+    const typeDiscriminant = parseInt(hexPair, 16);
+    typesList.push(typeDiscriminant);
+  }
+
+  const restoredEncoded =
+    '0x' +
+    '00'.repeat(32) + // dummy requestID (ignored)
+    decryptedResult.slice(2) +
+    '00'.repeat(32); // dummy empty bytes[] length (ignored)
+
+  const abiTypes = typesList.map((t) => {
+    const abiType = CiphertextType[t]; // all types are valid because this was supposedly checked already inside the `checkEncryptedBits` function
+    return abiType;
+  });
+
+  const coder = new AbiCoder();
+  const decoded = coder.decode(
+    ['uint256', ...abiTypes, 'bytes[]'],
+    restoredEncoded,
+  );
+
+  // strip dummy first/last element
+  const rawValues = decoded.slice(1, 1 + typesList.length);
+
+  let results: Record<string, any> = {};
+  handles.forEach((handle, idx) => (results[handle] = rawValues[idx]));
+
+  return results;
 }
 
 export const publicDecryptRequest =
@@ -190,7 +242,7 @@ export const publicDecryptRequest =
       throw Error('KMS signers threshold is not reached');
     }
 
-    // TODO deserialization + abi decoding
+    const results = deserializeDecryptedResult(handles, decryptedResult);
 
-    return json;
+    return results;
   };
