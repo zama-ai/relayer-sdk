@@ -1,6 +1,8 @@
 import { fromHexString, toHexString } from '../utils';
 import { ethers, AbiCoder } from 'ethers';
 
+export type DecryptedResults = Record<string, bigint | boolean | string>;
+
 const aclABI = [
   'function isAllowedForDecryption(bytes32 handle) view returns (bool)',
 ];
@@ -92,7 +94,7 @@ const CiphertextType: Record<number, 'bool' | 'uint256' | 'address' | 'bytes'> =
 function deserializeDecryptedResult(
   handles: string[],
   decryptedResult: string,
-): Record<string, any> {
+): Record<string, DecryptedResults> {
   let typesList: number[] = [];
   for (const handle of handles) {
     const hexPair = handle.slice(-4, -2).toLowerCase();
@@ -120,7 +122,7 @@ function deserializeDecryptedResult(
   // strip dummy first/last element
   const rawValues = decoded.slice(1, 1 + typesList.length);
 
-  let results: Record<string, any> = {};
+  let results: Record<string, DecryptedResults> = {};
   handles.forEach((handle, idx) => (results[handle] = rawValues[idx]));
 
   return results;

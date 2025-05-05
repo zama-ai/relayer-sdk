@@ -19,7 +19,10 @@ import {
   createRelayerEncryptedInput,
   RelayerEncryptedInput,
 } from './relayer/sendEncryption';
-import { publicDecryptRequest } from './relayer/publicDecrypt';
+import {
+  publicDecryptRequest,
+  DecryptedResults,
+} from './relayer/publicDecrypt';
 
 import { PublicParams } from './sdk/encrypt';
 import { generateKeypair, createEIP712, EIP712 } from './sdk/keypair';
@@ -50,7 +53,9 @@ export type FhevmInstance = {
     startTimestamp: string | number,
     durationDays: string | number,
   ) => EIP712;
-  publicDecrypt: (handles: (string | Uint8Array)[]) => Promise<any>;
+  publicDecrypt: (
+    handles: (string | Uint8Array)[],
+  ) => Promise<Record<string, DecryptedResults>>;
   userDecrypt: (
     handles: HandleContractPair[],
     privateKey: string,
