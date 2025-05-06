@@ -12,12 +12,12 @@ const aclABI = [
 ];
 
 export type HandleContractPair = {
-  ctHandle: Uint8Array | string;
+  handle: Uint8Array | string;
   contractAddress: string;
 };
 
 export type HandleContractPairRelayer = {
-  ctHandle: string;
+  handle: string;
   contractAddress: string;
 };
 
@@ -48,28 +48,25 @@ export const userDecryptRequest =
 
     // Casting handles if string
     const handles: HandleContractPairRelayer[] = _handles.map((h) => ({
-      ctHandle:
-        typeof h.ctHandle === 'string'
-          ? toHexString(fromHexString(h.ctHandle), true)
-          : toHexString(h.ctHandle, true),
+      handle:
+        typeof h.handle === 'string'
+          ? toHexString(fromHexString(h.handle), true)
+          : toHexString(h.handle, true),
       contractAddress: h.contractAddress,
     }));
 
     const acl = new ethers.Contract(aclContractAddress, aclABI, provider);
-    const verifications = handles.map(async ({ ctHandle, contractAddress }) => {
-      const userAllowed = await acl.persistAllowed(ctHandle, userAddress);
-      const contractAllowed = await acl.persistAllowed(
-        ctHandle,
-        contractAddress,
-      );
+    const verifications = handles.map(async ({ handle, contractAddress }) => {
+      const userAllowed = await acl.persistAllowed(handle, userAddress);
+      const contractAllowed = await acl.persistAllowed(handle, contractAddress);
       if (!userAllowed) {
         throw new Error(
-          `User ${userAddress} is not authorized to user decrypt handle ${ctHandle}!`,
+          `User ${userAddress} is not authorized to user decrypt handle ${handle}!`,
         );
       }
       if (!contractAllowed) {
         throw new Error(
-          `dapp contract ${contractAddress} is not authorized to user decrypt handle ${ctHandle}!`,
+          `dapp contract ${contractAddress} is not authorized to user decrypt handle ${handle}!`,
         );
       }
       if (userAddress === contractAddress) {
@@ -161,7 +158,7 @@ export const userDecryptRequest =
         signature,
         client_address: userAddress,
         enc_key: publicKey.replace(/^0x/, ''),
-        ciphertext_handles: handles.map((h) => h.ctHandle.replace(/^0x/, '')),
+        ciphertext_handles: handles.map((h) => h.handle.replace(/^0x/, '')),
         eip712_verifying_contract: verifyingContractAddress,
       };
       console.log(payloadForVerification);
