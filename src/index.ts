@@ -4,6 +4,8 @@ import {
   getChainId,
   getKMSSigners,
   getKMSSignersThreshold,
+  getCoprocessorSigners,
+  getCoprocessorSignersThreshold,
   getProvider,
   getPublicParams,
   getTfheCompactPublicKey,
@@ -77,9 +79,10 @@ export const createInstance = async (
   config: FhevmInstanceConfig,
 ): Promise<FhevmInstance> => {
   const {
+    verifyingContractAddressDecryption,
+    verifyingContractAddressInputVerification,
     publicKey,
     kmsContractAddress,
-    verifyingContractAddress,
     aclContractAddress,
     gatewayChainId,
   } = config;
@@ -88,8 +91,22 @@ export const createInstance = async (
     throw new Error('KMS contract address is not valid or empty');
   }
 
-  if (!verifyingContractAddress || !isAddress(verifyingContractAddress)) {
-    throw new Error('Verifying contract address is not valid or empty');
+  if (
+    !verifyingContractAddressDecryption ||
+    !isAddress(verifyingContractAddressDecryption)
+  ) {
+    throw new Error(
+      'Verifying contract for Decryption address is not valid or empty',
+    );
+  }
+
+  if (
+    !verifyingContractAddressInputVerification ||
+    !isAddress(verifyingContractAddressInputVerification)
+  ) {
+    throw new Error(
+      'Verifying contract for InputVerification address is not valid or empty',
+    );
   }
 
   if (!aclContractAddress || !isAddress(aclContractAddress)) {
@@ -113,27 +130,38 @@ export const createInstance = async (
 
   const kmsSigners = await getKMSSigners(provider, config);
 
-  const thresholdSigners = await getKMSSignersThreshold(provider, config);
+  const thresholdKMSSigners = await getKMSSignersThreshold(provider, config);
+
+  const coprocessorSigners = await getCoprocessorSigners(provider, config);
+
+  const thresholdCoprocessorSigners = await getCoprocessorSignersThreshold(
+    provider,
+    config,
+  );
 
   return {
     createEncryptedInput: createRelayerEncryptedInput(
       aclContractAddress,
+      verifyingContractAddressInputVerification,
       chainId,
+      gatewayChainId,
       cleanURL(config.relayerUrl),
       publicKeyData.publicKey,
       publicParamsData,
+      coprocessorSigners,
+      thresholdCoprocessorSigners,
     ),
     generateKeypair,
     createEIP712: createEIP712(
       gatewayChainId,
-      verifyingContractAddress,
+      verifyingContractAddressDecryption,
       chainId,
     ),
     publicDecrypt: publicDecryptRequest(
       kmsSigners,
-      thresholdSigners,
+      thresholdKMSSigners,
       gatewayChainId,
-      verifyingContractAddress,
+      verifyingContractAddressDecryption,
       aclContractAddress,
       cleanURL(config.relayerUrl),
       provider,
@@ -142,7 +170,7 @@ export const createInstance = async (
       kmsSigners,
       gatewayChainId,
       chainId,
-      verifyingContractAddress,
+      verifyingContractAddressDecryption,
       aclContractAddress,
       cleanURL(config.relayerUrl),
       provider,

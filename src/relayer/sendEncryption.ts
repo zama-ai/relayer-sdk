@@ -8,11 +8,39 @@ import {
 } from '../sdk/encrypt';
 import { ENCRYPTION_TYPES } from '../sdk/encryptionTypes';
 import { computeHandles } from './handles';
+import { ethers } from 'ethers';
 
 type EncryptionTypes = keyof typeof ENCRYPTION_TYPES;
 export const currentCiphertextVersion = () => {
   return 0;
 };
+
+function isThresholdReached(
+  coprocessorSigners: string[],
+  recoveredAddresses: string[],
+  threshold: number,
+): boolean {
+  const addressMap = new Map<string, number>();
+  recoveredAddresses.forEach((address, index) => {
+    if (addressMap.has(address)) {
+      const duplicateValue = address;
+      throw new Error(
+        `Duplicate coprocessor signer address found: ${duplicateValue} appears multiple times in recovered addresses`,
+      );
+    }
+    addressMap.set(address, index);
+  });
+
+  for (const address of recoveredAddresses) {
+    if (!coprocessorSigners.includes(address)) {
+      throw new Error(
+        `Invalid address found: ${address} is not in the list of coprocessor signers`,
+      );
+    }
+  }
+
+  return recoveredAddresses.length >= threshold;
+}
 
 export type FhevmRelayerInputProofResponse = {
   response: {
@@ -52,10 +80,14 @@ export type PublicParams<T = CompactPkeCrs> = {
 export const createRelayerEncryptedInput =
   (
     aclContractAddress: string,
+    verifyingContractAddressInputVerification: string,
     chainId: number,
+    gatewayChainId: number,
     relayerUrl: string,
     tfheCompactPublicKey: TfheCompactPublicKey,
     publicParams: PublicParams,
+    coprocessorSigners: string[],
+    thresholdCoprocessorSigners: number,
   ) =>
   (
     contractAddress: string,
@@ -196,6 +228,48 @@ export const createRelayerEncryptedInput =
           }
         }
         const signatures = json.response.signatures;
+
+        // verify signatures for inputs:
+        const domain = {
+          name: 'InputVerification',
+          version: '1',
+          chainId: gatewayChainId,
+          verifyingContract: verifyingContractAddressInputVerification,
+        };
+        const types = {
+          CiphertextVerification: [
+            { name: 'ctHandles', type: 'bytes32[]' },
+            { name: 'userAddress', type: 'address' },
+            { name: 'contractAddress', type: 'address' },
+            { name: 'contractChainId', type: 'uint256' },
+          ],
+        };
+
+        const recoveredAddresses = signatures.map((signature: string) => {
+          const sig = signature.startsWith('0x') ? signature : `0x${signature}`;
+          const recoveredAddress = ethers.verifyTypedData(
+            domain,
+            types,
+            {
+              ctHandles: handles,
+              userAddress,
+              contractAddress,
+              contractChainId: chainId,
+            },
+            sig,
+          );
+          return recoveredAddress;
+        });
+
+        const thresholdReached = isThresholdReached(
+          coprocessorSigners,
+          recoveredAddresses,
+          thresholdCoprocessorSigners,
+        );
+
+        if (!thresholdReached) {
+          throw Error('Coprocessor signers threshold is not reached');
+        }
 
         // inputProof is len(list_handles) + numCoprocessorSigners + list_handles + signatureCoprocessorSigners (1+1+NUM_HANDLES*32+65*numSigners)
         let inputProof = numberToHex(handles.length);

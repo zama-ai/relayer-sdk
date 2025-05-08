@@ -19,9 +19,16 @@ const abiKmsVerifier = [
   'function getThreshold() view returns (uint256)',
 ];
 
+const abiInputVerifier = [
+  'function getCoprocessorSigners() view returns (address[])',
+  'function getThreshold() view returns (uint256)',
+];
+
 export type FhevmInstanceConfig = {
-  verifyingContractAddress: string;
+  verifyingContractAddressDecryption: string;
+  verifyingContractAddressInputVerification: string;
   kmsContractAddress: string;
+  inputVerifierContractAddress: string;
   aclContractAddress: string;
   gatewayChainId: number;
   chainId?: number;
@@ -136,5 +143,31 @@ export const getKMSSignersThreshold = async (
     provider,
   );
   const threshold: bigint = await kmsContract.getThreshold();
+  return Number(threshold); // threshold is always supposed to fit in a number
+};
+
+export const getCoprocessorSigners = async (
+  provider: Provider,
+  config: FhevmInstanceConfig,
+): Promise<string[]> => {
+  const inputContract = new Contract(
+    config.inputVerifierContractAddress,
+    abiInputVerifier,
+    provider,
+  );
+  const signers: string[] = await inputContract.getCoprocessorSigners();
+  return signers;
+};
+
+export const getCoprocessorSignersThreshold = async (
+  provider: Provider,
+  config: FhevmInstanceConfig,
+): Promise<number> => {
+  const inputContract = new Contract(
+    config.inputVerifierContractAddress,
+    abiInputVerifier,
+    provider,
+  );
+  const threshold: bigint = await inputContract.getThreshold();
   return Number(threshold); // threshold is always supposed to fit in a number
 };
