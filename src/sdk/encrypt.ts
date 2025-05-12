@@ -103,11 +103,7 @@ export const createEncryptedInput = ({
         typeof value !== 'bigint'
       )
         throw new Error('The value must be a boolean, a number or a bigint.');
-      if (
-        (typeof value !== 'bigint' || typeof value !== 'number') &&
-        Number(value) > 1
-      )
-        throw new Error('The value must be 1 or 0.');
+      if (Number(value) > 1) throw new Error('The value must be 1 or 0.');
       checkEncryptedValue(Number(value), 1);
       checkLimit(2);
       builder.push_boolean(!!value);
