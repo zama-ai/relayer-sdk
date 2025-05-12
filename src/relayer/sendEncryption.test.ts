@@ -1,4 +1,3 @@
-import { ProvenCompactCiphertextList } from 'node-tfhe';
 import {
   createRelayerEncryptedInput,
   currentCiphertextVersion,
@@ -11,7 +10,10 @@ import { fromHexString, toHexString } from '../utils';
 
 const relayerUrl = 'https://test-fhevm-relayer';
 const aclContractAddress = '0x325ea1b59F28e9e1C51d3B5b47b7D3965CC5D8C8';
+const verifyingContractAddressInputVerification =
+  '0x0C475a195D5C16bb730Ae2d5B1196844A83899A5';
 const chainId = 1234;
+const gatewayChainId = 4321;
 
 const autoMock = (input: RelayerEncryptedInput) => {
   fetchMock.postOnce(`${relayerUrl}/v1/input-proof`, (params: any) => {
@@ -28,12 +30,11 @@ const autoMock = (input: RelayerEncryptedInput) => {
       chainId,
       currentCiphertextVersion(),
     ).map((handle: Uint8Array) => toHexString(handle));
-
     return {
       options: options,
       response: {
         handles: handles,
-        signatures: ['dead3232'],
+        signatures: [],
       },
     };
   });
@@ -43,10 +44,14 @@ describe('encrypt', () => {
   it('encrypt', async () => {
     const input = createRelayerEncryptedInput(
       aclContractAddress,
+      verifyingContractAddressInputVerification,
       chainId,
+      gatewayChainId,
       relayerUrl,
       publicKey,
       publicParams,
+      [],
+      0,
     )(
       '0x8ba1f109551bd432803012645ac136ddd64dba72',
       '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
@@ -68,10 +73,14 @@ describe('encrypt', () => {
   it('encrypt one 0 value', async () => {
     const input = createRelayerEncryptedInput(
       aclContractAddress,
+      verifyingContractAddressInputVerification,
       chainId,
+      gatewayChainId,
       relayerUrl,
       publicKey,
       publicParams,
+      [],
+      0,
     )(
       '0x8ba1f109551bd432803012645ac136ddd64dba72',
       '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
@@ -86,10 +95,14 @@ describe('encrypt', () => {
   it('encrypt one 2048 value', async () => {
     const input = createRelayerEncryptedInput(
       aclContractAddress,
+      verifyingContractAddressInputVerification,
       chainId,
+      gatewayChainId,
       relayerUrl,
       publicKey,
       publicParams,
+      [],
+      0,
     )(
       '0x8ba1f109551bd432803012645ac136ddd64dba72',
       '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
@@ -107,29 +120,41 @@ describe('encrypt', () => {
     expect(() =>
       createRelayerEncryptedInput(
         aclContractAddress,
+        verifyingContractAddressInputVerification,
         chainId,
+        gatewayChainId,
         relayerUrl,
         publicKey,
         publicParams,
+        [],
+        0,
       )('0xa5e1defb98EFe38EBb2D958CEe052410247F4c80', '0'),
     ).toThrow('User address is not a valid address.');
     expect(() =>
       createRelayerEncryptedInput(
         aclContractAddress,
+        verifyingContractAddressInputVerification,
         chainId,
+        gatewayChainId,
         relayerUrl,
         publicKey,
         publicParams,
+        [],
+        0,
       )('0x0', '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80'),
     ).toThrow('Contract address is not a valid address.');
 
     expect(() =>
       createRelayerEncryptedInput(
         aclContractAddress,
+        verifyingContractAddressInputVerification,
         chainId,
+        gatewayChainId,
         relayerUrl,
         publicKey,
         publicParams,
+        [],
+        0,
       )(
         '0x8ba1f109551bd432803012645ac136ddd64dba72',
         '0xa5e1defb98EFe38EBb2D958CEe052410247F4c',
@@ -138,10 +163,14 @@ describe('encrypt', () => {
 
     const input = createRelayerEncryptedInput(
       aclContractAddress,
+      verifyingContractAddressInputVerification,
       chainId,
+      gatewayChainId,
       relayerUrl,
       publicKey,
       publicParams,
+      [],
+      0,
     )(
       '0x8ba1f109551bd432803012645ac136ddd64dba72',
       '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
@@ -181,10 +210,14 @@ describe('encrypt', () => {
   it('throws if total bits is above 2048', async () => {
     const input2 = createRelayerEncryptedInput(
       aclContractAddress,
+      verifyingContractAddressInputVerification,
       chainId,
+      gatewayChainId,
       relayerUrl,
       publicKey,
       publicParams,
+      [],
+      0,
     )(
       '0x8ba1f109551bd432803012645ac136ddd64dba72',
       '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
@@ -198,10 +231,14 @@ describe('encrypt', () => {
   it('throws if incorrect handles list size', async () => {
     const input = createRelayerEncryptedInput(
       aclContractAddress,
+      verifyingContractAddressInputVerification,
       chainId,
+      gatewayChainId,
       relayerUrl,
       publicKey,
       publicParams,
+      [],
+      0,
     )(
       '0x8ba1f109551bd432803012645ac136ddd64dba72',
       '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
@@ -210,10 +247,14 @@ describe('encrypt', () => {
     autoMock(input);
     const input2 = createRelayerEncryptedInput(
       aclContractAddress,
+      verifyingContractAddressInputVerification,
       chainId,
+      gatewayChainId,
       relayerUrl,
       publicKey,
       publicParams,
+      [],
+      0,
     )(
       '0x8ba1f109551bd432803012645ac136ddd64dba72',
       '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
@@ -228,10 +269,14 @@ describe('encrypt', () => {
   it('throws if incorrect handle', async () => {
     const input = createRelayerEncryptedInput(
       aclContractAddress,
+      verifyingContractAddressInputVerification,
       chainId,
+      gatewayChainId,
       relayerUrl,
       publicKey,
       publicParams,
+      [],
+      0,
     )(
       '0x8ba1f109551bd432803012645ac136ddd64dba72',
       '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',

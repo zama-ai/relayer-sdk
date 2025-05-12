@@ -17,7 +17,7 @@ function isThresholdReached(
     if (addressMap.has(address)) {
       const duplicateValue = address;
       throw new Error(
-        `Duplicate signer address found: ${duplicateValue} appears multiple times in recovered addresses`,
+        `Duplicate KMS signer address found: ${duplicateValue} appears multiple times in recovered addresses`,
       );
     }
     addressMap.set(address, index);
