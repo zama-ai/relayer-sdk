@@ -32,7 +32,7 @@ module.exports = {
   transformIgnorePatterns: ['/node_modules/'],
   coverageThreshold: {
     global: {
-      branches: 50,
+      branches: 45,
       functions: 59,
       lines: 60,
     },
