@@ -6,10 +6,81 @@ import {
   u8vec_to_cryptobox_sk,
 } from 'node-tkms';
 import { ethers, getAddress } from 'ethers';
+import { DecryptedResults, checkEncryptedBits } from './decryptUtils';
 
 const aclABI = [
   'function persistAllowed(bytes32 handle, address account) view returns (bool)',
 ];
+
+const MAX_USER_DECRYPT_CONTRACT_ADDRESSES = 10;
+const MAX_USER_DECRYPT_DURATION_DAYS = BigInt(365);
+
+function formatAccordingToType(
+  decryptedBigInt: bigint,
+  type: number,
+): boolean | bigint | string {
+  if (type === 0) {
+    // ebool
+    return decryptedBigInt === BigInt(1);
+  } else if (type === 7) {
+    // eaddress
+    return getAddress('0x' + decryptedBigInt.toString(16).padStart(40, '0'));
+  } else if (type === 9) {
+    // ebytes64
+    return '0x' + decryptedBigInt.toString(16).padStart(128, '0');
+  } else if (type === 10) {
+    // ebytes128
+    return '0x' + decryptedBigInt.toString(16).padStart(256, '0');
+  } else if (type === 11) {
+    // ebytes256
+    return '0x' + decryptedBigInt.toString(16).padStart(512, '0');
+  } // euintXXX
+  return decryptedBigInt;
+}
+function buildUserDecryptedResult(
+  handles: string[],
+  listBigIntDecryptions: bigint[],
+): DecryptedResults {
+  let typesList: number[] = [];
+  for (const handle of handles) {
+    const hexPair = handle.slice(-4, -2).toLowerCase();
+    const typeDiscriminant = parseInt(hexPair, 16);
+    typesList.push(typeDiscriminant);
+  }
+
+  let results: DecryptedResults = {};
+  handles.forEach(
+    (handle, idx) =>
+      (results[handle] = formatAccordingToType(
+        listBigIntDecryptions[idx],
+        typesList[idx],
+      )),
+  );
+
+  return results;
+}
+
+function checkDeadlineValidity(startTimestamp: bigint, durationDays: bigint) {
+  if (durationDays === BigInt(0)) {
+    throw Error('durationDays is null');
+  }
+
+  if (durationDays > MAX_USER_DECRYPT_DURATION_DAYS) {
+    throw Error(
+      `durationDays is above max duration of ${MAX_USER_DECRYPT_DURATION_DAYS}`,
+    );
+  }
+
+  const currentTimestamp = BigInt(Math.floor(Date.now() / 1000));
+  if (startTimestamp > currentTimestamp) {
+    throw Error('startTimestamp is set in the future');
+  }
+
+  const durationInSeconds = durationDays * BigInt(86400);
+  if (startTimestamp + durationInSeconds < currentTimestamp) {
+    throw Error('User decrypt request has expired');
+  }
+}
 
 export type HandleContractPair = {
   handle: Uint8Array | string;
@@ -23,7 +94,7 @@ export type HandleContractPairRelayer = {
 
 export const userDecryptRequest =
   (
-    kmsSignatures: string[],
+    kmsSigners: string[],
     gatewayChainId: number,
     chainId: number,
     verifyingContractAddress: string,
@@ -40,12 +111,7 @@ export const userDecryptRequest =
     userAddress: string,
     startTimestamp: string | number,
     durationDays: string | number,
-  ): Promise<bigint[]> => {
-    console.log('gatewayChainId', gatewayChainId);
-    console.log('chainId', chainId);
-    console.log('verifyingContractAddress', verifyingContractAddress);
-    console.log('cthandles', _handles);
-
+  ): Promise<DecryptedResults> => {
     // Casting handles if string
     const handles: HandleContractPairRelayer[] = _handles.map((h) => ({
       handle:
@@ -54,6 +120,10 @@ export const userDecryptRequest =
           : toHexString(h.handle, true),
       contractAddress: h.contractAddress,
     }));
+
+    checkEncryptedBits(handles.map((h) => h.handle));
+
+    checkDeadlineValidity(BigInt(startTimestamp), BigInt(durationDays));
 
     const acl = new ethers.Contract(aclContractAddress, aclABI, provider);
     const verifications = handles.map(async ({ handle, contractAddress }) => {
@@ -76,12 +146,22 @@ export const userDecryptRequest =
       }
     });
 
+    const contractAddressesLength = contractAddresses.length;
+    if (contractAddressesLength === 0) {
+      throw Error('contractAddresses is empty');
+    }
+    if (contractAddressesLength > MAX_USER_DECRYPT_CONTRACT_ADDRESSES) {
+      throw Error(
+        `contractAddresses max length of ${MAX_USER_DECRYPT_CONTRACT_ADDRESSES} exceeded`,
+      );
+    }
+
     await Promise.all(verifications).catch((e) => {
       throw e;
     });
 
     const payloadForRequest = {
-      ctHandleContractPairs: handles,
+      handleContractPairs: handles,
       requestValidity: {
         startTimestamp: startTimestamp.toString(), // Convert to string
         durationDays: durationDays.toString(), // Convert to string
@@ -92,6 +172,7 @@ export const userDecryptRequest =
       signature: signature.replace(/^(0x)/, ''),
       publicKey: publicKey.replace(/^(0x)/, ''),
     };
+
     const options = {
       method: 'POST',
       headers: {
@@ -138,7 +219,7 @@ export const userDecryptRequest =
       );
     }
 
-    const client = new_client(kmsSignatures, userAddress, 'default');
+    const client = new_client(kmsSigners, userAddress, 'default');
 
     try {
       const buffer = new ArrayBuffer(32);
@@ -152,8 +233,7 @@ export const userDecryptRequest =
         verifying_contract: verifyingContractAddress,
         salt: null,
       };
-      // Duplicate payloadForRequest and replace ciphertext_handle with ciphertext_digest.
-      // TODO check all ciphertext digests are all the same
+
       const payloadForVerification = {
         signature,
         client_address: userAddress,
@@ -161,7 +241,6 @@ export const userDecryptRequest =
         ciphertext_handles: handles.map((h) => h.handle.replace(/^0x/, '')),
         eip712_verifying_contract: verifyingContractAddress,
       };
-      console.log(payloadForVerification);
 
       const decryption = process_user_decryption_resp_from_js(
         client,
@@ -172,10 +251,16 @@ export const userDecryptRequest =
         privKey,
         true,
       );
-
-      return decryption.map((d: { bytes: Uint8Array<ArrayBufferLike> }) =>
-        bytesToBigInt(d.bytes),
+      const listBigIntDecryptions = decryption.map(
+        (d: { bytes: Uint8Array<ArrayBufferLike> }) => bytesToBigInt(d.bytes),
       );
+
+      const results = buildUserDecryptedResult(
+        handles.map((h) => h.handle),
+        listBigIntDecryptions,
+      );
+
+      return results;
     } catch (e) {
       throw new Error('An error occured during decryption', { cause: e });
     }
