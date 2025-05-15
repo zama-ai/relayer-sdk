@@ -1,5 +1,4 @@
 import { isAddress } from 'ethers';
-export { version } from './_version';
 import {
   FhevmInstanceConfig,
   getChainId,
