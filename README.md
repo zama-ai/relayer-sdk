@@ -3,11 +3,12 @@
 </p>
 <hr/>
 <p align="center">
+  <!-- TODO: Migrate documentation links to https://docs.zama.ai/relayer -->
   <a href="https://docs.zama.ai/fhevm">📃 Read white paper</a> | <a href="https://docs.zama.ai/fhevm">📒 Read documentation</a> | <a href="https://zama.ai/community">💛 Community support</a>
 </p>
 <p align="center">
 <!-- Version badge using shields.io -->
-  <a href="https://github.com/zama-ai/fhevm-js/releases"><img src="https://img.shields.io/github/v/release/zama-ai/fhevm-js?style=flat-square"/></a>
+  <a href="https://github.com/zama-ai/relayer-sdk/releases"><img src="https://img.shields.io/github/v/release/zama-ai/relayer-sdk?style=flat-square"/></a>
 <!-- Zama Bounty Program -->
   <a href="https://github.com/zama-ai/bounty-program"><img src="https://img.shields.io/badge/Contribute-Zama%20Bounty%20Program-yellow?style=flat-square"/></a>
 </p>
@@ -19,20 +20,20 @@ fhevm SDK is a javascript library that enables developers to interact with block
 
 ```bash
 # Using npm
-npm install @fhevm/sdk
+npm install @zama-fhe/relayer-sdk
 
 # Using Yarn
-yarn add @fhevm/sdk
+yarn add @zama-fhe/relayer-sdk
 
 # Using pnpm
-pnpm add @fhevm/sdk
+pnpm add @zama-fhe/relayer-sdk
 ```
 
-This will download and install the fhevm SDK and its dependencies into your project.
+This will download and install the fhevm Relayer SDK and its dependencies into your project.
 
 ## Contributing
 
-There are two ways to contribute to Fhevm:
+There are two ways to contribute to the Relayer SDK:
 
 - you can open issues to report bugs or typos, or to suggest new ideas
 - you can ask to become an official contributor by emailing hello@zama.ai. (becoming an approved contributor involves signing our Contributor License Agreement (CLA))
@@ -45,7 +46,7 @@ This library uses several dependencies and we would like to thank the contributo
 ## Need support?
 
 <a target="_blank" href="https://community.zama.ai">
-  <img src="https://github.com/zama-ai/fhevm-js/assets/1384478/4fc4e460-ca1d-4910-8bc2-cd1d50c7d020">
+  <img src="https://github.com/zama-ai/relayer-sdk/assets/1384478/4fc4e460-ca1d-4910-8bc2-cd1d50c7d020">
 </a>
 
 ## License
