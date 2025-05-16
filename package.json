@@ -1,13 +1,13 @@
 {
-  "name": "@fhevm/sdk",
+  "name": "@zama-fhe/relayer-sdk",
   "version": "0.7.0-30",
-  "description": "fhevm SDK",
+  "description": "fhevm Relayer SDK",
   "main": "lib/node.js",
   "types": "lib/node.d.ts",
   "browser": "lib/web.js",
   "type": "module",
   "bin": {
-    "fhevm": "bin/fhevm.js"
+    "relayer": "bin/relayer.js"
   },
   "exports": {
     ".": {
@@ -49,14 +49,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/zama-ai/fhevm-js.git"
+    "url": "git+https://github.com/zama-ai/relayer-sdk.git"
   },
   "author": "",
   "license": "BSD-3-Clause-Clear",
   "bugs": {
-    "url": "https://github.com/zama-ai/fhevm-js/issues"
+    "url": "https://github.com/zama-ai/relayer-sdk/issues"
   },
-  "homepage": "https://github.com/zama-ai/fhevm-js#readme",
+  "homepage": "https://github.com/zama-ai/relayer-sdk#readme",
   "dependencies": {
     "commander": "^11.0.0",
     "ethers": "^6.13.4",
