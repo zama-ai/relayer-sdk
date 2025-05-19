@@ -11,3 +11,5 @@ export const ENCRYPTION_TYPES = {
   1024: 10,
   2048: 11,
 };
+
+export type EncryptionTypes = keyof typeof ENCRYPTION_TYPES;

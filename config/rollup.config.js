@@ -34,7 +34,6 @@ const webPlugins = [
   }),
   typescript({
     tsconfig: './tsconfig.rollup.json',
-    exclude: 'node_modules/**',
   }),
   commonjs(),
   resolve({
@@ -62,6 +61,7 @@ export default [
       }),
     ],
   },
+  // Build 'workerHelpers.js' in ESM format
   {
     input: `./node_modules/tfhe/snippets/${wasmBindgenRayon}/src/workerHelpers.js`,
     output: {
@@ -80,5 +80,20 @@ export default [
       format: 'cjs',
     },
     plugins: [...nodePlugins],
+    // Suppress warning
+    // https://rollupjs.org/troubleshooting/#warning-treating-module-as-external-dependency
+    external: ['ethers', 'fetch-retry', 'node-tfhe', 'node-tkms', 'keccak'],
+  },
+  {
+    input: 'src/node.ts',
+    output: {
+      file: 'lib/node.js',
+      name: 'fhevm',
+      format: 'es',
+    },
+    plugins: [...nodePlugins],
+    // Suppress warning
+    // https://rollupjs.org/troubleshooting/#warning-treating-module-as-external-dependency
+    external: ['ethers', 'fetch-retry', 'node-tfhe', 'node-tkms', 'keccak'],
   },
 ];

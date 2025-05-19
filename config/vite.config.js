@@ -17,6 +17,10 @@ export default defineConfig({
     outDir: 'bundle',
   },
   plugins: [
+    // Patch 'lib/web.js'
+    // Replace "const worker = new Worker(new URL('./workerHelpers.js', import.meta.url) ..."
+    // by a bunch of code to perform a more complex 'new Worker' object instantiation using a custom url
+    // (instead of the hardcoded 'new URL('./workerHelpers.js', import.meta.url)').
     changeLoadingWorker(basePath),
     ignoreURL(basePath),
     nodePolyfills(),

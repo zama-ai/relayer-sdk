@@ -1,5 +1,5 @@
-import { createEncryptedInput, EncryptedInput } from './encrypt';
-import { publicKey, publicKeyId, publicParams } from '../test';
+import { createEncryptedInput } from './encrypt';
+import { publicKey, publicParams } from '../test';
 
 describe('encrypt', () => {
   it('encrypt', async () => {

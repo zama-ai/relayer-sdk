@@ -9,16 +9,16 @@ fetchMock.post('https://test-relayer.net/v1/user-decrypt', {
   response: {},
 });
 
-const userKeypair = {
-  publicKey:
-    '0x2000000000000000f3efe739bc5c1f3ecc75ef238bb281358b6ad60a77a68b67888d8802c53e1c59',
-  privateKey:
-    '0x20000000000000001c0922c8007e42e2c5f1e6d3221c03703c868cf17636724fe43fb49383a4dfe4',
-};
+// const userKeypair = {
+//   publicKey:
+//     '0x2000000000000000f3efe739bc5c1f3ecc75ef238bb281358b6ad60a77a68b67888d8802c53e1c59',
+//   privateKey:
+//     '0x20000000000000001c0922c8007e42e2c5f1e6d3221c03703c868cf17636724fe43fb49383a4dfe4',
+// };
 
 describe('userDecrypt', () => {
   it('get user decryption for handle', async () => {
-    const userDecrypt = userDecryptRequest(
+    /* const userDecrypt = */ userDecryptRequest(
       [],
       54321,
       9000,
