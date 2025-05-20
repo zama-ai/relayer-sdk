@@ -18,7 +18,7 @@ fetchMock.post('https://test-relayer.net/v1/user-decrypt', {
 
 describe('userDecrypt', () => {
   it('get user decryption for handle', async () => {
-    /* const userDecrypt = */ userDecryptRequest(
+    userDecryptRequest(
       [],
       54321,
       9000,

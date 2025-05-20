@@ -9,7 +9,7 @@ fetchMock.post('https://test-relayer.net/v1/public-decrypt', {
 
 describe('publicDecrypt', () => {
   it('get public decryption for handle', async () => {
-    /* const public_decrypt = */ publicDecryptRequest(
+    publicDecryptRequest(
       [],
       1,
       54321,
