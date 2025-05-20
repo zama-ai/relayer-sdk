@@ -1,4 +1,4 @@
-import { getAddress, isAddress } from 'ethers';
+import { isAddress } from 'ethers';
 import {
   TfheCompactPublicKey,
   CompactCiphertextList,
@@ -11,9 +11,7 @@ import {
   fromHexString,
   SERIALIZED_SIZE_LIMIT_CIPHERTEXT,
 } from '../utils';
-import { ENCRYPTION_TYPES } from './encryptionTypes';
-
-type EncryptionTypes = keyof typeof ENCRYPTION_TYPES;
+import { EncryptionTypes } from './encryptionTypes';
 
 export type EncryptedInput = {
   addBool: (value: boolean | number | bigint) => EncryptedInput;

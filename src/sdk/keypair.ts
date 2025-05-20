@@ -26,13 +26,13 @@ export type EIP712 = {
 /**
  * Creates an EIP712 structure specifically for user decrypt requests
  *
- * @param gatewayChainId The chain ID of the gateway
- * @param verifyingContract The address of the contract that will verify the signature
- * @param publicKey The user's public key as a hex string or Uint8Array
- * @param contractAddresses Array of contract addresses that can access the decryption
- * @param contractsChainId The chain ID where the contracts are deployed
- * @param startTimestamp The timestamp when the decryption permission becomes valid
- * @param durationDays How many days the decryption permission remains valid
+ * @param gatewayChainId - The chain ID of the gateway
+ * @param verifyingContract - The address of the contract that will verify the signature
+ * @param publicKey - The user's public key as a hex string or Uint8Array
+ * @param contractAddresses - Array of contract addresses that can access the decryption
+ * @param contractsChainId - The chain ID where the contracts are deployed
+ * @param startTimestamp - The timestamp when the decryption permission becomes valid
+ * @param durationDays - How many days the decryption permission remains valid
  * @returns EIP712 typed data structure for user decryption
  */
 export const createEIP712 =

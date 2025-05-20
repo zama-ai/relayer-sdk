@@ -3,7 +3,7 @@
   "version": "0.1.0-1",
   "description": "fhevm Relayer SDK",
   "main": "lib/node.js",
-  "types": "lib/node/node.d.ts",
+  "types": "lib/node.d.ts",
   "browser": "lib/web.js",
   "type": "module",
   "bin": {
@@ -23,6 +23,7 @@
       "require": "./bundle.js"
     },
     "./node": {
+      "import": "./lib/node.js",
       "require": "./lib/node.cjs"
     }
   },
@@ -33,12 +34,18 @@
     "lint": "eslint src/",
     "generateKeys": "./generateKeys.js",
     "build": "npm run build:lib && npm run build:bundle",
-    "build:lib": "rollup -c config/rollup.config.js",
+    "build:lib": "npm run rollup:lib && npm run build:dts",
     "build:bundle": "vite build --config config/vite.config.js",
     "test": "jest --colors --passWithNoTests --coverage",
     "test:watch": "jest --colors --passWithNoTests --watch",
     "prettier": "prettier --write \"**/*.{js,json,md,sol,ts,yml}\"",
-    "prettier:check": "prettier --check \"**/*.{js,json,md,sol,ts,yml}\""
+    "prettier:check": "prettier --check \"**/*.{js,json,md,sol,ts,yml}\"",
+    "rollup:lib": "rollup -c config/rollup.config.js",
+    "clean": "rm -rf dist.tmp lib bundle coverage",
+    "clean:dts": "rm -rf dist.tmp",
+    "tsc:dts": "tsc --project config/tsconfig.dts.json",
+    "flatten:dts": "api-extractor run --local --config config/api-extractor.node.json && api-extractor run --local --config config/api-extractor.web.json",
+    "build:dts": "npm run clean:dts && npm run tsc:dts && npm run flatten:dts && npm run clean:dts"
   },
   "repository": {
     "type": "git",
@@ -64,6 +71,7 @@
   "devDependencies": {
     "@fetch-mock/jest": "^0.1.0",
     "@jest/globals": "^29.7.0",
+    "@microsoft/api-extractor": "^7.52.8",
     "@rollup/plugin-alias": "^5.1.0",
     "@rollup/plugin-commonjs": "^25.0.0",
     "@rollup/plugin-json": "^6.1.0",

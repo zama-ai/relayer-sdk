@@ -6,11 +6,10 @@ import {
   createEncryptedInput as createEncryptedInput,
   EncryptedInput,
 } from '../sdk/encrypt';
-import { ENCRYPTION_TYPES } from '../sdk/encryptionTypes';
+import { EncryptionTypes } from '../sdk/encryptionTypes';
 import { computeHandles } from './handles';
 import { ethers } from 'ethers';
 
-type EncryptionTypes = keyof typeof ENCRYPTION_TYPES;
 export const currentCiphertextVersion = () => {
   return 0;
 };

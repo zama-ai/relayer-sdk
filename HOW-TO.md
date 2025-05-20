@@ -12,3 +12,9 @@ Steps:
 6. Either push a PR to verify everything is green or test locally
    a. npm test
    b. npm run build
+
+## Updating exported types (ESM + CommonJS)
+
+1. Update named re-export `src/web.ts` (using wildcard synthax does not work in all situations when dealing with ESM)
+2. Update named re-export `bundle.d.ts` (using wildcard synthax does not work in all situations when dealing with ESM)
+3. No need to update `src/node.ts` (CommonJS is resolved without named re-export)

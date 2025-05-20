@@ -8,6 +8,8 @@ import initKMS, { InitInput as KMSInput } from 'tkms';
 // import wasmKMS from 'tkms/kms_lib_bg.wasm';
 import { threads } from 'wasm-feature-detect';
 
+export { KMSInput, TFHEInput };
+
 let initialized = false;
 
 export const initFhevm = async ({
