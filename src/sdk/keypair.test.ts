@@ -1,28 +1,34 @@
 import { fromHexString } from '../utils';
 import { generateKeypair, createEIP712 } from './keypair';
 import {
-  cryptobox_pk_to_u8vec,
-  cryptobox_sk_to_u8vec,
-  u8vec_to_cryptobox_pk,
-  u8vec_to_cryptobox_sk,
+  ml_kem_pke_pk_to_u8vec,
+  ml_kem_pke_sk_to_u8vec,
+  u8vec_to_ml_kem_pke_pk,
+  u8vec_to_ml_kem_pke_sk,
 } from 'node-tkms';
 
 describe('token', () => {
   it('generate a valid keypair', async () => {
     const keypair = generateKeypair();
 
-    expect(keypair.publicKey.length).toBe(80);
-    expect(keypair.privateKey.length).toBe(80);
+    const ml_kem_ct_pk_length = 1568; // for MlKem1024Params
+    const ml_kem_sk_len = 3168; // for MlKem1024Params
 
-    let pkBuf = cryptobox_pk_to_u8vec(
-      u8vec_to_cryptobox_pk(fromHexString(keypair.publicKey)),
-    );
-    expect(40).toBe(pkBuf.length);
+    // note that the keypair is in hex format
+    // so the length is double the byte length
+    // due to serialization, there's an additional 8 bytes
+    expect(keypair.publicKey.length).toBe((ml_kem_ct_pk_length + 8) * 2);
+    expect(keypair.privateKey.length).toBe((ml_kem_sk_len + 8) * 2);
 
-    let skBuf = cryptobox_sk_to_u8vec(
-      u8vec_to_cryptobox_sk(fromHexString(keypair.privateKey)),
+    let pkBuf = ml_kem_pke_pk_to_u8vec(
+      u8vec_to_ml_kem_pke_pk(fromHexString(keypair.publicKey)),
     );
-    expect(40).toBe(skBuf.length);
+    expect(ml_kem_ct_pk_length + 8).toBe(pkBuf.length);
+
+    let skBuf = ml_kem_pke_sk_to_u8vec(
+      u8vec_to_ml_kem_pke_sk(fromHexString(keypair.privateKey)),
+    );
+    expect(ml_kem_sk_len + 8).toBe(skBuf.length);
   });
 
   it('create a valid EIP712', async () => {
