@@ -220,6 +220,7 @@ export const userDecryptRequest =
       );
     }
 
+    // assume the KMS Signers have the correct order
     let indexedKmsSigners = kmsSigners.map((signer, index) => {
       return new_server_id_addr(index + 1, signer);
     });
