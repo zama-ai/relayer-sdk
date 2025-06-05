@@ -1,10 +1,10 @@
 import { isAddress } from 'ethers';
 import { toHexString } from '../utils';
 import {
-  cryptobox_keygen,
-  cryptobox_sk_to_u8vec,
-  cryptobox_pk_to_u8vec,
-  cryptobox_get_pk,
+  ml_kem_pke_keygen,
+  ml_kem_pke_sk_to_u8vec,
+  ml_kem_pke_pk_to_u8vec,
+  ml_kem_pke_get_pk,
 } from 'node-tkms';
 
 export type EIP712Type = { name: string; type: string };
@@ -142,9 +142,9 @@ export const createEIP712 =
   };
 
 export const generateKeypair = () => {
-  const keypair = cryptobox_keygen();
+  const keypair = ml_kem_pke_keygen();
   return {
-    publicKey: toHexString(cryptobox_pk_to_u8vec(cryptobox_get_pk(keypair))),
-    privateKey: toHexString(cryptobox_sk_to_u8vec(keypair)),
+    publicKey: toHexString(ml_kem_pke_pk_to_u8vec(ml_kem_pke_get_pk(keypair))),
+    privateKey: toHexString(ml_kem_pke_sk_to_u8vec(keypair)),
   };
 };

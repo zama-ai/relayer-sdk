@@ -1,9 +1,10 @@
 import { bytesToBigInt, fromHexString, toHexString } from '../utils';
 import {
-  u8vec_to_cryptobox_pk,
+  u8vec_to_ml_kem_pke_pk,
+  u8vec_to_ml_kem_pke_sk,
+  new_server_id_addr,
   new_client,
   process_user_decryption_resp_from_js,
-  u8vec_to_cryptobox_sk,
 } from 'node-tkms';
 import { ethers, getAddress } from 'ethers';
 import { DecryptedResults, checkEncryptedBits } from './decryptUtils';
@@ -183,8 +184,8 @@ export const userDecryptRequest =
     let pubKey;
     let privKey;
     try {
-      pubKey = u8vec_to_cryptobox_pk(fromHexString(publicKey));
-      privKey = u8vec_to_cryptobox_sk(fromHexString(privateKey));
+      pubKey = u8vec_to_ml_kem_pke_pk(fromHexString(publicKey));
+      privKey = u8vec_to_ml_kem_pke_sk(fromHexString(privateKey));
     } catch (e) {
       throw new Error('Invalid public or private key', { cause: e });
     }
@@ -219,7 +220,12 @@ export const userDecryptRequest =
       );
     }
 
-    const client = new_client(kmsSigners, userAddress, 'default');
+    // assume the KMS Signers have the correct order
+    let indexedKmsSigners = kmsSigners.map((signer, index) => {
+      return new_server_id_addr(index + 1, signer);
+    });
+
+    const client = new_client(indexedKmsSigners, userAddress, 'default');
 
     try {
       const buffer = new ArrayBuffer(32);
