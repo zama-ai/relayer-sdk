@@ -16,15 +16,18 @@
     },
     "./web": {
       "import": "./lib/web.js",
-      "require": "./lib/web.js"
+      "require": "./lib/web.js",
+      "types": "./lib/web.d.ts"
     },
     "./bundle": {
       "import": "./bundle.js",
-      "require": "./bundle.js"
+      "require": "./bundle.js",
+      "types": "./bundle.d.ts"
     },
     "./node": {
       "import": "./lib/node.js",
-      "require": "./lib/node.cjs"
+      "require": "./lib/node.cjs",
+      "types": "./lib/node.d.ts"
     }
   },
   "engines": {
