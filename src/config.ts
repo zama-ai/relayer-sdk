@@ -6,7 +6,7 @@ import {
   Provider,
 } from 'ethers';
 import { PublicParams } from './sdk/encrypt';
-import { getKeysFromRelayer } from './relayer/network';
+import { getKeysFromRelayer, getContractsFromRelayer } from './relayer/network';
 import {
   cleanURL,
   SERIALIZED_SIZE_LIMIT_PK,
@@ -174,3 +174,45 @@ export const getCoprocessorSignersThreshold = async (
   const threshold: bigint = await inputContract.getThreshold();
   return Number(threshold); // threshold is always supposed to fit in a number
 };
+
+
+const configCache: { [chain_id: string]: FhevmInstanceConfig } = {};
+export const getFhevmInstanceConfigFromRelayer = async (
+  url: string,
+  fhevm_chain_id: number,
+  public_key_id?: string | null,
+  network?: Eip1193Provider | string,
+) => {
+  // Try cache for configuration
+  if (configCache[fhevm_chain_id]) {
+    return configCache[fhevm_chain_id];
+  }
+
+  const [contracts, keys] = await Promise.all([getContractsFromRelayer(url, fhevm_chain_id),
+  getKeysFromRelayer(url, public_key_id)]);
+
+  let config: FhevmInstanceConfig = {
+    verifyingContractAddressDecryption: contracts.response.verifyingContractAddressDecryption,
+    verifyingContractAddressInputVerification: contracts.response.verifyingContractAddressInputVerification,
+    kmsContractAddress: contracts.response.kmsContractAddress,
+    inputVerifierContractAddress: contracts.response.inputVerifierContractAddress,
+    aclContractAddress: contracts.response.aclContractAddress,
+    gatewayChainId: contracts.response.gatewayChainId,
+    chainId: fhevm_chain_id,
+    relayerUrl: url,
+    network: network,
+    publicParams: keys.publicParams,
+    publicKey: {
+      data: keys.publicKey.safe_serialize(
+        SERIALIZED_SIZE_LIMIT_PK,
+      ),
+      id: keys.publicKeyId,
+    }
+  };
+  configCache[fhevm_chain_id] = config;
+  return config;
+};
+
+
+
+

@@ -34,7 +34,18 @@ import { fetchRelayerGet, RelayerKeyUrlResponse } from './fetchRelayer';
 //   status: string;
 // };
 
-const keyurlCache: { [key: string]: any } = {};
+export type Keys = {
+  publicKey: TfheCompactPublicKey;
+  publicKeyId: string;
+  publicParams: {
+    [n_bits: number]: {
+      publicParams: CompactPkeCrs;
+      publicParamsId: string;
+    };
+  };
+}
+
+const keyurlCache: { [key: string]: Keys } = {};
 export const getKeysFromRelayer = async (
   url: string,
   publicKeyId?: string | null,
@@ -159,3 +170,47 @@ export const getKeysFromRelayer = async (
     });
   }
 };
+
+
+export type Contracts = {
+  response: {
+    verifyingContractAddressDecryption: string;
+    verifyingContractAddressInputVerification: string;
+    kmsContractAddress: string,
+    inputVerifierContractAddress: string,
+    aclContractAddress: string,
+    gatewayChainId: number,
+  };
+  status: string;
+};
+
+
+const contractsCache: { [chain_id: string]: Contracts } = {};
+
+export const getContractsFromRelayer = async (
+  url: string,
+  chain_id: string | number,
+) => {
+  // Try cache for contracts
+  if (contractsCache[chain_id]) {
+    return contractsCache[chain_id];
+  }
+
+  // Try fetching them from the Relayer
+  try {
+    const response = await fetch(`${url}/v1/${chain_id}/contracts`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    if (response.status != 200) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data: Contracts = await response.json();
+    return data;
+  } catch (e) {
+    throw new Error('Impossible to fetch public key: wrong relayer url.', {
+      cause: e,
+    });
+  }
+};
+
