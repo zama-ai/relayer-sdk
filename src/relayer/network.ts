@@ -43,7 +43,7 @@ export type Keys = {
       publicParamsId: string;
     };
   };
-}
+};
 
 const keyurlCache: { [key: string]: Keys } = {};
 export const getKeysFromRelayer = async (
@@ -171,19 +171,18 @@ export const getKeysFromRelayer = async (
   }
 };
 
-
 export type Contracts = {
   response: {
     verifyingContractAddressDecryption: string;
     verifyingContractAddressInputVerification: string;
-    kmsContractAddress: string,
-    inputVerifierContractAddress: string,
-    aclContractAddress: string,
-    gatewayChainId: number,
+    kmsContractAddress: string;
+    inputVerifierContractAddress: string;
+    aclContractAddress: string;
+    decryptionOracle: string;
+    gatewayChainId: number;
   };
   status: string;
 };
-
 
 const contractsCache: { [chain_id: string]: Contracts } = {};
 
@@ -213,4 +212,3 @@ export const getContractsFromRelayer = async (
     });
   }
 };
-

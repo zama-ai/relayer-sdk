@@ -175,7 +175,6 @@ export const getCoprocessorSignersThreshold = async (
   return Number(threshold); // threshold is always supposed to fit in a number
 };
 
-
 const configCache: { [chain_id: string]: FhevmInstanceConfig } = {};
 export const getFhevmInstanceConfigFromRelayer = async (
   url: string,
@@ -188,14 +187,19 @@ export const getFhevmInstanceConfigFromRelayer = async (
     return configCache[fhevm_chain_id];
   }
 
-  const [contracts, keys] = await Promise.all([getContractsFromRelayer(url, fhevm_chain_id),
-  getKeysFromRelayer(url, public_key_id)]);
+  const [contracts, keys] = await Promise.all([
+    getContractsFromRelayer(url, fhevm_chain_id),
+    getKeysFromRelayer(url, public_key_id),
+  ]);
 
   let config: FhevmInstanceConfig = {
-    verifyingContractAddressDecryption: contracts.response.verifyingContractAddressDecryption,
-    verifyingContractAddressInputVerification: contracts.response.verifyingContractAddressInputVerification,
+    verifyingContractAddressDecryption:
+      contracts.response.verifyingContractAddressDecryption,
+    verifyingContractAddressInputVerification:
+      contracts.response.verifyingContractAddressInputVerification,
     kmsContractAddress: contracts.response.kmsContractAddress,
-    inputVerifierContractAddress: contracts.response.inputVerifierContractAddress,
+    inputVerifierContractAddress:
+      contracts.response.inputVerifierContractAddress,
     aclContractAddress: contracts.response.aclContractAddress,
     gatewayChainId: contracts.response.gatewayChainId,
     chainId: fhevm_chain_id,
@@ -203,16 +207,10 @@ export const getFhevmInstanceConfigFromRelayer = async (
     network: network,
     publicParams: keys.publicParams,
     publicKey: {
-      data: keys.publicKey.safe_serialize(
-        SERIALIZED_SIZE_LIMIT_PK,
-      ),
+      data: keys.publicKey.safe_serialize(SERIALIZED_SIZE_LIMIT_PK),
       id: keys.publicKeyId,
-    }
+    },
   };
   configCache[fhevm_chain_id] = config;
   return config;
 };
-
-
-
-
