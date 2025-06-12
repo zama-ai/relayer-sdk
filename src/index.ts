@@ -1,4 +1,4 @@
-import { isAddress } from 'ethers';
+import { isAddress, Eip1193Provider } from 'ethers';
 import {
   FhevmInstanceConfig,
   getChainId,
@@ -9,6 +9,7 @@ import {
   getProvider,
   getPublicParams,
   getTfheCompactPublicKey,
+  getFhevmInstanceConfigFromRelayer,
 } from './config';
 import {
   cleanURL,
@@ -73,6 +74,22 @@ export type FhevmInstance = {
     publicParams: Uint8Array;
     publicParamsId: string;
   } | null;
+};
+
+export const createInstanceFromRelayer = async (
+  url: string,
+  fhevm_chain_id: number,
+  public_key_id?: string | null,
+  network?: Eip1193Provider | string,
+) => {
+  return createInstance(
+    await getFhevmInstanceConfigFromRelayer(
+      url,
+      fhevm_chain_id,
+      public_key_id,
+      network,
+    ),
+  );
 };
 
 export const createInstance = async (
