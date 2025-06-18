@@ -1,8 +1,8 @@
 <p align="center">
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/zama-ai/fhevm/main/docs/.gitbook/assets/fhevm-header-dark.png">
-  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/zama-ai/fhevm/main/docs/.gitbook/assets/fhevm-header-light.png">
-  <img src="https://raw.githubusercontent.com/zama-ai/fhevm/main/docs/.gitbook/assets/fhevm-header-light.png" width="600" alt="FHEVM">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/.gitbook/assets/fhevm-header-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="docs/.gitbook/assets/fhevm-header-light.png">
+  <img width=500 alt="fhevm">
 </picture>
 </p>
 

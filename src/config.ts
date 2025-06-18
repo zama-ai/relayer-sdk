@@ -176,19 +176,26 @@ export const getCoprocessorSignersThreshold = async (
 };
 
 const configCache: { [chainId: string]: FhevmInstanceConfig } = {};
+
+/**
+ * @param {string}  relayerUrl - Relayer's URL.
+ * @param {number} chainId - FHEVM host chain id.
+ * @param {string=} [publicKeyId] - Optional public key id.
+ * @param {Eip1193Provider | string} [network] - Optional network.
+ */
 export const getFhevmInstanceConfigFromRelayer = async (
   relayerUrl: string,
-  fhevmChainId: number,
+  chainId: number,
   publicKeyId?: string | null,
   network?: Eip1193Provider | string,
 ) => {
   // Try cache for configuration
-  if (configCache[fhevmChainId]) {
-    return configCache[fhevmChainId];
+  if (configCache[chainId]) {
+    return configCache[chainId];
   }
 
   const [contracts, keys] = await Promise.all([
-    getContractsFromRelayer(relayerUrl, fhevmChainId),
+    getContractsFromRelayer(relayerUrl, chainId),
     getKeysFromRelayer(relayerUrl, publicKeyId),
   ]);
 
@@ -202,7 +209,7 @@ export const getFhevmInstanceConfigFromRelayer = async (
       contracts.response.inputVerifierContractAddress,
     aclContractAddress: contracts.response.aclContractAddress,
     gatewayChainId: contracts.response.gatewayChainId,
-    chainId: fhevmChainId,
+    chainId: chainId,
     relayerUrl: relayerUrl,
     network: network,
     publicParams: keys.publicParams,
@@ -211,6 +218,6 @@ export const getFhevmInstanceConfigFromRelayer = async (
       id: keys.publicKeyId,
     },
   };
-  configCache[fhevmChainId] = config;
+  configCache[chainId] = config;
   return config;
 };
