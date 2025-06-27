@@ -114,6 +114,9 @@ export const userDecryptRequest =
     durationDays: string | number,
   ): Promise<DecryptedResults> => {
     // Casting handles if string
+    const signatureSanitized = signature.replace(/^(0x)/, '');
+    const publicKeySanitized = publicKey.replace(/^(0x)/, '');
+
     const handles: HandleContractPairRelayer[] = _handles.map((h) => ({
       handle:
         typeof h.handle === 'string'
@@ -170,8 +173,8 @@ export const userDecryptRequest =
       contractsChainId: chainId.toString(), // Convert to string
       contractAddresses: contractAddresses.map((c) => getAddress(c)),
       userAddress: getAddress(userAddress),
-      signature: signature.replace(/^(0x)/, ''),
-      publicKey: publicKey.replace(/^(0x)/, ''),
+      signature: signatureSanitized,
+      publicKey: publicKeySanitized,
     };
 
     const options = {
@@ -241,9 +244,9 @@ export const userDecryptRequest =
       };
 
       const payloadForVerification = {
-        signature,
+        signature: signatureSanitized,
         client_address: userAddress,
-        enc_key: publicKey.replace(/^0x/, ''),
+        enc_key: publicKeySanitized,
         ciphertext_handles: handles.map((h) => h.handle.replace(/^0x/, '')),
         eip712_verifying_contract: verifyingContractAddress,
       };
