@@ -12,6 +12,7 @@ export {
   createEIP712,
   EIP712,
   EIP712Type,
+  SepoliaConfig,
 } from './index';
 export { FhevmInstanceConfig } from './config';
 export { createTfheKeypair, createTfhePublicKey } from './tfhe';
