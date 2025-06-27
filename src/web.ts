@@ -11,6 +11,7 @@ export {
   generateKeypair,
   createEIP712,
   EIP712,
+  SepoliaConfig,
   EIP712Type,
 } from './index';
 
