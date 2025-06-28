@@ -27,11 +27,6 @@ const webPlugins = [
   json(),
   url(),
   nodePolyfills(),
-  replace({
-    preventAssignment: true,
-    'node-tfhe': 'tfhe',
-    'node-tkms': 'tkms',
-  }),
   typescript({
     tsconfig: './tsconfig.rollup.json',
   }),

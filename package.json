@@ -65,9 +65,9 @@
     "ethers": "^6.13.4",
     "fetch-retry": "^6.0.0",
     "keccak": "^3.0.4",
-    "node-tfhe": "^1.1.2",
+    "node-tfhe": "^1.1.3",
     "node-tkms": "0.11.0-rc17",
-    "tfhe": "^1.1.2",
+    "tfhe": "^1.1.3",
     "tkms": "0.11.0-rc17",
     "wasm-feature-detect": "^1.8.0"
   },

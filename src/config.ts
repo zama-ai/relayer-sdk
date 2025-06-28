@@ -12,7 +12,6 @@ import {
   SERIALIZED_SIZE_LIMIT_PK,
   SERIALIZED_SIZE_LIMIT_CRS,
 } from './utils';
-import { CompactPkeCrs, TfheCompactPublicKey } from 'node-tfhe';
 
 const abiKmsVerifier = [
   'function getKmsSigners() view returns (address[])',
@@ -68,7 +67,10 @@ export const getChainId = async (
 
 export const getTfheCompactPublicKey = async (
   config: FhevmInstanceConfig,
-): Promise<{ publicKey: TfheCompactPublicKey; publicKeyId: string }> => {
+): Promise<{
+  publicKey: TFHE['TfheCompactPublicKey'];
+  publicKeyId: string;
+}> => {
   if (config.relayerUrl && !config.publicKey) {
     const inputs = await getKeysFromRelayer(cleanURL(config.relayerUrl));
     return { publicKey: inputs.publicKey, publicKeyId: inputs.publicKeyId };
@@ -76,7 +78,7 @@ export const getTfheCompactPublicKey = async (
     const buff = config.publicKey.data;
     try {
       return {
-        publicKey: TfheCompactPublicKey.safe_deserialize(
+        publicKey: TFHE.TfheCompactPublicKey.safe_deserialize(
           buff,
           SERIALIZED_SIZE_LIMIT_PK,
         ),
@@ -103,7 +105,7 @@ export const getPublicParams = async (
     try {
       return {
         2048: {
-          publicParams: CompactPkeCrs.safe_deserialize(
+          publicParams: TFHE.CompactPkeCrs.safe_deserialize(
             buff,
             SERIALIZED_SIZE_LIMIT_CRS,
           ),

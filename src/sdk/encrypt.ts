@@ -1,10 +1,4 @@
 import { isAddress } from 'ethers';
-import {
-  TfheCompactPublicKey,
-  CompactCiphertextList,
-  CompactPkeCrs,
-  ZkComputeLoad,
-} from 'node-tfhe';
 
 import {
   bytesToBigInt,
@@ -48,14 +42,14 @@ const checkEncryptedValue = (value: number | bigint, bits: number) => {
   }
 };
 
-export type PublicParams<T = CompactPkeCrs> = {
+export type PublicParams<T = TFHE['CompactPkeCrs']> = {
   [key in EncryptionTypes]?: { publicParams: T; publicParamsId: string };
 };
 
 export type EncryptInputParams = {
   aclContractAddress: string;
   chainId: number;
-  tfheCompactPublicKey: TfheCompactPublicKey;
+  tfheCompactPublicKey: TFHE['TfheCompactPublicKey'];
   publicParams: PublicParams;
   contractAddress: string;
   userAddress: string;
@@ -76,9 +70,9 @@ export const createEncryptedInput = ({
   if (!isAddress(userAddress)) {
     throw new Error('User address is not a valid address.');
   }
-  const publicKey: TfheCompactPublicKey = tfheCompactPublicKey;
+  const publicKey: TFHE['TfheCompactPublicKey'] = tfheCompactPublicKey;
   const bits: EncryptionTypes[] = [];
-  const builder = CompactCiphertextList.builder(publicKey);
+  const builder = TFHE.CompactCiphertextList.builder(publicKey);
   let ciphertextWithZKProof: Uint8Array = new Uint8Array(); // updated in `_prove`
   const checkLimit = (added: number) => {
     if (bits.reduce((acc, val) => acc + Math.max(2, val), 0) + added > 2048) {
@@ -233,7 +227,7 @@ export const createEncryptedInput = ({
       const encrypted = builder.build_with_proof_packed(
         pp,
         auxData,
-        ZkComputeLoad.Verify,
+        TFHE.ZkComputeLoad.Verify,
       );
       ciphertextWithZKProof = encrypted.safe_serialize(
         SERIALIZED_SIZE_LIMIT_CIPHERTEXT,
