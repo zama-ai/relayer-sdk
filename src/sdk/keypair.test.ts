@@ -35,7 +35,6 @@ describe('token', () => {
     const keypair = generateKeypair();
 
     const eip712 = createEIP712(
-      1234,
       '0x8ba1f109551bd432803012645ac136ddd64dba72',
       12345,
     )(
@@ -45,7 +44,7 @@ describe('token', () => {
       86400,
     );
 
-    expect(eip712.domain.chainId).toBe(1234);
+    expect(eip712.domain.chainId).toBe(12345);
     expect(eip712.domain.name).toBe('Decryption');
     expect(eip712.domain.version).toBe('1');
     expect(eip712.message.publicKey).toBe(`0x${keypair.publicKey}`);
@@ -61,7 +60,6 @@ describe('token', () => {
     const keypair = generateKeypair();
 
     const eip712 = createEIP712(
-      1234,
       '0x8ba1f109551bd432803012645ac136ddd64dba72',
       12345,
     )(
@@ -72,7 +70,7 @@ describe('token', () => {
       '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
     );
 
-    expect(eip712.domain.chainId).toBe(1234);
+    expect(eip712.domain.chainId).toBe(12345);
     expect(eip712.domain.name).toBe('Decryption');
     expect(eip712.domain.version).toBe('1');
     expect(eip712.message.publicKey).toBe(`0x${keypair.publicKey}`);
@@ -137,7 +135,7 @@ describe('token', () => {
     const keypair = generateKeypair();
 
     expect(() =>
-      createEIP712(1234, '0x8ba1f109551bd432803012645ac136ddd64dba72', 12345)(
+      createEIP712('0x8ba1f109551bd432803012645ac136ddd64dba72', 12345)(
         keypair.publicKey,
         ['99'],
         Date.now(),
@@ -145,7 +143,7 @@ describe('token', () => {
       ),
     ).toThrow('Invalid contract address.');
     expect(() =>
-      createEIP712(1234, '0x8ba1f109551bd432803012645ac136ddd64dba72', 12345)(
+      createEIP712('0x8ba1f109551bd432803012645ac136ddd64dba72', 12345)(
         keypair.publicKey,
         ['0x8ba1f109551bd432803012645ac136ddd64dba72'],
         Date.now(),

@@ -175,11 +175,7 @@ export const createInstance = async (
       thresholdCoprocessorSigners,
     ),
     generateKeypair,
-    createEIP712: createEIP712(
-      gatewayChainId,
-      verifyingContractAddressDecryption,
-      chainId,
-    ),
+    createEIP712: createEIP712(verifyingContractAddressDecryption, chainId),
     publicDecrypt: publicDecryptRequest(
       kmsSigners,
       thresholdKMSSigners,
