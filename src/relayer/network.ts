@@ -1,4 +1,3 @@
-import { CompactPkeCrs, TfheCompactPublicKey } from 'node-tfhe';
 import { SERIALIZED_SIZE_LIMIT_PK, SERIALIZED_SIZE_LIMIT_CRS } from '../utils';
 
 export type RelayerKeysItem = {
@@ -97,11 +96,20 @@ export const getKeysFromRelayer = async (
           `HTTP error! status: ${publicParams2048Response.status} on ${publicParams2048Response.url}`,
         );
       }
-      const publicParams2048 = await publicParams2048Response.bytes();
+
+      let publicParams2048: Uint8Array;
+      if (typeof publicParams2048Response.bytes === 'function') {
+        // bytes is not widely supported yet
+        publicParams2048 = await publicParams2048Response.bytes();
+      } else {
+        publicParams2048 = new Uint8Array(
+          await publicParams2048Response.arrayBuffer(),
+        );
+      }
 
       let pub_key;
       try {
-        pub_key = TfheCompactPublicKey.safe_deserialize(
+        pub_key = TFHE.TfheCompactPublicKey.safe_deserialize(
           publicKey,
           SERIALIZED_SIZE_LIMIT_PK,
         );
@@ -113,7 +121,7 @@ export const getKeysFromRelayer = async (
 
       let crs;
       try {
-        crs = CompactPkeCrs.safe_deserialize(
+        crs = TFHE.CompactPkeCrs.safe_deserialize(
           new Uint8Array(publicParams2048),
           SERIALIZED_SIZE_LIMIT_CRS,
         );

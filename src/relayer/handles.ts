@@ -41,9 +41,9 @@ export const computeHandles = (
       throw new Error('ChainId exceeds maximum allowed value (8 bytes)'); // fhevm assumes chainID is only taking up to 8 bytes
     }
 
-    const chainId8Bytes = chainId32Bytes.slice(24, 32);
+    const chainId8Bytes = fromHexString(hex).slice(24, 32);
     dataInput[21] = encryptionIndex;
-    chainId8Bytes.copy(dataInput, 22);
+    dataInput.set(chainId8Bytes, 22);
     dataInput[30] = encryptionType;
     dataInput[31] = ciphertextVersion;
 

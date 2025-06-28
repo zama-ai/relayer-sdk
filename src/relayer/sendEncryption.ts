@@ -1,5 +1,4 @@
 import { getAddress, isAddress } from 'ethers';
-import { TfheCompactPublicKey, CompactPkeCrs } from 'node-tfhe';
 
 import { fromHexString, numberToHex, toHexString } from '../utils';
 import {
@@ -72,7 +71,7 @@ export type RelayerEncryptedInput = {
   }>;
 };
 
-export type PublicParams<T = CompactPkeCrs> = {
+export type PublicParams<T = TFHE['CompactPkeCrs']> = {
   [key in EncryptionTypes]?: { publicParams: T; publicParamsId: string };
 };
 
@@ -83,7 +82,7 @@ export const createRelayerEncryptedInput =
     chainId: number,
     gatewayChainId: number,
     relayerUrl: string,
-    tfheCompactPublicKey: TfheCompactPublicKey,
+    tfheCompactPublicKey: TFHE['TfheCompactPublicKey'],
     publicParams: PublicParams,
     coprocessorSigners: string[],
     thresholdCoprocessorSigners: number,

@@ -1,12 +1,3 @@
-const waitForFunction =
-  (functionName) =>
-  async (...params) => {
-    if (window && window.fhevm) {
-      return window.fhevm[functionName](...params);
-    }
-  };
-
-const initFhevm = waitForFunction('initFhevm');
-const createInstance = waitForFunction('createInstance');
-
-export { initFhevm, createInstance };
+export const initFhevm = window.fhevm.initFhevm;
+export const createInstance = window.fhevm.createInstance;
+export const SepoliaConfig = window.fhevm.SepoliaConfig;
