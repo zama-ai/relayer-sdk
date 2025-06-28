@@ -18,6 +18,11 @@ jobs:
         id: package-version
         run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
       - run: BASE_PATH=https://cdn.zama.ai/relayer-sdk-js/${{ steps.package-version.outputs.version }}/ npm run build
+      - name: Archive bundle
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: relayer-sdk-js-bundle-${{ steps.package-version.outputs.version }}
+          path: ./bundle
       - uses: shallwefootball/s3-upload-action@0d261a6f15b3b2e209dfebdecace4b100c04f95b
         with:
           aws_key_id: ${{ secrets.AWS_ACCESS_KEY_S3_USER }}
