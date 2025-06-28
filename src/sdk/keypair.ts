@@ -30,11 +30,7 @@ export type EIP712 = {
  * @returns EIP712 typed data structure for user decryption
  */
 export const createEIP712 =
-  (
-    gatewayChainId: number,
-    verifyingContract: string,
-    contractsChainId: number,
-  ) =>
+  (verifyingContract: string, contractsChainId: number) =>
   (
     publicKey: string | Uint8Array,
     contractAddresses: string[],
@@ -79,7 +75,7 @@ export const createEIP712 =
     const domain = {
       name: 'Decryption',
       version: '1',
-      chainId: gatewayChainId,
+      chainId: contractsChainId,
       verifyingContract,
     };
 
