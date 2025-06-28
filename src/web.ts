@@ -16,6 +16,7 @@ import {
   ml_kem_pke_keygen,
   ml_kem_pke_pk_to_u8vec,
   ml_kem_pke_sk_to_u8vec,
+  ml_kem_pke_get_pk,
 } from 'tkms';
 window.TFHE = {
   default: initTFHE,
@@ -35,6 +36,7 @@ window.TKMS = {
   ml_kem_pke_keygen,
   ml_kem_pke_pk_to_u8vec,
   ml_kem_pke_sk_to_u8vec,
+  ml_kem_pke_get_pk,
 };
 
 export { InitInput as TFHEInput } from 'tfhe';
