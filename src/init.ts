@@ -12,7 +12,7 @@ export { KMSInput, TFHEInput };
 
 let initialized = false;
 
-export const initFhevm = async ({
+export const initSDK = async ({
   tfheParams,
   kmsParams,
   thread,

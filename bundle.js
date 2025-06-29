@@ -1,3 +1,3 @@
-export const initFhevm = window.fhevm.initFhevm;
-export const createInstance = window.fhevm.createInstance;
-export const SepoliaConfig = window.fhevm.SepoliaConfig;
+export const initSDK = window.relayerSDK.initSDK;
+export const createInstance = window.relayerSDK.createInstance;
+export const SepoliaConfig = window.relayerSDK.SepoliaConfig;

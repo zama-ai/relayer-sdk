@@ -10,7 +10,7 @@ export default defineConfig({
   base: basePath,
   build: {
     lib: {
-      name: 'relayer-sdk-js',
+      name: 'relayerSDK',
       fileName: 'relayer-sdk-js',
       entry: ['lib/web.js'],
     },
