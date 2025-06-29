@@ -8,7 +8,11 @@ export const prependHttps = (host) => {
 export const toHexString = (bytes) =>
   bytes.reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), '');
 
-export const throwError = (error) => {
-  console.error(`Error: ${error}`);
+export const throwError = (error, cause) => {
+  if (cause) {
+    console.error(`Error: ${error} with cause: ${cause}`);
+  } else {
+    console.error(`Error: ${error}`);
+  }
   process.exit();
 };
