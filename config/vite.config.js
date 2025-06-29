@@ -10,8 +10,8 @@ export default defineConfig({
   base: basePath,
   build: {
     lib: {
-      name: 'fhevm',
-      fileName: 'fhevm',
+      name: 'relayer-sdk-js',
+      fileName: 'relayer-sdk-js',
       entry: ['lib/web.js'],
     },
     outDir: 'bundle',
