@@ -14,8 +14,7 @@ const getInstance = async (networkUrl) => {
 
   try {
     // NOTE: hack to get the instance created
-    let config = SepoliaConfig;
-    config.network = networkUrl;
+    const config = { ...SepoliaConfig, network: networkUrl };
     console.debug(`Using network ${config.network}`);
     _instance = await createInstance(config);
   } catch (e) {
