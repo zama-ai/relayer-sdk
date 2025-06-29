@@ -12,6 +12,6 @@ export {
   EncryptionTypes,
   ENCRYPTION_TYPES,
   DecryptedResults,
-  initFhevm,
+  initSDK,
   SepoliaConfig,
 } from './lib/web';

@@ -60,4 +60,4 @@ export {
   EIP712Type,
 } from './index';
 
-export { initFhevm } from './init';
+export { initSDK } from './init';
