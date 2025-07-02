@@ -92,30 +92,6 @@ describe('encrypt', () => {
     expect(handles.length).toBe(1);
   });
 
-  it('encrypt one 2048 value', async () => {
-    const input = createRelayerEncryptedInput(
-      aclContractAddress,
-      verifyingContractAddressInputVerification,
-      chainId,
-      gatewayChainId,
-      relayerUrl,
-      publicKey,
-      publicParams,
-      [],
-      0,
-    )(
-      '0x8ba1f109551bd432803012645ac136ddd64dba72',
-      '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
-    );
-    const data = new Uint8Array(256);
-    data.set([255], 63);
-    input.addBytes256(data);
-    autoMock(input);
-    const { handles, inputProof } = await input.encrypt();
-    expect(inputProof).toBeDefined();
-    expect(handles.length).toBe(1);
-  });
-
   it('throws errors', async () => {
     expect(() =>
       createRelayerEncryptedInput(
@@ -222,7 +198,14 @@ describe('encrypt', () => {
       '0x8ba1f109551bd432803012645ac136ddd64dba72',
       '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
     );
-    input2.addBytes256(new Uint8Array(256));
+    input2.add256(242);
+    input2.add256(242);
+    input2.add256(242);
+    input2.add256(242);
+    input2.add256(242);
+    input2.add256(242);
+    input2.add256(242);
+    input2.add256(242);
     expect(() => input2.addBool(false)).toThrow(
       'Packing more than 2048 bits in a single input ciphertext is unsupported',
     );
