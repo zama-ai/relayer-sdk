@@ -8,6 +8,7 @@ import {
 import { EncryptionTypes } from '../sdk/encryptionTypes';
 import { computeHandles } from './handles';
 import { ethers } from 'ethers';
+import { TFHEType } from '../tfheType';
 
 export const currentCiphertextVersion = () => {
   return 0;
@@ -71,7 +72,7 @@ export type RelayerEncryptedInput = {
   }>;
 };
 
-export type PublicParams<T = TFHE['CompactPkeCrs']> = {
+export type PublicParams<T = TFHEType['CompactPkeCrs']> = {
   [key in EncryptionTypes]?: { publicParams: T; publicParamsId: string };
 };
 
@@ -82,7 +83,7 @@ export const createRelayerEncryptedInput =
     chainId: number,
     gatewayChainId: number,
     relayerUrl: string,
-    tfheCompactPublicKey: TFHE['TfheCompactPublicKey'],
+    tfheCompactPublicKey: TFHEType['TfheCompactPublicKey'],
     publicParams: PublicParams,
     coprocessorSigners: string[],
     thresholdCoprocessorSigners: number,

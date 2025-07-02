@@ -5,6 +5,8 @@ global.TFHE = TFHEPkg;
 global.TKMS = TKMSPkg;
 
 // CommonJS no need to perform explicit named re-export. Wildcard is enough.
+export { TFHEType } from './tfheType';
+
 export {
   RelayerEncryptedInput,
   PublicParams,

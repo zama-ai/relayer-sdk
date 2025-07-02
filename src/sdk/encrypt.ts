@@ -6,6 +6,7 @@ import {
   SERIALIZED_SIZE_LIMIT_CIPHERTEXT,
 } from '../utils';
 import { EncryptionTypes } from './encryptionTypes';
+import { TFHEType } from '../tfheType';
 
 export type EncryptedInput = {
   addBool: (value: boolean | number | bigint) => EncryptedInput;
@@ -42,14 +43,14 @@ const checkEncryptedValue = (value: number | bigint, bits: number) => {
   }
 };
 
-export type PublicParams<T = TFHE['CompactPkeCrs']> = {
+export type PublicParams<T = TFHEType['CompactPkeCrs']> = {
   [key in EncryptionTypes]?: { publicParams: T; publicParamsId: string };
 };
 
 export type EncryptInputParams = {
   aclContractAddress: string;
   chainId: number;
-  tfheCompactPublicKey: TFHE['TfheCompactPublicKey'];
+  tfheCompactPublicKey: TFHEType['TfheCompactPublicKey'];
   publicParams: PublicParams;
   contractAddress: string;
   userAddress: string;
@@ -70,7 +71,7 @@ export const createEncryptedInput = ({
   if (!isAddress(userAddress)) {
     throw new Error('User address is not a valid address.');
   }
-  const publicKey: TFHE['TfheCompactPublicKey'] = tfheCompactPublicKey;
+  const publicKey: TFHEType['TfheCompactPublicKey'] = tfheCompactPublicKey;
   const bits: EncryptionTypes[] = [];
   const builder = TFHE.CompactCiphertextList.builder(publicKey);
   let ciphertextWithZKProof: Uint8Array = new Uint8Array(); // updated in `_prove`
