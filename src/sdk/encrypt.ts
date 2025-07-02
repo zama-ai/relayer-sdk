@@ -6,7 +6,7 @@ import {
   SERIALIZED_SIZE_LIMIT_CIPHERTEXT,
 } from '../utils';
 import { EncryptionTypes } from './encryptionTypes';
-import { TFHEType } from '../tfhe_tkms_types';
+import { TFHEType } from '../tfheType';
 
 export type EncryptedInput = {
   addBool: (value: boolean | number | bigint) => EncryptedInput;

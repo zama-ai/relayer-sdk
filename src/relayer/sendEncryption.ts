@@ -8,7 +8,7 @@ import {
 import { EncryptionTypes } from '../sdk/encryptionTypes';
 import { computeHandles } from './handles';
 import { ethers } from 'ethers';
-import { TFHEType } from '../tfhe_tkms_types';
+import { TFHEType } from '../tfheType';
 
 export const currentCiphertextVersion = () => {
   return 0;

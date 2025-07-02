@@ -12,7 +12,7 @@ import {
   SERIALIZED_SIZE_LIMIT_PK,
   SERIALIZED_SIZE_LIMIT_CRS,
 } from './utils';
-import { TFHEType } from './tfhe_tkms_types';
+import { TFHEType } from './tfheType';
 
 const abiKmsVerifier = [
   'function getKmsSigners() view returns (address[])',

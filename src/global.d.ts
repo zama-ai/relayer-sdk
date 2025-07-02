@@ -1,5 +1,6 @@
-// Import the types from 'tfhe_tkms_types.d.ts' (see comments in tfhe_tkms_types.ts)
-import { TFHEType, TKMSType } from "./tfhe_tkms_types";
+// see comments in tfheType.ts
+import { TFHEType } from "./tfheType";
+import { TKMSType } from "./tkmsType";
 
 declare module '*.bin' {
   var data: Uint8Array;
