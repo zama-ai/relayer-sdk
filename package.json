@@ -10,10 +10,6 @@
     "relayer": "bin/relayer.js"
   },
   "exports": {
-    ".": {
-      "import": "./lib/web.js",
-      "require": "./lib/node.cjs"
-    },
     "./web": {
       "import": "./lib/web.js",
       "require": "./lib/web.js",
