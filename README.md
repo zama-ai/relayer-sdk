@@ -1,6 +1,11 @@
 <p align="center">
-<img width=600 src="https://github.com/user-attachments/assets/6173e401-7c1b-4911-9731-ca2eb436e85f" />
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/zama-ai/fhevm/main/docs/.gitbook/assets/fhevm-header-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/zama-ai/fhevm/main/docs/.gitbook/assets/fhevm-header-light.png">
+  <img src="https://raw.githubusercontent.com/zama-ai/fhevm/main/docs/.gitbook/assets/fhevm-header-light.png" width="600" alt="FHEVM">
+</picture>
 </p>
+
 <hr/>
 <p align="center">
   <!-- TODO: Migrate documentation links to https://docs.zama.ai/relayer -->
