@@ -12,6 +12,7 @@ import {
   SERIALIZED_SIZE_LIMIT_PK,
   SERIALIZED_SIZE_LIMIT_CRS,
 } from './utils';
+import { TFHEType } from './tfhe_tkms_types';
 
 const abiKmsVerifier = [
   'function getKmsSigners() view returns (address[])',
@@ -68,7 +69,7 @@ export const getChainId = async (
 export const getTfheCompactPublicKey = async (
   config: FhevmInstanceConfig,
 ): Promise<{
-  publicKey: TFHE['TfheCompactPublicKey'];
+  publicKey: TFHEType['TfheCompactPublicKey'];
   publicKeyId: string;
 }> => {
   if (config.relayerUrl && !config.publicKey) {
