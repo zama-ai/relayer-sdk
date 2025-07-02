@@ -107,9 +107,8 @@ export const publicDecryptRequest =
               ? toHexString(fromHexString(_handle), true)
               : toHexString(_handle, true);
 
-          const isAllowedForDecryption = await acl.isAllowedForDecryption(
-            handle,
-          );
+          const isAllowedForDecryption =
+            await acl.isAllowedForDecryption(handle);
           if (!isAllowedForDecryption) {
             throw new Error(
               `Handle ${handle} is not allowed for public decryption!`,

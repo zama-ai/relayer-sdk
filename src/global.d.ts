@@ -1,6 +1,6 @@
 // see comments in tfheType.ts
-import { TFHEType } from "./tfheType";
-import { TKMSType } from "./tkmsType";
+import { TFHEType } from './tfheType';
+import { TKMSType } from './tkmsType';
 
 declare module '*.bin' {
   var data: Uint8Array;

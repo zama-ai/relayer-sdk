@@ -6,9 +6,9 @@
 // - tfheType.ts
 // - tfheType.d.ts
 // to satisfy both import cases: import in a .ts file and import in a .d.ts file
-// If not either: 
+// If not either:
 // - api-extractor raises an error
-// or 
+// or
 // - TFHEType is not exported resulting in future tsc compile error each time relayer-sdk is imported.
 
 export type TFHEType = {
