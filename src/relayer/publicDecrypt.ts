@@ -43,9 +43,6 @@ const CiphertextType: Record<number, 'bool' | 'uint256' | 'address' | 'bytes'> =
     6: 'uint256',
     7: 'address',
     8: 'uint256',
-    9: 'bytes',
-    10: 'bytes',
-    11: 'bytes',
   };
 
 function deserializeDecryptedResult(

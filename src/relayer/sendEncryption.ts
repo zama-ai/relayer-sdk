@@ -61,9 +61,6 @@ export type RelayerEncryptedInput = {
   add64: (value: number | bigint) => RelayerEncryptedInput;
   add128: (value: number | bigint) => RelayerEncryptedInput;
   add256: (value: number | bigint) => RelayerEncryptedInput;
-  addBytes64: (value: Uint8Array) => RelayerEncryptedInput;
-  addBytes128: (value: Uint8Array) => RelayerEncryptedInput;
-  addBytes256: (value: Uint8Array) => RelayerEncryptedInput;
   addAddress: (value: string) => RelayerEncryptedInput;
   getBits: () => EncryptionTypes[];
   encrypt: () => Promise<{
@@ -137,18 +134,6 @@ export const createRelayerEncryptedInput =
       },
       add256(value: number | bigint) {
         input.add256(value);
-        return this;
-      },
-      addBytes64(value: Uint8Array) {
-        input.addBytes64(value);
-        return this;
-      },
-      addBytes128(value: Uint8Array) {
-        input.addBytes128(value);
-        return this;
-      },
-      addBytes256(value: Uint8Array) {
-        input.addBytes256(value);
         return this;
       },
       addAddress(value: string) {

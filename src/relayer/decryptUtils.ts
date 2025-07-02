@@ -10,9 +10,6 @@ const NumEncryptedBits: Record<number, number> = {
   6: 128, // euint128
   7: 160, // eaddress
   8: 256, // euint256
-  9: 512, // ebytes64
-  10: 1024, // ebytes128
-  11: 2048, // ebytes256
 } as const;
 
 export function checkEncryptedBits(handles: string[]) {
