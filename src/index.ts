@@ -42,6 +42,7 @@ export { HandleContractPair } from './relayer/userDecrypt';
 export { PublicParams } from './sdk/encrypt';
 export { EncryptionTypes, ENCRYPTION_TYPES } from './sdk/encryptionTypes';
 export { DecryptedResults } from './relayer/decryptUtils';
+export { getErrorCauseStatus, getErrorCauseCode } from './relayer/error';
 
 export type FhevmInstance = {
   createEncryptedInput: (

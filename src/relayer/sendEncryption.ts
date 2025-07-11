@@ -1,4 +1,4 @@
-import { getAddress, isAddress } from 'ethers';
+import { isAddress, getAddress as ethersGetAddress } from 'ethers';
 
 import { fromHexString, numberToHex, toHexString } from '../utils';
 import {
@@ -9,6 +9,16 @@ import { EncryptionTypes } from '../sdk/encryptionTypes';
 import { computeHandles } from './handles';
 import { ethers } from 'ethers';
 import { TFHEType } from '../tfheType';
+import { throwRelayerInternalError } from './error';
+import {
+  fetchRelayerJsonRpcPost,
+  RelayerFetchResponseJson,
+  RelayerInputProofPayload,
+} from './fetchRelayer';
+
+// Add type checking
+const getAddress = (value: string): `0x${string}` =>
+  ethersGetAddress(value) as `0x${string}`;
 
 export const currentCiphertextVersion = () => {
   return 0;
@@ -48,6 +58,25 @@ export type FhevmRelayerInputProofResponse = {
   };
   status: string;
 };
+
+function isFhevmRelayerInputProofResponse(
+  json: RelayerFetchResponseJson,
+): json is FhevmRelayerInputProofResponse {
+  const response = json.response as unknown;
+  if (typeof response !== 'object' || response === null) {
+    return false;
+  }
+  if (!('handles' in response && Array.isArray(response.handles))) {
+    return false;
+  }
+  if (!('signatures' in response && Array.isArray(response.signatures))) {
+    return false;
+  }
+  return (
+    response.signatures.every((s) => typeof s === 'string') &&
+    response.handles.every((h) => typeof h === 'string')
+  );
+}
 
 export type RelayerEncryptedInputInternal = RelayerEncryptedInput & {
   _input: EncryptedInput;
@@ -143,49 +172,36 @@ export const createRelayerEncryptedInput =
       getBits(): EncryptionTypes[] {
         return input.getBits();
       },
-      encrypt: async (opts?: { apiKey?: string }) => {
+      encrypt: async (options?: { apiKey?: string }) => {
         const bits = input.getBits();
         const ciphertext = input.encrypt();
-        // https://github.com/zama-ai/fhevm-relayer/blob/978b08f62de060a9b50d2c6cc19fd71b5fb8d873/src/input_http_listener.rs#L13C1-L22C1
-        const payload = {
+
+        const payload: RelayerInputProofPayload = {
           contractAddress: getAddress(contractAddress),
           userAddress: getAddress(userAddress),
           ciphertextWithInputVerification: toHexString(ciphertext),
-          contractChainId: '0x' + chainId.toString(16),
+          contractChainId: ('0x' + chainId.toString(16)) as `0x${string}`,
         };
-        const options = {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(opts?.apiKey && { 'x-api-key': opts.apiKey }),
-          },
-          body: JSON.stringify(payload),
-        };
-        const url = `${relayerUrl}/v1/input-proof`;
-        let json: FhevmRelayerInputProofResponse;
-        const response = await fetch(url, options);
-        if (!response.ok) {
-          throw new Error(
-            `Relayer didn't response correctly. Bad status ${
-              response.statusText
-            }. Content: ${await response.text()}`,
-          );
-        }
-        try {
-          json = await response.json();
-        } catch (e) {
-          throw new Error("Relayer didn't response correctly. Bad JSON.", {
-            cause: e,
-          });
+
+        const json = await fetchRelayerJsonRpcPost(
+          'INPUT_PROOF',
+          `${relayerUrl}/v1/input-proof`,
+          payload,
+          options,
+        );
+
+        if (!isFhevmRelayerInputProofResponse(json)) {
+          throwRelayerInternalError('INPUT_PROOF', json);
         }
 
-        const handles = computeHandles(
+        const handles: Uint8Array[] = computeHandles(
           ciphertext,
           bits,
           aclContractAddress,
           chainId,
           currentCiphertextVersion(),
         );
+
         // Note that the hex strings returned by the relayer do have have the 0x prefix
         if (json.response.handles && json.response.handles.length > 0) {
           const responseHandles = json.response.handles.map(fromHexString);
@@ -206,7 +222,8 @@ export const createRelayerEncryptedInput =
             }
           }
         }
-        const signatures = json.response.signatures;
+
+        const signatures: string[] = json.response.signatures;
 
         // verify signatures for inputs:
         const domain = {
