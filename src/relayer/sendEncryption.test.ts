@@ -304,14 +304,13 @@ describe('encrypt', () => {
         publicParams,
         [],
         0,
+        { apiKey: 'my-wrong-api-key' },
       )(
         '0x8ba1f109551bd432803012645ac136ddd64dba72',
         '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
       );
       autoMock(input, { apiKey: 'my-api-key' });
-      expect(input.encrypt({ apiKey: 'my-wrong-api-key' })).rejects.toThrow(
-        /Unauthorized/,
-      );
+      expect(input.encrypt()).rejects.toThrow(/Unauthorized/);
     });
 
     it('returns Unauthorized if the api key is missing', async () => {
@@ -344,14 +343,13 @@ describe('encrypt', () => {
         publicParams,
         [],
         0,
+        { apiKey: 'my-api-key' },
       )(
         '0x8ba1f109551bd432803012645ac136ddd64dba72',
         '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
       );
       autoMock(input, { apiKey: 'my-api-key' });
-      const { inputProof } = await input.encrypt({
-        apiKey: 'my-api-key',
-      });
+      const { inputProof } = await input.encrypt();
       expect(inputProof).toBeDefined();
     });
   });

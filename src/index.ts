@@ -108,6 +108,7 @@ export const createInstance = async (
     kmsContractAddress,
     aclContractAddress,
     gatewayChainId,
+    apiKey,
   } = config;
 
   if (!kmsContractAddress || !isAddress(kmsContractAddress)) {
@@ -173,6 +174,7 @@ export const createInstance = async (
       publicParamsData,
       coprocessorSigners,
       thresholdCoprocessorSigners,
+      apiKey ? { apiKey } : undefined,
     ),
     generateKeypair,
     createEIP712: createEIP712(verifyingContractAddressDecryption, chainId),
@@ -184,6 +186,7 @@ export const createInstance = async (
       aclContractAddress,
       cleanURL(config.relayerUrl),
       provider,
+      apiKey ? { apiKey } : undefined,
     ),
     userDecrypt: userDecryptRequest(
       kmsSigners,
@@ -193,6 +196,7 @@ export const createInstance = async (
       aclContractAddress,
       cleanURL(config.relayerUrl),
       provider,
+      apiKey ? { apiKey } : undefined,
     ),
     getPublicKey: () =>
       publicKeyData.publicKey

@@ -39,6 +39,7 @@ export type FhevmInstanceConfig = {
     data: Uint8Array | null;
     id: string | null;
   };
+  apiKey?: string;
 };
 
 export const getProvider = (config: FhevmInstanceConfig) => {

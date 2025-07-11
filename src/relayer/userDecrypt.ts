@@ -95,7 +95,7 @@ export const userDecryptRequest =
     aclContractAddress: string,
     relayerUrl: string,
     provider: ethers.JsonRpcProvider | ethers.BrowserProvider,
-    opts?: { apiKey?: string },
+    instanceOptions?: { apiKey?: string },
   ) =>
   async (
     _handles: HandleContractPair[],
@@ -106,6 +106,7 @@ export const userDecryptRequest =
     userAddress: string,
     startTimestamp: string | number,
     durationDays: string | number,
+    decryptOptions?: { apiKey?: string },
   ): Promise<DecryptedResults> => {
     // Casting handles if string
     const signatureSanitized = signature.replace(/^(0x)/, '');
@@ -171,11 +172,12 @@ export const userDecryptRequest =
       publicKey: publicKeySanitized,
     };
 
+    const apiKey = decryptOptions?.apiKey ?? instanceOptions?.apiKey;
     const options = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...(opts?.apiKey && { 'x-api-key': opts.apiKey }),
+        ...(apiKey && { 'x-api-key': apiKey }),
       },
       body: JSON.stringify(payloadForRequest),
     };

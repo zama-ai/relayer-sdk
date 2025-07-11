@@ -84,6 +84,7 @@ export const createRelayerEncryptedInput =
     publicParams: PublicParams,
     coprocessorSigners: string[],
     thresholdCoprocessorSigners: number,
+    instanceOptions?: { apiKey?: string },
   ) =>
   (
     contractAddress: string,
@@ -143,7 +144,7 @@ export const createRelayerEncryptedInput =
       getBits(): EncryptionTypes[] {
         return input.getBits();
       },
-      encrypt: async (opts?: { apiKey?: string }) => {
+      encrypt: async (ecnriptOptions?: { apiKey?: string }) => {
         const bits = input.getBits();
         const ciphertext = input.encrypt();
         // https://github.com/zama-ai/fhevm-relayer/blob/978b08f62de060a9b50d2c6cc19fd71b5fb8d873/src/input_http_listener.rs#L13C1-L22C1
@@ -153,11 +154,12 @@ export const createRelayerEncryptedInput =
           ciphertextWithInputVerification: toHexString(ciphertext),
           contractChainId: '0x' + chainId.toString(16),
         };
+        const apiKey = ecnriptOptions?.apiKey ?? instanceOptions?.apiKey;
         const options = {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            ...(opts?.apiKey && { 'x-api-key': opts.apiKey }),
+            ...(apiKey && { 'x-api-key': apiKey }),
           },
           body: JSON.stringify(payload),
         };
