@@ -95,6 +95,7 @@ export const userDecryptRequest =
     aclContractAddress: string,
     relayerUrl: string,
     provider: ethers.JsonRpcProvider | ethers.BrowserProvider,
+    opts?: { apiKey?: string },
   ) =>
   async (
     _handles: HandleContractPair[],
@@ -174,6 +175,7 @@ export const userDecryptRequest =
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...(opts?.apiKey && { 'x-api-key': opts.apiKey }),
       },
       body: JSON.stringify(payloadForRequest),
     };

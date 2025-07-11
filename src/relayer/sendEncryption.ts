@@ -63,7 +63,7 @@ export type RelayerEncryptedInput = {
   add256: (value: number | bigint) => RelayerEncryptedInput;
   addAddress: (value: string) => RelayerEncryptedInput;
   getBits: () => EncryptionTypes[];
-  encrypt: () => Promise<{
+  encrypt: (options?: { apiKey?: string }) => Promise<{
     handles: Uint8Array[];
     inputProof: Uint8Array;
   }>;
@@ -143,7 +143,7 @@ export const createRelayerEncryptedInput =
       getBits(): EncryptionTypes[] {
         return input.getBits();
       },
-      encrypt: async () => {
+      encrypt: async (opts?: { apiKey?: string }) => {
         const bits = input.getBits();
         const ciphertext = input.encrypt();
         // https://github.com/zama-ai/fhevm-relayer/blob/978b08f62de060a9b50d2c6cc19fd71b5fb8d873/src/input_http_listener.rs#L13C1-L22C1
@@ -157,29 +157,24 @@ export const createRelayerEncryptedInput =
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            ...(opts?.apiKey && { 'x-api-key': opts.apiKey }),
           },
           body: JSON.stringify(payload),
         };
         const url = `${relayerUrl}/v1/input-proof`;
         let json: FhevmRelayerInputProofResponse;
+        const response = await fetch(url, options);
+        if (!response.ok) {
+          throw new Error(
+            `Relayer didn't response correctly. Bad status ${
+              response.statusText
+            }. Content: ${await response.text()}`,
+          );
+        }
         try {
-          const response = await fetch(url, options);
-          if (!response.ok) {
-            throw new Error(
-              `Relayer didn't response correctly. Bad status ${
-                response.statusText
-              }. Content: ${await response.text()}`,
-            );
-          }
-          try {
-            json = await response.json();
-          } catch (e) {
-            throw new Error("Relayer didn't response correctly. Bad JSON.", {
-              cause: e,
-            });
-          }
+          json = await response.json();
         } catch (e) {
-          throw new Error("Relayer didn't response correctly.", {
+          throw new Error("Relayer didn't response correctly. Bad JSON.", {
             cause: e,
           });
         }

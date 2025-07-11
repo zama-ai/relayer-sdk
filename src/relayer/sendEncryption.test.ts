@@ -15,8 +15,13 @@ const verifyingContractAddressInputVerification =
 const chainId = 1234;
 const gatewayChainId = 4321;
 
-const autoMock = (input: RelayerEncryptedInput) => {
-  fetchMock.postOnce(`${relayerUrl}/v1/input-proof`, (params: any) => {
+const autoMock = (input: RelayerEncryptedInput, opts?: { apiKey: string }) => {
+  fetchMock.postOnce(`${relayerUrl}/v1/input-proof`, function (params: any) {
+    if (opts?.apiKey) {
+      if (params.options.headers['x-api-key'] !== opts.apiKey) {
+        return { status: 401 };
+      }
+    }
     const body = JSON.parse(params.options.body);
     const ciphertextWithInputVerification: string =
       body.ciphertextWithInputVerification;
@@ -285,5 +290,69 @@ describe('encrypt', () => {
     await expect(input.encrypt()).rejects.toThrow(
       /Incorrect Handle 0: \(expected\) [0-9a-z]{64} != [0-9a-z]{64} \(received\)/,
     );
+  });
+
+  describe('when api keys are enabled', () => {
+    it('returns Unauthorized if api key is invalid', async () => {
+      const input = createRelayerEncryptedInput(
+        aclContractAddress,
+        verifyingContractAddressInputVerification,
+        chainId,
+        gatewayChainId,
+        relayerUrl,
+        publicKey,
+        publicParams,
+        [],
+        0,
+      )(
+        '0x8ba1f109551bd432803012645ac136ddd64dba72',
+        '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
+      );
+      autoMock(input, { apiKey: 'my-api-key' });
+      expect(input.encrypt({ apiKey: 'my-wrong-api-key' })).rejects.toThrow(
+        /Unauthorized/,
+      );
+    });
+
+    it('returns Unauthorized if the api key is missing', async () => {
+      const input = createRelayerEncryptedInput(
+        aclContractAddress,
+        verifyingContractAddressInputVerification,
+        chainId,
+        gatewayChainId,
+        relayerUrl,
+        publicKey,
+        publicParams,
+        [],
+        0,
+      )(
+        '0x8ba1f109551bd432803012645ac136ddd64dba72',
+        '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
+      );
+      autoMock(input, { apiKey: 'my-api-key' });
+      expect(input.encrypt()).rejects.toThrow(/Unauthorized/);
+    });
+
+    it('returns ok if the api key is valid', async () => {
+      const input = createRelayerEncryptedInput(
+        aclContractAddress,
+        verifyingContractAddressInputVerification,
+        chainId,
+        gatewayChainId,
+        relayerUrl,
+        publicKey,
+        publicParams,
+        [],
+        0,
+      )(
+        '0x8ba1f109551bd432803012645ac136ddd64dba72',
+        '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
+      );
+      autoMock(input, { apiKey: 'my-api-key' });
+      const { inputProof } = await input.encrypt({
+        apiKey: 'my-api-key',
+      });
+      expect(inputProof).toBeDefined();
+    });
   });
 });
