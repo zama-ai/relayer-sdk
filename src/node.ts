@@ -21,6 +21,8 @@ export {
   EIP712,
   EIP712Type,
   SepoliaConfig,
+  getErrorCauseCode,
+  getErrorCauseStatus
 } from './index';
 export { FhevmInstanceConfig } from './config';
 export { createTfheKeypair, createTfhePublicKey } from './tfhe';

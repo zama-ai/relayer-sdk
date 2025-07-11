@@ -56,8 +56,10 @@ export {
   generateKeypair,
   createEIP712,
   EIP712,
-  SepoliaConfig,
   EIP712Type,
+  SepoliaConfig,
+  getErrorCauseCode,
+  getErrorCauseStatus
 } from './index';
-
+export { FhevmInstanceConfig } from './config';
 export { initSDK } from './init';

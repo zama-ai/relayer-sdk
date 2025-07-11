@@ -1,6 +1,7 @@
 import { fromHexString, toHexString } from '../utils';
 import { ethers, AbiCoder } from 'ethers';
 import { DecryptedResults, checkEncryptedBits } from './decryptUtils';
+import { fetchRelayerJsonRpcPost, RelayerPublicDecryptPayload } from './fetchRelayer';
 
 const aclABI = [
   'function isAllowedForDecryption(bytes32 handle) view returns (bool)',
@@ -91,12 +92,12 @@ export const publicDecryptRequest =
     aclContractAddress: string,
     relayerUrl: string,
     provider: ethers.JsonRpcProvider | ethers.BrowserProvider,
-    opts?: { apiKey?: string },
+    options?: { apiKey?: string }
   ) =>
   async (_handles: (Uint8Array | string)[]) => {
     const acl = new ethers.Contract(aclContractAddress, aclABI, provider);
 
-    let handles: string[];
+    let handles: `0x${string}`[];
     try {
       handles = await Promise.all(
         _handles.map(async (_handle) => {
@@ -120,63 +121,19 @@ export const publicDecryptRequest =
       throw e;
     }
 
-    const verifications = handles.map(async (ctHandle) => {
-      const isAllowedForDecryption = await acl.isAllowedForDecryption(ctHandle);
-      if (!isAllowedForDecryption) {
-        throw new Error(
-          `Handle ${ctHandle} is not allowed for public decryption!`,
-        );
-      }
-    });
-
-    await Promise.all(verifications).catch((e) => {
-      throw e;
-    });
-
     // check 2048 bits limit
     checkEncryptedBits(handles);
 
-    const payloadForRequest = {
+    const payloadForRequest: RelayerPublicDecryptPayload = {
       ciphertextHandles: handles,
     };
-    const options = {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(opts?.apiKey && { 'x-api-key': opts.apiKey }),
-      },
-      body: JSON.stringify(payloadForRequest),
-    };
 
-    let response;
-    let json;
-    try {
-      response = await fetch(`${relayerUrl}/v1/public-decrypt`, options);
-      if (!response.ok) {
-        throw new Error(
-          `Public decrypt failed: relayer respond with HTTP code ${response.status}`,
-        );
-      }
-    } catch (e) {
-      throw new Error("Public decrypt failed: Relayer didn't respond", {
-        cause: e,
-      });
-    }
-
-    try {
-      json = await response.json();
-    } catch (e) {
-      throw new Error("Public decrypt failed: Relayer didn't return a JSON", {
-        cause: e,
-      });
-    }
-
-    if (json.status === 'failure') {
-      throw new Error(
-        "Public decrypt failed: the public decrypt didn't succeed for an unknown reason",
-        { cause: json },
-      );
-    }
+    const json = await fetchRelayerJsonRpcPost(
+      'PUBLIC_DECRYPT',
+      `${relayerUrl}/v1/public-decrypt`,
+      payloadForRequest,
+      options
+    );
 
     // verify signatures on decryption:
     const domain = {

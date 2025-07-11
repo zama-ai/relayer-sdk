@@ -1,6 +1,10 @@
 import { bytesToBigInt, fromHexString, toHexString } from '../utils';
-import { ethers, getAddress } from 'ethers';
+import { ethers, getAddress as ethersGetAddress } from 'ethers';
 import { DecryptedResults, checkEncryptedBits } from './decryptUtils';
+import { fetchRelayerJsonRpcPost, HandleContractPairRelayer, RelayerUserDecryptPayload } from './fetchRelayer';
+
+// Add type checking
+const getAddress = (value: string): `0x${string}` => ethersGetAddress(value) as `0x${string}`;
 
 const aclABI = [
   'function persistAllowed(bytes32 handle, address account) view returns (bool)',
@@ -81,11 +85,6 @@ export type HandleContractPair = {
   contractAddress: string;
 };
 
-export type HandleContractPairRelayer = {
-  handle: string;
-  contractAddress: string;
-};
-
 export const userDecryptRequest =
   (
     kmsSigners: string[],
@@ -95,7 +94,7 @@ export const userDecryptRequest =
     aclContractAddress: string,
     relayerUrl: string,
     provider: ethers.JsonRpcProvider | ethers.BrowserProvider,
-    opts?: { apiKey?: string },
+    options?: { apiKey?: string }
   ) =>
   async (
     _handles: HandleContractPair[],
@@ -107,6 +106,15 @@ export const userDecryptRequest =
     startTimestamp: string | number,
     durationDays: string | number,
   ): Promise<DecryptedResults> => {
+    let pubKey;
+    let privKey;
+    try {
+      pubKey = TKMS.u8vec_to_ml_kem_pke_pk(fromHexString(publicKey));
+      privKey = TKMS.u8vec_to_ml_kem_pke_sk(fromHexString(privateKey));
+    } catch (e) {
+      throw new Error('Invalid public or private key', { cause: e });
+    }
+
     // Casting handles if string
     const signatureSanitized = signature.replace(/^(0x)/, '');
     const publicKeySanitized = publicKey.replace(/^(0x)/, '');
@@ -116,7 +124,7 @@ export const userDecryptRequest =
         typeof h.handle === 'string'
           ? toHexString(fromHexString(h.handle), true)
           : toHexString(h.handle, true),
-      contractAddress: h.contractAddress,
+      contractAddress: getAddress(h.contractAddress),
     }));
 
     checkEncryptedBits(handles.map((h) => h.handle));
@@ -158,7 +166,7 @@ export const userDecryptRequest =
       throw e;
     });
 
-    const payloadForRequest = {
+    const payloadForRequest: RelayerUserDecryptPayload = {
       handleContractPairs: handles,
       requestValidity: {
         startTimestamp: startTimestamp.toString(), // Convert to string
@@ -171,52 +179,12 @@ export const userDecryptRequest =
       publicKey: publicKeySanitized,
     };
 
-    const options = {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(opts?.apiKey && { 'x-api-key': opts.apiKey }),
-      },
-      body: JSON.stringify(payloadForRequest),
-    };
-    let pubKey;
-    let privKey;
-    try {
-      pubKey = TKMS.u8vec_to_ml_kem_pke_pk(fromHexString(publicKey));
-      privKey = TKMS.u8vec_to_ml_kem_pke_sk(fromHexString(privateKey));
-    } catch (e) {
-      throw new Error('Invalid public or private key', { cause: e });
-    }
-
-    let response;
-    let json;
-    try {
-      response = await fetch(`${relayerUrl}/v1/user-decrypt`, options);
-      if (!response.ok) {
-        throw new Error(
-          `User decrypt failed: relayer respond with HTTP code ${response.status}`,
-        );
-      }
-    } catch (e) {
-      throw new Error("User decrypt failed: Relayer didn't respond", {
-        cause: e,
-      });
-    }
-
-    try {
-      json = await response.json();
-    } catch (e) {
-      throw new Error("User decrypt failed: Relayer didn't return a JSON", {
-        cause: e,
-      });
-    }
-
-    if (json.status === 'failure') {
-      throw new Error(
-        "User decrypt failed: the user decryption didn't succeed for an unknown reason",
-        { cause: json },
-      );
-    }
+    const json = await fetchRelayerJsonRpcPost(
+      'USER_DECRYPT',
+      `${relayerUrl}/v1/user-decrypt`,
+      payloadForRequest,
+      options
+    );
 
     // assume the KMS Signers have the correct order
     let indexedKmsSigners = kmsSigners.map((signer, index) => {
