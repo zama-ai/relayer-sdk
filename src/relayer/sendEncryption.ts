@@ -9,11 +9,16 @@ import { EncryptionTypes } from '../sdk/encryptionTypes';
 import { computeHandles } from './handles';
 import { ethers } from 'ethers';
 import { TFHEType } from '../tfheType';
-import { throwRelayerInternalError} from './error';
-import { fetchRelayerJsonRpcPost, RelayerFetchResponseJson, RelayerInputProofPayload } from './fetchRelayer';
+import { throwRelayerInternalError } from './error';
+import {
+  fetchRelayerJsonRpcPost,
+  RelayerFetchResponseJson,
+  RelayerInputProofPayload,
+} from './fetchRelayer';
 
 // Add type checking
-const getAddress = (value: string): `0x${string}` => ethersGetAddress(value) as `0x${string}`;
+const getAddress = (value: string): `0x${string}` =>
+  ethersGetAddress(value) as `0x${string}`;
 
 export const currentCiphertextVersion = () => {
   return 0;
@@ -58,16 +63,19 @@ function isFhevmRelayerInputProofResponse(
   json: RelayerFetchResponseJson,
 ): json is FhevmRelayerInputProofResponse {
   const response = json.response as unknown;
-  if (typeof response !== "object" || response === null) {
+  if (typeof response !== 'object' || response === null) {
     return false;
   }
-  if (!("handles" in response && Array.isArray(response.handles))) {
+  if (!('handles' in response && Array.isArray(response.handles))) {
     return false;
   }
-  if (!("signatures" in response && Array.isArray(response.signatures))) {
+  if (!('signatures' in response && Array.isArray(response.signatures))) {
     return false;
   }
-  return response.signatures.every((s) => typeof s === "string") && response.handles.every((h) => typeof h === "string");
+  return (
+    response.signatures.every((s) => typeof s === 'string') &&
+    response.handles.every((h) => typeof h === 'string')
+  );
 }
 
 export type RelayerEncryptedInputInternal = RelayerEncryptedInput & {
@@ -167,7 +175,7 @@ export const createRelayerEncryptedInput =
       encrypt: async (options?: { apiKey?: string }) => {
         const bits = input.getBits();
         const ciphertext = input.encrypt();
-        
+
         const payload: RelayerInputProofPayload = {
           contractAddress: getAddress(contractAddress),
           userAddress: getAddress(userAddress),
@@ -175,10 +183,15 @@ export const createRelayerEncryptedInput =
           contractChainId: ('0x' + chainId.toString(16)) as `0x${string}`,
         };
 
-        const json = await fetchRelayerJsonRpcPost('INPUT_PROOF', `${relayerUrl}/v1/input-proof`, payload, options);
+        const json = await fetchRelayerJsonRpcPost(
+          'INPUT_PROOF',
+          `${relayerUrl}/v1/input-proof`,
+          payload,
+          options,
+        );
 
         if (!isFhevmRelayerInputProofResponse(json)) {
-          throwRelayerInternalError("INPUT_PROOF", json);
+          throwRelayerInternalError('INPUT_PROOF', json);
         }
 
         const handles: Uint8Array[] = computeHandles(

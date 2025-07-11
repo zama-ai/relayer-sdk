@@ -1,7 +1,10 @@
 import { publicDecryptRequest } from './publicDecrypt';
 import fetchMock from '@fetch-mock/core';
 import { ethers } from 'ethers';
-import { fetchRelayerJsonRpcPost, RelayerPublicDecryptPayload } from './fetchRelayer';
+import {
+  fetchRelayerJsonRpcPost,
+  RelayerPublicDecryptPayload,
+} from './fetchRelayer';
 import { getErrorCause, getErrorCauseErrorMessage } from './error';
 
 const RELAYER_URL: string = 'https://test-relayer.net';

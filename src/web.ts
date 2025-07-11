@@ -59,7 +59,7 @@ export {
   EIP712Type,
   SepoliaConfig,
   getErrorCauseCode,
-  getErrorCauseStatus
+  getErrorCauseStatus,
 } from './index';
 export { FhevmInstanceConfig } from './config';
 export { initSDK } from './init';

@@ -122,7 +122,7 @@ export async function fetchRelayerJsonRpcPost(
   relayerOperation: RelayerOperation,
   url: string,
   payload: any,
-  options?: { apiKey?: string }
+  options?: { apiKey?: string },
 ): Promise<RelayerFetchResponseJson> {
   const init = {
     method: 'POST',

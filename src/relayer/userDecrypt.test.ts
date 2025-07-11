@@ -1,11 +1,14 @@
 import { userDecryptRequest } from './userDecrypt';
 import fetchMock from '@fetch-mock/core';
 import { ethers } from 'ethers';
-import { fetchRelayerJsonRpcPost, RelayerUserDecryptPayload } from './fetchRelayer';
+import {
+  fetchRelayerJsonRpcPost,
+  RelayerUserDecryptPayload,
+} from './fetchRelayer';
 import { getErrorCause, getErrorCauseErrorMessage } from './error';
 
 const RELAYER_URL: string = 'https://test-relayer.net';
-const RELAYER_USER_DECRYPT_URL= `${RELAYER_URL}/v1/user-decrypt`;
+const RELAYER_USER_DECRYPT_URL = `${RELAYER_URL}/v1/user-decrypt`;
 
 const dummyRelayerUserDecryptPayload: RelayerUserDecryptPayload = {
   handleContractPairs: [

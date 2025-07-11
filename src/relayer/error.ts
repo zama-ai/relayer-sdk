@@ -12,7 +12,7 @@ export function getErrorCauseCode(e: unknown): string | undefined {
   if (!cause || !('code' in cause) || !cause.code) {
     return undefined;
   }
-  if (typeof cause.code !== "string") {
+  if (typeof cause.code !== 'string') {
     return undefined;
   }
   return cause.code;
@@ -23,7 +23,7 @@ export function getErrorCauseStatus(e: unknown): number | undefined {
   if (!cause || !('status' in cause) || cause.status === undefined) {
     return undefined;
   }
-  if (typeof cause.status !== "number") {
+  if (typeof cause.status !== 'number') {
     return undefined;
   }
   return cause.status;
@@ -129,15 +129,17 @@ export function throwRelayerUnexpectedJSONError(
   let message: string;
   switch (operation) {
     case 'PUBLIC_DECRYPT': {
-      message = "Public decrypt failed: Relayer returned an unexpected JSON response";
+      message =
+        'Public decrypt failed: Relayer returned an unexpected JSON response';
       break;
     }
     case 'USER_DECRYPT': {
-      message = "User decrypt failed: Relayer returned an unexpected JSON response";
+      message =
+        'User decrypt failed: Relayer returned an unexpected JSON response';
       break;
     }
     default: {
-      message = "Relayer returned an unexpected JSON response";
+      message = 'Relayer returned an unexpected JSON response';
       break;
     }
   }

@@ -1,10 +1,15 @@
 import { bytesToBigInt, fromHexString, toHexString } from '../utils';
 import { ethers, getAddress as ethersGetAddress } from 'ethers';
 import { DecryptedResults, checkEncryptedBits } from './decryptUtils';
-import { fetchRelayerJsonRpcPost, HandleContractPairRelayer, RelayerUserDecryptPayload } from './fetchRelayer';
+import {
+  fetchRelayerJsonRpcPost,
+  HandleContractPairRelayer,
+  RelayerUserDecryptPayload,
+} from './fetchRelayer';
 
 // Add type checking
-const getAddress = (value: string): `0x${string}` => ethersGetAddress(value) as `0x${string}`;
+const getAddress = (value: string): `0x${string}` =>
+  ethersGetAddress(value) as `0x${string}`;
 
 const aclABI = [
   'function persistAllowed(bytes32 handle, address account) view returns (bool)',
@@ -94,7 +99,7 @@ export const userDecryptRequest =
     aclContractAddress: string,
     relayerUrl: string,
     provider: ethers.JsonRpcProvider | ethers.BrowserProvider,
-    options?: { apiKey?: string }
+    options?: { apiKey?: string },
   ) =>
   async (
     _handles: HandleContractPair[],
@@ -183,7 +188,7 @@ export const userDecryptRequest =
       'USER_DECRYPT',
       `${relayerUrl}/v1/user-decrypt`,
       payloadForRequest,
-      options
+      options,
     );
 
     // assume the KMS Signers have the correct order

@@ -22,7 +22,7 @@ export {
   EIP712Type,
   SepoliaConfig,
   getErrorCauseCode,
-  getErrorCauseStatus
+  getErrorCauseStatus,
 } from './index';
 export { FhevmInstanceConfig } from './config';
 export { createTfheKeypair, createTfhePublicKey } from './tfhe';
