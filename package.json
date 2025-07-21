@@ -1,6 +1,6 @@
 {
   "name": "@zama-fhe/relayer-sdk",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "fhevm Relayer SDK",
   "main": "lib/node.js",
   "types": "lib/node.d.ts",
@@ -62,9 +62,9 @@
     "fetch-retry": "^6.0.0",
     "keccak": "^3.0.4",
     "wasm-feature-detect": "^1.8.0",
-    "node-tfhe": "1.3.2",
+    "node-tfhe": "1.2.0",
+    "tfhe": "1.2.0",
     "node-tkms": "0.11.0-rc20",
-    "tfhe": "1.3.2",
     "tkms": "0.11.0-rc20"
   },
   "devDependencies": {

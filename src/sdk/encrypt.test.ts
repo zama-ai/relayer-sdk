@@ -20,7 +20,7 @@ describe('encrypt', () => {
     input.addAddress('0xa5e1defb98EFe38EBb2D958CEe052410247F4c80');
     input.add256(BigInt('2339389323922393930'));
     const ciphertext = input.encrypt();
-    expect(ciphertext.length).toBe(20106);
+    expect(ciphertext.length).toBe(20098);
   }, 60000);
 
   it('encrypt one 0 value', async () => {
@@ -34,7 +34,7 @@ describe('encrypt', () => {
     });
     input.add128(BigInt(0));
     const ciphertext = input.encrypt();
-    expect(ciphertext.length).toBe(18922);
+    expect(ciphertext.length).toBe(18914);
   });
 
   it('encrypt one 2048 value', async () => {
@@ -50,7 +50,7 @@ describe('encrypt', () => {
     data.set([255], 63);
     input.addBytes256(data);
     const ciphertext = input.encrypt();
-    expect(ciphertext.length).toBe(22762);
+    expect(ciphertext.length).toBe(22754);
   });
 
   it('throws errors', async () => {
