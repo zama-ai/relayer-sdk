@@ -8,6 +8,7 @@ export {
   EIP712,
   EIP712Type,
   FhevmInstance,
+  FhevmInstanceConfig,
   createInstance,
   EncryptionTypes,
   ENCRYPTION_TYPES,
