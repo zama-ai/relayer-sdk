@@ -239,6 +239,6 @@ export const userDecryptRequest =
 
       return results;
     } catch (e) {
-      throw new Error('An error occured during decryption', { cause: e });
+      throw new Error('An error occurred during decryption', { cause: e });
     }
   };

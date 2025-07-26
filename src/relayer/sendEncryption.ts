@@ -202,7 +202,7 @@ export const createRelayerEncryptedInput =
           currentCiphertextVersion(),
         );
 
-        // Note that the hex strings returned by the relayer do have have the 0x prefix
+        // Note that the hex strings returned by the relayer do have the 0x prefix
         if (json.response.handles && json.response.handles.length > 0) {
           const responseHandles = json.response.handles.map(fromHexString);
           if (handles.length != responseHandles.length) {
