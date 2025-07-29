@@ -11,19 +11,21 @@ describe('token', () => {
   it('generate a valid keypair', async () => {
     const keypair = generateKeypair();
 
-    const ml_kem_ct_pk_length = 1568; // for MlKem1024Params
-    const ml_kem_sk_len = 3168; // for MlKem1024Params
+    // CT length is different from pk length, but unused here
+    //const ml_kem_ct_length = 768; // for MlKem512Params
+    const ml_kem_pk_length = 800; // for MlKem512Params
+    const ml_kem_sk_len = 1632; // for MlKem512Params
 
     // note that the keypair is in hex format
     // so the length is double the byte length
     // due to serialization, there's an additional 8 bytes
-    expect(keypair.publicKey.length).toBe((ml_kem_ct_pk_length + 8) * 2);
+    expect(keypair.publicKey.length).toBe((ml_kem_pk_length + 8) * 2);
     expect(keypair.privateKey.length).toBe((ml_kem_sk_len + 8) * 2);
 
     let pkBuf = ml_kem_pke_pk_to_u8vec(
       u8vec_to_ml_kem_pke_pk(fromHexString(keypair.publicKey)),
     );
-    expect(ml_kem_ct_pk_length + 8).toBe(pkBuf.length);
+    expect(ml_kem_pk_length + 8).toBe(pkBuf.length);
 
     let skBuf = ml_kem_pke_sk_to_u8vec(
       u8vec_to_ml_kem_pke_sk(fromHexString(keypair.privateKey)),
@@ -79,7 +81,7 @@ describe('token', () => {
     );
     expect(eip712.primaryType).toBe('DelegatedUserDecryptRequestVerification');
 
-    /* 
+    /*
      { name: 'publicKey', type: 'bytes' },
           { name: 'contractAddresses', type: 'address[]' },
           { name: 'contractsChainId', type: 'uint256' },
