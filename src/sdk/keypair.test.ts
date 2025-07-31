@@ -11,21 +11,24 @@ describe('token', () => {
   it('generate a valid keypair', async () => {
     const keypair = generateKeypair();
 
-    // CT length is different from pk length, but unused here
-    //const ml_kem_ct_length = 768; // for MlKem512Params
+    //const ml_kem_ct_length = 768; // for MlKem512Params, unused here
     const ml_kem_pk_length = 800; // for MlKem512Params
     const ml_kem_sk_len = 1632; // for MlKem512Params
 
+    const serialize_overhead = 69; // serialization overhead for safe serialize of ML-KEM key
+
     // note that the keypair is in hex format
     // so the length is double the byte length
-    // due to serialization, there's an additional 8 bytes
-    expect(keypair.publicKey.length).toBe((ml_kem_pk_length + 8) * 2);
+    // due to serialization, there are additional bytes
+    expect(keypair.publicKey.length).toBe(
+      (ml_kem_pk_length + serialize_overhead) * 2,
+    );
     expect(keypair.privateKey.length).toBe((ml_kem_sk_len + 8) * 2);
 
     let pkBuf = ml_kem_pke_pk_to_u8vec(
       u8vec_to_ml_kem_pke_pk(fromHexString(keypair.publicKey)),
     );
-    expect(ml_kem_pk_length + 8).toBe(pkBuf.length);
+    expect(ml_kem_pk_length + serialize_overhead).toBe(pkBuf.length);
 
     let skBuf = ml_kem_pke_sk_to_u8vec(
       u8vec_to_ml_kem_pke_sk(fromHexString(keypair.privateKey)),
