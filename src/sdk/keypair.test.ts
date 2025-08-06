@@ -54,7 +54,7 @@ describe('token', () => {
     expect(eip712.domain.version).toBe('1');
     expect(eip712.message.publicKey).toBe(`0x${keypair.publicKey}`);
     expect(eip712.primaryType).toBe('UserDecryptRequestVerification');
-    expect(eip712.types.UserDecryptRequestVerification.length).toBe(5);
+    expect(eip712.types.UserDecryptRequestVerification.length).toBe(6);
     expect(eip712.types.UserDecryptRequestVerification[0].name).toBe(
       'publicKey',
     );
@@ -92,7 +92,7 @@ describe('token', () => {
           { name: 'durationDays', type: 'uint256' },
           { name: 'delegatedAccount', type: 'address' },
            */
-    expect(eip712.types.DelegatedUserDecryptRequestVerification.length).toBe(6);
+    expect(eip712.types.DelegatedUserDecryptRequestVerification.length).toBe(7);
 
     expect(eip712.types.DelegatedUserDecryptRequestVerification[0].name).toBe(
       'publicKey',
@@ -129,9 +129,16 @@ describe('token', () => {
     );
 
     expect(eip712.types.DelegatedUserDecryptRequestVerification[5].name).toBe(
-      'delegatedAccount',
+      'extraData',
     );
     expect(eip712.types.DelegatedUserDecryptRequestVerification[5].type).toBe(
+      'bytes',
+    );
+
+    expect(eip712.types.DelegatedUserDecryptRequestVerification[6].name).toBe(
+      'delegatedAccount',
+    );
+    expect(eip712.types.DelegatedUserDecryptRequestVerification[6].type).toBe(
       'address',
     );
   });

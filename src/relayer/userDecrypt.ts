@@ -111,6 +111,7 @@ export const userDecryptRequest =
     startTimestamp: string | number,
     durationDays: string | number,
   ): Promise<DecryptedResults> => {
+    const extraData: `0x${string}` = '0x00';
     let pubKey;
     let privKey;
     try {
@@ -182,6 +183,7 @@ export const userDecryptRequest =
       userAddress: getAddress(userAddress),
       signature: signatureSanitized,
       publicKey: publicKeySanitized,
+      extraData,
     };
 
     const json = await fetchRelayerJsonRpcPost(

@@ -98,6 +98,7 @@ export const publicDecryptRequest =
     options?: { apiKey?: string },
   ) =>
   async (_handles: (Uint8Array | string)[]) => {
+    const extraData: `0x${string}` = '0x00';
     const acl = new ethers.Contract(aclContractAddress, aclABI, provider);
 
     let handles: `0x${string}`[];
@@ -128,6 +129,7 @@ export const publicDecryptRequest =
 
     const payloadForRequest: RelayerPublicDecryptPayload = {
       ciphertextHandles: handles,
+      extraData,
     };
 
     const json = await fetchRelayerJsonRpcPost(
@@ -148,6 +150,7 @@ export const publicDecryptRequest =
       PublicDecryptVerification: [
         { name: 'ctHandles', type: 'bytes32[]' },
         { name: 'decryptedResult', type: 'bytes' },
+        { name: 'extraData', type: 'bytes' },
       ],
     };
     const result = json.response[0];
@@ -161,7 +164,7 @@ export const publicDecryptRequest =
       const recoveredAddress = ethers.verifyTypedData(
         domain,
         types,
-        { ctHandles: handles, decryptedResult },
+        { ctHandles: handles, decryptedResult, extraData },
         sig,
       );
       return recoveredAddress;
