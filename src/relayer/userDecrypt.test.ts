@@ -27,6 +27,7 @@ const dummyRelayerUserDecryptPayload: RelayerUserDecryptPayload = {
   userAddress: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
   signature: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
   publicKey: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+  extraData: '0x00',
 };
 
 describe('userDecrypt', () => {

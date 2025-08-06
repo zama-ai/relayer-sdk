@@ -92,7 +92,10 @@ export type RelayerEncryptedInput = {
   add256: (value: number | bigint) => RelayerEncryptedInput;
   addAddress: (value: string) => RelayerEncryptedInput;
   getBits: () => EncryptionTypes[];
-  encrypt: (options?: { apiKey?: string }) => Promise<{
+  encrypt: (
+    options?: { apiKey?: string },
+    extraData?: `0x${string}`,
+  ) => Promise<{
     handles: Uint8Array[];
     inputProof: Uint8Array;
   }>;
@@ -172,7 +175,10 @@ export const createRelayerEncryptedInput =
       getBits(): EncryptionTypes[] {
         return input.getBits();
       },
-      encrypt: async (options?: { apiKey?: string }) => {
+      encrypt: async (
+        options?: { apiKey?: string },
+        extraData: `0x${string}` = '0x00',
+      ) => {
         const bits = input.getBits();
         const ciphertext = input.encrypt();
 
@@ -181,6 +187,7 @@ export const createRelayerEncryptedInput =
           userAddress: getAddress(userAddress),
           ciphertextWithInputVerification: toHexString(ciphertext),
           contractChainId: ('0x' + chainId.toString(16)) as `0x${string}`,
+          extraData,
         };
 
         const json = await fetchRelayerJsonRpcPost(
@@ -238,6 +245,7 @@ export const createRelayerEncryptedInput =
             { name: 'userAddress', type: 'address' },
             { name: 'contractAddress', type: 'address' },
             { name: 'contractChainId', type: 'uint256' },
+            { name: 'extraData', type: 'bytes' },
           ],
         };
 
@@ -251,6 +259,7 @@ export const createRelayerEncryptedInput =
               userAddress,
               contractAddress,
               contractChainId: chainId,
+              extraData,
             },
             sig,
           );
