@@ -21,6 +21,8 @@ export type RelayerInputProofPayload = {
   userAddress: `0x${string}`;
   // List of hex encoded binary proof without 0x prefix
   ciphertextWithInputVerification: string;
+  // Hex encoded bytes with 0x prefix. Default: 0x00
+  extraData: `0x${string}`;
 };
 
 // https://github.com/zama-ai/fhevm-relayer/blob/96151ef300f787658c5fbaf1b4471263160032d5/src/http/userdecrypt_http_listener.rs#L33
@@ -50,11 +52,15 @@ export type RelayerUserDecryptPayload = {
   signature: string;
   // Hex encoded key without 0x prefix.
   publicKey: string;
+  // Hex encoded bytes with 0x prefix. Default: 0x00
+  extraData: `0x${string}`;
 };
 
 // https://github.com/zama-ai/fhevm-relayer/blob/96151ef300f787658c5fbaf1b4471263160032d5/src/http/public_decrypt_http_listener.rs#L19
 export type RelayerPublicDecryptPayload = {
   ciphertextHandles: `0x${string}`[];
+  // Hex encoded bytes with 0x prefix. Default: 0x00
+  extraData: `0x${string}`;
 };
 
 // https://github.com/zama-ai/fhevm-relayer/blob/96151ef300f787658c5fbaf1b4471263160032d5/src/http/keyurl_http_listener.rs#L6

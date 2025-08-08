@@ -12,6 +12,7 @@ const RELAYER_PUBLIC_DECRYPT_URL = `${RELAYER_URL}/v1/public-decrypt`;
 
 const dummyRelayerUserDecryptPayload: RelayerPublicDecryptPayload = {
   ciphertextHandles: ['0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef'],
+  extraData: '0x00',
 };
 
 describe('publicDecrypt', () => {
