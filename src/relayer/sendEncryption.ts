@@ -279,6 +279,9 @@ export const createRelayerEncryptedInput =
         const listHandlesStr = handles.map((i) => toHexString(i));
         listHandlesStr.map((handle) => (inputProof += handle));
         signatures.map((signature) => (inputProof += signature.slice(2))); // removes the '0x' prefix from the `signature` string
+
+        // Append the extra data to the input proof
+        inputProof += extraData.slice(2);
         return {
           handles,
           inputProof: fromHexString(inputProof),
