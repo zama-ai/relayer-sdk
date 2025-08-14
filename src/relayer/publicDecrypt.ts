@@ -158,13 +158,14 @@ export const publicDecryptRequest =
       ? result.decrypted_value
       : `0x${result.decrypted_value}`;
     const signatures = result.signatures;
+    const signedExtraData = '0x';
 
     const recoveredAddresses = signatures.map((signature: string) => {
       const sig = signature.startsWith('0x') ? signature : `0x${signature}`;
       const recoveredAddress = ethers.verifyTypedData(
         domain,
         types,
-        { ctHandles: handles, decryptedResult, extraData },
+        { ctHandles: handles, decryptedResult, extraData: signedExtraData },
         sig,
       );
       return recoveredAddress;
