@@ -27,6 +27,7 @@ export type EIP712 = {
  * @param contractsChainId - The chain ID where the contracts are deployed
  * @param startTimestamp - The timestamp when the decryption permission becomes valid
  * @param durationDays - How many days the decryption permission remains valid
+ * @param delegatedAccount - Optional delegated account address
  * @returns EIP712 typed data structure for user decryption
  */
 export const createEIP712 =
@@ -38,6 +39,7 @@ export const createEIP712 =
     durationDays: string | number,
     delegatedAccount?: string,
   ): EIP712 => {
+    const extraData: `0x${string}` = '0x00';
     if (delegatedAccount && !isAddress(delegatedAccount))
       throw new Error('Invalid delegated account.');
 
@@ -89,6 +91,7 @@ export const createEIP712 =
             { name: 'contractsChainId', type: 'uint256' },
             { name: 'startTimestamp', type: 'uint256' },
             { name: 'durationDays', type: 'uint256' },
+            { name: 'extraData', type: 'bytes' },
             {
               name: 'delegatedAccount',
               type: 'address',
@@ -103,6 +106,7 @@ export const createEIP712 =
           contractsChainId,
           startTimestamp: formattedStartTimestamp,
           durationDays: formattedDurationDays,
+          extraData,
           delegatedAccount: delegatedAccount,
         },
       };
@@ -117,6 +121,7 @@ export const createEIP712 =
           { name: 'contractsChainId', type: 'uint256' },
           { name: 'startTimestamp', type: 'uint256' },
           { name: 'durationDays', type: 'uint256' },
+          { name: 'extraData', type: 'bytes' },
         ],
       },
       primaryType: 'UserDecryptRequestVerification',
@@ -127,6 +132,7 @@ export const createEIP712 =
         contractsChainId,
         startTimestamp: formattedStartTimestamp,
         durationDays: formattedDurationDays,
+        extraData,
       },
     };
   };

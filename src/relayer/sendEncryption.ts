@@ -173,6 +173,7 @@ export const createRelayerEncryptedInput =
         return input.getBits();
       },
       encrypt: async (options?: { apiKey?: string }) => {
+        const extraData: `0x${string}` = '0x00';
         const bits = input.getBits();
         const ciphertext = input.encrypt();
 
@@ -181,6 +182,7 @@ export const createRelayerEncryptedInput =
           userAddress: getAddress(userAddress),
           ciphertextWithInputVerification: toHexString(ciphertext),
           contractChainId: ('0x' + chainId.toString(16)) as `0x${string}`,
+          extraData,
         };
 
         const json = await fetchRelayerJsonRpcPost(
@@ -238,6 +240,7 @@ export const createRelayerEncryptedInput =
             { name: 'userAddress', type: 'address' },
             { name: 'contractAddress', type: 'address' },
             { name: 'contractChainId', type: 'uint256' },
+            { name: 'extraData', type: 'bytes' },
           ],
         };
 
@@ -251,6 +254,7 @@ export const createRelayerEncryptedInput =
               userAddress,
               contractAddress,
               contractChainId: chainId,
+              extraData,
             },
             sig,
           );
@@ -275,6 +279,9 @@ export const createRelayerEncryptedInput =
         const listHandlesStr = handles.map((i) => toHexString(i));
         listHandlesStr.map((handle) => (inputProof += handle));
         signatures.map((signature) => (inputProof += signature.slice(2))); // removes the '0x' prefix from the `signature` string
+
+        // Append the extra data to the input proof
+        inputProof += extraData.slice(2);
         return {
           handles,
           inputProof: fromHexString(inputProof),
