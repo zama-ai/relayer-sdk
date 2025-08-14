@@ -11,56 +11,42 @@ export type RelayerOperation =
   | 'USER_DECRYPT'
   | 'KEY_URL';
 
+type HexString = `0x${string}`;
+
 // https://github.com/zama-ai/fhevm-relayer/blob/96151ef300f787658c5fbaf1b4471263160032d5/src/http/input_http_listener.rs#L17
 export type RelayerInputProofPayload = {
-  // Hex encoded uint256 string without prefix
-  contractChainId: `0x${string}`;
-  // Hex encoded address with 0x prefix.
-  contractAddress: `0x${string}`;
-  // Hex encoded address with 0x prefix.
-  userAddress: `0x${string}`;
-  // List of hex encoded binary proof without 0x prefix
+  contractChainId: HexString;
+  contractAddress: HexString;
+  userAddress: HexString;
   ciphertextWithInputVerification: string;
-  // Hex encoded bytes with 0x prefix. Default: 0x00
-  extraData: `0x${string}`;
+  extraData: HexString;
 };
 
 // https://github.com/zama-ai/fhevm-relayer/blob/96151ef300f787658c5fbaf1b4471263160032d5/src/http/userdecrypt_http_listener.rs#L33
 export type HandleContractPairRelayer = {
-  // Hex encoded bytes32 with 0x prefix.
-  handle: `0x${string}`;
-  // Hex encoded address with 0x prefix.
-  contractAddress: `0x${string}`;
+  handle: HexString;
+  contractAddress: HexString;
 };
 
 // https://github.com/zama-ai/fhevm-relayer/blob/96151ef300f787658c5fbaf1b4471263160032d5/src/http/userdecrypt_http_listener.rs#L20
 export type RelayerUserDecryptPayload = {
   handleContractPairs: HandleContractPairRelayer[];
   requestValidity: {
-    // Number as a string
     startTimestamp: string;
-    // Number as a string
     durationDays: string;
   };
-  // Number as a string
   contractsChainId: string;
-  // List of hex encoded addresses with 0x prefix
-  contractAddresses: `0x${string}`[];
-  // Hex encoded address with 0x prefix.
-  userAddress: `0x${string}`;
-  // Hex encoded signature without 0x prefix.
+  contractAddresses: HexString[];
+  userAddress: HexString;
   signature: string;
-  // Hex encoded key without 0x prefix.
   publicKey: string;
-  // Hex encoded bytes with 0x prefix. Default: 0x00
-  extraData: `0x${string}`;
+  extraData: HexString;
 };
 
 // https://github.com/zama-ai/fhevm-relayer/blob/96151ef300f787658c5fbaf1b4471263160032d5/src/http/public_decrypt_http_listener.rs#L19
 export type RelayerPublicDecryptPayload = {
-  ciphertextHandles: `0x${string}`[];
-  // Hex encoded bytes with 0x prefix. Default: 0x00
-  extraData: `0x${string}`;
+  ciphertextHandles: HexString[];
+  extraData: HexString;
 };
 
 // https://github.com/zama-ai/fhevm-relayer/blob/96151ef300f787658c5fbaf1b4471263160032d5/src/http/keyurl_http_listener.rs#L6
@@ -76,9 +62,7 @@ export type RelayerKeyUrlResponse = {
 // https://github.com/zama-ai/fhevm-relayer/blob/96151ef300f787658c5fbaf1b4471263160032d5/src/http/userdecrypt_http_listener.rs#L64
 export type RelayerUserDecryptJsonResponse = {
   response: Array<{
-    // Hex encoded key without 0x prefix.
     payload: string;
-    // Hex encoded key without 0x prefix. (len=130)
     signature: string;
   }>;
 };
@@ -86,9 +70,7 @@ export type RelayerUserDecryptJsonResponse = {
 // https://github.com/zama-ai/fhevm-relayer/blob/96151ef300f787658c5fbaf1b4471263160032d5/src/http/public_decrypt_http_listener.rs#L32
 export type RelayerPublicDecryptJsonResponse = {
   response: Array<{
-    // Hex encoded value without 0x prefix.
     decrypted_value: string;
-    // Hex encoded value without 0x prefix.
     signatures: string[];
   }>;
 };
@@ -96,10 +78,8 @@ export type RelayerPublicDecryptJsonResponse = {
 // https://github.com/zama-ai/fhevm-relayer/blob/96151ef300f787658c5fbaf1b4471263160032d5/src/http/input_http_listener.rs#L38
 export type RelayerInputProofJsonResponse = {
   response: {
-    // Ordered List of hex encoded handles with 0x prefix.
-    handles: `0x${string}`[];
-    // Attestation signatures for Input verification for the ordered list of handles with 0x prefix.
-    signatures: `0x${string}`[];
+    handles: HexString[];
+    signatures: HexString[];
   };
 };
 
@@ -147,7 +127,7 @@ export async function fetchRelayerJsonRpcPost(
     throwRelayerUnknownError(relayerOperation, e);
   }
   if (!response.ok) {
-    await throwRelayerResponseError(relayerOperation, response);
+    throwRelayerResponseError(relayerOperation, response);
   }
 
   let parsed;
@@ -179,7 +159,7 @@ export async function fetchRelayerGet(
     throwRelayerUnknownError(relayerOperation, e);
   }
   if (!response.ok) {
-    await throwRelayerResponseError(relayerOperation, response);
+    throwRelayerResponseError(relayerOperation, response);
   }
 
   let parsed;
