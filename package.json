@@ -64,8 +64,8 @@
     "wasm-feature-detect": "^1.8.0",
     "node-tfhe": "1.3.0",
     "tfhe": "1.3.0",
-    "node-tkms": "0.11.0-24",
-    "tkms": "0.11.0-24"
+    "node-tkms": "0.11.0-26",
+    "tkms": "0.11.0-26"
   },
   "devDependencies": {
     "@fetch-mock/jest": "0.2.16",
