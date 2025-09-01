@@ -13,6 +13,7 @@ import {
   SERIALIZED_SIZE_LIMIT_CRS,
 } from './utils';
 import { TFHEType } from './tfheType';
+import { Auth } from './auth';
 
 const abiKmsVerifier = [
   'function getKmsSigners() view returns (address[])',
@@ -39,6 +40,7 @@ export type FhevmInstanceConfig = {
     data: Uint8Array | null;
     id: string | null;
   };
+  auth?: Auth;
 };
 
 export const getProvider = (config: FhevmInstanceConfig) => {

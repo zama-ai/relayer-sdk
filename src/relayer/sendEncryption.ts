@@ -15,6 +15,7 @@ import {
   RelayerFetchResponseJson,
   RelayerInputProofPayload,
 } from './fetchRelayer';
+import { Auth } from '../auth';
 
 // Add type checking
 const getAddress = (value: string): `0x${string}` =>
@@ -92,7 +93,7 @@ export type RelayerEncryptedInput = {
   add256: (value: number | bigint) => RelayerEncryptedInput;
   addAddress: (value: string) => RelayerEncryptedInput;
   getBits: () => EncryptionTypes[];
-  encrypt: (options?: { apiKey?: string }) => Promise<{
+  encrypt: (options?: { auth?: Auth }) => Promise<{
     handles: Uint8Array[];
     inputProof: Uint8Array;
   }>;
@@ -113,6 +114,7 @@ export const createRelayerEncryptedInput =
     publicParams: PublicParams,
     coprocessorSigners: string[],
     thresholdCoprocessorSigners: number,
+    instanceOptions?: { auth: Auth },
   ) =>
   (
     contractAddress: string,
@@ -172,7 +174,7 @@ export const createRelayerEncryptedInput =
       getBits(): EncryptionTypes[] {
         return input.getBits();
       },
-      encrypt: async (options?: { apiKey?: string }) => {
+      encrypt: async (options?: { auth?: Auth }) => {
         const extraData: `0x${string}` = '0x00';
         const bits = input.getBits();
         const ciphertext = input.encrypt();
@@ -189,7 +191,7 @@ export const createRelayerEncryptedInput =
           'INPUT_PROOF',
           `${relayerUrl}/v1/input-proof`,
           payload,
-          options,
+          options ?? instanceOptions,
         );
 
         if (!isFhevmRelayerInputProofResponse(json)) {

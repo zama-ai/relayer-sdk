@@ -1,3 +1,4 @@
+import { Auth, setAuth } from '../auth';
 import {
   throwRelayerUnexpectedJSONError,
   throwRelayerJSONError,
@@ -128,16 +129,18 @@ export async function fetchRelayerJsonRpcPost(
   relayerOperation: RelayerOperation,
   url: string,
   payload: any,
-  options?: { apiKey?: string },
+  options?: { auth?: Auth },
 ): Promise<RelayerFetchResponseJson> {
-  const init = {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(options?.apiKey && { 'x-api-key': options.apiKey }),
-    },
-    body: JSON.stringify(payload),
-  };
+  const init = setAuth(
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    } satisfies RequestInit,
+    options?.auth,
+  );
 
   let response: Response;
   let json: RelayerFetchResponseJson;

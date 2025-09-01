@@ -7,6 +7,7 @@ import { publicKey, publicParams } from '../test';
 import fetchMock from '@fetch-mock/core';
 import { computeHandles } from './handles';
 import { fromHexString, toHexString } from '../utils';
+import type { Auth } from '../auth';
 
 const relayerUrl = 'https://test-fhevm-relayer';
 const aclContractAddress = '0x325ea1b59F28e9e1C51d3B5b47b7D3965CC5D8C8';
@@ -15,11 +16,36 @@ const verifyingContractAddressInputVerification =
 const chainId = 1234;
 const gatewayChainId = 4321;
 
-const autoMock = (input: RelayerEncryptedInput, opts?: { apiKey: string }) => {
+const autoMock = (input: RelayerEncryptedInput, opts?: { auth?: Auth }) => {
   fetchMock.postOnce(`${relayerUrl}/v1/input-proof`, function (params: any) {
-    if (opts?.apiKey) {
-      if (params.options.headers['x-api-key'] !== opts.apiKey) {
-        return { status: 401 };
+    if (opts?.auth) {
+      switch (opts.auth.__type) {
+        case 'BearerToken':
+          if (
+            params.options.headers['Authorization'] !==
+            `Bearer ${opts.auth.token}`
+          ) {
+            return { status: 401 };
+          }
+          break;
+
+        case 'ApiKeyHeader':
+          if (
+            params.options.headers[opts.auth.header || 'x-api-key'] !==
+            opts.auth.value
+          ) {
+            return { status: 401 };
+          }
+          break;
+
+        case 'ApiKeyCookie':
+          if (
+            params.options.headers['Cookie'] !==
+            `${opts.auth.cookie || 'x-api-key'}=${opts.auth.value};`
+          ) {
+            return { status: 401 };
+          }
+          break;
       }
     }
     const body = JSON.parse(params.options.body);
@@ -308,10 +334,14 @@ describe('encrypt', () => {
         '0x8ba1f109551bd432803012645ac136ddd64dba72',
         '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
       );
-      autoMock(input, { apiKey: 'my-api-key' });
-      expect(input.encrypt({ apiKey: 'my-wrong-api-key' })).rejects.toThrow(
-        /Unauthorized/,
-      );
+      autoMock(input, {
+        auth: { __type: 'ApiKeyHeader', value: 'my-api-key' },
+      });
+      expect(
+        input.encrypt({
+          auth: { __type: 'ApiKeyHeader', value: 'my-wrong-api-key' },
+        }),
+      ).rejects.toThrow(/Unauthorized/);
     });
 
     it('returns Unauthorized if the api key is missing', async () => {
@@ -329,7 +359,9 @@ describe('encrypt', () => {
         '0x8ba1f109551bd432803012645ac136ddd64dba72',
         '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
       );
-      autoMock(input, { apiKey: 'my-api-key' });
+      autoMock(input, {
+        auth: { __type: 'ApiKeyHeader', value: 'my-api-key' },
+      });
       expect(input.encrypt()).rejects.toThrow(/Unauthorized/);
     });
 
@@ -348,9 +380,11 @@ describe('encrypt', () => {
         '0x8ba1f109551bd432803012645ac136ddd64dba72',
         '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
       );
-      autoMock(input, { apiKey: 'my-api-key' });
+      autoMock(input, {
+        auth: { __type: 'ApiKeyHeader', value: 'my-api-key' },
+      });
       const { inputProof } = await input.encrypt({
-        apiKey: 'my-api-key',
+        auth: { __type: 'ApiKeyHeader', value: 'my-api-key' },
       });
       expect(inputProof).toBeDefined();
     });
