@@ -114,7 +114,7 @@ export const createRelayerEncryptedInput =
     publicParams: PublicParams,
     coprocessorSigners: string[],
     thresholdCoprocessorSigners: number,
-    instanceOptions?: { auth: Auth },
+    instanceOptions?: { auth?: Auth },
   ) =>
   (
     contractAddress: string,
