@@ -51,9 +51,8 @@ export function setAuth(init: RequestInit, auth?: Auth): RequestInit {
   if (auth) {
     switch (auth.__type) {
       case 'BearerToken':
-        (init.headers as Record<string, string>)[
-          'Authorization'
-        ] = `Bearer ${auth.token}`;
+        (init.headers as Record<string, string>)['Authorization'] =
+          `Bearer ${auth.token}`;
         break;
 
       case 'ApiKeyHeader':
