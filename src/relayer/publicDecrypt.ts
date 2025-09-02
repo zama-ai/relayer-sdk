@@ -5,6 +5,7 @@ import {
   fetchRelayerJsonRpcPost,
   RelayerPublicDecryptPayload,
 } from './fetchRelayer';
+import { Auth } from '../auth';
 
 const aclABI = [
   'function isAllowedForDecryption(bytes32 handle) view returns (bool)',
@@ -95,9 +96,11 @@ export const publicDecryptRequest =
     aclContractAddress: string,
     relayerUrl: string,
     provider: ethers.JsonRpcProvider | ethers.BrowserProvider,
-    options?: { apiKey?: string },
+    instanceOptions?: {
+      auth?: Auth;
+    },
   ) =>
-  async (_handles: (Uint8Array | string)[]) => {
+  async (_handles: (Uint8Array | string)[], options?: { auth?: Auth }) => {
     const extraData: `0x${string}` = '0x00';
     const acl = new ethers.Contract(aclContractAddress, aclABI, provider);
 
@@ -136,7 +139,7 @@ export const publicDecryptRequest =
       'PUBLIC_DECRYPT',
       `${relayerUrl}/v1/public-decrypt`,
       payloadForRequest,
-      options,
+      options ?? instanceOptions,
     );
 
     // verify signatures on decryption:

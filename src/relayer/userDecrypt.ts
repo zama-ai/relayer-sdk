@@ -6,6 +6,7 @@ import {
   HandleContractPairRelayer,
   RelayerUserDecryptPayload,
 } from './fetchRelayer';
+import { Auth } from '../auth';
 
 // Add type checking
 const getAddress = (value: string): `0x${string}` =>
@@ -99,7 +100,7 @@ export const userDecryptRequest =
     aclContractAddress: string,
     relayerUrl: string,
     provider: ethers.JsonRpcProvider | ethers.BrowserProvider,
-    options?: { apiKey?: string },
+    instanceOptions?: { auth?: Auth },
   ) =>
   async (
     _handles: HandleContractPair[],
@@ -110,6 +111,7 @@ export const userDecryptRequest =
     userAddress: string,
     startTimestamp: string | number,
     durationDays: string | number,
+    options?: { auth?: Auth },
   ): Promise<DecryptedResults> => {
     const extraData: `0x${string}` = '0x00';
     let pubKey;
@@ -190,7 +192,7 @@ export const userDecryptRequest =
       'USER_DECRYPT',
       `${relayerUrl}/v1/user-decrypt`,
       payloadForRequest,
-      options,
+      instanceOptions ?? options,
     );
 
     // assume the KMS Signers have the correct order

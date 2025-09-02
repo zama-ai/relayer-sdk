@@ -109,6 +109,7 @@ export const createInstance = async (
     kmsContractAddress,
     aclContractAddress,
     gatewayChainId,
+    auth,
   } = config;
 
   if (!kmsContractAddress || !isAddress(kmsContractAddress)) {
@@ -185,6 +186,7 @@ export const createInstance = async (
       aclContractAddress,
       cleanURL(config.relayerUrl),
       provider,
+      auth && { auth },
     ),
     userDecrypt: userDecryptRequest(
       kmsSigners,
@@ -194,6 +196,7 @@ export const createInstance = async (
       aclContractAddress,
       cleanURL(config.relayerUrl),
       provider,
+      auth && { auth },
     ),
     getPublicKey: () =>
       publicKeyData.publicKey
