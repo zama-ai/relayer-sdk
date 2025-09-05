@@ -88,7 +88,6 @@ export const createEIP712 =
           DelegatedUserDecryptRequestVerification: [
             { name: 'publicKey', type: 'bytes' },
             { name: 'contractAddresses', type: 'address[]' },
-            { name: 'contractsChainId', type: 'uint256' },
             { name: 'startTimestamp', type: 'uint256' },
             { name: 'durationDays', type: 'uint256' },
             { name: 'extraData', type: 'bytes' },
@@ -103,7 +102,6 @@ export const createEIP712 =
         message: {
           publicKey: formattedPublicKey,
           contractAddresses,
-          contractsChainId,
           startTimestamp: formattedStartTimestamp,
           durationDays: formattedDurationDays,
           extraData,
@@ -118,7 +116,6 @@ export const createEIP712 =
         UserDecryptRequestVerification: [
           { name: 'publicKey', type: 'bytes' },
           { name: 'contractAddresses', type: 'address[]' },
-          { name: 'contractsChainId', type: 'uint256' },
           { name: 'startTimestamp', type: 'uint256' },
           { name: 'durationDays', type: 'uint256' },
           { name: 'extraData', type: 'bytes' },
@@ -129,7 +126,6 @@ export const createEIP712 =
       message: {
         publicKey: formattedPublicKey,
         contractAddresses,
-        contractsChainId,
         startTimestamp: formattedStartTimestamp,
         durationDays: formattedDurationDays,
         extraData,
