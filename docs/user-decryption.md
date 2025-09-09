@@ -65,10 +65,15 @@ const handleContractPairs = [
   },
 ];
 const startTimeStamp = Math.floor(Date.now() / 1000).toString();
-const durationDays = "10"; // String for consistency
+const durationDays = '10'; // String for consistency
 const contractAddresses = [contractAddress];
 
-const eip712 = instance.createEIP712(keypair.publicKey, contractAddresses, startTimeStamp, durationDays);
+const eip712 = instance.createEIP712(
+  keypair.publicKey,
+  contractAddresses,
+  startTimeStamp,
+  durationDays,
+);
 
 const signature = await signer.signTypedData(
   eip712.domain,
@@ -82,7 +87,7 @@ const result = await instance.userDecrypt(
   handleContractPairs,
   keypair.privateKey,
   keypair.publicKey,
-  signature.replace("0x", ""),
+  signature.replace('0x', ''),
   contractAddresses,
   signer.address,
   startTimeStamp,

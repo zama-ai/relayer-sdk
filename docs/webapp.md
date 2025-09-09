@@ -33,13 +33,20 @@ This document guides you through building a web application using the `@zama-fhe
 Include this line at the top of your project.
 
 ```html
-<script src="https://cdn.zama.ai/relayer-sdk-js/0.1.0-9/relayer-sdk-js.umd.cjs" type="text/javascript"></script>
+<script
+  src="https://cdn.zama.ai/relayer-sdk-js/0.1.0-9/relayer-sdk-js.umd.cjs"
+  type="text/javascript"
+></script>
 ```
 
 In your project, you can use the bundle import if you install `@zama-fhe/relayer-sdk` package:
 
 ```javascript
-import { initSDK, createInstance, SepoliaConfig } from "@zama-fhe/relayer-sdk/bundle";
+import {
+  initSDK,
+  createInstance,
+  SepoliaConfig,
+} from '@zama-fhe/relayer-sdk/bundle';
 ```
 
 #### Using ESM CDN
@@ -48,7 +55,11 @@ If you prefer You can also use the `@zama-fhe/relayer-sdk` as a ES module:
 
 ```html
 <script type="module">
-  import { initSDK, createInstance, SepoliaConfig } from "https://cdn.zama.ai/relayer-sdk-js/0.1.0-9/relayer-sdk-js.js";
+  import {
+    initSDK,
+    createInstance,
+    SepoliaConfig,
+  } from 'https://cdn.zama.ai/relayer-sdk-js/0.1.0-9/relayer-sdk-js.js';
 
   await initSDK();
   const config = { ...SepoliaConfig, network: window.ethereum };
@@ -75,7 +86,7 @@ pnpm add @zama-fhe/relayer-sdk
 `@zama-fhe/relayer-sdk` uses ESM format. You need to set the [type to "module" in your package.json](https://nodejs.org/api/packages.html#type). If your node project use `"type": "commonjs"` or no type, you can force the loading of the web version by using `import { createInstance } from '@zama-fhe/relayer-sdk/web';`
 
 ```javascript
-import { initSDK, createInstance, SepoliaConfig } from "@zama-fhe/relayer-sdk";
+import { initSDK, createInstance, SepoliaConfig } from '@zama-fhe/relayer-sdk';
 ```
 
 ### Step 2: Initialize your project
@@ -83,7 +94,7 @@ import { initSDK, createInstance, SepoliaConfig } from "@zama-fhe/relayer-sdk";
 To use the library in your project, you need to load the WASM of [TFHE](https://www.npmjs.com/package/tfhe) first with `initSDK`.
 
 ```javascript
-import { initSDK } from "@zama-fhe/relayer-sdk/bundle";
+import { initSDK } from '@zama-fhe/relayer-sdk/bundle';
 
 const init = async () => {
   await initSDK(); // Load needed WASM
@@ -95,7 +106,11 @@ const init = async () => {
 Once the WASM is loaded, you can now create an instance.
 
 ```javascript
-import { initSDK, createInstance, SepoliaConfig } from "@zama-fhe/relayer-sdk/bundle";
+import {
+  initSDK,
+  createInstance,
+  SepoliaConfig,
+} from '@zama-fhe/relayer-sdk/bundle';
 
 const init = async () => {
   await initSDK(); // Load FHE
