@@ -43,7 +43,8 @@ Doing this will return the ciphertext handle, an identifier for the underlying c
 
 {% hint style="warning" %}
 For the user to be able to user decrypt (also called re-encrypt) the ciphertext value the access control (ACL) needs to be set properly using the `FHE.allow(ciphertext, address)` function in the solidity contract holding the ciphertext.
-For more details on the topic please refer to [the ACL documentation](../solidity-guides/acl/README.md).
+
+For more details on the topic please refer to [the ACL documentation](https://docs.zama.ai/protocol/solidity-guides/solidity-guides/smart-contract/acl).
 {% endhint %}
 
 ## Step 2: decrypt the ciphertext
@@ -65,10 +66,15 @@ const handleContractPairs = [
   },
 ];
 const startTimeStamp = Math.floor(Date.now() / 1000).toString();
-const durationDays = "10"; // String for consistency
+const durationDays = '10'; // String for consistency
 const contractAddresses = [contractAddress];
 
-const eip712 = instance.createEIP712(keypair.publicKey, contractAddresses, startTimeStamp, durationDays);
+const eip712 = instance.createEIP712(
+  keypair.publicKey,
+  contractAddresses,
+  startTimeStamp,
+  durationDays,
+);
 
 const signature = await signer.signTypedData(
   eip712.domain,
@@ -82,7 +88,7 @@ const result = await instance.userDecrypt(
   handleContractPairs,
   keypair.privateKey,
   keypair.publicKey,
-  signature.replace("0x", ""),
+  signature.replace('0x', ''),
   contractAddresses,
   signer.address,
   startTimeStamp,
