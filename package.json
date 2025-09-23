@@ -26,9 +26,6 @@
       "types": "./lib/node.d.ts"
     }
   },
-  "engines": {
-    "node": ">=20"
-  },
   "scripts": {
     "lint": "eslint src/",
     "generateKeys": "./generateKeys.js",
@@ -103,5 +100,8 @@
     "vite": "7.0.5",
     "vite-plugin-node-polyfills": "0.24.0",
     "vite-plugin-static-copy": "^3.1.2"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

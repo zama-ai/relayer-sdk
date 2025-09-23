@@ -16,5 +16,5 @@ jobs:
       - uses: actions/checkout@master
       - uses: gaurav-nelson/github-action-markdown-link-check@v1
         with:
+          config-file: '.github/linters/mlc_config.json'
           use-quiet-mode: 'yes'
-          use-verbose-mode: 'yes'
