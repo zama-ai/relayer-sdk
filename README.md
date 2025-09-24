@@ -8,8 +8,7 @@
 
 <hr/>
 <p align="center">
-  <!-- TODO: Migrate documentation links to https://docs.zama.ai/relayer -->
-  <a href="https://docs.zama.ai/fhevm">📃 Read white paper</a> | <a href="https://docs.zama.ai/fhevm">📒 Read documentation</a> | <a href="https://zama.ai/community">💛 Community support</a>
+  <a href="https://docs.zama.ai/protocol/zama-protocol-litepaper">📃 Read white paper</a> | <a href="https://docs.zama.ai/protocol/relayer-sdk-guides">📒 Read documentation</a> | <a href="https://zama.ai/community">💛 Community support</a>
 </p>
 <p align="center">
 <!-- Version badge using shields.io -->
