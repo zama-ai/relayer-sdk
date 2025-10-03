@@ -1,6 +1,6 @@
 {
   "name": "@zama-fhe/relayer-sdk",
-  "version": "0.3.0-2",
+  "version": "0.3.0-3",
   "description": "fhevm Relayer SDK",
   "main": "lib/node.js",
   "types": "lib/node.d.ts",
@@ -24,7 +24,8 @@
       "import": "./lib/node.js",
       "require": "./lib/node.cjs",
       "types": "./lib/node.d.ts"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "scripts": {
     "lint": "eslint src/",
