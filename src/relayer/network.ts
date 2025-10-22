@@ -1,4 +1,5 @@
 import { SERIALIZED_SIZE_LIMIT_PK, SERIALIZED_SIZE_LIMIT_CRS } from '../utils';
+import { retryFetch } from '../index';
 import { fetchRelayerGet, RelayerKeyUrlResponse } from './fetchRelayer';
 
 // export type RelayerKeysItem = {
@@ -79,7 +80,7 @@ export const getKeysFromRelayer = async (
       pubKeyUrl = keyInfo.fhe_public_key.urls[0];
     }
 
-    const publicKeyResponse = await fetch(pubKeyUrl);
+    const publicKeyResponse = await retryFetch(pubKeyUrl);
     if (!publicKeyResponse.ok) {
       throw new Error(
         `HTTP error! status: ${publicKeyResponse.status} on ${publicKeyResponse.url}`,
@@ -97,7 +98,7 @@ export const getKeysFromRelayer = async (
     const publicParamsUrl = data.response.crs['2048'].urls[0];
     const publicParamsId = data.response.crs['2048'].data_id;
 
-    const publicParams2048Response = await fetch(publicParamsUrl);
+    const publicParams2048Response = await retryFetch(publicParamsUrl);
     if (!publicParams2048Response.ok) {
       throw new Error(
         `HTTP error! status: ${publicParams2048Response.status} on ${publicParams2048Response.url}`,

@@ -77,7 +77,7 @@ export default [
     plugins: [...nodePlugins],
     // Suppress warning
     // https://rollupjs.org/troubleshooting/#warning-treating-module-as-external-dependency
-    external: ['ethers', 'fetch-retry', 'node-tfhe', 'node-tkms', 'keccak'],
+    external: ['ethers', 'ky', 'node-tfhe', 'node-tkms', 'keccak'],
   },
   {
     input: 'src/node.ts',
@@ -89,6 +89,6 @@ export default [
     plugins: [...nodePlugins],
     // Suppress warning
     // https://rollupjs.org/troubleshooting/#warning-treating-module-as-external-dependency
-    external: ['ethers', 'fetch-retry', 'node-tfhe', 'node-tkms', 'keccak'],
+    external: ['ethers', 'ky', 'node-tfhe', 'node-tkms', 'keccak'],
   },
 ];

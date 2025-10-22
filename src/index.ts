@@ -27,9 +27,16 @@ import { DecryptedResults } from './relayer/decryptUtils';
 import { PublicParams } from './sdk/encrypt';
 import { generateKeypair, createEIP712, EIP712 } from './sdk/keypair';
 
-import fetchRetry from 'fetch-retry';
+import ky from 'ky';
 
-global.fetch = fetchRetry(global.fetch, { retries: 5, retryDelay: 500 });
+// Create a dedicated fetch instance with retry logic for relayer network requests
+// Note: We don't wrap global.fetch to avoid interfering with WASM module loading
+export const retryFetch = ky.create({
+  retry: {
+    limit: 5,
+    delay: () => 500, // Fixed 500ms delay
+  },
+});
 
 export {
   generateKeypair,
