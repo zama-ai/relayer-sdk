@@ -1,4 +1,4 @@
-import createHash from 'keccak';
+import { concat, getBytes, keccak256 } from 'ethers';
 
 import { ENCRYPTION_TYPES } from '../sdk/encryptionTypes';
 import { fromHexString } from '../utils';
@@ -16,9 +16,7 @@ export const computeHandles = (
 ) => {
   // Should be identical to:
   // https://github.com/zama-ai/fhevm-backend/blob/bae00d1b0feafb63286e94acdc58dc88d9c481bf/fhevm-engine/zkproof-worker/src/verifier.rs#L301
-  const blob_hash = createHash('keccak256')
-    .update(Buffer.from(ciphertextWithZKProof))
-    .digest();
+  const blob_hash = getBytes(keccak256(ciphertextWithZKProof));
   const aclContractAddress20Bytes = Buffer.from(
     fromHexString(aclContractAddress),
   );
@@ -27,12 +25,16 @@ export const computeHandles = (
   const handles = bitwidths.map((bitwidth, encryptionIndex) => {
     const encryptionType = ENCRYPTION_TYPES[bitwidth];
     const encryptionIndex1Byte = Buffer.from([encryptionIndex]);
-    const handleHash = createHash('keccak256')
-      .update(blob_hash)
-      .update(encryptionIndex1Byte)
-      .update(aclContractAddress20Bytes)
-      .update(chainId32Bytes)
-      .digest();
+    const handleHash = getBytes(
+      keccak256(
+        concat([
+          blob_hash,
+          encryptionIndex1Byte,
+          aclContractAddress20Bytes,
+          chainId32Bytes,
+        ]),
+      ),
+    );
     const dataInput = new Uint8Array(32);
     dataInput.set(handleHash, 0);
 

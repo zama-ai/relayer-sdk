@@ -1,4 +1,5 @@
 import { Auth, setAuth } from '../auth';
+import { retryFetch } from '../index';
 import {
   throwRelayerUnexpectedJSONError,
   throwRelayerJSONError,
@@ -145,7 +146,7 @@ export async function fetchRelayerJsonRpcPost(
   let response: Response;
   let json: RelayerFetchResponseJson;
   try {
-    response = await fetch(url, init);
+    response = await retryFetch(url, init);
   } catch (e) {
     throwRelayerUnknownError(relayerOperation, e);
   }
@@ -177,7 +178,7 @@ export async function fetchRelayerGet(
   let response: Response;
   let json: RelayerFetchResponseJson;
   try {
-    response = await fetch(url);
+    response = await retryFetch(url);
   } catch (e) {
     throwRelayerUnknownError(relayerOperation, e);
   }
