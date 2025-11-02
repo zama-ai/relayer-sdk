@@ -18,7 +18,7 @@ jobs:
       - name: Get package version
         id: package-version
         run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
-      - run: BASE_PATH=https://cdn.zama.ai/relayer-sdk-js/${{ steps.package-version.outputs.version }}/ npm run build
+      - run: BASE_PATH=https://cdn.zama.org/relayer-sdk-js/${{ steps.package-version.outputs.version }}/ npm run build
       - name: Archive bundle
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
