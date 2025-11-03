@@ -45,3 +45,7 @@ export const bytesToBigInt = function (byteArray: Uint8Array): bigint {
 
   return BigInt(`0x${hex}`);
 };
+
+export function ensure0x(s: string): `0x${string}` {
+  return !s.startsWith('0x') ? `0x${s}` : (s as `0x${string}`);
+}
