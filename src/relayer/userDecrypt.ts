@@ -1,6 +1,10 @@
 import { bytesToBigInt, fromHexString, toHexString } from '../utils';
 import { ethers, getAddress as ethersGetAddress } from 'ethers';
-import { DecryptedResults, checkEncryptedBits } from './decryptUtils';
+import {
+  ClearValueType,
+  UserDecryptResults,
+  checkEncryptedBits,
+} from './decryptUtils';
 import {
   fetchRelayerJsonRpcPost,
   HandleContractPairRelayer,
@@ -20,31 +24,27 @@ const MAX_USER_DECRYPT_CONTRACT_ADDRESSES = 10;
 const MAX_USER_DECRYPT_DURATION_DAYS = BigInt(365);
 
 function formatAccordingToType(
-  decryptedBigInt: bigint,
+  clearValueAsBigInt: bigint,
   type: number,
-): boolean | bigint | string {
+): ClearValueType {
   if (type === 0) {
     // ebool
-    return decryptedBigInt === BigInt(1);
+    return clearValueAsBigInt === BigInt(1);
   } else if (type === 7) {
     // eaddress
-    return getAddress('0x' + decryptedBigInt.toString(16).padStart(40, '0'));
-  } else if (type === 9) {
-    // ebytes64
-    return '0x' + decryptedBigInt.toString(16).padStart(128, '0');
-  } else if (type === 10) {
-    // ebytes128
-    return '0x' + decryptedBigInt.toString(16).padStart(256, '0');
-  } else if (type === 11) {
-    // ebytes256
-    return '0x' + decryptedBigInt.toString(16).padStart(512, '0');
-  } // euintXXX
-  return decryptedBigInt;
+    return getAddress('0x' + clearValueAsBigInt.toString(16).padStart(40, '0'));
+  } else if (type > 8 || type == 1) {
+    // type == 1 : euint4 (not supported)
+    throw new Error(`Unsupported handle type ${type}`);
+  }
+  // euintXXX
+  return clearValueAsBigInt;
 }
-function buildUserDecryptedResult(
-  handles: string[],
+
+function buildUserDecryptResults(
+  handles: `0x${string}`[],
   listBigIntDecryptions: bigint[],
-): DecryptedResults {
+): UserDecryptResults {
   let typesList: number[] = [];
   for (const handle of handles) {
     const hexPair = handle.slice(-4, -2).toLowerCase();
@@ -52,7 +52,7 @@ function buildUserDecryptedResult(
     typesList.push(typeDiscriminant);
   }
 
-  let results: DecryptedResults = {};
+  const results: UserDecryptResults = {};
   handles.forEach(
     (handle, idx) =>
       (results[handle] = formatAccordingToType(
@@ -112,7 +112,7 @@ export const userDecryptRequest =
     startTimestamp: string | number,
     durationDays: string | number,
     options?: { auth?: Auth },
-  ): Promise<DecryptedResults> => {
+  ): Promise<UserDecryptResults> => {
     const extraData: `0x${string}` = '0x00';
     let pubKey;
     let privKey;
@@ -236,7 +236,7 @@ export const userDecryptRequest =
         (d: { bytes: Uint8Array<ArrayBufferLike> }) => bytesToBigInt(d.bytes),
       );
 
-      const results = buildUserDecryptedResult(
+      const results: UserDecryptResults = buildUserDecryptResults(
         handles.map((h) => h.handle),
         listBigIntDecryptions,
       );

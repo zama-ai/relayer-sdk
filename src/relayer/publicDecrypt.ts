@@ -1,6 +1,10 @@
 import { fromHexString, toHexString } from '../utils';
 import { ethers, AbiCoder } from 'ethers';
-import { DecryptedResults, checkEncryptedBits } from './decryptUtils';
+import {
+  ClearValues,
+  PublicDecryptResults,
+  checkEncryptedBits,
+} from './decryptUtils';
 import {
   fetchRelayerJsonRpcPost,
   RelayerPublicDecryptPayload,
@@ -50,10 +54,10 @@ const CiphertextType: Record<number, 'bool' | 'uint256' | 'address' | 'bytes'> =
     8: 'uint256',
   };
 
-function deserializeDecryptedResult(
-  handles: string[],
-  decryptedResult: string,
-): DecryptedResults {
+function deserializeClearValues(
+  handles: `0x${string}`[],
+  decryptedResult: `0x${string}`,
+): ClearValues {
   let typesList: number[] = [];
   for (const handle of handles) {
     const hexPair = handle.slice(-4, -2).toLowerCase();
@@ -81,7 +85,7 @@ function deserializeDecryptedResult(
   // strip dummy first/last element
   const rawValues = decoded.slice(1, 1 + typesList.length);
 
-  let results: DecryptedResults = {};
+  const results: ClearValues = {};
   handles.forEach((handle, idx) => (results[handle] = rawValues[idx]));
 
   return results;
@@ -100,7 +104,10 @@ export const publicDecryptRequest =
       auth?: Auth;
     },
   ) =>
-  async (_handles: (Uint8Array | string)[], options?: { auth?: Auth }) => {
+  async (
+    _handles: (Uint8Array | string)[],
+    options?: { auth?: Auth },
+  ): Promise<PublicDecryptResults> => {
     const extraData: `0x${string}` = '0x00';
     const acl = new ethers.Contract(aclContractAddress, aclABI, provider);
 
@@ -157,20 +164,24 @@ export const publicDecryptRequest =
       ],
     };
     const result = json.response[0];
-    const decryptedResult = result.decrypted_value.startsWith('0x')
+    const decryptedResult: `0x${string}` = result.decrypted_value.startsWith(
+      '0x',
+    )
       ? result.decrypted_value
       : `0x${result.decrypted_value}`;
-    const signatures = result.signatures;
+    const signatures = result.signatures as string[];
     const signedExtraData = '0x';
 
     const recoveredAddresses = signatures.map((signature: string) => {
-      const sig = signature.startsWith('0x') ? signature : `0x${signature}`;
+      const sig: `0x${string}` = signature.startsWith('0x')
+        ? (signature as `0x${string}`)
+        : `0x${signature}`;
       const recoveredAddress = ethers.verifyTypedData(
         domain,
         types,
         { ctHandles: handles, decryptedResult, extraData: signedExtraData },
         sig,
-      );
+      ) as `0x${string}`;
       return recoveredAddress;
     });
 
@@ -184,7 +195,10 @@ export const publicDecryptRequest =
       throw Error('KMS signers threshold is not reached');
     }
 
-    const results = deserializeDecryptedResult(handles, decryptedResult);
+    const clearValues: ClearValues = deserializeClearValues(
+      handles,
+      decryptedResult,
+    );
 
-    return results;
+    return { clearValues, abiEncodedClearValues: '0x0', decryptionProof: '0x' };
   };

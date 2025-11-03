@@ -22,12 +22,17 @@ import {
   RelayerEncryptedInput,
 } from './relayer/sendEncryption';
 import { publicDecryptRequest } from './relayer/publicDecrypt';
-import { DecryptedResults } from './relayer/decryptUtils';
 
 import { PublicParams } from './sdk/encrypt';
 import { generateKeypair, createEIP712, EIP712 } from './sdk/keypair';
 
 import fetchRetry from 'fetch-retry';
+import type {
+  PublicDecryptResults,
+  UserDecryptResults,
+  ClearValueType,
+  ClearValues,
+} from './relayer/decryptUtils';
 
 global.fetch = fetchRetry(global.fetch, { retries: 5, retryDelay: 500 });
 
@@ -41,8 +46,13 @@ export { RelayerEncryptedInput } from './relayer/sendEncryption';
 export { HandleContractPair } from './relayer/userDecrypt';
 export { PublicParams } from './sdk/encrypt';
 export { EncryptionTypes, ENCRYPTION_TYPES } from './sdk/encryptionTypes';
-export { DecryptedResults } from './relayer/decryptUtils';
 export { getErrorCauseStatus, getErrorCauseCode } from './relayer/error';
+export type {
+  PublicDecryptResults,
+  UserDecryptResults,
+  ClearValueType,
+  ClearValues,
+};
 
 export type FhevmInstance = {
   createEncryptedInput: (
@@ -58,7 +68,7 @@ export type FhevmInstance = {
   ) => EIP712;
   publicDecrypt: (
     handles: (string | Uint8Array)[],
-  ) => Promise<DecryptedResults>;
+  ) => Promise<PublicDecryptResults>;
   userDecrypt: (
     handles: HandleContractPair[],
     privateKey: string,
@@ -68,7 +78,7 @@ export type FhevmInstance = {
     userAddress: string,
     startTimestamp: string | number,
     durationDays: string | number,
-  ) => Promise<DecryptedResults>;
+  ) => Promise<UserDecryptResults>;
   getPublicKey: () => { publicKeyId: string; publicKey: Uint8Array } | null;
   getPublicParams: (bits: keyof PublicParams) => {
     publicParams: Uint8Array;
@@ -96,7 +106,7 @@ export const SepoliaConfig: FhevmInstanceConfig = {
   // Optional RPC provider to host chain
   network: 'https://eth-sepolia.public.blastapi.io',
   // Relayer URL
-  relayerUrl: 'https://relayer-sandbox.testnet.zama.cloud',
+  relayerUrl: 'https://relayer.testnet.zama.org',
 };
 
 export const createInstance = async (

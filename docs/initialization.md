@@ -28,7 +28,7 @@ const instance = await createInstance({
   // Optional RPC provider to host chain
   network: 'https://eth-sepolia.public.blastapi.io',
   // Relayer URL
-  relayerUrl: 'https://relayer-sandbox.testnet.zama.cloud',
+  relayerUrl: 'https://relayer.testnet.zama.org',
 });
 ```
 
