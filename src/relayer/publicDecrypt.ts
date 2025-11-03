@@ -1,9 +1,11 @@
-import { fromHexString, toHexString } from '../utils';
+import { ensure0x, fromHexString, toHexString } from '../utils';
 import { ethers, AbiCoder } from 'ethers';
 import {
+  ClearValueType,
   ClearValues,
   PublicDecryptResults,
   checkEncryptedBits,
+  getHandleType,
 } from './decryptUtils';
 import {
   fetchRelayerJsonRpcPost,
@@ -40,6 +42,104 @@ function isThresholdReached(
   }
 
   return recoveredAddresses.length >= threshold;
+}
+
+function abiEncodeClearValues(clearValues: ClearValues) {
+  const handlesBytes32Hex = Object.keys(clearValues) as `0x${string}`[];
+
+  const abiTypes: string[] = [];
+  const abiValues: (string | bigint)[] = [];
+
+  for (let i = 0; i < handlesBytes32Hex.length; ++i) {
+    const handle = handlesBytes32Hex[i];
+    const handleType = getHandleType(handle);
+
+    let clearTextValue: ClearValueType =
+      clearValues[handle as keyof typeof clearValues];
+    if (typeof clearTextValue === 'boolean') {
+      clearTextValue = clearTextValue ? '0x01' : '0x00';
+    }
+
+    const clearTextValueBigInt = BigInt(clearTextValue);
+
+    //abiTypes.push(fhevmTypeInfo.solidityTypeName);
+    abiTypes.push('uint256');
+
+    switch (handleType) {
+      // eaddress
+      case 7: {
+        // string
+        abiValues.push(
+          `0x${clearTextValueBigInt.toString(16).padStart(40, '0')}`,
+        );
+        break;
+      }
+      // ebool
+      case 0: {
+        // bigint (0 or 1)
+        if (
+          clearTextValueBigInt !== BigInt(0) &&
+          clearTextValueBigInt !== BigInt(1)
+        ) {
+          throw new Error(
+            `Invalid ebool clear text value ${clearTextValueBigInt}. Expecting 0 or 1.`,
+          );
+        }
+        abiValues.push(clearTextValueBigInt);
+        break;
+      }
+      case 2: //euint8
+      case 3: //euint16
+      case 4: //euint32
+      case 5: //euint64
+      case 6: //euint128
+      case 7: {
+        //euint256
+        // bigint
+        abiValues.push(clearTextValueBigInt);
+        break;
+      }
+      default: {
+        throw new Error(`Unsupported Fhevm primitive type id: ${handleType}`);
+      }
+    }
+  }
+
+  const abiCoder = ethers.AbiCoder.defaultAbiCoder();
+
+  // ABI encode the decryptedResult as done in the KMS, since all decrypted values
+  // are native static types, thay have same abi-encoding as uint256:
+  const abiEncodedClearValues: `0x${string}` = abiCoder.encode(
+    abiTypes,
+    abiValues,
+  ) as `0x${string}`;
+
+  return {
+    abiTypes,
+    abiValues,
+    abiEncodedClearValues,
+  };
+}
+
+function buildDecryptionProof(
+  kmsSignatures: `0x${string}`[],
+  extraData: `0x${string}`,
+): `0x${string}` {
+  // Build the decryptionProof as numSigners + KMS signatures + extraData
+  const packedNumSigners = ethers.solidityPacked(
+    ['uint8'],
+    [kmsSignatures.length],
+  );
+  const packedSignatures = ethers.solidityPacked(
+    Array(kmsSignatures.length).fill('bytes'),
+    kmsSignatures,
+  );
+  const decryptionProof: `0x${string}` = ethers.concat([
+    packedNumSigners,
+    packedSignatures,
+    extraData,
+  ]) as `0x${string}`;
+  return decryptionProof;
 }
 
 const CiphertextType: Record<number, 'bool' | 'uint256' | 'address' | 'bytes'> =
@@ -164,26 +264,21 @@ export const publicDecryptRequest =
       ],
     };
     const result = json.response[0];
-    const decryptedResult: `0x${string}` = result.decrypted_value.startsWith(
-      '0x',
-    )
-      ? result.decrypted_value
-      : `0x${result.decrypted_value}`;
-    const signatures = result.signatures as string[];
+    const decryptedResult: `0x${string}` = ensure0x(result.decrypted_value);
+    const kmsSignatures: `0x${string}`[] = result.signatures.map(ensure0x);
     const signedExtraData = '0x';
 
-    const recoveredAddresses = signatures.map((signature: string) => {
-      const sig: `0x${string}` = signature.startsWith('0x')
-        ? (signature as `0x${string}`)
-        : `0x${signature}`;
-      const recoveredAddress = ethers.verifyTypedData(
-        domain,
-        types,
-        { ctHandles: handles, decryptedResult, extraData: signedExtraData },
-        sig,
-      ) as `0x${string}`;
-      return recoveredAddress;
-    });
+    const recoveredAddresses: `0x${string}`[] = kmsSignatures.map(
+      (kmsSignature: `0x${string}`) => {
+        const recoveredAddress = ethers.verifyTypedData(
+          domain,
+          types,
+          { ctHandles: handles, decryptedResult, extraData: signedExtraData },
+          kmsSignature,
+        ) as `0x${string}`;
+        return recoveredAddress;
+      },
+    );
 
     const thresholdReached = isThresholdReached(
       kmsSigners,
@@ -200,5 +295,15 @@ export const publicDecryptRequest =
       decryptedResult,
     );
 
-    return { clearValues, abiEncodedClearValues: '0x0', decryptionProof: '0x' };
+    const abiEnc = abiEncodeClearValues(clearValues);
+    const decryptionProof = buildDecryptionProof(
+      kmsSignatures,
+      signedExtraData,
+    );
+
+    return {
+      clearValues,
+      abiEncodedClearValues: abiEnc.abiEncodedClearValues,
+      decryptionProof,
+    };
   };

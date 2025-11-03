@@ -19,6 +19,19 @@ const NumEncryptedBits: Record<number, number> = {
   8: 256, // euint256
 } as const;
 
+export function getHandleType(handle: `0x${string}`): number {
+  if (handle.length !== 66) {
+    throw new Error(`Handle ${handle} is not of valid length`);
+  }
+  const hexPair = handle.slice(-4, -2).toLowerCase();
+  const typeDiscriminant = parseInt(hexPair, 16);
+
+  if (!(typeDiscriminant in NumEncryptedBits)) {
+    throw new Error(`Handle ${handle} is not of valid type`);
+  }
+  return typeDiscriminant;
+}
+
 export function checkEncryptedBits(handles: `0x${string}`[]) {
   let total = 0;
 
