@@ -1,11 +1,7 @@
 import { isAddress } from 'ethers';
 
-import {
-  bytesToBigInt,
-  fromHexString,
-  SERIALIZED_SIZE_LIMIT_CIPHERTEXT,
-} from '../utils';
-import { EncryptionTypes } from './encryptionTypes';
+import { fromHexString, SERIALIZED_SIZE_LIMIT_CIPHERTEXT } from '../utils';
+import { EncryptionBits } from './encryptionTypes';
 import { TFHEType } from '../tfheType';
 
 export type EncryptedInput = {
@@ -16,11 +12,8 @@ export type EncryptedInput = {
   add64: (value: number | bigint) => EncryptedInput;
   add128: (value: number | bigint) => EncryptedInput;
   add256: (value: number | bigint) => EncryptedInput;
-  addBytes64: (value: Uint8Array) => EncryptedInput;
-  addBytes128: (value: Uint8Array) => EncryptedInput;
-  addBytes256: (value: Uint8Array) => EncryptedInput;
   addAddress: (value: string) => EncryptedInput;
-  getBits: () => EncryptionTypes[];
+  getBits: () => EncryptionBits[];
   encrypt: () => Uint8Array;
 };
 
@@ -44,7 +37,7 @@ const checkEncryptedValue = (value: number | bigint, bits: number) => {
 };
 
 export type PublicParams<T = TFHEType['CompactPkeCrs']> = {
-  [key in EncryptionTypes]?: { publicParams: T; publicParamsId: string };
+  2048: { publicParams: T; publicParamsId: string };
 };
 
 export type EncryptInputParams = {
@@ -72,7 +65,7 @@ export const createEncryptedInput = ({
     throw new Error('User address is not a valid address.');
   }
   const publicKey: TFHEType['TfheCompactPublicKey'] = tfheCompactPublicKey;
-  const bits: EncryptionTypes[] = [];
+  const bits: EncryptionBits[] = [];
   const builder = TFHE.CompactCiphertextList.builder(publicKey);
   let ciphertextWithZKProof: Uint8Array = new Uint8Array(); // updated in `_prove`
   const checkLimit = (added: number) => {
@@ -100,7 +93,7 @@ export const createEncryptedInput = ({
       checkEncryptedValue(Number(value), 1);
       checkLimit(2);
       builder.push_boolean(!!value);
-      bits.push(1); // ebool takes 2 encrypted bits
+      bits.push(2); // ebool takes 2 encrypted bits
       return this;
     },
     add8(value: number | bigint) {
@@ -154,42 +147,6 @@ export const createEncryptedInput = ({
       bits.push(256);
       return this;
     },
-    addBytes64(value: Uint8Array) {
-      if (value.length !== 64)
-        throw Error(
-          'Uncorrect length of input Uint8Array, should be 64 for an ebytes64',
-        );
-      const bigIntValue = bytesToBigInt(value);
-      checkEncryptedValue(bigIntValue, 512);
-      checkLimit(512);
-      builder.push_u512(bigIntValue);
-      bits.push(512);
-      return this;
-    },
-    addBytes128(value: Uint8Array) {
-      if (value.length !== 128)
-        throw Error(
-          'Uncorrect length of input Uint8Array, should be 128 for an ebytes128',
-        );
-      const bigIntValue = bytesToBigInt(value);
-      checkEncryptedValue(bigIntValue, 1024);
-      checkLimit(1024);
-      builder.push_u1024(bigIntValue);
-      bits.push(1024);
-      return this;
-    },
-    addBytes256(value: Uint8Array) {
-      if (value.length !== 256)
-        throw Error(
-          'Uncorrect length of input Uint8Array, should be 256 for an ebytes256',
-        );
-      const bigIntValue = bytesToBigInt(value);
-      checkEncryptedValue(bigIntValue, 2048);
-      checkLimit(2048);
-      builder.push_u2048(bigIntValue);
-      bits.push(2048);
-      return this;
-    },
     getBits() {
       return bits;
     },
@@ -200,9 +157,7 @@ export const createEncryptedInput = ({
 
         const totalBits = bits.reduce((total, v) => total + v, 0);
         const ppTypes = getKeys(publicParams);
-        const closestPP: EncryptionTypes | undefined = ppTypes.find(
-          (k) => Number(k) >= totalBits,
-        );
+        const closestPP = ppTypes.find((k) => Number(k) >= totalBits);
         if (!closestPP) {
           throw new Error(
             `Too many bits in provided values. Maximum is ${

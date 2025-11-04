@@ -1,12 +1,11 @@
 /**
- * @constant
  * **FHE Type Mapping for Input Builders**
  * * Maps the **number of encrypted bits** used by a FHEVM primary type
  * to its corresponding **FheTypeId**. This constant is primarily used by
  * `EncryptedInput` and `RelayerEncryptedInput` builders to determine the correct
  * input type and calculate the total required bit-length.
  *
- * **Structure: { Encrypted Bit Length: FheTypeId }**
+ * **Structure: \{ Encrypted Bit Length: FheTypeId \}**
  *
  * | Bits | FheTypeId | FHE Type Name | Note |
  * | :--- | :-------- | :------------ | :--- |
@@ -32,4 +31,4 @@ export const ENCRYPTION_TYPES = {
   256: 8, // euint256 (FheTypeId=8) is using 256 encrypted bits
 };
 
-export type EncryptionTypes = keyof typeof ENCRYPTION_TYPES;
+export type EncryptionBits = keyof typeof ENCRYPTION_TYPES;

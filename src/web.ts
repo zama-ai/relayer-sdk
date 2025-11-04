@@ -44,6 +44,8 @@ window.TKMS = {
 export { InitInput as TFHEInput } from 'tfhe';
 export { InitInput as KMSInput } from 'tkms';
 
+export type { TFHEType } from './tfheType';
+
 export {
   createInstance,
   ENCRYPTION_TYPES,
@@ -59,13 +61,17 @@ export type {
   PublicParams,
   HandleContractPair,
   FhevmInstance,
-  EncryptionTypes,
+  EncryptionBits,
   UserDecryptResults,
   PublicDecryptResults,
   ClearValueType,
   ClearValues,
   EIP712,
   EIP712Type,
+  Auth,
+  BearerToken,
+  ApiKeyCookie,
+  ApiKeyHeader,
 } from './index';
 
 export type { FhevmInstanceConfig } from './config';

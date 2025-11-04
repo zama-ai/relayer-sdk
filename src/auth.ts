@@ -1,7 +1,7 @@
 /**
  * Bearer Token Authentication
  */
-type BearerToken = {
+export type BearerToken = {
   __type: 'BearerToken';
   /**
    * The Bearer token.
@@ -12,7 +12,7 @@ type BearerToken = {
 /**
  * Custom header authentication
  */
-type ApiKeyHeader = {
+export type ApiKeyHeader = {
   __type: 'ApiKeyHeader';
   /**
    * The header name. The default value is `x-api-key`.
@@ -27,7 +27,7 @@ type ApiKeyHeader = {
 /**
  * Custom cookie authentication
  */
-type ApiKeyCookie = {
+export type ApiKeyCookie = {
   __type: 'ApiKeyCookie';
   /**
    * The cookie name. The default value is `x-api-key`.

@@ -1,6 +1,6 @@
 import { isAddress } from 'ethers';
 import {
-  FhevmInstanceConfig,
+  type FhevmInstanceConfig,
   getChainId,
   getKMSSigners,
   getKMSSignersThreshold,
@@ -16,15 +16,17 @@ import {
   SERIALIZED_SIZE_LIMIT_PK,
 } from './utils';
 
-import { HandleContractPair, userDecryptRequest } from './relayer/userDecrypt';
-import {
-  createRelayerEncryptedInput,
-  RelayerEncryptedInput,
-} from './relayer/sendEncryption';
+import type { HandleContractPair } from './relayer/userDecrypt';
+import { userDecryptRequest } from './relayer/userDecrypt';
+import { createRelayerEncryptedInput } from './relayer/sendEncryption';
+import type { RelayerEncryptedInput } from './relayer/sendEncryption';
 import { publicDecryptRequest } from './relayer/publicDecrypt';
 
-import { PublicParams } from './sdk/encrypt';
-import { generateKeypair, createEIP712, EIP712 } from './sdk/keypair';
+import type { PublicParams } from './sdk/encrypt';
+
+import { generateKeypair, createEIP712 } from './sdk/keypair';
+import type { EIP712, EIP712Type } from './sdk/keypair';
+import type { Auth, BearerToken, ApiKeyCookie, ApiKeyHeader } from './auth';
 
 import fetchRetry from 'fetch-retry';
 import type {
@@ -36,16 +38,20 @@ import type {
 
 global.fetch = fetchRetry(global.fetch, { retries: 5, retryDelay: 500 });
 
-export {
-  generateKeypair,
-  createEIP712,
+export { generateKeypair, createEIP712 };
+export type {
   EIP712,
   EIP712Type,
-} from './sdk/keypair';
-export { RelayerEncryptedInput } from './relayer/sendEncryption';
-export { HandleContractPair } from './relayer/userDecrypt';
-export { PublicParams } from './sdk/encrypt';
-export { EncryptionTypes, ENCRYPTION_TYPES } from './sdk/encryptionTypes';
+  Auth,
+  BearerToken,
+  ApiKeyCookie,
+  ApiKeyHeader,
+  RelayerEncryptedInput,
+  HandleContractPair,
+  PublicParams,
+};
+export { ENCRYPTION_TYPES } from './sdk/encryptionTypes';
+export type { EncryptionBits } from './sdk/encryptionTypes';
 export { getErrorCauseStatus, getErrorCauseCode } from './relayer/error';
 export type {
   PublicDecryptResults,

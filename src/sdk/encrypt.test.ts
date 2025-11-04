@@ -37,22 +37,6 @@ describe('encrypt', () => {
     expect(ciphertext.length).toBe(18922);
   });
 
-  it('encrypt one 2048 value', async () => {
-    const input = createEncryptedInput({
-      aclContractAddress: '0x325ea1b59F28e9e1C51d3B5b47b7D3965CC5D8C8',
-      chainId: 1234,
-      tfheCompactPublicKey: publicKey,
-      publicParams,
-      userAddress: '0x8ba1f109551bd432803012645ac136ddd64dba72',
-      contractAddress: '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
-    });
-    const data = new Uint8Array(256);
-    data.set([255], 63);
-    input.addBytes256(data);
-    const ciphertext = input.encrypt();
-    expect(ciphertext.length).toBe(22762);
-  });
-
   it('throws errors', async () => {
     expect(() =>
       createEncryptedInput({
@@ -127,7 +111,7 @@ describe('encrypt', () => {
   });
 
   it('throws if total bits is above 2048', async () => {
-    const input2 = createEncryptedInput({
+    const input = createEncryptedInput({
       aclContractAddress: '0x325ea1b59F28e9e1C51d3B5b47b7D3965CC5D8C8',
       chainId: 1234,
       tfheCompactPublicKey: publicKey,
@@ -135,8 +119,10 @@ describe('encrypt', () => {
       userAddress: '0x8ba1f109551bd432803012645ac136ddd64dba72',
       contractAddress: '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
     });
-    input2.addBytes256(new Uint8Array(256));
-    expect(() => input2.addBool(false)).toThrow(
+    for (let i = 0; i < 8; ++i) {
+      input.add256(BigInt(123456789) * BigInt(i + 1));
+    }
+    expect(() => input.addBool(false)).toThrow(
       'Packing more than 2048 bits in a single input ciphertext is unsupported',
     );
   });
