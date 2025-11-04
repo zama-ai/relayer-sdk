@@ -22,12 +22,17 @@ import {
   RelayerEncryptedInput,
 } from './relayer/sendEncryption';
 import { publicDecryptRequest } from './relayer/publicDecrypt';
-import { DecryptedResults } from './relayer/decryptUtils';
 
 import { PublicParams } from './sdk/encrypt';
 import { generateKeypair, createEIP712, EIP712 } from './sdk/keypair';
 
 import fetchRetry from 'fetch-retry';
+import type {
+  PublicDecryptResults,
+  UserDecryptResults,
+  ClearValueType,
+  ClearValues,
+} from './relayer/decryptUtils';
 
 global.fetch = fetchRetry(global.fetch, { retries: 5, retryDelay: 500 });
 
@@ -41,8 +46,13 @@ export { RelayerEncryptedInput } from './relayer/sendEncryption';
 export { HandleContractPair } from './relayer/userDecrypt';
 export { PublicParams } from './sdk/encrypt';
 export { EncryptionTypes, ENCRYPTION_TYPES } from './sdk/encryptionTypes';
-export { DecryptedResults } from './relayer/decryptUtils';
 export { getErrorCauseStatus, getErrorCauseCode } from './relayer/error';
+export type {
+  PublicDecryptResults,
+  UserDecryptResults,
+  ClearValueType,
+  ClearValues,
+};
 
 export type FhevmInstance = {
   createEncryptedInput: (
@@ -58,7 +68,7 @@ export type FhevmInstance = {
   ) => EIP712;
   publicDecrypt: (
     handles: (string | Uint8Array)[],
-  ) => Promise<DecryptedResults>;
+  ) => Promise<PublicDecryptResults>;
   userDecrypt: (
     handles: HandleContractPair[],
     privateKey: string,
@@ -68,7 +78,7 @@ export type FhevmInstance = {
     userAddress: string,
     startTimestamp: string | number,
     durationDays: string | number,
-  ) => Promise<DecryptedResults>;
+  ) => Promise<UserDecryptResults>;
   getPublicKey: () => { publicKeyId: string; publicKey: Uint8Array } | null;
   getPublicParams: (bits: keyof PublicParams) => {
     publicParams: Uint8Array;
@@ -78,25 +88,25 @@ export type FhevmInstance = {
 
 export const SepoliaConfig: FhevmInstanceConfig = {
   // ACL_CONTRACT_ADDRESS (FHEVM Host chain)
-  aclContractAddress: '0x687820221192C5B662b25367F70076A37bc79b6c',
+  aclContractAddress: '0xf0Ffdc93b7E186bC2f8CB3dAA75D86d1930A433D',
   // KMS_VERIFIER_CONTRACT_ADDRESS (FHEVM Host chain)
-  kmsContractAddress: '0x1364cBBf2cDF5032C47d8226a6f6FBD2AFCDacAC',
+  kmsContractAddress: '0xbE0E383937d564D7FF0BC3b46c51f0bF8d5C311A',
   // INPUT_VERIFIER_CONTRACT_ADDRESS (FHEVM Host chain)
-  inputVerifierContractAddress: '0xbc91f3daD1A5F19F8390c400196e58073B6a0BC4',
+  inputVerifierContractAddress: '0xBBC1fFCdc7C316aAAd72E807D9b0272BE8F84DA0',
   // DECRYPTION_ADDRESS (Gateway chain)
   verifyingContractAddressDecryption:
-    '0xb6E160B1ff80D67Bfe90A85eE06Ce0A2613607D1',
+    '0x5D8BD78e2ea6bbE41f26dFe9fdaEAa349e077478',
   // INPUT_VERIFICATION_ADDRESS (Gateway chain)
   verifyingContractAddressInputVerification:
-    '0x7048C39f048125eDa9d678AEbaDfB22F7900a29F',
+    '0x483b9dE06E4E4C7D35CCf5837A1668487406D955',
   // FHEVM Host chain id
   chainId: 11155111,
   // Gateway chain id
-  gatewayChainId: 55815,
+  gatewayChainId: 10901,
   // Optional RPC provider to host chain
   network: 'https://eth-sepolia.public.blastapi.io',
   // Relayer URL
-  relayerUrl: 'https://relayer.testnet.zama.cloud',
+  relayerUrl: 'https://relayer.testnet.zama.org',
 };
 
 export const createInstance = async (

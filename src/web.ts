@@ -45,21 +45,28 @@ export { InitInput as TFHEInput } from 'tfhe';
 export { InitInput as KMSInput } from 'tkms';
 
 export {
-  RelayerEncryptedInput,
-  PublicParams,
-  HandleContractPair,
-  FhevmInstance,
   createInstance,
-  EncryptionTypes,
   ENCRYPTION_TYPES,
-  DecryptedResults,
   generateKeypair,
   createEIP712,
-  EIP712,
-  EIP712Type,
   SepoliaConfig,
   getErrorCauseCode,
   getErrorCauseStatus,
 } from './index';
-export { FhevmInstanceConfig } from './config';
+
+export type {
+  RelayerEncryptedInput,
+  PublicParams,
+  HandleContractPair,
+  FhevmInstance,
+  EncryptionTypes,
+  UserDecryptResults,
+  PublicDecryptResults,
+  ClearValueType,
+  ClearValues,
+  EIP712,
+  EIP712Type,
+} from './index';
+
+export type { FhevmInstanceConfig } from './config';
 export { initSDK } from './init';

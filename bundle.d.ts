@@ -12,7 +12,10 @@ export {
   createInstance,
   EncryptionTypes,
   ENCRYPTION_TYPES,
-  DecryptedResults,
+  UserDecryptResults,
+  PublicDecryptResults,
+  ClearValueType,
+  ClearValues,
   initSDK,
   SepoliaConfig,
 } from './lib/web';

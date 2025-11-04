@@ -1,5 +1,12 @@
 // This file contains common utilities for both user and public decryption requests
-export type DecryptedResults = Record<string, bigint | boolean | string>;
+export type ClearValueType = bigint | boolean | `0x${string}`;
+export type ClearValues = Record<`0x${string}`, ClearValueType>;
+export type UserDecryptResults = ClearValues;
+export type PublicDecryptResults = {
+  clearValues: ClearValues;
+  abiEncodedClearValues: `0x${string}`;
+  decryptionProof: `0x${string}`;
+};
 
 const NumEncryptedBits: Record<number, number> = {
   0: 2, // ebool
@@ -12,7 +19,20 @@ const NumEncryptedBits: Record<number, number> = {
   8: 256, // euint256
 } as const;
 
-export function checkEncryptedBits(handles: string[]) {
+export function getHandleType(handle: `0x${string}`): number {
+  if (handle.length !== 66) {
+    throw new Error(`Handle ${handle} is not of valid length`);
+  }
+  const hexPair = handle.slice(-4, -2).toLowerCase();
+  const typeDiscriminant = parseInt(hexPair, 16);
+
+  if (!(typeDiscriminant in NumEncryptedBits)) {
+    throw new Error(`Handle ${handle} is not of valid type`);
+  }
+  return typeDiscriminant;
+}
+
+export function checkEncryptedBits(handles: `0x${string}`[]) {
   let total = 0;
 
   for (const handle of handles) {
