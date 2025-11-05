@@ -110,7 +110,7 @@ export const SepoliaConfig: FhevmInstanceConfig = {
   // Gateway chain id
   gatewayChainId: 10901,
   // Optional RPC provider to host chain
-  network: 'https://eth-sepolia.public.blastapi.io',
+  network: 'https://ethereum-sepolia-rpc.publicnode.com',
   // Relayer URL
   relayerUrl: 'https://relayer.testnet.zama.org',
 };
