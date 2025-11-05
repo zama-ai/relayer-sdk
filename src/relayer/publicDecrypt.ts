@@ -266,6 +266,8 @@ export const publicDecryptRequest =
     const result = json.response[0];
     const decryptedResult: `0x${string}` = ensure0x(result.decrypted_value);
     const kmsSignatures: `0x${string}`[] = result.signatures.map(ensure0x);
+
+    // TODO result.extra_data (RelayerPublicDecryptJsonResponse)
     const signedExtraData = '0x';
 
     const recoveredAddresses: `0x${string}`[] = kmsSignatures.map(

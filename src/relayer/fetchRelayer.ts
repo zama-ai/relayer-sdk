@@ -91,6 +91,8 @@ export type RelayerPublicDecryptJsonResponse = {
     decrypted_value: string;
     // Hex encoded value without 0x prefix.
     signatures: string[];
+    // Hex encoded for extra data without 0x prefix.
+    extra_data: string;
   }>;
 };
 
