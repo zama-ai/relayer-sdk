@@ -1,6 +1,7 @@
 import { CompactPkeCrs, TfheClientKey, TfheCompactPublicKey } from 'node-tfhe';
 import fs from 'fs';
 import { SERIALIZED_SIZE_LIMIT_CRS, SERIALIZED_SIZE_LIMIT_PK } from '../utils';
+import { PublicParams } from 'src/sdk/encrypt';
 
 const privKey = fs.readFileSync(`${__dirname}/keys/privateKey.bin`);
 const pubKey = fs.readFileSync(`${__dirname}/keys/publicKey.bin`);
@@ -16,7 +17,7 @@ export const publicKey = TfheCompactPublicKey.safe_deserialize(
   pubKey,
   SERIALIZED_SIZE_LIMIT_PK,
 );
-export const publicParams = {
+export const publicParams: PublicParams = {
   2048: {
     publicParams: CompactPkeCrs.safe_deserialize(
       params2048,

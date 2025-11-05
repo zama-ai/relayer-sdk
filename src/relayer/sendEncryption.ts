@@ -4,8 +4,9 @@ import { fromHexString, numberToHex, toHexString } from '../utils';
 import {
   createEncryptedInput as createEncryptedInput,
   EncryptedInput,
+  PublicParams,
 } from '../sdk/encrypt';
-import { EncryptionTypes } from '../sdk/encryptionTypes';
+import { EncryptionBits } from '../sdk/encryptionTypes';
 import { computeHandles } from './handles';
 import { ethers } from 'ethers';
 import { TFHEType } from '../tfheType';
@@ -92,15 +93,11 @@ export type RelayerEncryptedInput = {
   add128: (value: number | bigint) => RelayerEncryptedInput;
   add256: (value: number | bigint) => RelayerEncryptedInput;
   addAddress: (value: string) => RelayerEncryptedInput;
-  getBits: () => EncryptionTypes[];
+  getBits: () => EncryptionBits[];
   encrypt: (options?: { auth?: Auth }) => Promise<{
     handles: Uint8Array[];
     inputProof: Uint8Array;
   }>;
-};
-
-export type PublicParams<T = TFHEType['CompactPkeCrs']> = {
-  [key in EncryptionTypes]?: { publicParams: T; publicParamsId: string };
 };
 
 export const createRelayerEncryptedInput =
@@ -171,7 +168,7 @@ export const createRelayerEncryptedInput =
         input.addAddress(value);
         return this;
       },
-      getBits(): EncryptionTypes[] {
+      getBits(): EncryptionBits[] {
         return input.getBits();
       },
       encrypt: async (options?: { auth?: Auth }) => {

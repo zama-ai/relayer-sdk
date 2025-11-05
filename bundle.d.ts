@@ -10,7 +10,7 @@ export {
   FhevmInstance,
   FhevmInstanceConfig,
   createInstance,
-  EncryptionTypes,
+  EncryptionBits,
   ENCRYPTION_TYPES,
   UserDecryptResults,
   PublicDecryptResults,
@@ -18,4 +18,8 @@ export {
   ClearValues,
   initSDK,
   SepoliaConfig,
+  Auth,
+  BearerToken,
+  ApiKeyCookie,
+  ApiKeyHeader,
 } from './lib/web';

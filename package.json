@@ -11,19 +11,19 @@
   },
   "exports": {
     "./web": {
+      "types": "./lib/web.d.ts",
       "import": "./lib/web.js",
-      "require": "./lib/web.js",
-      "types": "./lib/web.d.ts"
+      "require": "./lib/web.js"
     },
     "./bundle": {
+      "types": "./bundle.d.ts",
       "import": "./bundle.js",
-      "require": "./bundle.js",
-      "types": "./bundle.d.ts"
+      "require": "./bundle.js"
     },
     "./node": {
+      "types": "./lib/node.d.ts",
       "import": "./lib/node.js",
-      "require": "./lib/node.cjs",
-      "types": "./lib/node.d.ts"
+      "require": "./lib/node.cjs"
     },
     "./package.json": "./package.json"
   },
