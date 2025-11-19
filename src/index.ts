@@ -115,6 +115,20 @@ export const SepoliaConfig: FhevmInstanceConfig = {
   relayerUrl: 'https://relayer.testnet.zama.org',
 };
 
+function resolveRelayerUrl(value: unknown): string | null {
+  if (!value || typeof value !== 'string') {
+    return null;
+  }
+  const u =
+    value === 'https://relayer.testnet.zama.org'
+      ? 'https://relayer.testnet.zama.org/v1'
+      : value;
+  if (!URL.canParse(u)) {
+    return null;
+  }
+  return u;
+}
+
 export const createInstance = async (
   config: FhevmInstanceConfig,
 ): Promise<FhevmInstance> => {
