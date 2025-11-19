@@ -1,39 +1,6 @@
 import { SERIALIZED_SIZE_LIMIT_PK, SERIALIZED_SIZE_LIMIT_CRS } from '../utils';
 import { fetchRelayerGet, RelayerKeyUrlResponse } from './fetchRelayer';
 
-// export type RelayerKeysItem = {
-//   data_id: string;
-//   param_choice: number;
-//   urls: string[];
-//   signatures: string[];
-// };
-
-// export type RelayerKey = {
-//   data_id: string;
-//   param_choice: number;
-//   signatures: string[];
-//   urls: string[];
-// };
-
-// export type RelayerKeys = {
-//   response: {
-//     fhe_key_info: {
-//       fhe_public_key: RelayerKey;
-//       fhe_server_key: RelayerKey;
-//     }[];
-//     verf_public_key: {
-//       key_id: string;
-//       server_id: number;
-//       verf_public_key_address: string;
-//       verf_public_key_url: string;
-//     }[];
-//     crs: {
-//       [key: string]: RelayerKeysItem;
-//     };
-//   };
-//   status: string;
-// };
-
 const keyurlCache: { [key: string]: any } = {};
 export const getKeysFromRelayer = async (
   url: string,
@@ -49,12 +16,6 @@ export const getKeysFromRelayer = async (
   );
 
   try {
-    // const response = await fetch(`${url}/v1/keyurl`);
-    // if (!response.ok) {
-    //   await throwRelayerResponseError("KEY_URL", response);
-    // }
-    //const data: RelayerKeys = await response.json();
-    //if (data) {
     let pubKeyUrl: string;
 
     // If no publicKeyId is provided, use the first one
