@@ -18,6 +18,10 @@ publicDecrypt(handle: string, contractAddress: string)
 encrypt(contractAddress: string, encryptedInput: EncryptedInput, options?: AsyncOptions)
 userDecrypt(handles, privateKey, publicKey, signature, contractAddresses, userAddress, startTimestamp, durationDays, options?: AsyncOptions)
 publicDecrypt(handle: string, contractAddress: string, options?: AsyncOptions)
+
+continueEncrypt(requestID, options?: AsyncOptions)
+continueUserDecrypt(requestID, options?: AsyncOptions)
+continuePublicDecrypt(requestID, options?: AsyncOptions)
 ```
 
 ## Usage
@@ -71,8 +75,14 @@ Errors now include structured codes instead of only message strings:
 ```typescript
 try {
   const result = await instance.userDecrypt(
-    handles, privateKey, publicKey, signature, 
-    contractAddresses, userAddress, startTimestamp, durationDays,
+    handles,
+    privateKey,
+    publicKey,
+    signature,
+    contractAddresses,
+    userAddress,
+    startTimestamp,
+    durationDays,
     {
       timeout: 45000,
       onProgress: (status) => {
@@ -81,7 +91,9 @@ try {
             setStatus(`Submitting request (attempt ${status.submitAttempts})`);
             break;
           case 'queued':
-            setStatus(`Processing (${Math.round(status.elapsedMs / 1000)}s elapsed)`);
+            setStatus(
+              `Processing (${Math.round(status.elapsedMs / 1000)}s elapsed)`,
+            );
             break;
           case 'failed':
             if (status.error?.code === 'PERMISSION_DENIED') {
@@ -89,10 +101,10 @@ try {
             }
             break;
         }
-      }
-    }
+      },
+    },
   );
-  
+
   setResult(result);
 } catch (error: RelayerError) {
   switch (error.code) {
