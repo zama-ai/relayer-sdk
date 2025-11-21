@@ -1,4 +1,3 @@
-import { isAddress } from 'ethers';
 import {
   type FhevmInstanceConfig,
   getChainId,
@@ -35,6 +34,7 @@ import type {
   ClearValueType,
   ClearValues,
 } from './relayer/decryptUtils';
+import { isChecksummedAddress } from './utils/address';
 
 global.fetch = fetchRetry(global.fetch, { retries: 5, retryDelay: 500 });
 
@@ -113,20 +113,44 @@ export const SepoliaConfig: FhevmInstanceConfig = {
   network: 'https://ethereum-sepolia-rpc.publicnode.com',
   // Relayer URL
   relayerUrl: 'https://relayer.testnet.zama.org',
-};
+} as const;
+Object.freeze(SepoliaConfig);
 
-function resolveRelayerUrl(value: unknown): string | null {
+const DEFAULT_RELAYER_ROUTE_VERSION: number = 1;
+
+function resolveRelayerUrl(
+  value: unknown,
+): { url: string; version: number } | null {
   if (!value || typeof value !== 'string') {
     return null;
   }
-  const u =
-    value === 'https://relayer.testnet.zama.org'
-      ? 'https://relayer.testnet.zama.org/v1'
-      : value;
-  if (!URL.canParse(u)) {
+
+  const url = cleanURL(value);
+  if (url === SepoliaConfig.relayerUrl) {
+    return {
+      url: `${SepoliaConfig.relayerUrl}/v${DEFAULT_RELAYER_ROUTE_VERSION}`,
+      version: DEFAULT_RELAYER_ROUTE_VERSION,
+    };
+  }
+
+  if (!URL.canParse(url)) {
     return null;
   }
-  return u;
+
+  // Try to parse version number:
+  // https://relayer.testnet.zama.org/vXXX
+  const prefix = `${SepoliaConfig.relayerUrl}/v`;
+  if (url.startsWith(prefix)) {
+    // Determine version
+    const version = Number.parseInt(url.substring(prefix.length));
+    if (!Number.isInteger(version) || version <= 1) {
+      return null;
+    }
+
+    return { url, version };
+  }
+
+  return { url, version: DEFAULT_RELAYER_ROUTE_VERSION };
 }
 
 export const createInstance = async (
@@ -142,30 +166,26 @@ export const createInstance = async (
     auth,
   } = config;
 
-  if (!kmsContractAddress || !isAddress(kmsContractAddress)) {
-    throw new Error('KMS contract address is not valid or empty');
+  const resolvedRelayerUrl = resolveRelayerUrl(config.relayerUrl);
+  if (!resolvedRelayerUrl) {
+    throw new Error('Missing or invalid relayerUrl');
   }
 
-  if (
-    !verifyingContractAddressDecryption ||
-    !isAddress(verifyingContractAddressDecryption)
-  ) {
+  if (!isChecksummedAddress(aclContractAddress)) {
+    throw new Error('ACL contract address is not valid or empty');
+  }
+  if (!isChecksummedAddress(kmsContractAddress)) {
+    throw new Error('KMS contract address is not valid or empty');
+  }
+  if (!isChecksummedAddress(verifyingContractAddressDecryption)) {
     throw new Error(
       'Verifying contract for Decryption address is not valid or empty',
     );
   }
-
-  if (
-    !verifyingContractAddressInputVerification ||
-    !isAddress(verifyingContractAddressInputVerification)
-  ) {
+  if (!isChecksummedAddress(verifyingContractAddressInputVerification)) {
     throw new Error(
       'Verifying contract for InputVerification address is not valid or empty',
     );
-  }
-
-  if (!aclContractAddress || !isAddress(aclContractAddress)) {
-    throw new Error('ACL contract address is not valid or empty');
   }
 
   if (publicKey && !(publicKey.data instanceof Uint8Array))

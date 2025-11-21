@@ -1,6 +1,6 @@
 import { bytesToBigInt, bytesToHex, fromHexString } from './utils';
 
-describe('decrypt', () => {
+describe('decrypt-utils', () => {
   it('converts a hex to bytes', async () => {
     const value = '0xff';
     const bytes = fromHexString(value);

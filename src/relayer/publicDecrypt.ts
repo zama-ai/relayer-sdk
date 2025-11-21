@@ -1,4 +1,4 @@
-import { ensure0x, fromHexString, toHexString } from '../utils';
+import { fromHexString, toHexString } from '../utils';
 import { ethers, AbiCoder } from 'ethers';
 import {
   ClearValueType,
@@ -12,6 +12,7 @@ import {
   RelayerPublicDecryptPayload,
 } from './fetchRelayer';
 import { Auth } from '../auth';
+import { ensure0x } from '../utils/string';
 
 const aclABI = [
   'function isAllowedForDecryption(bytes32 handle) view returns (bool)',

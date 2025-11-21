@@ -1,9 +1,4 @@
-import {
-  isAddress as ethersIsAddress,
-  getAddress as ethersGetAddress,
-} from 'ethers';
-
-export type ChecksummedAddress = `0x${string}`;
+import { isBytesHex } from './utils/bytes';
 
 export const SERIALIZED_SIZE_LIMIT_CIPHERTEXT = BigInt(1024 * 1024 * 512);
 export const SERIALIZED_SIZE_LIMIT_PK = BigInt(1024 * 1024 * 512);
@@ -53,79 +48,76 @@ export const bytesToBigInt = function (byteArray: Uint8Array): bigint {
   return BigInt(`0x${hex}`);
 };
 
-export function ensure0x(s: string): `0x${string}` {
-  return !s.startsWith('0x') ? `0x${s}` : (s as `0x${string}`);
-}
+type ObjectWithObjectProperty<K extends string> = Record<string, unknown> & {
+  [P in K]: Record<string, unknown>;
+};
 
-export function isChecksummedAddress(
-  value: unknown,
-): value is ChecksummedAddress {
-  if (typeof value !== 'string') {
-    return false;
-  }
-  const a = ethersGetAddress(value);
-  return a === value;
-}
+type ObjectWithProperty<K extends string, T> = Record<string, unknown> & {
+  [P in K]: T;
+};
 
-export function assertIsChecksummedAddress(
-  value: unknown,
-): asserts value is ChecksummedAddress {
-  if (!isChecksummedAddress(value)) {
-    throw new TypeError('Invalid Checksummed Address');
-  }
-}
-
-export function isAddress(value: unknown): value is `0x${string}` {
-  return ethersIsAddress(value);
-}
-
-export function assertIsAddress(
-  value: unknown,
-): asserts value is `0x${string}` {
-  if (!isAddress(value)) {
-    throw new TypeError('Invalid Address');
+export function assertStringProperty<K extends string>(
+  o: unknown,
+  property: K,
+  objName: string,
+): asserts o is ObjectWithProperty<K, string> {
+  if (
+    !o ||
+    typeof o !== 'object' ||
+    !(property in o) ||
+    !(o as Record<string, unknown>)[property] ||
+    typeof (o as Record<string, unknown>)[property] !== 'string'
+  ) {
+    throw new Error(`Invalid ${objName}.${property}`);
   }
 }
 
-export function isBytesHex(value: unknown): value is `0x${string}` {
-  if (typeof value !== 'string') {
-    return false;
-  }
-  if (!value.startsWith('0x')) {
-    return false;
-  }
-  const hexRegex = /^0x[a-fA-F0-9]*$/;
-  if (!hexRegex.test(value)) {
-    return false;
-  }
-  if ((value.length - 2) % 2 !== 0) {
-    return false;
-  }
-  return true;
-}
-
-export function isBytes32Hex(value: unknown): value is `0x${string}` {
-  if (!isBytesHex(value)) {
-    return false;
-  }
-  if (value.length !== 66) {
-    throw new RangeError('Invalid Bytes32Hex');
-  }
-  return true;
-}
-
-export function assertIsBytesHex(
-  value: unknown,
-): asserts value is `0x${string}` {
-  if (!isBytesHex(value)) {
-    throw new RangeError('Invalid BytesHex');
+export function assertObjectProperty<K extends string>(
+  o: unknown,
+  property: K,
+  objName: string,
+): asserts o is ObjectWithObjectProperty<K> {
+  if (
+    !o ||
+    typeof o !== 'object' ||
+    !(property in o) ||
+    !(o as Record<string, unknown>)[property] ||
+    typeof (o as Record<string, unknown>)[property] !== 'object'
+  ) {
+    throw new Error(`Invalid ${objName}.${property}`);
   }
 }
 
-export function assertIsBytes32Hex(
-  value: unknown,
-): asserts value is `0x${string}` {
-  if (!isBytes32Hex(value)) {
-    throw new RangeError('Invalid Bytes32Hex');
+type ObjectWithArrayProperty<K extends string> = Record<string, unknown> & {
+  [P in K]: Array<unknown>;
+};
+
+export function assertArrayProperty<K extends string>(
+  o: unknown,
+  property: K,
+  objName: string,
+): asserts o is ObjectWithArrayProperty<K> {
+  if (
+    !o ||
+    typeof o !== 'object' ||
+    !(property in o) ||
+    !(o as Record<string, unknown>)[property] ||
+    !Array.isArray((o as Record<string, unknown>)[property])
+  ) {
+    throw new Error(`Invalid array ${objName}.${property}`);
+  }
+}
+
+export function assertBytesHexArrayProperty<K extends string>(
+  o: unknown,
+  property: K,
+  objName: string,
+): asserts o is ObjectWithProperty<K, `0x${string}`[]> {
+  assertArrayProperty(o, property, objName);
+  const arr = o[property];
+  for (let i = 0; i < arr.length; ++i) {
+    if (!isBytesHex(arr[i])) {
+      throw new Error(`Invalid ${objName}.${property}[${i}]`);
+    }
   }
 }
