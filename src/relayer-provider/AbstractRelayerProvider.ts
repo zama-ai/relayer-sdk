@@ -1,4 +1,11 @@
-import type { RelayerKeyUrlResponse } from '../relayer/fetchRelayer';
+import type { Auth } from '../auth';
+import type {
+  RelayerFetchResponseJson,
+  RelayerInputProofPayload,
+  RelayerKeyUrlResponse,
+  RelayerPublicDecryptPayload,
+  RelayerUserDecryptPayload,
+} from '../relayer/fetchRelayer';
 
 export abstract class AbstractRelayerProvider {
   private readonly _relayerUrl: string;
@@ -13,6 +20,33 @@ export abstract class AbstractRelayerProvider {
   public get keyUrl(): string {
     return `${this.url}/keyurl`;
   }
+  public get inputProof(): string {
+    return `${this.url}/input-proof`;
+  }
+  public get publicDecrypt(): string {
+    return `${this.url}/public-decrypt`;
+  }
+  public get userDecrypt(): string {
+    return `${this.url}/user-decrypt`;
+  }
   public abstract get version(): number;
   public abstract fetchGetKeyUrl(): Promise<RelayerKeyUrlResponse>;
+  public abstract fetchPostInputProof(
+    payload: RelayerInputProofPayload,
+    options?: {
+      auth?: Auth;
+    },
+  ): Promise<RelayerFetchResponseJson>;
+  public abstract fetchPostPublicDecrypt(
+    payload: RelayerPublicDecryptPayload,
+    options?: {
+      auth?: Auth;
+    },
+  ): Promise<RelayerFetchResponseJson>;
+  public abstract fetchPostUserDecrypt(
+    payload: RelayerUserDecryptPayload,
+    options?: {
+      auth?: Auth;
+    },
+  ): Promise<RelayerFetchResponseJson>;
 }

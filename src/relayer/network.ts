@@ -3,16 +3,16 @@ import { fetchRelayerGet, RelayerKeyUrlResponse } from './fetchRelayer';
 
 const keyurlCache: { [key: string]: any } = {};
 export const getKeysFromRelayer = async (
-  url: string,
+  versionUrl: string,
   publicKeyId?: string | null,
 ) => {
-  if (keyurlCache[url]) {
-    return keyurlCache[url];
+  if (keyurlCache[versionUrl]) {
+    return keyurlCache[versionUrl];
   }
 
   const data: RelayerKeyUrlResponse = await fetchRelayerGet(
     'KEY_URL',
-    `${url}/v1/keyurl`,
+    `${versionUrl}/keyurl`,
   );
 
   try {
@@ -109,11 +109,8 @@ export const getKeysFromRelayer = async (
         },
       },
     };
-    keyurlCache[url] = result;
+    keyurlCache[versionUrl] = result;
     return result;
-    // } else {
-    //   throw new Error('No public key available');
-    // }
   } catch (e) {
     throw new Error('Impossible to fetch public key: wrong relayer url.', {
       cause: e,

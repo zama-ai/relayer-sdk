@@ -6,11 +6,11 @@ import {
   checkEncryptedBits,
 } from './decryptUtils';
 import {
-  fetchRelayerJsonRpcPost,
   HandleContractPairRelayer,
   RelayerUserDecryptPayload,
 } from './fetchRelayer';
 import { Auth } from '../auth';
+import { AbstractRelayerProvider } from '../relayer-provider/AbstractRelayerProvider';
 
 // Add type checking
 const getAddress = (value: string): `0x${string}` =>
@@ -98,7 +98,8 @@ export const userDecryptRequest =
     chainId: number,
     verifyingContractAddress: string,
     aclContractAddress: string,
-    relayerUrl: string,
+    //relayerUrl: string,
+    relayerProvider: AbstractRelayerProvider,
     provider: ethers.JsonRpcProvider | ethers.BrowserProvider,
     instanceOptions?: { auth?: Auth },
   ) =>
@@ -188,12 +189,16 @@ export const userDecryptRequest =
       extraData,
     };
 
-    const json = await fetchRelayerJsonRpcPost(
-      'USER_DECRYPT',
-      `${relayerUrl}/v1/user-decrypt`,
+    const json = await relayerProvider.fetchPostUserDecrypt(
       payloadForRequest,
-      instanceOptions ?? options,
+      options ?? instanceOptions,
     );
+    // const json = await fetchRelayerJsonRpcPost(
+    //   'USER_DECRYPT',
+    //   `${relayerUrl}/v1/user-decrypt`,
+    //   payloadForRequest,
+    //   instanceOptions ?? options,
+    // );
 
     // assume the KMS Signers have the correct order
     let indexedKmsSigners = kmsSigners.map((signer, index) => {

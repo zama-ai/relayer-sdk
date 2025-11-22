@@ -6,9 +6,12 @@ import {
   RelayerUserDecryptPayload,
 } from './fetchRelayer';
 import { getErrorCause, getErrorCauseErrorMessage } from './error';
+import { createRelayerProvider } from '../relayer-provider/createRelayerFhevm';
 
-const RELAYER_URL: string = 'https://test-relayer.net';
-const RELAYER_USER_DECRYPT_URL = `${RELAYER_URL}/v1/user-decrypt`;
+// npx jest --colors --passWithNoTests --coverage ./src/relayer/userDecrypt.test.ts --collectCoverageFrom=./src/relayer/userDecrypt.ts
+
+const relayerProvider = createRelayerProvider('https://test-fhevm-relayer/v1');
+const RELAYER_USER_DECRYPT_URL = relayerProvider.userDecrypt;
 
 const dummyRelayerUserDecryptPayload: RelayerUserDecryptPayload = {
   handleContractPairs: [
@@ -46,7 +49,7 @@ describe('userDecrypt', () => {
       9000,
       '0x8ba1f109551bd432803012645ac136ddd64dba72',
       '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
-      `${RELAYER_URL}/`,
+      relayerProvider,
       new ethers.JsonRpcProvider('https://devnet.zama.ai'),
     );
   });
@@ -123,7 +126,7 @@ describe('fetchRelayerUserDecrypt', () => {
 
   it('error: fetch throws an error', async () => {
     const errorToThrow = new Error();
-    fetchMock.postOnce(RELAYER_USER_DECRYPT_URL, {
+    fetchMock.post(RELAYER_USER_DECRYPT_URL, {
       throws: errorToThrow,
     });
 

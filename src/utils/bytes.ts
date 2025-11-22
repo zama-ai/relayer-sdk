@@ -1,6 +1,7 @@
 import {
   assertNonNullableRecordProperty,
   assertRecordArrayProperty,
+  isNonNullableRecordProperty,
 } from './record';
 
 export type BytesHex = `0x${string}`;
@@ -154,4 +155,45 @@ export function assertBytesHexNo0xArrayProperty<K extends string>(
       );
     }
   }
+}
+
+type RecordUint8ArrayProperty<K extends string> = Record<string, unknown> & {
+  [P in K]: NonNullable<Uint8Array>;
+};
+
+export function isRecordUint8ArrayProperty<K extends string>(
+  o: unknown,
+  property: K,
+): o is RecordUint8ArrayProperty<K> {
+  if (!isNonNullableRecordProperty(o, property)) {
+    return false;
+  }
+  return o[property] instanceof Uint8Array;
+}
+
+export function assertUint8ArrayProperty<K extends string>(
+  o: unknown,
+  property: K,
+  objName: string,
+): asserts o is ObjectWithProperty<K, Uint8Array> {
+  if (!isRecordUint8ArrayProperty(o, property)) {
+    throw new Error(`Invalid Uint8Array ${objName}.${property}`);
+  }
+}
+
+export async function fetchBytes(url: string): Promise<Uint8Array> {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(
+      `HTTP error! status: ${response.status} on ${response.url}`,
+    );
+  }
+
+  // Warning : bytes is not widely supported yet!
+  const bytes: Uint8Array =
+    typeof response.bytes === 'function'
+      ? await response.bytes()
+      : new Uint8Array(await response.arrayBuffer());
+
+  return bytes;
 }

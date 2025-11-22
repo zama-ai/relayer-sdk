@@ -148,9 +148,10 @@ export type RelayerV2ResultInputProofRejected = {
   extra_data: BytesHex;
 };
 
+// GET
 export type RelayerV2KeyInfo = { fhe_public_key: RelayerV2KeyData };
 export type RelayerV2KeyData = { data_id: string; urls: Array<string> };
-export type RelayerV2ResponseKeyUrl = {
+export type RelayerV2GetResponseKeyUrl = {
   response: {
     fhe_key_info: Array<RelayerV2KeyInfo>;
     crs: Record<string, RelayerV2KeyData>;

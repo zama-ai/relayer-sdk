@@ -18,10 +18,13 @@ export function isChecksummedAddress(
   if (!value.startsWith('0x')) {
     return false;
   }
+  if (value.length !== 42) {
+    return false;
+  }
   try {
     const a = ethersGetAddress(value);
     return a === value;
-  } catch {
+  } catch (e) {
     return false;
   }
 }
@@ -39,6 +42,9 @@ export function isAddress(value: unknown): value is `0x${string}` {
     return false;
   }
   if (!value.startsWith('0x')) {
+    return false;
+  }
+  if (value.length !== 42) {
     return false;
   }
   return true;

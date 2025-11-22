@@ -1,4 +1,4 @@
-import type { RelayerV2KeyData, RelayerV2ResponseKeyUrl } from './types';
+import type { RelayerV2KeyData, RelayerV2GetResponseKeyUrl } from './types';
 import {
   assertNonNullableRecordProperty,
   assertRecordArrayProperty,
@@ -8,10 +8,21 @@ import {
   assertRecordStringProperty,
 } from '../../../utils/string';
 
+export function isRelayerV2GetResponseKeyUrl(
+  value: unknown,
+): value is RelayerV2GetResponseKeyUrl {
+  try {
+    assertIsRelayerV2GetResponseKeyUrl(value, 'RelayerV2GetResponseKeyUrl');
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function assertIsRelayerV2GetResponseKeyUrl(
   value: unknown,
   name: string,
-): asserts value is RelayerV2ResponseKeyUrl {
+): asserts value is RelayerV2GetResponseKeyUrl {
   assertNonNullableRecordProperty(value, 'response', name);
 
   // crs

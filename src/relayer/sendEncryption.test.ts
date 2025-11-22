@@ -8,16 +8,17 @@ import fetchMock from '@fetch-mock/core';
 import { computeHandles } from './handles';
 import { fromHexString, toHexString } from '../utils';
 import type { Auth } from '../auth';
+import { createRelayerProvider } from '../relayer-provider/createRelayerFhevm';
 
-const relayerUrl = 'https://test-fhevm-relayer';
 const aclContractAddress = '0x325ea1b59F28e9e1C51d3B5b47b7D3965CC5D8C8';
 const verifyingContractAddressInputVerification =
   '0x0C475a195D5C16bb730Ae2d5B1196844A83899A5';
 const chainId = 1234;
 const gatewayChainId = 4321;
+const relayerProvider = createRelayerProvider('https://test-fhevm-relayer');
 
 const autoMock = (input: RelayerEncryptedInput, opts?: { auth?: Auth }) => {
-  fetchMock.postOnce(`${relayerUrl}/v1/input-proof`, function (params: any) {
+  fetchMock.postOnce(relayerProvider.inputProof, function (params: any) {
     if (opts?.auth) {
       switch (opts.auth.__type) {
         case 'BearerToken':
@@ -78,7 +79,7 @@ describe('encrypt', () => {
       verifyingContractAddressInputVerification,
       chainId,
       gatewayChainId,
-      relayerUrl,
+      relayerProvider,
       publicKey,
       publicParams,
       [],
@@ -107,7 +108,7 @@ describe('encrypt', () => {
       verifyingContractAddressInputVerification,
       chainId,
       gatewayChainId,
-      relayerUrl,
+      relayerProvider,
       publicKey,
       publicParams,
       [],
@@ -130,7 +131,7 @@ describe('encrypt', () => {
         verifyingContractAddressInputVerification,
         chainId,
         gatewayChainId,
-        relayerUrl,
+        relayerProvider,
         publicKey,
         publicParams,
         [],
@@ -143,7 +144,7 @@ describe('encrypt', () => {
         verifyingContractAddressInputVerification,
         chainId,
         gatewayChainId,
-        relayerUrl,
+        relayerProvider,
         publicKey,
         publicParams,
         [],
@@ -157,7 +158,7 @@ describe('encrypt', () => {
         verifyingContractAddressInputVerification,
         chainId,
         gatewayChainId,
-        relayerUrl,
+        relayerProvider,
         publicKey,
         publicParams,
         [],
@@ -173,7 +174,7 @@ describe('encrypt', () => {
       verifyingContractAddressInputVerification,
       chainId,
       gatewayChainId,
-      relayerUrl,
+      relayerProvider,
       publicKey,
       publicParams,
       [],
@@ -220,7 +221,7 @@ describe('encrypt', () => {
       verifyingContractAddressInputVerification,
       chainId,
       gatewayChainId,
-      relayerUrl,
+      relayerProvider,
       publicKey,
       publicParams,
       [],
@@ -248,7 +249,7 @@ describe('encrypt', () => {
       verifyingContractAddressInputVerification,
       chainId,
       gatewayChainId,
-      relayerUrl,
+      relayerProvider,
       publicKey,
       publicParams,
       [],
@@ -264,7 +265,7 @@ describe('encrypt', () => {
       verifyingContractAddressInputVerification,
       chainId,
       gatewayChainId,
-      relayerUrl,
+      relayerProvider,
       publicKey,
       publicParams,
       [],
@@ -286,7 +287,7 @@ describe('encrypt', () => {
       verifyingContractAddressInputVerification,
       chainId,
       gatewayChainId,
-      relayerUrl,
+      relayerProvider,
       publicKey,
       publicParams,
       [],
@@ -296,7 +297,7 @@ describe('encrypt', () => {
       '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
     );
     input.add128(BigInt(1));
-    fetchMock.postOnce(`${relayerUrl}/v1/input-proof`, (params: any) => {
+    fetchMock.postOnce(relayerProvider.inputProof, (params: any) => {
       const body = JSON.parse(params.options.body);
       const ciphertextWithInputVerification: string =
         body.ciphertextWithInputVerification;
@@ -325,7 +326,7 @@ describe('encrypt', () => {
         verifyingContractAddressInputVerification,
         chainId,
         gatewayChainId,
-        relayerUrl,
+        relayerProvider,
         publicKey,
         publicParams,
         [],
@@ -350,7 +351,7 @@ describe('encrypt', () => {
         verifyingContractAddressInputVerification,
         chainId,
         gatewayChainId,
-        relayerUrl,
+        relayerProvider,
         publicKey,
         publicParams,
         [],
@@ -371,7 +372,7 @@ describe('encrypt', () => {
         verifyingContractAddressInputVerification,
         chainId,
         gatewayChainId,
-        relayerUrl,
+        relayerProvider,
         publicKey,
         publicParams,
         [],

@@ -12,11 +12,11 @@ import { ethers } from 'ethers';
 import { TFHEType } from '../tfheType';
 import { throwRelayerInternalError } from './error';
 import {
-  fetchRelayerJsonRpcPost,
   RelayerFetchResponseJson,
   RelayerInputProofPayload,
 } from './fetchRelayer';
 import { Auth } from '../auth';
+import { AbstractRelayerProvider } from '../relayer-provider/AbstractRelayerProvider';
 
 // Add type checking
 const getAddress = (value: string): `0x${string}` =>
@@ -106,7 +106,8 @@ export const createRelayerEncryptedInput =
     verifyingContractAddressInputVerification: string,
     chainId: number,
     gatewayChainId: number,
-    relayerUrl: string,
+    //relayerUrl: string,
+    relayerProvider: AbstractRelayerProvider,
     tfheCompactPublicKey: TFHEType['TfheCompactPublicKey'],
     publicParams: PublicParams,
     coprocessorSigners: string[],
@@ -184,12 +185,16 @@ export const createRelayerEncryptedInput =
           extraData,
         };
 
-        const json = await fetchRelayerJsonRpcPost(
-          'INPUT_PROOF',
-          `${relayerUrl}/v1/input-proof`,
+        const json = await relayerProvider.fetchPostInputProof(
           payload,
           options ?? instanceOptions,
         );
+        // const json = await fetchRelayerJsonRpcPost(
+        //   'INPUT_PROOF',
+        //   `${relayerUrl}/v1/input-proof`,
+        //   payload,
+        //   options ?? instanceOptions,
+        // );
 
         if (!isFhevmRelayerInputProofResponse(json)) {
           throwRelayerInternalError('INPUT_PROOF', json);

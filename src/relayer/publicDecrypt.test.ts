@@ -6,9 +6,14 @@ import {
   RelayerPublicDecryptPayload,
 } from './fetchRelayer';
 import { getErrorCause, getErrorCauseErrorMessage } from './error';
+import { createRelayerProvider } from '../relayer-provider/createRelayerFhevm';
 
-const RELAYER_URL: string = 'https://test-relayer.net';
-const RELAYER_PUBLIC_DECRYPT_URL = `${RELAYER_URL}/v1/public-decrypt`;
+// npx jest --colors --passWithNoTests --coverage ./src/relayer/publicDecrypt.test.ts --collectCoverageFrom=./src/relayer/publicDecrypt.ts
+
+// const RELAYER_URL: string = 'https://test-relayer.net';
+// const RELAYER_PUBLIC_DECRYPT_URL = `${RELAYER_URL}/v1/public-decrypt`;
+const relayerProvider = createRelayerProvider('https://test-fhevm-relayer/v1');
+const RELAYER_PUBLIC_DECRYPT_URL = relayerProvider.publicDecrypt;
 
 const dummyRelayerUserDecryptPayload: RelayerPublicDecryptPayload = {
   ciphertextHandles: ['0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef'],
@@ -18,6 +23,14 @@ const dummyRelayerUserDecryptPayload: RelayerPublicDecryptPayload = {
 describe('publicDecrypt', () => {
   beforeEach(() => {
     fetchMock.removeRoutes();
+  });
+
+  it('relayerProvider', async () => {
+    expect(relayerProvider.version).toStrictEqual(1);
+    expect(relayerProvider.url).toStrictEqual('https://test-fhevm-relayer/v1');
+    expect(RELAYER_PUBLIC_DECRYPT_URL).toStrictEqual(
+      'https://test-fhevm-relayer/v1/public-decrypt',
+    );
   });
 
   it('get public decryption for handle', async () => {
@@ -32,7 +45,7 @@ describe('publicDecrypt', () => {
       54321,
       '0x8ba1f109551bd432803012645ac136ddd64dba72',
       '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
-      RELAYER_URL,
+      relayerProvider,
       new ethers.JsonRpcProvider('https://devnet.zama.ai'),
     );
   });
@@ -109,14 +122,14 @@ describe('fetchRelayerPublicDecrypt', () => {
 
   it('error: fetch throws an error', async () => {
     const errorToThrow = new Error();
-    fetchMock.postOnce(RELAYER_PUBLIC_DECRYPT_URL, {
+    fetchMock.post('https://test-fhevm-relayer/v1/public-decrypt', {
       throws: errorToThrow,
     });
 
     try {
       await fetchRelayerJsonRpcPost(
         'PUBLIC_DECRYPT',
-        RELAYER_PUBLIC_DECRYPT_URL,
+        'https://test-fhevm-relayer/v1/public-decrypt',
         dummyRelayerUserDecryptPayload,
       );
     } catch (e) {

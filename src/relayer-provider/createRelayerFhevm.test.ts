@@ -1,5 +1,5 @@
 import { SepoliaConfig } from '../index';
-import { createRelayerProvider } from './createRelayerProvider';
+import { createRelayerProvider } from './createRelayerFhevm';
 
 // npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/createRelayerProvider.test.ts --collectCoverageFrom=./src/relayer-provider/createRelayerProvider.ts
 

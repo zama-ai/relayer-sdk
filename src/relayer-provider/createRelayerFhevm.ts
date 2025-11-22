@@ -1,8 +1,43 @@
 import { SepoliaConfig } from '../index';
+import type { PublicParams } from '../sdk/encrypt';
 import { cleanURL } from '../utils';
 import { AbstractRelayerProvider } from './AbstractRelayerProvider';
 import { RelayerV1Provider } from './v1/RelayerV1Provider';
 import { RelayerV2Provider } from './v2/RelayerV2Provider';
+import { RelayerV2Fhevm } from './v2/RelayerV2Fhevm';
+import { RelayerV1Fhevm } from './v1/RelayerV1Fhevm';
+import { AbstractRelayerFhevm } from './AbstractRelayerFhevm';
+
+export async function createRelayerFhevm(config: {
+  relayerUrl: string;
+  publicKey?: {
+    data: Uint8Array | null;
+    id: string | null;
+  };
+  publicParams?: PublicParams<Uint8Array> | null;
+}): Promise<AbstractRelayerFhevm> {
+  const resolved = _resolveRelayerUrl(
+    config.relayerUrl,
+    SepoliaConfig.relayerUrl!,
+  );
+  if (!resolved) {
+    throw new Error(`Invalid relayerUrl: ${config.relayerUrl}`);
+  }
+
+  if (resolved.version === 2) {
+    return RelayerV2Fhevm.fromConfig({
+      relayerVersionUrl: resolved.url,
+      publicKey: config.publicKey,
+      publicParams: config.publicParams,
+    });
+  }
+
+  return RelayerV1Fhevm.fromConfig({
+    relayerVersionUrl: resolved.url,
+    publicKey: config.publicKey,
+    publicParams: config.publicParams,
+  });
+}
 
 export function createRelayerProvider(
   relayerUrl: string,

@@ -12,7 +12,7 @@ import {
   SERIALIZED_SIZE_LIMIT_PK,
   SERIALIZED_SIZE_LIMIT_CRS,
 } from './utils';
-import { TFHEType } from './tfheType';
+import type { TFHEType } from './tfheType';
 import { Auth } from './auth';
 
 const abiKmsVerifier = [
@@ -68,14 +68,18 @@ export const getChainId = async (
   }
 };
 
-export const getTfheCompactPublicKey = async (
-  config: FhevmInstanceConfig,
-): Promise<{
+export const getTfheCompactPublicKey = async (config: {
+  relayerVersionUrl?: string;
+  publicKey?: {
+    data: Uint8Array | null;
+    id: string | null;
+  };
+}): Promise<{
   publicKey: TFHEType['TfheCompactPublicKey'];
   publicKeyId: string;
 }> => {
-  if (config.relayerUrl && !config.publicKey) {
-    const inputs = await getKeysFromRelayer(cleanURL(config.relayerUrl));
+  if (config.relayerVersionUrl && !config.publicKey) {
+    const inputs = await getKeysFromRelayer(cleanURL(config.relayerVersionUrl));
     return { publicKey: inputs.publicKey, publicKeyId: inputs.publicKeyId };
   } else if (config.publicKey && config.publicKey.data && config.publicKey.id) {
     const buff = config.publicKey.data;
@@ -97,11 +101,12 @@ export const getTfheCompactPublicKey = async (
   }
 };
 
-export const getPublicParams = async (
-  config: FhevmInstanceConfig,
-): Promise<PublicParams> => {
-  if (config.relayerUrl && !config.publicParams) {
-    const inputs = await getKeysFromRelayer(cleanURL(config.relayerUrl));
+export const getPublicParams = async (config: {
+  relayerVersionUrl?: string;
+  publicParams?: PublicParams<Uint8Array> | null;
+}): Promise<PublicParams> => {
+  if (config.relayerVersionUrl && !config.publicParams) {
+    const inputs = await getKeysFromRelayer(cleanURL(config.relayerVersionUrl));
     return inputs.publicParams;
   } else if (config.publicParams && config.publicParams['2048']) {
     const buff = config.publicParams['2048'].publicParams;

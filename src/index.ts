@@ -6,14 +6,7 @@ import {
   getCoprocessorSigners,
   getCoprocessorSignersThreshold,
   getProvider,
-  getPublicParams,
-  getTfheCompactPublicKey,
 } from './config';
-import {
-  cleanURL,
-  SERIALIZED_SIZE_LIMIT_CRS,
-  SERIALIZED_SIZE_LIMIT_PK,
-} from './utils';
 
 import type { HandleContractPair } from './relayer/userDecrypt';
 import { userDecryptRequest } from './relayer/userDecrypt';
@@ -35,6 +28,7 @@ import type {
   ClearValues,
 } from './relayer/decryptUtils';
 import { isChecksummedAddress } from './utils/address';
+import { createRelayerFhevm } from './relayer-provider/createRelayerFhevm';
 
 global.fetch = fetchRetry(global.fetch, { retries: 5, retryDelay: 500 });
 
@@ -116,43 +110,6 @@ export const SepoliaConfig: FhevmInstanceConfig = {
 } as const;
 Object.freeze(SepoliaConfig);
 
-const DEFAULT_RELAYER_ROUTE_VERSION: number = 1;
-
-function resolveRelayerUrl(
-  value: unknown,
-): { url: string; version: number } | null {
-  if (!value || typeof value !== 'string') {
-    return null;
-  }
-
-  const url = cleanURL(value);
-  if (url === SepoliaConfig.relayerUrl) {
-    return {
-      url: `${SepoliaConfig.relayerUrl}/v${DEFAULT_RELAYER_ROUTE_VERSION}`,
-      version: DEFAULT_RELAYER_ROUTE_VERSION,
-    };
-  }
-
-  if (!URL.canParse(url)) {
-    return null;
-  }
-
-  // Try to parse version number:
-  // https://relayer.testnet.zama.org/vXXX
-  const prefix = `${SepoliaConfig.relayerUrl}/v`;
-  if (url.startsWith(prefix)) {
-    // Determine version
-    const version = Number.parseInt(url.substring(prefix.length));
-    if (!Number.isInteger(version) || version <= 1) {
-      return null;
-    }
-
-    return { url, version };
-  }
-
-  return { url, version: DEFAULT_RELAYER_ROUTE_VERSION };
-}
-
 export const createInstance = async (
   config: FhevmInstanceConfig,
 ): Promise<FhevmInstance> => {
@@ -165,11 +122,6 @@ export const createInstance = async (
     gatewayChainId,
     auth,
   } = config;
-
-  const resolvedRelayerUrl = resolveRelayerUrl(config.relayerUrl);
-  if (!resolvedRelayerUrl) {
-    throw new Error('Missing or invalid relayerUrl');
-  }
 
   if (!isChecksummedAddress(aclContractAddress)) {
     throw new Error('ACL contract address is not valid or empty');
@@ -188,20 +140,36 @@ export const createInstance = async (
     );
   }
 
-  if (publicKey && !(publicKey.data instanceof Uint8Array))
+  if (publicKey && !(publicKey.data instanceof Uint8Array)) {
     throw new Error('publicKey must be a Uint8Array');
+  }
 
+  // TODO change argument
+  // provider is never undefined | null here!
   const provider = getProvider(config);
 
-  if (!provider) {
-    throw new Error('No network has been provided!');
-  }
+  const relayerUrl = config.relayerUrl ?? SepoliaConfig.relayerUrl!;
+  const relayerFhevm = await createRelayerFhevm({
+    relayerUrl,
+    publicKey: config.publicKey,
+    publicParams: config.publicParams,
+  });
 
   const chainId = await getChainId(provider, config);
 
-  const publicKeyData = await getTfheCompactPublicKey(config);
+  // const relayerVersionUrl = `${config.relayerUrl!}/v1`;
 
-  const publicParamsData = await getPublicParams(config);
+  // const publicKeyData = await getTfheCompactPublicKey({
+  //   relayerVersionUrl: relayerFhevm.relayerVersionUrl,
+  //   publicKey: config.publicKey,
+  // });
+
+  //const aaa = relayerFhevm.getPublicKey();
+
+  // const publicParamsData = await getPublicParams({
+  //   relayerVersionUrl,
+  //   publicParams: config.publicParams,
+  // });
 
   const kmsSigners = await getKMSSigners(provider, config);
 
@@ -220,9 +188,13 @@ export const createInstance = async (
       verifyingContractAddressInputVerification,
       chainId,
       gatewayChainId,
-      cleanURL(config.relayerUrl),
-      publicKeyData.publicKey,
-      publicParamsData,
+      //cleanURL(config.relayerUrl),
+      //relayerFhevm.relayerVersionUrl,
+      relayerFhevm.relayerProvider,
+      //publicKeyData.publicKey,
+      relayerFhevm.getPublicKeyWasm().publicKey,
+      //publicParamsData,
+      { 2048: relayerFhevm.getPublicParamsWasm(2048) },
       coprocessorSigners,
       thresholdCoprocessorSigners,
     ),
@@ -234,7 +206,8 @@ export const createInstance = async (
       gatewayChainId,
       verifyingContractAddressDecryption,
       aclContractAddress,
-      cleanURL(config.relayerUrl),
+      //cleanURL(config.relayerUrl),
+      relayerFhevm.relayerProvider,
       provider,
       auth && { auth },
     ),
@@ -244,29 +217,33 @@ export const createInstance = async (
       chainId,
       verifyingContractAddressDecryption,
       aclContractAddress,
-      cleanURL(config.relayerUrl),
+      //cleanURL(config.relayerUrl),
+      relayerFhevm.relayerProvider,
       provider,
       auth && { auth },
     ),
-    getPublicKey: () =>
-      publicKeyData.publicKey
-        ? {
-            publicKey: publicKeyData.publicKey.safe_serialize(
-              SERIALIZED_SIZE_LIMIT_PK,
-            ),
-            publicKeyId: publicKeyData.publicKeyId,
-          }
-        : null,
-    getPublicParams: (bits: keyof PublicParams) => {
-      if (publicParamsData[bits]) {
-        return {
-          publicParams: publicParamsData[bits]!.publicParams.safe_serialize(
-            SERIALIZED_SIZE_LIMIT_CRS,
-          ),
-          publicParamsId: publicParamsData[bits]!.publicParamsId,
-        };
-      }
-      return null;
-    },
+    getPublicKey: () => relayerFhevm.getPublicKeyBytes(),
+    getPublicParams: (bits: keyof PublicParams) =>
+      relayerFhevm.getPublicParamsBytes(bits),
+    // getPublicKey: () =>
+    //   publicKeyData.publicKey
+    //     ? {
+    //         publicKey: publicKeyData.publicKey.safe_serialize(
+    //           SERIALIZED_SIZE_LIMIT_PK,
+    //         ),
+    //         publicKeyId: publicKeyData.publicKeyId,
+    //       }
+    //     : null,
+    // getPublicParams: (bits: keyof PublicParams) => {
+    //   if (publicParamsData[bits]) {
+    //     return {
+    //       publicParams: publicParamsData[bits]!.publicParams.safe_serialize(
+    //         SERIALIZED_SIZE_LIMIT_CRS,
+    //       ),
+    //       publicParamsId: publicParamsData[bits]!.publicParamsId,
+    //     };
+    //   }
+    //   return null;
+    // },
   };
 };
