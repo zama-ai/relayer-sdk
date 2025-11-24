@@ -6,7 +6,7 @@ import { Bytes32Hex, BytesHex, BytesHexNo0x } from 'src/utils/bytes';
 
 // RelayerV2<Response|GetResponse|PostResponse><QueuedOrFailed|Succeeded>
 
-// GET:  200 | 202 | 404 |  500 | 503 | 504
+// GET:  200 | 202 | 404 | 500 | 503 | 504
 // POST: 202 | 400 | 429 | 500 | 503
 
 // Notes on 504
@@ -47,6 +47,7 @@ export type RelayerV2GetResponse =
 // POST: 400 | 429 | 500 | 503
 export type RelayerV2ResponseFailed = {
   status: 'failed';
+  request_id?: string; // Optional request id field. Would be empty in case of 429 from Cloudflare/Kong. In other cases, use it for identifying the request and asking support
   error: RelayerV2ApiError;
 };
 
@@ -63,7 +64,6 @@ export type RelayerV2ApiError =
 export type RelayerV2ApiError500 = {
   label: 'internal_server_error';
   message: string;
-  request_id: string;
 };
 
 // GET:  503
@@ -71,14 +71,12 @@ export type RelayerV2ApiError500 = {
 export type RelayerV2ApiError503 = {
   label: 'protocol_paused' | `gateway_not_reachable`;
   message: string;
-  request_id: string;
 };
 
 // GET:  504
 export type RelayerV2ApiGetError504 = {
   label: 'readiness_check_timedout' | 'response_timedout`';
   message: string;
-  request_id: string;
 };
 // Note: 429 will use only the following headers
 // Retry-After in duration seconds. Since this value is populated by the rate
@@ -86,7 +84,7 @@ export type RelayerV2ApiGetError504 = {
 // value.
 // Makes it simpler and avoids issues with clock skew between client and server.
 // POST: 429
-// The body will be  still contain status=failed, and error field with a label and message and optional request_id.
+// The body will be  still contain status=failed, and error field with a label and message
 export type RelayerV2ApiPostError429 = {
   label: 'rate_limited';
   message: string;
@@ -95,7 +93,6 @@ export type RelayerV2ApiPostError429 = {
   // retry_after is only used in the case of Rate limit errors.
   // example = "Thu, 14 Nov 2024 15:30:00 GMT"
   // retry_after: Timestamp;
-  request_id?: string;
 };
 
 // POST: 400
@@ -107,14 +104,12 @@ export type RelayerV2ApiPostError400 =
 export type RelayerV2ApiPostError400NoDetails = {
   label: 'malformed_json' | 'request_error' | 'not_ready_for_decryption';
   message: string;
-  request_id: string;
 };
 
 // POST: 400
 export type RelayerV2ApiPostError400WithDetails = {
   label: 'missing_fields' | 'validation_failed';
   message: string;
-  request_id: string;
   details: Array<RelayerV2PostErrorDetail>;
 };
 
@@ -128,12 +123,14 @@ export type RelayerV2PostErrorDetail = {
 // POST: 202
 export type RelayerV2ResponseQueued = {
   status: 'queued';
+  request_id: string; // request id field. use it for identifying the request and asking support
   result: RelayerV2ResultQueued;
 };
 
 // GET: 200
 export type RelayerV2GetResponseSucceeded = {
   status: 'succeeded';
+  request_id: string; // request id field. use it for identifying the request and asking support
   result:
     | RelayerV2ResultPublicDecrypt
     | RelayerV2ResultUserDecrypt
