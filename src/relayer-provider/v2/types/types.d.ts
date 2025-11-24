@@ -143,8 +143,8 @@ export type RelayerV2GetResponseSucceeded = {
 // For, we will not cache it.
 // Later, even if we decide to cache, we can use the Age and Max field inj cache headers to decide on the staleness of the response
 export type RelayerV2ResultQueued = {
-  id: string;
   retry_after: Timestamp; // Timestamp
+  job_id: string;
 };
 
 // GET: 200

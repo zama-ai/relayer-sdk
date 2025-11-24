@@ -168,12 +168,12 @@ export class RelayerV2AsyncRequest {
             this._requestId === undefined,
             'this._requestId === undefined',
           );
-          this._requestId = bodyJson.result.id;
+          this._requestId = bodyJson.result.job_id;
 
           // Wait if needed (minimum 1s)
           await this._setRetryAfterTimeout(ms);
 
-          const json = await this._runGetLoop(bodyJson.result.id);
+          const json = await this._runGetLoop(bodyJson.result.job_id);
           return json;
         }
         // RelayerV2ResponseFailed
