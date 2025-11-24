@@ -34,9 +34,9 @@ export function isRelayerV2ApiPostError400NoDetails(
 ): error is RelayerV2ApiPostError400NoDetails {
   if (
     !(
-      error.code === 'malformed_json' ||
-      error.code === 'request_error' ||
-      error.code === 'not_ready_for_decryption'
+      error.label === 'malformed_json' ||
+      error.label === 'request_error' ||
+      error.label === 'not_ready_for_decryption'
     )
   ) {
     return false;

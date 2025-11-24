@@ -66,18 +66,18 @@ export function assertIsRelayerV2ResponseFailedWithPostError400(
 } {
   assertIsRelayerV2ResponseFailed(value, name);
   if (
-    value.error.code === 'malformed_json' ||
-    value.error.code === 'request_error' ||
-    value.error.code === 'not_ready_for_decryption'
+    value.error.label === 'malformed_json' ||
+    value.error.label === 'request_error' ||
+    value.error.label === 'not_ready_for_decryption'
   ) {
     assertIsRelayerV2ApiPostError400NoDetails(value.error, `${name}.error`);
   } else if (
-    value.error.code === 'missing_fields' ||
-    value.error.code === 'validation_failed'
+    value.error.label === 'missing_fields' ||
+    value.error.label === 'validation_failed'
   ) {
     assertIsRelayerV2ApiPostError400WithDetails(value.error, `${name}.error`);
   } else {
-    throw new Error(`Invalid ${name}.error.code='${value.error.code}'.`);
+    throw new Error(`Invalid ${name}.error.code='${value.error.label}'.`);
   }
 }
 

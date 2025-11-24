@@ -6,8 +6,19 @@ import { Bytes32Hex, BytesHex, BytesHexNo0x } from 'src/utils/bytes';
 
 // RelayerV2<Response|GetResponse|PostResponse><QueuedOrFailed|Succeeded>
 
-// GET:  200 | 202 | 404 | 422 | 500
-// POST: 202 | 400 | 429 | 500
+// GET:  200 | 202 | 404 |  500 | 503 | 504
+// POST: 202 | 400 | 429 | 500 | 503
+
+// Notes on 504
+// 1. We use 504 when we want to say readiness check timed out or response timedout.
+//    In this case, user can make a fresh post request and start another job.
+// Notes on 503
+// 2. This is to deal with protocol pausing. If protocol is paused, we cannot do any operations.
+//    So, event POST (paused when making a request) or GET (paused while processing a request).
+//    We treat this specially becasue, at this point, relayer cannot do anything.
+//    User has to be informed and waits for information from external world that protocol has been unpaused.
+//
+// 3. As an improvement, to the above point we could provide protocol pause status in a status endpoint (for user).
 
 // Readiness (400)
 // 1. ACL check not propagated
@@ -18,22 +29,22 @@ import { Bytes32Hex, BytesHex, BytesHexNo0x } from 'src/utils/bytes';
 // GMT time stamp RFC 7231 timestamp indicating when client should retry (e.g. "Wed, 21 Oct 2015 07:28:00 GMT")
 export type Timestamp = string;
 
-// GET:  202 (queued) | 400 | 429 | 500
-// POST: 202 (queued) | 400 | 429 | 500
+// GET:  202 (queued) | 400 | 429 | 500 | 503 | 504
+// POST: 202 (queued) | 400 | 429 | 500 | 503
 export type RelayerV2ResponseQueuedOrFailed =
   | RelayerV2ResponseFailed
   | RelayerV2ResponseQueued;
 
-// POST : 202 (queued) | 400 | 429 | 500
+// POST : 202 (queued) | 400 | 429 | 500 | 503
 export type RelayerV2PostResponse = RelayerV2ResponseQueuedOrFailed;
 
-// GET:  200 | 202 | 404 | 422 | 500
+// GET:  200 | 202 | 404 | 500 | 503 | 504
 export type RelayerV2GetResponse =
   | RelayerV2ResponseQueuedOrFailed
   | RelayerV2GetResponseSucceeded;
 
-// GET : 404 | 422 | 500
-// POST: 400 | 429 | 500
+// GET : 404 | 500 | 503 | 504
+// POST: 400 | 429 | 500 | 503
 export type RelayerV2ResponseFailed = {
   status: 'failed';
   error: RelayerV2ApiError;
@@ -43,25 +54,47 @@ export type RelayerV2ResponseFailed = {
 export type RelayerV2ApiError =
   | RelayerV2ApiPostError400
   | RelayerV2ApiPostError429
-  | RelayerV2ApiError500;
+  | RelayerV2ApiError500
+  | RelayerV2ApiError503
+  | RelayerV2ApiGetError504;
 
 // GET:  500
 // POST: 500
 export type RelayerV2ApiError500 = {
-  code: 'internal_server_error';
+  label: 'internal_server_error';
   message: string;
   request_id: string;
 };
 
+// GET:  503
+// POST: 503
+export type RelayerV2ApiError503 = {
+  label: 'protocol_paused' | `gateway_not_reachable`;
+  message: string;
+  request_id: string;
+};
+
+// GET:  504
+export type RelayerV2ApiGetError504 = {
+  label: 'readiness_check_timedout' | 'response_timedout`';
+  message: string;
+  request_id: string;
+};
+// Note: 429 will use only the following headers
+// Retry-After in duration seconds. Since this value is populated by the rate
+// limiting element (Cloudflare, Kong, Relayer), it will always be an up to date
+// value.
+// Makes it simpler and avoids issues with clock skew between client and server.
 // POST: 429
+// The body will be  still contain status=failed, and error field with a label and message and optional request_id.
 export type RelayerV2ApiPostError429 = {
-  code: 'rate_limited';
+  label: 'rate_limited';
   message: string;
   // RFC 7231 timestamp indicating when client should retry (e.g. "Wed, 21 Oct 2015 07:28:00 GMT").
   // Uses absolute timestamp instead of relative seconds for cache-safety.
   // retry_after is only used in the case of Rate limit errors.
   // example = "Thu, 14 Nov 2024 15:30:00 GMT"
-  retry_after: Timestamp;
+  // retry_after: Timestamp;
   request_id?: string;
 };
 
@@ -72,14 +105,14 @@ export type RelayerV2ApiPostError400 =
 
 // POST: 400
 export type RelayerV2ApiPostError400NoDetails = {
-  code: 'malformed_json' | 'request_error' | 'not_ready_for_decryption';
+  label: 'malformed_json' | 'request_error' | 'not_ready_for_decryption';
   message: string;
   request_id: string;
 };
 
 // POST: 400
 export type RelayerV2ApiPostError400WithDetails = {
-  code: 'missing_fields' | 'validation_failed';
+  label: 'missing_fields' | 'validation_failed';
   message: string;
   request_id: string;
   details: Array<RelayerV2PostErrorDetail>;
@@ -109,6 +142,9 @@ export type RelayerV2GetResponseSucceeded = {
 
 // GET:  202
 // POST: 202
+// We change the strategy to use absolute duration here (to again not be affected by clock skew.)
+// For, we will not cache it.
+// Later, even if we decide to cache, we can use the Age and Max field inj cache headers to decide on the staleness of the response
 export type RelayerV2ResultQueued = {
   id: string;
   retry_after: Timestamp; // Timestamp

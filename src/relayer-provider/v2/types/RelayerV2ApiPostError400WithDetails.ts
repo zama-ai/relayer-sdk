@@ -45,7 +45,7 @@ export function isRelayerV2ApiPostError400WithDetails(
   name: string,
 ): error is RelayerV2ApiPostError400WithDetails {
   if (
-    !(error.code === 'missing_fields' || error.code === 'validation_failed')
+    !(error.label === 'missing_fields' || error.label === 'validation_failed')
   ) {
     return false;
   }
