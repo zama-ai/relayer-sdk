@@ -1,4 +1,4 @@
-import { assertIsRelayerV2ApiError400 } from './RelayerV2ApiError400';
+import { assertIsRelayerV2ApiPostError400NoDetails } from './RelayerV2ApiPostError400NoDetails';
 
 // npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v2/types/RelayerV2ApiError400.test.ts --collectCoverageFrom=./src/relayer-provider/v2/types/RelayerV2ApiError400.ts
 
@@ -6,7 +6,7 @@ describe('RelayerV2ApiError400', () => {
   it('assertIsRelayerV2ApiError400', () => {
     // True
     expect(() =>
-      assertIsRelayerV2ApiError400(
+      assertIsRelayerV2ApiPostError400NoDetails(
         {
           code: 'malformed_json',
           message: 'hello',
@@ -17,7 +17,7 @@ describe('RelayerV2ApiError400', () => {
     ).not.toThrow();
 
     expect(() =>
-      assertIsRelayerV2ApiError400(
+      assertIsRelayerV2ApiPostError400NoDetails(
         {
           code: 'request_error',
           message: 'hello',
@@ -28,7 +28,7 @@ describe('RelayerV2ApiError400', () => {
     ).not.toThrow();
 
     expect(() =>
-      assertIsRelayerV2ApiError400(
+      assertIsRelayerV2ApiPostError400NoDetails(
         {
           code: 'not_ready_for_decryption',
           message: 'hello',
@@ -39,11 +39,11 @@ describe('RelayerV2ApiError400', () => {
     ).not.toThrow();
 
     // False
-    expect(() => assertIsRelayerV2ApiError400({}, 'Foo')).toThrow(
+    expect(() => assertIsRelayerV2ApiPostError400NoDetails({}, 'Foo')).toThrow(
       'Invalid Foo.code',
     );
     expect(() =>
-      assertIsRelayerV2ApiError400(
+      assertIsRelayerV2ApiPostError400NoDetails(
         {
           code: 'foo',
         },
@@ -54,7 +54,7 @@ describe('RelayerV2ApiError400', () => {
     );
 
     expect(() =>
-      assertIsRelayerV2ApiError400(
+      assertIsRelayerV2ApiPostError400NoDetails(
         {
           code: 'malformed_json',
         },
@@ -62,7 +62,7 @@ describe('RelayerV2ApiError400', () => {
       ),
     ).toThrow('Invalid Foo.message');
     expect(() =>
-      assertIsRelayerV2ApiError400(
+      assertIsRelayerV2ApiPostError400NoDetails(
         {
           code: 'malformed_json',
           message: 123,
@@ -71,7 +71,7 @@ describe('RelayerV2ApiError400', () => {
       ),
     ).toThrow('Invalid string Foo.message');
     expect(() =>
-      assertIsRelayerV2ApiError400(
+      assertIsRelayerV2ApiPostError400NoDetails(
         {
           code: 'malformed_json',
           message: 'foo',
@@ -80,7 +80,7 @@ describe('RelayerV2ApiError400', () => {
       ),
     ).toThrow('Invalid Foo.request_id');
     expect(() =>
-      assertIsRelayerV2ApiError400(
+      assertIsRelayerV2ApiPostError400NoDetails(
         {
           code: 'malformed_json',
           message: 'foo',

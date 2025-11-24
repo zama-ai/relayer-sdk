@@ -1,9 +1,12 @@
 import { SepoliaConfig } from '../..';
+import { getErrorCause } from '../../relayer/error';
 import { AbstractRelayerProvider } from '../AbstractRelayerProvider';
 import { createRelayerProvider } from '../createRelayerFhevm';
 import fetchMock from '@fetch-mock/core';
 
-// npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v2/RelayerV2Provider.test.ts --collectCoverageFrom=./src/relayer-provider/v2/RelayerV2Provider.ts
+// npx jest --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_keyurl.test.ts
+// npx jest --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_keyurl.test.ts --testNamePattern=BBB
+// npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v2/RelayerV2Provider_keyurl.test.ts --collectCoverageFrom=./src/relayer-provider/v2/RelayerV2Provider.ts
 
 // curl https://relayer.testnet.zama.org/v2/keyurl
 const relayerV2ResponseGetKeyUrl = {
@@ -40,6 +43,9 @@ describe('RelayerV2Provider', () => {
     relayerProvider = createRelayerProvider(`${SepoliaConfigeRelayerUrl}/v2`);
     expect(relayerProvider.version).toBe(2);
     expect(relayerProvider.url).toBe(`${SepoliaConfigeRelayerUrl}/v2`);
+    expect(relayerProvider.keyUrl).toBe(
+      `${SepoliaConfigeRelayerUrl}/v2/keyurl`,
+    );
   });
 
   it('v2: fetchGetKeyUrl', async () => {
@@ -105,5 +111,70 @@ describe('RelayerV2Provider', () => {
     await expect(() => relayerProvider.fetchGetKeyUrl()).rejects.toThrow(
       `Unexpected response ${relayerUrlV2}/keyurl. Invalid array fetchGetKeyUrl().response.fhe_key_info`,
     );
+  });
+
+  it('v2: fetchGetKeyUrl - 404', async () => {
+    fetchMock.getOnce(`${relayerUrlV2}/keyurl`, { status: 404 });
+    await expect(() => relayerProvider.fetchGetKeyUrl()).rejects.toThrow(
+      'HTTP error! status: 404',
+    );
+  });
+
+  it('v2: fetchGetKeyUrl - 404 - cause', async () => {
+    fetchMock.getOnce(`${relayerUrlV2}/keyurl`, { status: 404 });
+
+    try {
+      await relayerProvider.fetchGetKeyUrl();
+      fail('Expected fetchGetKeyUrl to throw an error, but it did not.');
+    } catch (e) {
+      expect(String(e)).toStrictEqual('Error: HTTP error! status: 404');
+      const cause = getErrorCause(e) as any;
+      expect(cause.code).toStrictEqual('RELAYER_FETCH_ERROR');
+      expect(cause.operation).toStrictEqual('KEY_URL');
+      expect(cause.status).toStrictEqual(404);
+      expect(cause.statusText).toStrictEqual('Not Found');
+      expect(cause.url).toStrictEqual(relayerProvider.keyUrl);
+    }
+  });
+
+  it('v2: fetchGetKeyUrl - 404+headers - cause', async () => {
+    const bodyObj = {
+      message: 'no Route matched with those values',
+      request_id: 'e4d9e74d3cf53270ecdee649b55d1666',
+    };
+    const body = JSON.stringify(bodyObj, null, 2);
+    fetchMock.getOnce(`${relayerUrlV2}/keyurl`, {
+      status: 404,
+      headers: {
+        date: 'Sun, 23 Nov 2025 05:38:07 GMT',
+        'content-type': 'application/json; charset=utf-8',
+        'content-length': '103',
+        'x-kong-response-latency': '0',
+        server: 'cloudflare',
+        'x-kong-request-id': 'b15b96748385cb3a3346c86cee85032b',
+        'cf-cache-status': 'DYNAMIC',
+        'cf-ray': '9a2e518d8aa5647a-CDG',
+      },
+      body,
+    });
+
+    try {
+      await relayerProvider.fetchGetKeyUrl();
+      fail('Expected fetchGetKeyUrl to throw an error, but it did not.');
+    } catch (e) {
+      // Error message
+      expect(String(e)).toStrictEqual('Error: HTTP error! status: 404');
+
+      // Error cause
+      const cause = getErrorCause(e) as any;
+      expect(cause.code).toStrictEqual('RELAYER_FETCH_ERROR');
+      expect(cause.operation).toStrictEqual('KEY_URL');
+      expect(cause.status).toStrictEqual(404);
+      expect(cause.statusText).toStrictEqual('Not Found');
+      expect(cause.url).toStrictEqual(relayerProvider.keyUrl);
+      expect(JSON.stringify(cause.responseJson)).toEqual(
+        JSON.stringify(bodyObj),
+      );
+    }
   });
 });

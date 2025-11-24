@@ -29,24 +29,28 @@ export abstract class AbstractRelayerProvider {
   public get userDecrypt(): string {
     return `${this.url}/user-decrypt`;
   }
+
   public abstract get version(): number;
   public abstract fetchGetKeyUrl(): Promise<RelayerKeyUrlResponse>;
   public abstract fetchPostInputProof(
     payload: RelayerInputProofPayload,
     options?: {
       auth?: Auth;
+      signal?: AbortSignal;
     },
   ): Promise<RelayerFetchResponseJson>;
   public abstract fetchPostPublicDecrypt(
     payload: RelayerPublicDecryptPayload,
     options?: {
       auth?: Auth;
+      signal?: AbortSignal;
     },
   ): Promise<RelayerFetchResponseJson>;
   public abstract fetchPostUserDecrypt(
     payload: RelayerUserDecryptPayload,
     options?: {
       auth?: Auth;
+      signal?: AbortSignal;
     },
   ): Promise<RelayerFetchResponseJson>;
 }

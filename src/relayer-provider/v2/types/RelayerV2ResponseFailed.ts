@@ -1,9 +1,15 @@
 import { assertNonNullableRecordProperty } from '../../../utils/record';
 import { assertRecordStringProperty } from '../../../utils/string';
-import { RelayerV2ApiError, RelayerV2ResponseFailed } from './types';
-import { assertIsRelayerV2ApiError400 } from './RelayerV2ApiError400';
-import { assertIsRelayerV2ApiError400WithDetails } from './RelayerV2ApiError400WithDetails';
-import { assertIsRelayerV2ApiPostError429 } from './RelayerV2ApiErrorPost429';
+import {
+  RelayerV2ApiError,
+  RelayerV2ApiError500,
+  RelayerV2ApiPostError400,
+  RelayerV2ApiPostError429,
+  RelayerV2ResponseFailed,
+} from './types';
+import { assertIsRelayerV2ApiPostError400NoDetails } from './RelayerV2ApiPostError400NoDetails';
+import { assertIsRelayerV2ApiPostError400WithDetails } from './RelayerV2ApiPostError400WithDetails';
+import { assertIsRelayerV2ApiPostError429 } from './RelayerV2ApiPostError429';
 import { assertIsRelayerV2ApiError500 } from './RelayerV2ApiError500';
 
 export function assertIsRelayerV2ResponseFailed(
@@ -25,12 +31,12 @@ export function assertIsRelayerV2ApiError(
     value.code === 'request_error' ||
     value.code === 'not_ready_for_decryption'
   ) {
-    assertIsRelayerV2ApiError400(value, name);
+    assertIsRelayerV2ApiPostError400NoDetails(value, name);
   } else if (
     value.code === 'missing_fields' ||
     value.code === 'validation_failed'
   ) {
-    assertIsRelayerV2ApiError400WithDetails(value, name);
+    assertIsRelayerV2ApiPostError400WithDetails(value, name);
   } else if (value.code === 'rate_limited') {
     assertIsRelayerV2ApiPostError429(value, name);
   } else if (value.code === 'internal_server_error') {
@@ -38,4 +44,50 @@ export function assertIsRelayerV2ApiError(
   } else {
     throw new Error(`Invalid ${name}.error.code='${value.code}'.`);
   }
+}
+
+export function assertIsRelayerV2ResponseFailedWithPostError429(
+  value: unknown,
+  name: string,
+): asserts value is {
+  status: 'failed';
+  error: RelayerV2ApiPostError429;
+} {
+  assertIsRelayerV2ResponseFailed(value, name);
+  assertIsRelayerV2ApiPostError429(value.error, `${name}.error`);
+}
+
+export function assertIsRelayerV2ResponseFailedWithPostError400(
+  value: unknown,
+  name: string,
+): asserts value is {
+  status: 'failed';
+  error: RelayerV2ApiPostError400;
+} {
+  assertIsRelayerV2ResponseFailed(value, name);
+  if (
+    value.error.code === 'malformed_json' ||
+    value.error.code === 'request_error' ||
+    value.error.code === 'not_ready_for_decryption'
+  ) {
+    assertIsRelayerV2ApiPostError400NoDetails(value.error, `${name}.error`);
+  } else if (
+    value.error.code === 'missing_fields' ||
+    value.error.code === 'validation_failed'
+  ) {
+    assertIsRelayerV2ApiPostError400WithDetails(value.error, `${name}.error`);
+  } else {
+    throw new Error(`Invalid ${name}.error.code='${value.error.code}'.`);
+  }
+}
+
+export function assertIsRelayerV2ResponseFailedWithError500(
+  value: unknown,
+  name: string,
+): asserts value is {
+  status: 'failed';
+  error: RelayerV2ApiError500;
+} {
+  assertIsRelayerV2ResponseFailed(value, name);
+  assertIsRelayerV2ApiError500(value.error, `${name}.error`);
 }

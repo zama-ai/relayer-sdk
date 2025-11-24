@@ -78,12 +78,21 @@ export async function throwRelayerResponseError(
     }
   }
 
+  let responseJson;
+  try {
+    responseJson = await response.json();
+  } catch {
+    responseJson = '';
+  }
+
   const cause = {
     code: 'RELAYER_FETCH_ERROR',
     operation,
     status: response.status,
     statusText: response.statusText,
     url: response.url,
+    response,
+    responseJson,
   };
 
   throw new Error(message, {
@@ -94,6 +103,7 @@ export async function throwRelayerResponseError(
 export function throwRelayerJSONError(
   operation: RelayerOperation,
   error: unknown,
+  response: Response,
 ): never {
   let message: string;
   switch (operation) {
@@ -115,6 +125,7 @@ export function throwRelayerJSONError(
     code: 'RELAYER_NO_JSON_ERROR',
     operation,
     error,
+    response,
   };
 
   throw new Error(message, {

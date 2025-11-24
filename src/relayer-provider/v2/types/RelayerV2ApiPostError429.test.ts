@@ -1,4 +1,4 @@
-import { assertIsRelayerV2ApiPostError429 } from './RelayerV2ApiErrorPost429';
+import { assertIsRelayerV2ApiPostError429 } from './RelayerV2ApiPostError429';
 
 // npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v2/types/RelayerV2ApiErrorPost429.test.ts --collectCoverageFrom=./src/relayer-provider/v2/types/RelayerV2ApiErrorPost429.ts
 

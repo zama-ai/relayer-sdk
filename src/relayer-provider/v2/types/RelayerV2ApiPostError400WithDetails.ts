@@ -1,6 +1,9 @@
 import { assertRecordArrayProperty } from '../../../utils/record';
 import { assertRecordStringProperty } from '../../../utils/string';
-import { RelayerV2ApiPostError400WithDetails } from './types';
+import {
+  RelayerV2ApiError,
+  RelayerV2ApiPostError400WithDetails,
+} from './types';
 
 /*
     type RelayerV2ApiPostError400WithDetails = {
@@ -14,7 +17,7 @@ import { RelayerV2ApiPostError400WithDetails } from './types';
       issue: string;
     }
 */
-export function assertIsRelayerV2ApiError400WithDetails(
+export function assertIsRelayerV2ApiPostError400WithDetails(
   value: unknown,
   name: string,
 ): asserts value is RelayerV2ApiPostError400WithDetails {
@@ -35,4 +38,25 @@ export function assertIsRelayerV2ApiError400WithDetails(
     assertRecordStringProperty(detail, 'field', `${name}.details[${i}]`);
     assertRecordStringProperty(detail, 'issue', `${name}.details[${i}]`);
   }
+}
+
+export function isRelayerV2ApiPostError400WithDetails(
+  error: RelayerV2ApiError,
+  name: string,
+): error is RelayerV2ApiPostError400WithDetails {
+  if (
+    !(error.code === 'missing_fields' || error.code === 'validation_failed')
+  ) {
+    return false;
+  }
+  assertRecordStringProperty(error, 'message', name);
+  assertRecordStringProperty(error, 'request_id', name);
+  assertRecordArrayProperty(error, 'details', name);
+  const arr = error.details;
+  for (let i = 0; i < arr.length; ++i) {
+    const detail = arr[i];
+    assertRecordStringProperty(detail, 'field', `${name}.details[${i}]`);
+    assertRecordStringProperty(detail, 'issue', `${name}.details[${i}]`);
+  }
+  return true;
 }

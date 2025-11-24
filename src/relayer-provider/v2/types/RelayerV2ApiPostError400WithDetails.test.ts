@@ -1,4 +1,4 @@
-import { assertIsRelayerV2ApiError400WithDetails } from './RelayerV2ApiError400WithDetails';
+import { assertIsRelayerV2ApiPostError400WithDetails } from './RelayerV2ApiPostError400WithDetails';
 
 // npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v2/types/RelayerV2ApiError400WithDetails.test.ts --collectCoverageFrom=./src/relayer-provider/v2/types/RelayerV2ApiError400WithDetails.ts
 
@@ -6,7 +6,7 @@ describe('RelayerV2ApiError400WithDetails', () => {
   it('assertIsRelayerV2ApiError400WithDetails', () => {
     // True
     expect(() =>
-      assertIsRelayerV2ApiError400WithDetails(
+      assertIsRelayerV2ApiPostError400WithDetails(
         {
           code: 'missing_fields',
           message: 'hello',
@@ -23,7 +23,7 @@ describe('RelayerV2ApiError400WithDetails', () => {
     ).not.toThrow();
 
     expect(() =>
-      assertIsRelayerV2ApiError400WithDetails(
+      assertIsRelayerV2ApiPostError400WithDetails(
         {
           code: 'validation_failed',
           message: 'hello',
@@ -40,11 +40,11 @@ describe('RelayerV2ApiError400WithDetails', () => {
     ).not.toThrow();
 
     // False
-    expect(() => assertIsRelayerV2ApiError400WithDetails({}, 'Foo')).toThrow(
-      'Invalid Foo.code',
-    );
     expect(() =>
-      assertIsRelayerV2ApiError400WithDetails(
+      assertIsRelayerV2ApiPostError400WithDetails({}, 'Foo'),
+    ).toThrow('Invalid Foo.code');
+    expect(() =>
+      assertIsRelayerV2ApiPostError400WithDetails(
         {
           code: 'foo',
         },
@@ -55,7 +55,7 @@ describe('RelayerV2ApiError400WithDetails', () => {
     );
 
     expect(() =>
-      assertIsRelayerV2ApiError400WithDetails(
+      assertIsRelayerV2ApiPostError400WithDetails(
         {
           code: 'missing_fields',
         },
@@ -63,7 +63,7 @@ describe('RelayerV2ApiError400WithDetails', () => {
       ),
     ).toThrow('Invalid Foo.message');
     expect(() =>
-      assertIsRelayerV2ApiError400WithDetails(
+      assertIsRelayerV2ApiPostError400WithDetails(
         {
           code: 'missing_fields',
           message: 123,
@@ -72,7 +72,7 @@ describe('RelayerV2ApiError400WithDetails', () => {
       ),
     ).toThrow('Invalid string Foo.message');
     expect(() =>
-      assertIsRelayerV2ApiError400WithDetails(
+      assertIsRelayerV2ApiPostError400WithDetails(
         {
           code: 'missing_fields',
           message: 'foo',
@@ -81,7 +81,7 @@ describe('RelayerV2ApiError400WithDetails', () => {
       ),
     ).toThrow('Invalid Foo.request_id');
     expect(() =>
-      assertIsRelayerV2ApiError400WithDetails(
+      assertIsRelayerV2ApiPostError400WithDetails(
         {
           code: 'missing_fields',
           message: 'foo',
@@ -91,7 +91,7 @@ describe('RelayerV2ApiError400WithDetails', () => {
       ),
     ).toThrow('Invalid string Foo.request_id');
     expect(() =>
-      assertIsRelayerV2ApiError400WithDetails(
+      assertIsRelayerV2ApiPostError400WithDetails(
         {
           code: 'missing_fields',
           message: 'foo',
@@ -101,7 +101,7 @@ describe('RelayerV2ApiError400WithDetails', () => {
       ),
     ).toThrow('Invalid Foo.details');
     expect(() =>
-      assertIsRelayerV2ApiError400WithDetails(
+      assertIsRelayerV2ApiPostError400WithDetails(
         {
           code: 'missing_fields',
           message: 'foo',
@@ -112,7 +112,7 @@ describe('RelayerV2ApiError400WithDetails', () => {
       ),
     ).toThrow('Invalid array Foo.details');
     expect(() =>
-      assertIsRelayerV2ApiError400WithDetails(
+      assertIsRelayerV2ApiPostError400WithDetails(
         {
           code: 'missing_fields',
           message: 'foo',
@@ -123,7 +123,7 @@ describe('RelayerV2ApiError400WithDetails', () => {
       ),
     ).toThrow('Invalid Foo.details[0].field');
     expect(() =>
-      assertIsRelayerV2ApiError400WithDetails(
+      assertIsRelayerV2ApiPostError400WithDetails(
         {
           code: 'missing_fields',
           message: 'foo',

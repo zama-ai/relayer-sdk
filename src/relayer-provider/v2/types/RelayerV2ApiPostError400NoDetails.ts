@@ -1,17 +1,17 @@
 import { assertRecordStringProperty } from '../../../utils/string';
-import { RelayerV2ApiPostError400 } from './types';
+import { RelayerV2ApiError, RelayerV2ApiPostError400NoDetails } from './types';
 
 /*
-    type RelayerV2ApiError500 = {
+    type RelayerV2ApiPostError400 = {
       code: "malformed_json" | "request_error" | "not_ready_for_decryption";
       message: string;
       request_id: string;
     };
 */
-export function assertIsRelayerV2ApiError400(
+export function assertIsRelayerV2ApiPostError400NoDetails(
   value: unknown,
   name: string,
-): asserts value is RelayerV2ApiPostError400 {
+): asserts value is RelayerV2ApiPostError400NoDetails {
   assertRecordStringProperty(value, 'code', name);
   if (
     !(
@@ -26,4 +26,22 @@ export function assertIsRelayerV2ApiError400(
   }
   assertRecordStringProperty(value, 'message', name);
   assertRecordStringProperty(value, 'request_id', name);
+}
+
+export function isRelayerV2ApiPostError400NoDetails(
+  error: RelayerV2ApiError,
+  name: string,
+): error is RelayerV2ApiPostError400NoDetails {
+  if (
+    !(
+      error.code === 'malformed_json' ||
+      error.code === 'request_error' ||
+      error.code === 'not_ready_for_decryption'
+    )
+  ) {
+    return false;
+  }
+  assertRecordStringProperty(error, 'message', name);
+  assertRecordStringProperty(error, 'request_id', name);
+  return true;
 }

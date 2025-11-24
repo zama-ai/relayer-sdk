@@ -163,7 +163,7 @@ export async function fetchRelayerJsonRpcPost(
   try {
     parsed = await response.json();
   } catch (e) {
-    throwRelayerJSONError(relayerOperation, e);
+    throwRelayerJSONError(relayerOperation, e, response);
   }
 
   try {
@@ -187,6 +187,7 @@ export async function fetchRelayerGet(
   } catch (e) {
     throwRelayerUnknownError(relayerOperation, e);
   }
+
   if (!response.ok) {
     await throwRelayerResponseError(relayerOperation, response);
   }
@@ -195,7 +196,7 @@ export async function fetchRelayerGet(
   try {
     parsed = await response.json();
   } catch (e) {
-    throwRelayerJSONError(relayerOperation, e);
+    throwRelayerJSONError(relayerOperation, e, response);
   }
 
   try {

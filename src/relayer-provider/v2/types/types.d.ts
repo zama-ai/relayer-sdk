@@ -42,7 +42,6 @@ export type RelayerV2ResponseFailed = {
 // https://github.com/zama-ai/console/blob/1d74c413760690d9ad4350e283f609242159331e/apps/relayer/src/http/utils.rs#L626
 export type RelayerV2ApiError =
   | RelayerV2ApiPostError400
-  | RelayerV2ApiPostError400WithDetails
   | RelayerV2ApiPostError429
   | RelayerV2ApiError500;
 
@@ -67,7 +66,12 @@ export type RelayerV2ApiPostError429 = {
 };
 
 // POST: 400
-export type RelayerV2ApiPostError400 = {
+export type RelayerV2ApiPostError400 =
+  | RelayerV2ApiPostError400NoDetails
+  | RelayerV2ApiPostError400WithDetails;
+
+// POST: 400
+export type RelayerV2ApiPostError400NoDetails = {
   code: 'malformed_json' | 'request_error' | 'not_ready_for_decryption';
   message: string;
   request_id: string;
