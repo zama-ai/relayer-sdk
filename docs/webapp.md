@@ -30,11 +30,13 @@ This document guides you through building a web application using the `@zama-fhe
 
 #### Using UMD CDN
 
+The Zama CDN url format is `https://cdn.zama.org/relayer-sdk-js/<package-version>/relayer-sdk-js.umd.cjs`
+
 Include this line at the top of your project.
 
 ```html
 <script
-  src="https://cdn.zama.ai/relayer-sdk-js/0.2.0/relayer-sdk-js.umd.cjs"
+  src="https://cdn.zama.org/relayer-sdk-js/0.3.0-5/relayer-sdk-js.umd.cjs"
   type="text/javascript"
 ></script>
 ```
@@ -59,7 +61,7 @@ If you prefer You can also use the `@zama-fhe/relayer-sdk` as a ES module:
     initSDK,
     createInstance,
     SepoliaConfig,
-  } from 'https://cdn.zama.ai/relayer-sdk-js/0.2.0/relayer-sdk-js.js';
+  } from 'https://cdn.zama.org/relayer-sdk-js/0.3.0-5/relayer-sdk-js.umd.cjs';
 
   await initSDK();
   const config = { ...SepoliaConfig, network: window.ethereum };
