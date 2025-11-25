@@ -93,8 +93,7 @@ function abiEncodeClearValues(clearValues: ClearValues) {
       case 4: //euint32
       case 5: //euint64
       case 6: //euint128
-      case 7: {
-        //euint256
+      case 8: { //euint256
         // bigint
         abiValues.push(clearTextValueBigInt);
         break;
