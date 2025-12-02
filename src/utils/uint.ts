@@ -1,6 +1,10 @@
-import { isNonNullableRecordProperty } from './record';
+import { InvalidTypeError } from '../errors/InvalidTypeError';
+import { InvalidPropertyError } from '../errors/InvalidPropertyError';
+import { isNonNullableRecordProperty, typeofProperty } from './record';
 
-export function isUint(value: any): value is number {
+type Uint = number | bigint;
+
+export function isUint(value: any): value is Uint {
   if (typeof value === 'number') {
     if (value < 0) {
       return false;
@@ -12,14 +16,17 @@ export function isUint(value: any): value is number {
   return false;
 }
 
-export function assertIsUint(value: unknown): asserts value is number {
+export function assertIsUint(value: unknown): asserts value is Uint {
   if (!isUint(value)) {
-    throw new RangeError('Invalid uint');
+    throw new InvalidTypeError({
+      type: typeof value,
+      expectedType: 'Uint',
+    });
   }
 }
 
 type RecordUintProperty<K extends string> = Record<string, unknown> & {
-  [P in K]: NonNullable<number>;
+  [P in K]: NonNullable<Uint>;
 };
 
 export function isRecordUintProperty<K extends string>(
@@ -40,8 +47,13 @@ export function assertRecordUintProperty<K extends string>(
   o: unknown,
   property: K,
   objName: string,
-): asserts o is ObjectWithProperty<K, number> {
+): asserts o is ObjectWithProperty<K, Uint> {
   if (!isRecordUintProperty(o, property)) {
-    throw new Error(`Invalid uint ${objName}.${property}`);
+    throw new InvalidPropertyError({
+      objName,
+      property,
+      type: typeofProperty(o, property),
+      expectedType: 'Uint',
+    });
   }
 }

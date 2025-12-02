@@ -3,9 +3,13 @@ import {
   getAddress as ethersGetAddress,
 } from 'ethers';
 import {
-  assertNonNullableRecordProperty,
   assertRecordArrayProperty,
+  isNonNullableRecordProperty,
+  typeofProperty,
 } from './record';
+import { ChecksummedAddressError } from '../errors/ChecksummedAddressError';
+import { AddressError } from '../errors/AddressError';
+import { InvalidPropertyError } from '../errors/InvalidPropertyError';
 
 export type ChecksummedAddress = `0x${string}`;
 
@@ -33,18 +37,21 @@ export function assertIsChecksummedAddress(
   value: unknown,
 ): asserts value is ChecksummedAddress {
   if (!isChecksummedAddress(value)) {
-    throw new TypeError('Invalid Checksummed Address');
+    throw new ChecksummedAddressError({ address: String(value) });
   }
 }
 
 export function isAddress(value: unknown): value is `0x${string}` {
-  if (!ethersIsAddress(value)) {
+  if (typeof value !== 'string') {
     return false;
   }
   if (!value.startsWith('0x')) {
     return false;
   }
   if (value.length !== 42) {
+    return false;
+  }
+  if (!ethersIsAddress(value)) {
     return false;
   }
   return true;
@@ -54,37 +61,54 @@ export function assertIsAddress(
   value: unknown,
 ): asserts value is `0x${string}` {
   if (!isAddress(value)) {
-    throw new TypeError('Invalid Address');
+    throw new AddressError({ address: String(value) });
   }
 }
 
-type ObjectWithProperty<K extends string, T> = Record<string, unknown> & {
+type RecordWithProperty<K extends string, T> = Record<string, unknown> & {
   [P in K]: T;
 };
 
-export function assertChecksummedAddressProperty<K extends string>(
+export function isRecordChecksummedAddressProperty<K extends string>(
+  o: unknown,
+  property: K,
+): o is RecordWithProperty<K, ChecksummedAddress> {
+  if (!isNonNullableRecordProperty(o, property)) {
+    return false;
+  }
+  return isChecksummedAddress(o[property]);
+}
+
+export function assertRecordChecksummedAddressProperty<K extends string>(
   o: unknown,
   property: K,
   objName: string,
-): asserts o is ObjectWithProperty<K, ChecksummedAddress> {
-  assertNonNullableRecordProperty(o, property, objName);
-  if (!isChecksummedAddress(o[property])) {
-    throw new Error(`Invalid checksummed address ${objName}.${property}`);
+): asserts o is RecordWithProperty<K, ChecksummedAddress> {
+  if (!isRecordChecksummedAddressProperty(o, property)) {
+    throw new InvalidPropertyError({
+      objName,
+      property,
+      expectedType: 'ChecksummedAddress',
+      type: typeofProperty(o, property),
+    });
   }
 }
 
-export function assertChecksummedAddressArrayProperty<K extends string>(
+export function assertRecordChecksummedAddressArrayProperty<K extends string>(
   o: unknown,
   property: K,
   objName: string,
-): asserts o is ObjectWithProperty<K, Array<ChecksummedAddress>> {
+): asserts o is RecordWithProperty<K, Array<ChecksummedAddress>> {
   assertRecordArrayProperty(o, property, objName);
   const arr = o[property];
   for (let i = 0; i < arr.length; ++i) {
     if (!isChecksummedAddress(arr[i])) {
-      throw new Error(
-        `Invalid checksummed address ${objName}.${property}[${i}]`,
-      );
+      throw new InvalidPropertyError({
+        objName,
+        property: `${property}[${i}]`,
+        expectedType: 'ChecksummedAddress',
+        type: typeof arr[i],
+      });
     }
   }
 }

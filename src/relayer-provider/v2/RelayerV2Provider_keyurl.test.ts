@@ -3,6 +3,8 @@ import { getErrorCause } from '../../relayer/error';
 import { AbstractRelayerProvider } from '../AbstractRelayerProvider';
 import { createRelayerProvider } from '../createRelayerFhevm';
 import fetchMock from '@fetch-mock/core';
+import { RelayerV2GetKeyUrlInvalidResponseError } from './errors/RelayerV2GetKeyUrlError';
+import { InvalidPropertyError } from '../../errors/InvalidPropertyError';
 
 // npx jest --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_keyurl.test.ts
 // npx jest --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_keyurl.test.ts --testNamePattern=BBB
@@ -48,7 +50,7 @@ describe('RelayerV2Provider', () => {
     );
   });
 
-  it('v2: fetchGetKeyUrl', async () => {
+  it('v2: RelayerV2Provider', async () => {
     fetchMock.get(`${relayerUrlV2}/keyurl`, relayerV2ResponseGetKeyUrl);
 
     const response = await relayerProvider.fetchGetKeyUrl();
@@ -91,7 +93,13 @@ describe('RelayerV2Provider', () => {
     fetchMock.get(`${relayerUrlV2}/keyurl`, { response: {} });
 
     await expect(() => relayerProvider.fetchGetKeyUrl()).rejects.toThrow(
-      `Unexpected response ${relayerUrlV2}/keyurl. Invalid fetchGetKeyUrl().response.crs`,
+      new RelayerV2GetKeyUrlInvalidResponseError({
+        cause: InvalidPropertyError.missingProperty({
+          objName: 'fetchGetKeyUrl().response',
+          property: 'crs',
+          expectedType: 'non-nullable',
+        }),
+      }),
     );
   });
 
@@ -99,7 +107,13 @@ describe('RelayerV2Provider', () => {
     fetchMock.get(`${relayerUrlV2}/keyurl`, { response: { crs: {} } });
 
     await expect(() => relayerProvider.fetchGetKeyUrl()).rejects.toThrow(
-      `Unexpected response ${relayerUrlV2}/keyurl. Invalid fetchGetKeyUrl().response.fhe_key_info`,
+      new RelayerV2GetKeyUrlInvalidResponseError({
+        cause: InvalidPropertyError.missingProperty({
+          objName: 'fetchGetKeyUrl().response',
+          property: 'fhe_key_info',
+          expectedType: 'Array',
+        }),
+      }),
     );
   });
 
@@ -109,7 +123,14 @@ describe('RelayerV2Provider', () => {
     });
 
     await expect(() => relayerProvider.fetchGetKeyUrl()).rejects.toThrow(
-      `Unexpected response ${relayerUrlV2}/keyurl. Invalid array fetchGetKeyUrl().response.fhe_key_info`,
+      new RelayerV2GetKeyUrlInvalidResponseError({
+        cause: new InvalidPropertyError({
+          objName: 'fetchGetKeyUrl().response',
+          property: 'fhe_key_info',
+          expectedType: 'Array',
+          type: 'object',
+        }),
+      }),
     );
   });
 

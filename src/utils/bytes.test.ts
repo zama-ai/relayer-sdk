@@ -1,15 +1,20 @@
 import {
-  assertBytesHexProperty,
-  assertBytesHexArrayProperty,
-  assertBytes32HexArrayProperty,
-  assertBytes32HexProperty,
+  assertRecordBytesHexProperty,
+  assertRecordBytesHexArrayProperty,
+  assertRecordBytes32HexArrayProperty,
+  assertRecordBytes32HexProperty,
   assertIsBytes32Hex,
   assertIsBytesHex,
   isBytes32Hex,
   isBytesHex,
+  isBytesHexNo0x,
+  assertIsBytesHexNo0x,
 } from './bytes';
+import { InvalidTypeError } from '../errors/InvalidTypeError';
+import { InvalidPropertyError } from '../errors/InvalidPropertyError';
 
 // npx jest --colors --passWithNoTests --coverage ./src/utils/bytes.test.ts --collectCoverageFrom=./src/utils/bytes.ts
+// npx jest --colors --passWithNoTests --coverage ./src/utils/bytes.test.ts --collectCoverageFrom=./src/utils/bytes.ts --testNamePattern=BBB
 
 describe('bytes', () => {
   it('isBytesHex', () => {
@@ -17,6 +22,7 @@ describe('bytes', () => {
     expect(isBytesHex('0x')).toEqual(true);
     expect(isBytesHex('0x00')).toEqual(true);
     expect(isBytesHex('0xdeadbeef')).toEqual(true);
+
     // False
     expect(isBytesHex('deadbee')).toEqual(false);
     expect(isBytesHex('0x0')).toEqual(false);
@@ -41,32 +47,47 @@ describe('bytes', () => {
 
   it('assertIsBytesHex', () => {
     // True
-    expect(() => assertIsBytesHex('0x')).not.toThrow(RangeError);
-    expect(() => assertIsBytesHex('0x00')).not.toThrow(RangeError);
-    expect(() => assertIsBytesHex('0xdeadbeef')).not.toThrow(RangeError);
+    expect(() => assertIsBytesHex('0x')).not.toThrow();
+    expect(() => assertIsBytesHex('0x00')).not.toThrow();
+    expect(() => assertIsBytesHex('0xdeadbeef')).not.toThrow();
+
+    const e = (type: string) =>
+      new InvalidTypeError({
+        expectedType: 'BytesHex',
+        type,
+      });
+
     // False
-    expect(() => assertIsBytesHex('deadbeef')).toThrow(RangeError);
-    expect(() => assertIsBytesHex('0x0')).toThrow(RangeError);
-    expect(() => assertIsBytesHex('0xhello')).toThrow(RangeError);
-    expect(() => assertIsBytesHex('0xdeadbeefzz')).toThrow(RangeError);
-    expect(() => assertIsBytesHex('0xdeadbee')).toThrow(RangeError);
-    expect(() => assertIsBytesHex('hello')).toThrow(RangeError);
-    expect(() => assertIsBytesHex(null)).toThrow(RangeError);
-    expect(() => assertIsBytesHex(undefined)).toThrow(RangeError);
-    expect(() => assertIsBytesHex('')).toThrow(RangeError);
-    expect(() => assertIsBytesHex('123')).toThrow(RangeError);
-    expect(() => assertIsBytesHex(123)).toThrow(RangeError);
-    expect(() => assertIsBytesHex(BigInt(123))).toThrow(RangeError);
-    expect(() => assertIsBytesHex(123.0)).toThrow(RangeError);
-    expect(() => assertIsBytesHex(123.1)).toThrow(RangeError);
-    expect(() => assertIsBytesHex(-123)).toThrow();
-    expect(() => assertIsBytesHex(0)).toThrow(RangeError);
-    expect(() => assertIsBytesHex({})).toThrow(RangeError);
-    expect(() => assertIsBytesHex([])).toThrow(RangeError);
-    expect(() => assertIsBytesHex([123])).toThrow(RangeError);
+    expect(() => assertIsBytesHex('deadbeef')).toThrow(e('string'));
+    expect(() => assertIsBytesHex('0x0')).toThrow(e('string'));
+    expect(() => assertIsBytesHex('0xhello')).toThrow(e('string'));
+    expect(() => assertIsBytesHex('0xdeadbeefzz')).toThrow(e('string'));
+    expect(() => assertIsBytesHex('0xdeadbee')).toThrow(e('string'));
+    expect(() => assertIsBytesHex('hello')).toThrow(e('string'));
+    expect(() => assertIsBytesHex(null)).toThrow(e('object'));
+    expect(() => assertIsBytesHex(undefined)).toThrow(e('undefined'));
+    expect(() => assertIsBytesHex('')).toThrow(e('string'));
+    expect(() => assertIsBytesHex('123')).toThrow(e('string'));
+    expect(() => assertIsBytesHex(123)).toThrow(e('number'));
+    expect(() => assertIsBytesHex(BigInt(123))).toThrow(e('bigint'));
+    expect(() => assertIsBytesHex(123.0)).toThrow(e('number'));
+    expect(() => assertIsBytesHex(123.1)).toThrow(e('number'));
+    expect(() => assertIsBytesHex(-123)).toThrow(e('number'));
+    expect(() => assertIsBytesHex(0)).toThrow(e('number'));
+    expect(() => assertIsBytesHex({})).toThrow(e('object'));
+    expect(() => assertIsBytesHex([])).toThrow(e('object'));
+    expect(() => assertIsBytesHex([123])).toThrow(e('object'));
   });
 
   it('isBytes32Hex', () => {
+    // True
+    expect(
+      isBytes32Hex(
+        '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+      ),
+    ).toEqual(true);
+
+    // False
     expect(isBytes32Hex('0x')).toEqual(false);
     expect(isBytes32Hex('0x00')).toEqual(false);
     expect(isBytes32Hex('0xdeadbeef')).toEqual(false);
@@ -75,44 +96,49 @@ describe('bytes', () => {
     expect(isBytes32Hex('0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef')).toEqual(
       false,
     );
-    expect(
-      isBytes32Hex(
-        '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
-      ),
-    ).toEqual(true);
   });
 
   it('assertIsBytes32Hex', () => {
-    expect(() => assertIsBytes32Hex('0x')).toThrow(RangeError);
-    expect(() => assertIsBytes32Hex('0x00')).toThrow(RangeError);
-    expect(() => assertIsBytes32Hex('0xdeadbeef')).toThrow(RangeError);
-    expect(() => assertIsBytes32Hex('deadbeef')).toThrow(RangeError);
-    expect(() =>
-      assertIsBytes32Hex('0xdeadbeefdeadbeefdeadbeefdeadbeef'),
-    ).toThrow(RangeError);
-    expect(() =>
-      assertIsBytes32Hex('0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef'),
-    ).toThrow(RangeError);
+    // True
     expect(() =>
       assertIsBytes32Hex(
         '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
       ),
     ).not.toThrow();
+
+    const e = (type: string) =>
+      new InvalidTypeError({
+        expectedType: 'Bytes32Hex',
+        type,
+      });
+
+    // False
+    expect(() => assertIsBytes32Hex('0x')).toThrow(e('string'));
+    expect(() => assertIsBytes32Hex('0x00')).toThrow(e('string'));
+    expect(() => assertIsBytes32Hex('0xdeadbeef')).toThrow(e('string'));
+    expect(() => assertIsBytes32Hex('deadbeef')).toThrow(e('string'));
+    expect(() =>
+      assertIsBytes32Hex('0xdeadbeefdeadbeefdeadbeefdeadbeef'),
+    ).toThrow(e('string'));
+    expect(() =>
+      assertIsBytes32Hex('0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef'),
+    ).toThrow(e('string'));
     expect(() =>
       assertIsBytes32Hex(
         'deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
       ),
-    ).toThrow(RangeError);
+    ).toThrow(e('string'));
     expect(() =>
       assertIsBytes32Hex(
         'deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefff',
       ),
-    ).toThrow(RangeError);
+    ).toThrow(e('string'));
   });
 
   it('assertBytes32HexProperty', () => {
+    // True
     expect(() =>
-      assertBytes32HexProperty(
+      assertRecordBytes32HexProperty(
         {
           foo: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
         },
@@ -120,28 +146,59 @@ describe('bytes', () => {
         'Foo',
       ),
     ).not.toThrow();
-    expect(() => assertBytes32HexProperty({ foo: null }, 'foo', 'Foo')).toThrow(
-      'Invalid Foo.foo',
+
+    // False
+    expect(() =>
+      assertRecordBytes32HexProperty({ foo: null }, 'foo', 'Foo'),
+    ).toThrow(
+      new InvalidPropertyError({
+        objName: 'Foo',
+        expectedType: 'Bytes32Hex',
+        property: 'foo',
+        type: 'undefined',
+      }),
     );
+
     expect(() =>
-      assertBytes32HexProperty({ foo: undefined }, 'foo', 'Foo'),
-    ).toThrow('Invalid Foo.foo');
+      assertRecordBytes32HexProperty({ foo: undefined }, 'foo', 'Foo'),
+    ).toThrow(
+      new InvalidPropertyError({
+        objName: 'Foo',
+        expectedType: 'Bytes32Hex',
+        property: 'foo',
+        type: 'undefined',
+      }),
+    );
+
+    expect(() => assertRecordBytes32HexProperty({}, 'foo', 'Foo')).toThrow(
+      new InvalidPropertyError({
+        objName: 'Foo',
+        expectedType: 'Bytes32Hex',
+        property: 'foo',
+        type: 'undefined',
+      }),
+    );
+
     expect(() =>
-      assertBytes32HexProperty(
+      assertRecordBytes32HexProperty(
         { foo: 'DeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF' },
         'foo',
         'Foo',
       ),
-    ).toThrow('Invalid bytes32 hex Foo.foo');
-    expect(() => assertBytes32HexProperty({}, 'foo', 'Foo')).toThrow(
-      'Invalid Foo.foo',
+    ).toThrow(
+      new InvalidPropertyError({
+        objName: 'Foo',
+        expectedType: 'Bytes32Hex',
+        property: 'foo',
+        type: 'string',
+      }),
     );
   });
 
   it('assertBytes32HexArrayProperty', () => {
     // True
     expect(() =>
-      assertBytes32HexArrayProperty(
+      assertRecordBytes32HexArrayProperty(
         {
           foo: [
             '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
@@ -151,32 +208,66 @@ describe('bytes', () => {
         'Foo',
       ),
     ).not.toThrow();
+
     // False
     expect(() =>
-      assertBytes32HexArrayProperty({ foo: null }, 'foo', 'Foo'),
-    ).toThrow('Invalid Foo.foo');
+      assertRecordBytes32HexArrayProperty({ foo: null }, 'foo', 'Foo'),
+    ).toThrow(
+      new InvalidPropertyError({
+        objName: 'Foo',
+        expectedType: 'Array',
+        type: 'undefined',
+        property: 'foo',
+      }),
+    );
+
     expect(() =>
-      assertBytes32HexArrayProperty({ foo: undefined }, 'foo', 'Foo'),
-    ).toThrow('Invalid Foo.foo');
+      assertRecordBytes32HexArrayProperty({ foo: undefined }, 'foo', 'Foo'),
+    ).toThrow(
+      new InvalidPropertyError({
+        objName: 'Foo',
+        expectedType: 'Array',
+        type: 'undefined',
+        property: 'foo',
+      }),
+    );
+
     expect(() =>
-      assertBytes32HexArrayProperty(
+      assertRecordBytes32HexArrayProperty(
         { foo: '0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF' },
         'foo',
         'Foo',
       ),
-    ).toThrow('Invalid array Foo.foo');
+    ).toThrow(
+      new InvalidPropertyError({
+        objName: 'Foo',
+        expectedType: 'Array',
+        type: 'string',
+        property: 'foo',
+      }),
+    );
+
     expect(() =>
-      assertBytes32HexArrayProperty(
+      assertRecordBytes32HexArrayProperty(
         { foo: ['0xDeaDbeefdEAdbeef'] },
         'foo',
         'Foo',
       ),
-    ).toThrow('Invalid bytes32 hex Foo.foo[0]');
+    ).toThrow(
+      new InvalidPropertyError({
+        objName: 'Foo',
+        expectedType: 'Bytes32Hex',
+        type: 'string',
+        property: 'foo',
+        index: 0,
+      }),
+    );
   });
 
   it('assertBytesHexProperty', () => {
+    // True
     expect(() =>
-      assertBytesHexProperty(
+      assertRecordBytesHexProperty(
         {
           foo: '0xdead',
         },
@@ -184,31 +275,70 @@ describe('bytes', () => {
         'Foo',
       ),
     ).not.toThrow();
-    expect(() => assertBytesHexProperty({ foo: null }, 'foo', 'Foo')).toThrow(
-      'Invalid Foo.foo',
+
+    // False
+    expect(() =>
+      assertRecordBytesHexProperty({ foo: null }, 'foo', 'Foo'),
+    ).toThrow(
+      new InvalidPropertyError({
+        objName: 'Foo',
+        expectedType: 'BytesHex',
+        property: 'foo',
+        type: 'undefined',
+      }),
     );
+
     expect(() =>
-      assertBytesHexProperty({ foo: undefined }, 'foo', 'Foo'),
-    ).toThrow('Invalid Foo.foo');
+      assertRecordBytesHexProperty({ foo: undefined }, 'foo', 'Foo'),
+    ).toThrow(
+      new InvalidPropertyError({
+        objName: 'Foo',
+        expectedType: 'BytesHex',
+        property: 'foo',
+        type: 'undefined',
+      }),
+    );
+
     expect(() =>
-      assertBytesHexProperty(
+      assertRecordBytesHexProperty(
         { foo: 'DeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF' },
         'foo',
         'Foo',
       ),
-    ).toThrow('Invalid bytes hex Foo.foo');
+    ).toThrow(
+      new InvalidPropertyError({
+        objName: 'Foo',
+        expectedType: 'BytesHex',
+        property: 'foo',
+        type: 'string',
+      }),
+    );
+
     expect(() =>
-      assertBytesHexProperty({ foo: '0xdeadbee' }, 'foo', 'Foo'),
-    ).toThrow('Invalid bytes hex Foo.foo');
-    expect(() => assertBytesHexProperty({}, 'foo', 'Foo')).toThrow(
-      'Invalid Foo.foo',
+      assertRecordBytesHexProperty({ foo: '0xdeadbee' }, 'foo', 'Foo'),
+    ).toThrow(
+      new InvalidPropertyError({
+        objName: 'Foo',
+        expectedType: 'BytesHex',
+        type: 'string',
+        property: 'foo',
+      }),
+    );
+
+    expect(() => assertRecordBytesHexProperty({}, 'foo', 'Foo')).toThrow(
+      new InvalidPropertyError({
+        objName: 'Foo',
+        expectedType: 'BytesHex',
+        property: 'foo',
+        type: 'undefined',
+      }),
     );
   });
 
   it('assertBytesHexArrayProperty', () => {
     // True
     expect(() =>
-      assertBytesHexArrayProperty(
+      assertRecordBytesHexArrayProperty(
         {
           foo: ['0xdeadbeef'],
         },
@@ -216,22 +346,114 @@ describe('bytes', () => {
         'Foo',
       ),
     ).not.toThrow();
+
     // False
     expect(() =>
-      assertBytesHexArrayProperty({ foo: null }, 'foo', 'Foo'),
-    ).toThrow('Invalid Foo.foo');
+      assertRecordBytesHexArrayProperty({ foo: null }, 'foo', 'Foo'),
+    ).toThrow(
+      new InvalidPropertyError({
+        objName: 'Foo',
+        expectedType: 'Array',
+        property: 'foo',
+        type: 'undefined',
+      }),
+    );
+
     expect(() =>
-      assertBytesHexArrayProperty({ foo: undefined }, 'foo', 'Foo'),
-    ).toThrow('Invalid Foo.foo');
+      assertRecordBytesHexArrayProperty({ foo: undefined }, 'foo', 'Foo'),
+    ).toThrow(
+      new InvalidPropertyError({
+        objName: 'Foo',
+        expectedType: 'Array',
+        property: 'foo',
+        type: 'undefined',
+      }),
+    );
+
     expect(() =>
-      assertBytesHexArrayProperty(
+      assertRecordBytesHexArrayProperty(
         { foo: '0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF' },
         'foo',
         'Foo',
       ),
-    ).toThrow('Invalid array Foo.foo');
+    ).toThrow(
+      new InvalidPropertyError({
+        objName: 'Foo',
+        expectedType: 'Array',
+        property: 'foo',
+        type: 'string',
+      }),
+    );
+
     expect(() =>
-      assertBytesHexArrayProperty({ foo: ['0xdeadbee'] }, 'foo', 'Foo'),
-    ).toThrow('Invalid bytes hex Foo.foo[0]');
+      assertRecordBytesHexArrayProperty({ foo: ['0xdeadbee'] }, 'foo', 'Foo'),
+    ).toThrow(
+      new InvalidPropertyError({
+        objName: 'Foo',
+        expectedType: 'BytesHex',
+        property: 'foo',
+        type: 'string',
+        index: 0,
+      }),
+    );
+  });
+
+  it('isBytesHexNo0x', () => {
+    // True
+    expect(isBytesHexNo0x('')).toEqual(true);
+    expect(isBytesHexNo0x('00')).toEqual(true);
+    expect(isBytesHexNo0x('deadbeef')).toEqual(true);
+
+    // False
+    expect(isBytesHexNo0x('0xdeadbeef')).toEqual(false);
+    expect(isBytesHexNo0x('0')).toEqual(false);
+    expect(isBytesHexNo0x('hello')).toEqual(false);
+    expect(isBytesHexNo0x('deadbee')).toEqual(false);
+    expect(isBytesHexNo0x('deadbeefzz')).toEqual(false);
+    expect(isBytesHexNo0x(null)).toEqual(false);
+    expect(isBytesHexNo0x(undefined)).toEqual(false);
+    expect(isBytesHexNo0x('123')).toEqual(false);
+    expect(isBytesHexNo0x(123)).toEqual(false);
+    expect(isBytesHexNo0x(BigInt(123))).toEqual(false);
+    expect(isBytesHexNo0x(123.0)).toEqual(false);
+    expect(isBytesHexNo0x(123.1)).toEqual(false);
+    expect(isBytesHexNo0x(-123)).toEqual(false);
+    expect(isBytesHexNo0x(0)).toEqual(false);
+    expect(isBytesHexNo0x({})).toEqual(false);
+    expect(isBytesHexNo0x([])).toEqual(false);
+    expect(isBytesHexNo0x([123])).toEqual(false);
+  });
+
+  it('assertIsBytesHexNo0x', () => {
+    // True
+    expect(() => assertIsBytesHexNo0x('')).not.toThrow();
+    expect(() => assertIsBytesHexNo0x('00')).not.toThrow();
+    expect(() => assertIsBytesHexNo0x('deadbeef')).not.toThrow();
+
+    const e = (type: string) =>
+      new InvalidTypeError({
+        expectedType: 'BytesHexNo0x',
+        type,
+      });
+
+    // False
+    expect(() => assertIsBytesHexNo0x('0xdeadbeef')).toThrow(e('string'));
+    expect(() => assertIsBytesHexNo0x('0')).toThrow(e('string'));
+    expect(() => assertIsBytesHexNo0x('hello')).toThrow(e('string'));
+    expect(() => assertIsBytesHexNo0x('deadbeefzz')).toThrow(e('string'));
+    expect(() => assertIsBytesHexNo0x('deadbee')).toThrow(e('string'));
+    expect(() => assertIsBytesHexNo0x('hello')).toThrow(e('string'));
+    expect(() => assertIsBytesHexNo0x(null)).toThrow(e('object'));
+    expect(() => assertIsBytesHexNo0x(undefined)).toThrow(e('undefined'));
+    expect(() => assertIsBytesHexNo0x('123')).toThrow(e('string'));
+    expect(() => assertIsBytesHexNo0x(123)).toThrow(e('number'));
+    expect(() => assertIsBytesHexNo0x(BigInt(123))).toThrow(e('bigint'));
+    expect(() => assertIsBytesHexNo0x(123.0)).toThrow(e('number'));
+    expect(() => assertIsBytesHexNo0x(123.1)).toThrow(e('number'));
+    expect(() => assertIsBytesHexNo0x(-123)).toThrow(e('number'));
+    expect(() => assertIsBytesHexNo0x(0)).toThrow(e('number'));
+    expect(() => assertIsBytesHexNo0x({})).toThrow(e('object'));
+    expect(() => assertIsBytesHexNo0x([])).toThrow(e('object'));
+    expect(() => assertIsBytesHexNo0x([123])).toThrow(e('object'));
   });
 });

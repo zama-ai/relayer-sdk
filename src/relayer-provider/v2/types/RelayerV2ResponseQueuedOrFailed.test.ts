@@ -1,3 +1,4 @@
+import { InvalidPropertyError } from '../../../errors/InvalidPropertyError';
 import { assertIsRelayerV2ResponseQueuedOrFailed } from './RelayerV2ResponseQueuedOrFailed';
 
 // npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v2/types/RelayerV2ResponseQueuedOrFailed.test.ts --collectCoverageFrom=./src/relayer-provider/v2/types/RelayerV2ResponseQueuedOrFailed.ts
@@ -10,7 +11,7 @@ describe('RelayerV2ResponseQueuedOrFailed', () => {
         {
           status: 'failed',
           error: {
-            code: 'malformed_json',
+            label: 'malformed_json',
             message: 'hello',
             request_id: 'world',
           },
@@ -24,8 +25,8 @@ describe('RelayerV2ResponseQueuedOrFailed', () => {
         {
           status: 'queued',
           result: {
-            id: 'hello',
-            retry_after: 'Thu, 14 Nov 2024 15:30:00 GMT',
+            job_id: 'hello',
+            retry_after_seconds: 2,
           },
         },
         'Foo',
@@ -33,12 +34,20 @@ describe('RelayerV2ResponseQueuedOrFailed', () => {
     ).not.toThrow();
 
     expect(() => assertIsRelayerV2ResponseQueuedOrFailed({}, 'Foo')).toThrow(
-      'Invalid Foo.status',
+      InvalidPropertyError.missingProperty({
+        objName: 'Foo',
+        property: 'status',
+        expectedType: 'string',
+      }),
     );
+
     expect(() =>
       assertIsRelayerV2ResponseQueuedOrFailed({ status: 'foo' }, 'Foo'),
     ).toThrow(
-      "Invalid value for Foo.status. Expected 'failed' | 'queued'. Got 'foo'.",
+      InvalidPropertyError.invalidFormat({
+        objName: 'Foo',
+        property: 'result',
+      }),
     );
   });
 });

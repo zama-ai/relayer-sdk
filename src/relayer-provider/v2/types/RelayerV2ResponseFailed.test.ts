@@ -1,3 +1,4 @@
+import { InvalidPropertyError } from '../../../errors/InvalidPropertyError';
 import { assertIsRelayerV2ResponseFailed } from './RelayerV2ResponseFailed';
 
 // npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v2/types/RelayerV2ResponseFailed.test.ts --collectCoverageFrom=./src/relayer-provider/v2/types/RelayerV2ResponseFailed.ts
@@ -15,70 +16,77 @@ describe('RelayerV2ResponseFailed', () => {
       message: 'hello',
       request_id: 'world',
     };
+
     // True
     expect(() =>
       assertIsRelayerV2ResponseFailed(
         {
           status: 'failed',
-          error: { ...err, code: 'malformed_json' },
+          error: { ...err, label: 'malformed_json' },
         },
         'Foo',
       ),
     ).not.toThrow();
+
     expect(() =>
       assertIsRelayerV2ResponseFailed(
         {
           status: 'failed',
-          error: { ...err, code: 'request_error' },
+          error: { ...err, label: 'request_error' },
         },
         'Foo',
       ),
     ).not.toThrow();
+
     expect(() =>
       assertIsRelayerV2ResponseFailed(
         {
           status: 'failed',
-          error: { ...err, code: 'not_ready_for_decryption' },
+          error: { ...err, label: 'not_ready_for_decryption' },
         },
         'Foo',
       ),
     ).not.toThrow();
+
     expect(() =>
       assertIsRelayerV2ResponseFailed(
         {
           status: 'failed',
-          error: { ...err, code: 'missing_fields', details: [] },
+          error: { ...err, label: 'missing_fields', details: [] },
         },
         'Foo',
       ),
     ).not.toThrow();
+
     expect(() =>
       assertIsRelayerV2ResponseFailed(
         {
           status: 'failed',
-          error: { ...err, code: 'validation_failed', details: [] },
+          error: { ...err, label: 'validation_failed', details: [] },
         },
         'Foo',
       ),
     ).not.toThrow();
+
     expect(() =>
       assertIsRelayerV2ResponseFailed(
         {
           status: 'failed',
           error: {
             ...err,
-            code: 'rate_limited',
-            retry_after: 'Thu, 14 Nov 2024 15:30:00 GMT',
+            label: 'rate_limited',
+            retry_after_seconds: 'Thu, 14 Nov 2024 15:30:00 GMT',
           },
         },
         'Foo',
       ),
     ).not.toThrow();
+
     expect(() =>
       assertIsRelayerV2ResponseFailed(
         {
           status: 'failed',
-          error: { ...err, code: 'internal_server_error' },
+          error: { ...err, label: 'internal_server_error' },
         },
         'Foo',
       ),
@@ -92,10 +100,23 @@ describe('RelayerV2ResponseFailed', () => {
         },
         'Foo',
       ),
-    ).toThrow("Invalid value for Foo.status. Expected 'failed'. Got 'fail'.");
+    ).toThrow(
+      new InvalidPropertyError({
+        objName: 'Foo',
+        property: 'status',
+        expectedType: 'string',
+        type: 'string',
+        expectedValue: 'failed',
+        value: 'fail',
+      }),
+    );
 
     expect(() => assertIsRelayerV2ResponseFailed({}, 'Foo')).toThrow(
-      'Invalid Foo.status',
+      InvalidPropertyError.missingProperty({
+        objName: 'Foo',
+        property: 'status',
+        expectedType: 'string',
+      }),
     );
 
     expect(() =>
@@ -105,7 +126,13 @@ describe('RelayerV2ResponseFailed', () => {
         },
         'Foo',
       ),
-    ).toThrow('Invalid Foo.error');
+    ).toThrow(
+      InvalidPropertyError.missingProperty({
+        objName: 'Foo',
+        property: 'error',
+        expectedType: 'non-nullable',
+      }),
+    );
 
     expect(() =>
       assertIsRelayerV2ResponseFailed(
@@ -115,16 +142,39 @@ describe('RelayerV2ResponseFailed', () => {
         },
         'Foo',
       ),
-    ).toThrow('Invalid Foo.error.code');
+    ).toThrow(
+      InvalidPropertyError.missingProperty({
+        objName: 'Foo.error',
+        property: 'label',
+        expectedType: 'string',
+      }),
+    );
 
     expect(() =>
       assertIsRelayerV2ResponseFailed(
         {
           status: 'failed',
-          error: { code: 'hello' },
+          error: { label: 'hello' },
         },
         'Foo',
       ),
-    ).toThrow("Invalid Foo.error.error.code='hello'.");
+    ).toThrow(
+      new InvalidPropertyError({
+        objName: 'Foo.error',
+        property: 'label',
+        expectedType: 'string',
+        type: 'string',
+        expectedValue: [
+          'malformed_json',
+          'request_error',
+          'not_ready_for_decryption',
+          'missing_fields',
+          'validation_failed',
+          'rate_limited',
+          'internal_server_error',
+        ],
+        value: 'hello',
+      }),
+    );
   });
 });

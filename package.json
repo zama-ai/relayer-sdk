@@ -34,6 +34,7 @@
     "build:lib": "npm run rollup:lib && npm run build:dts",
     "build:bundle": "vite build --config config/vite.config.js",
     "test": "jest --colors --passWithNoTests --coverage",
+    "test:mock": "jest --colors --passWithNoTests --coverage --config jest.mock.config.cjs",
     "test:watch": "jest --colors --passWithNoTests --watch",
     "prettier": "prettier --write \"**/*.{js,json,md,sol,ts,yml}\"",
     "prettier:check": "prettier --check \"**/*.{js,json,md,sol,ts,yml}\"",

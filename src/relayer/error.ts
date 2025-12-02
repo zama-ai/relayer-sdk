@@ -1,5 +1,30 @@
 import { RelayerFetchResponseJson, RelayerOperation } from './fetchRelayer';
 
+export type RelayerProviderErrorCause =
+  | {
+      code:
+        | 'RELAYER_UNEXPECTED_JSON_ERROR'
+        | 'RELAYER_INTERNAL_ERROR'
+        | 'RELAYER_UNKNOWN_ERROR';
+      operation: RelayerOperation;
+      error: unknown;
+    }
+  | {
+      code: 'RELAYER_FETCH_ERROR';
+      operation: RelayerOperation;
+      status: Response['status'];
+      statusText: Response['statusText'];
+      url: Response['url'];
+      response: Response;
+      responseJson: any;
+    }
+  | {
+      code: 'RELAYER_NO_JSON_ERROR';
+      operation: RelayerOperation;
+      response: Response;
+      error: unknown;
+    };
+
 export function getErrorCause(e: unknown): object | undefined {
   if (e instanceof Error && typeof e.cause === 'object' && e.cause !== null) {
     return e.cause;
@@ -85,7 +110,7 @@ export async function throwRelayerResponseError(
     responseJson = '';
   }
 
-  const cause = {
+  const cause: RelayerProviderErrorCause = {
     code: 'RELAYER_FETCH_ERROR',
     operation,
     status: response.status,
@@ -121,7 +146,7 @@ export function throwRelayerJSONError(
     }
   }
 
-  const cause = {
+  const cause: RelayerProviderErrorCause = {
     code: 'RELAYER_NO_JSON_ERROR',
     operation,
     error,
@@ -155,7 +180,7 @@ export function throwRelayerUnexpectedJSONError(
     }
   }
 
-  const cause = {
+  const cause: RelayerProviderErrorCause = {
     code: 'RELAYER_UNEXPECTED_JSON_ERROR',
     operation,
     error,
@@ -188,7 +213,7 @@ export function throwRelayerInternalError(
     }
   }
 
-  const cause = {
+  const cause: RelayerProviderErrorCause = {
     code: 'RELAYER_INTERNAL_ERROR',
     operation,
     error: json,
@@ -221,7 +246,7 @@ export function throwRelayerUnknownError(
     }
   }
 
-  const cause = {
+  const cause: RelayerProviderErrorCause = {
     code: 'RELAYER_UNKNOWN_ERROR',
     operation,
     error,

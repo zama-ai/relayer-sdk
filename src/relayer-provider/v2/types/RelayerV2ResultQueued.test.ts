@@ -1,3 +1,4 @@
+import { InvalidPropertyError } from '../../../errors/InvalidPropertyError';
 import { assertIsRelayerV2ResultQueued } from './RelayerV2ResultQueued';
 
 // npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v2/types/RelayerV2ResultQueued.test.ts --collectCoverageFrom=./src/relayer-provider/v2/types/RelayerV2ResultQueued.ts
@@ -6,21 +7,45 @@ describe('RelayerV2ResultQueued', () => {
   it('assertIsRelayerV2ResultQueued', () => {
     expect(() =>
       assertIsRelayerV2ResultQueued(
-        { id: 'abc', retry_after: 'Thu, 14 Nov 2024 15:30:00 GMT' },
+        { job_id: 'abc', retry_after_seconds: 3 },
         'Foo',
       ),
     ).not.toThrow();
-    expect(() =>
-      assertIsRelayerV2ResultQueued({ id: 'abc', retry_after: 'Thu' }, 'Foo'),
-    ).toThrow('Invalid timestamp Foo.retry_after');
+
     expect(() =>
       assertIsRelayerV2ResultQueued(
-        { id: 123, retry_after: 'Thu, 14 Nov 2024 15:30:00 GMT' },
+        { job_id: 'abc', retry_after_seconds: 'Thu' },
         'Foo',
       ),
-    ).toThrow('Invalid string Foo.id');
+    ).toThrow(
+      new InvalidPropertyError({
+        objName: 'Foo',
+        property: 'retry_after_seconds',
+        expectedType: 'Uint',
+        type: 'string',
+      }),
+    );
+
+    expect(() =>
+      assertIsRelayerV2ResultQueued(
+        { job_id: 123, retry_after_seconds: 2 },
+        'Foo',
+      ),
+    ).toThrow(
+      new InvalidPropertyError({
+        objName: 'Foo',
+        property: 'job_id',
+        expectedType: 'string',
+        type: 'number',
+      }),
+    );
+
     expect(() => assertIsRelayerV2ResultQueued({}, 'Foo')).toThrow(
-      'Invalid Foo.id',
+      InvalidPropertyError.missingProperty({
+        objName: 'Foo',
+        property: 'job_id',
+        expectedType: 'string',
+      }),
     );
   });
 });

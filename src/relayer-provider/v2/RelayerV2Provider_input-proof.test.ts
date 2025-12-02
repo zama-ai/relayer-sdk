@@ -3,6 +3,8 @@ import type { RelayerInputProofPayload } from '../../relayer/fetchRelayer';
 import { AbstractRelayerProvider } from '../AbstractRelayerProvider';
 import { createRelayerProvider } from '../createRelayerFhevm';
 import fetchMock from '@fetch-mock/core';
+import { RelayerV2InvalidPostResponseError } from './errors/RelayerV2InvalidPostResponseError';
+import { InvalidPropertyError } from '../../errors/InvalidPropertyError';
 
 // npx jest --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_input-proof.test.ts --testNamePattern=BBB
 // npx jest --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_input-proof.test.ts
@@ -31,6 +33,12 @@ function post202(body: any) {
   });
 }
 
+const consoleLogSpy = jest
+  .spyOn(console, 'log')
+  .mockImplementation((message) => {
+    process.stdout.write(`${message}\n`);
+  });
+
 describe('RelayerV2Provider', () => {
   let relayerProvider: AbstractRelayerProvider;
 
@@ -43,6 +51,10 @@ describe('RelayerV2Provider', () => {
     expect(relayerProvider.keyUrl).toBe(
       `${SepoliaConfigeRelayerUrl}/v2/keyurl`,
     );
+  });
+
+  afterAll(() => {
+    consoleLogSpy.mockRestore();
   });
 
   it('v2: 202 - malformed json', async () => {
@@ -65,7 +77,19 @@ describe('RelayerV2Provider', () => {
     post202({});
     await expect(() =>
       relayerProvider.fetchPostInputProof(payload),
-    ).rejects.toThrow('Invalid body.status');
+    ).rejects.toThrow(
+      new RelayerV2InvalidPostResponseError({
+        status: 202,
+        url: `${relayerUrlV2}/input-proof`,
+        operation: 'INPUT_PROOF',
+        cause: InvalidPropertyError.missingProperty({
+          objName: 'body',
+          property: 'status',
+          expectedType: 'string',
+          expectedValue: 'queued',
+        }),
+      }),
+    );
   });
 
   it('v2: 202 - status:failed', async () => {
@@ -73,7 +97,19 @@ describe('RelayerV2Provider', () => {
     await expect(() =>
       relayerProvider.fetchPostInputProof(payload),
     ).rejects.toThrow(
-      "Invalid value for body.status. Expected 'queued'. Got 'failed'.",
+      new RelayerV2InvalidPostResponseError({
+        status: 202,
+        url: `${relayerUrlV2}/input-proof`,
+        operation: 'INPUT_PROOF',
+        cause: new InvalidPropertyError({
+          objName: 'body',
+          property: 'status',
+          expectedType: 'string',
+          expectedValue: 'queued',
+          type: 'string',
+          value: 'failed',
+        }),
+      }),
     );
   });
 
@@ -82,7 +118,19 @@ describe('RelayerV2Provider', () => {
     await expect(() =>
       relayerProvider.fetchPostInputProof(payload),
     ).rejects.toThrow(
-      "Invalid value for body.status. Expected 'queued'. Got 'succeeded'.",
+      new RelayerV2InvalidPostResponseError({
+        status: 202,
+        url: `${relayerUrlV2}/input-proof`,
+        operation: 'INPUT_PROOF',
+        cause: new InvalidPropertyError({
+          objName: 'body',
+          property: 'status',
+          expectedType: 'string',
+          expectedValue: 'queued',
+          type: 'string',
+          value: 'succeeded',
+        }),
+      }),
     );
   });
 
@@ -90,128 +138,71 @@ describe('RelayerV2Provider', () => {
     post202({ status: 'queued' });
     await expect(() =>
       relayerProvider.fetchPostInputProof(payload),
-    ).rejects.toThrow('Invalid body.result');
+    ).rejects.toThrow(
+      new RelayerV2InvalidPostResponseError({
+        status: 202,
+        url: `${relayerUrlV2}/input-proof`,
+        operation: 'INPUT_PROOF',
+        cause: InvalidPropertyError.missingProperty({
+          objName: 'body',
+          property: 'result',
+          expectedType: 'non-nullable',
+        }),
+      }),
+    );
   });
 
   it('v2: 202 - status:queued, result empty', async () => {
     post202({ status: 'queued', result: {} });
     await expect(() =>
       relayerProvider.fetchPostInputProof(payload),
-    ).rejects.toThrow('Invalid body.result.id');
+    ).rejects.toThrow(
+      new RelayerV2InvalidPostResponseError({
+        status: 202,
+        url: `${relayerUrlV2}/input-proof`,
+        operation: 'INPUT_PROOF',
+        cause: InvalidPropertyError.missingProperty({
+          objName: 'body.result',
+          property: 'job_id',
+          expectedType: 'string',
+        }),
+      }),
+    );
   });
 
   it('v2: 202 - status:queued, result no timestamp', async () => {
-    post202({ status: 'queued', result: { id: '123' } });
+    post202({ status: 'queued', result: { job_id: '123' } });
     await expect(() =>
       relayerProvider.fetchPostInputProof(payload),
-    ).rejects.toThrow('Invalid body.result.retry_after');
+    ).rejects.toThrow(
+      new RelayerV2InvalidPostResponseError({
+        status: 202,
+        url: `${relayerUrlV2}/input-proof`,
+        operation: 'INPUT_PROOF',
+        cause: InvalidPropertyError.missingProperty({
+          objName: 'body.result',
+          property: 'retry_after_seconds',
+          expectedType: 'Uint',
+        }),
+      }),
+    );
   });
 
-  it('BBB v2: 202 - status:queued, result ok', async () => {
+  it('v2: 202 - status:queued, result ok', async () => {
     post202({
       status: 'queued',
-      result: { id: '123', retry_after: new Date() },
+      result: { job_id: '123', retry_after_seconds: 3 },
     });
+
+    fetchMock.get(`${relayerUrlV2}/input-proof/123`, {
+      status: 200,
+      body: {
+        status: 'succeeded',
+        result: { accepted: false, extra_data: `0x00` },
+      },
+      headers: { 'Content-Type': 'application/json' },
+    });
+
     await relayerProvider.fetchPostInputProof(payload);
   });
-
-  // it('BBB v2: fetchPostInputProof', async () => {
-  //   fetchMock.post(`${relayerUrlV2}/input-proof`, { status: 202, body: '{' });
-  //   await relayerProvider.fetchPostInputProof(payload);
-  //   //expect(response).toEqual(relayerV2ResponseGetKeyUrl);
-  // });
-
-  //   it('BBB v2: fetchGetKeyUrl', async () => {
-  //   fetchMock.get(`${relayerUrlV2}/keyurl`, relayerV2ResponseGetKeyUrl);
-
-  //   const response = await fetch(relayerProvider.keyUrl);
-  //   const responseJson1 = await response.json();
-  //   const responseJson2 = await response.json();
-  //   console.log(JSON.stringify(responseJson1));
-  //   console.log(JSON.stringify(responseJson2));
-  //   //expect(response).toEqual(relayerV2ResponseGetKeyUrl);
-  // });
-  // //     response = await fetch(url);
-
-  // it("v2: fetchGetKeyUrl - response = { hello: '123' }", async () => {
-  //   fetchMock.get(`${relayerUrlV2}/keyurl`, { hello: '123' });
-
-  //   await expect(() => relayerProvider.fetchGetKeyUrl()).rejects.toThrow(
-  //     'Relayer returned an unexpected JSON response',
-  //   );
-  // });
-
-  // it('v2: fetchGetKeyUrl - response = 123 ', async () => {
-  //   fetchMock.get(`${relayerUrlV2}/keyurl`, 123);
-
-  //   await expect(() => relayerProvider.fetchGetKeyUrl()).rejects.toThrow(
-  //     "Relayer didn't response correctly. Bad JSON.",
-  //   );
-  // });
-
-  // it('v2: fetchGetKeyUrl - response = { response: undefined }', async () => {
-  //   fetchMock.get(`${relayerUrlV2}/keyurl`, { response: undefined });
-
-  //   await expect(() => relayerProvider.fetchGetKeyUrl()).rejects.toThrow(
-  //     'Relayer returned an unexpected JSON response',
-  //   );
-  // });
-
-  // it('v2: fetchGetKeyUrl - response = { response: null }', async () => {
-  //   fetchMock.get(`${relayerUrlV2}/keyurl`, { response: null });
-
-  //   await expect(() => relayerProvider.fetchGetKeyUrl()).rejects.toThrow(
-  //     'Relayer returned an unexpected JSON response',
-  //   );
-  // });
-
-  // it('v2: fetchGetKeyUrl - response = { response: {} }', async () => {
-  //   fetchMock.get(`${relayerUrlV2}/keyurl`, { response: {} });
-
-  //   await expect(() => relayerProvider.fetchGetKeyUrl()).rejects.toThrow(
-  //     `Unexpected response ${relayerUrlV2}/keyurl. Invalid fetchGetKeyUrl().response.crs`,
-  //   );
-  // });
-
-  // it('v2: fetchGetKeyUrl - response = { response: { crs: {} } }', async () => {
-  //   fetchMock.get(`${relayerUrlV2}/keyurl`, { response: { crs: {} } });
-
-  //   await expect(() => relayerProvider.fetchGetKeyUrl()).rejects.toThrow(
-  //     `Unexpected response ${relayerUrlV2}/keyurl. Invalid fetchGetKeyUrl().response.fhe_key_info`,
-  //   );
-  // });
-
-  // it('v2: fetchGetKeyUrl - response = { response: { crs: {}, fhe_key_info: {} } }', async () => {
-  //   fetchMock.get(`${relayerUrlV2}/keyurl`, {
-  //     response: { crs: {}, fhe_key_info: {} },
-  //   });
-
-  //   await expect(() => relayerProvider.fetchGetKeyUrl()).rejects.toThrow(
-  //     `Unexpected response ${relayerUrlV2}/keyurl. Invalid array fetchGetKeyUrl().response.fhe_key_info`,
-  //   );
-  // });
-
-  // it('v2: fetchGetKeyUrl - 404', async () => {
-  //   fetchMock.getOnce(`${relayerUrlV2}/keyurl`, { status: 404 });
-  //   await expect(() => relayerProvider.fetchGetKeyUrl()).rejects.toThrow(
-  //     'HTTP error! status: 404',
-  //   );
-  // });
-
-  // it('BBB v2: fetchGetKeyUrl - 404 - cause', async () => {
-  //   fetchMock.getOnce(`${relayerUrlV2}/keyurl`, { status: 404 });
-
-  //   try {
-  //     await relayerProvider.fetchGetKeyUrl();
-  //     fail('Expected fetchGetKeyUrl to throw an error, but it did not.');
-  //   } catch (e) {
-  //     expect(String(e)).toStrictEqual('Error: HTTP error! status: 404');
-  //     const cause = getErrorCause(e) as any;
-  //     expect(cause.code).toStrictEqual('RELAYER_FETCH_ERROR');
-  //     expect(cause.operation).toStrictEqual('KEY_URL');
-  //     expect(cause.status).toStrictEqual(404);
-  //     expect(cause.statusText).toStrictEqual('Not Found');
-  //     expect(cause.url).toStrictEqual(relayerProvider.keyUrl);
-  //   }
-  // });
 });

@@ -3,14 +3,15 @@ import { assertRecordStringProperty } from '../../../utils/string';
 import {
   RelayerV2ApiError,
   RelayerV2ApiError500,
-  RelayerV2ApiPostError400,
+  RelayerV2ApiError400,
   RelayerV2ApiPostError429,
   RelayerV2ResponseFailed,
 } from './types';
-import { assertIsRelayerV2ApiPostError400NoDetails } from './RelayerV2ApiPostError400NoDetails';
-import { assertIsRelayerV2ApiPostError400WithDetails } from './RelayerV2ApiPostError400WithDetails';
+import { assertIsRelayerV2ApiError400NoDetails } from './RelayerV2ApiError400NoDetails';
+import { assertIsRelayerV2ApiError400WithDetails } from './RelayerV2ApiError400WithDetails';
 import { assertIsRelayerV2ApiPostError429 } from './RelayerV2ApiPostError429';
 import { assertIsRelayerV2ApiError500 } from './RelayerV2ApiError500';
+import { InvalidPropertyError } from '../../../errors/InvalidPropertyError';
 
 export function assertIsRelayerV2ResponseFailed(
   value: unknown,
@@ -25,24 +26,39 @@ export function assertIsRelayerV2ApiError(
   value: unknown,
   name: string,
 ): asserts value is RelayerV2ApiError {
-  assertRecordStringProperty(value, 'code', name);
+  assertRecordStringProperty(value, 'label', name);
   if (
-    value.code === 'malformed_json' ||
-    value.code === 'request_error' ||
-    value.code === 'not_ready_for_decryption'
+    value.label === 'malformed_json' ||
+    value.label === 'request_error' ||
+    value.label === 'not_ready_for_decryption'
   ) {
-    assertIsRelayerV2ApiPostError400NoDetails(value, name);
+    assertIsRelayerV2ApiError400NoDetails(value, name);
   } else if (
-    value.code === 'missing_fields' ||
-    value.code === 'validation_failed'
+    value.label === 'missing_fields' ||
+    value.label === 'validation_failed'
   ) {
-    assertIsRelayerV2ApiPostError400WithDetails(value, name);
-  } else if (value.code === 'rate_limited') {
+    assertIsRelayerV2ApiError400WithDetails(value, name);
+  } else if (value.label === 'rate_limited') {
     assertIsRelayerV2ApiPostError429(value, name);
-  } else if (value.code === 'internal_server_error') {
+  } else if (value.label === 'internal_server_error') {
     assertIsRelayerV2ApiError500(value, name);
   } else {
-    throw new Error(`Invalid ${name}.error.code='${value.code}'.`);
+    throw new InvalidPropertyError({
+      objName: name,
+      property: 'label',
+      expectedType: 'string',
+      expectedValue: [
+        'malformed_json',
+        'request_error',
+        'not_ready_for_decryption',
+        'missing_fields',
+        'validation_failed',
+        'rate_limited',
+        'internal_server_error',
+      ],
+      type: typeof value.label,
+      value: value.label,
+    });
   }
 }
 
@@ -57,27 +73,40 @@ export function assertIsRelayerV2ResponseFailedWithPostError429(
   assertIsRelayerV2ApiPostError429(value.error, `${name}.error`);
 }
 
-export function assertIsRelayerV2ResponseFailedWithPostError400(
+export function assertIsRelayerV2ResponseFailedWithError400(
   value: unknown,
   name: string,
 ): asserts value is {
   status: 'failed';
-  error: RelayerV2ApiPostError400;
+  error: RelayerV2ApiError400;
 } {
   assertIsRelayerV2ResponseFailed(value, name);
   if (
-    value.error.code === 'malformed_json' ||
-    value.error.code === 'request_error' ||
-    value.error.code === 'not_ready_for_decryption'
+    value.error.label === 'malformed_json' ||
+    value.error.label === 'request_error' ||
+    value.error.label === 'not_ready_for_decryption'
   ) {
-    assertIsRelayerV2ApiPostError400NoDetails(value.error, `${name}.error`);
+    assertIsRelayerV2ApiError400NoDetails(value.error, `${name}.error`);
   } else if (
-    value.error.code === 'missing_fields' ||
-    value.error.code === 'validation_failed'
+    value.error.label === 'missing_fields' ||
+    value.error.label === 'validation_failed'
   ) {
-    assertIsRelayerV2ApiPostError400WithDetails(value.error, `${name}.error`);
+    assertIsRelayerV2ApiError400WithDetails(value.error, `${name}.error`);
   } else {
-    throw new Error(`Invalid ${name}.error.code='${value.error.code}'.`);
+    throw new InvalidPropertyError({
+      objName: `${name}.error`,
+      property: 'label',
+      expectedType: 'string',
+      expectedValue: [
+        'malformed_json',
+        'request_error',
+        'not_ready_for_decryption',
+        'missing_fields',
+        'validation_failed',
+      ],
+      type: typeof value.error.label,
+      value: value.error.label,
+    });
   }
 }
 

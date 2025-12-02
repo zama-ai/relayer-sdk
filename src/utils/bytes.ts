@@ -1,7 +1,9 @@
+import { InvalidPropertyError } from '../errors/InvalidPropertyError';
+import { InvalidTypeError } from '../errors/InvalidTypeError';
 import {
-  assertNonNullableRecordProperty,
   assertRecordArrayProperty,
   isNonNullableRecordProperty,
+  typeofProperty,
 } from './record';
 
 export type BytesHex = `0x${string}`;
@@ -54,7 +56,10 @@ export function isBytes32Hex(value: unknown): value is Bytes32Hex {
 
 export function assertIsBytesHex(value: unknown): asserts value is BytesHex {
   if (!isBytesHex(value)) {
-    throw new RangeError('Invalid BytesHex');
+    throw new InvalidTypeError({
+      type: typeof value,
+      expectedType: 'BytesHex',
+    });
   }
 }
 
@@ -62,7 +67,10 @@ export function assertIsBytesHexNo0x(
   value: unknown,
 ): asserts value is BytesHexNo0x {
   if (!isBytesHexNo0x(value)) {
-    throw new RangeError('Invalid BytesHex without 0x prefix');
+    throw new InvalidTypeError({
+      type: typeof value,
+      expectedType: 'BytesHexNo0x',
+    });
   }
 }
 
@@ -70,89 +78,145 @@ export function assertIsBytes32Hex(
   value: unknown,
 ): asserts value is Bytes32Hex {
   if (!isBytes32Hex(value)) {
-    throw new RangeError('Invalid Bytes32Hex');
+    throw new InvalidTypeError({
+      type: typeof value,
+      expectedType: 'Bytes32Hex',
+    });
   }
 }
 
-type ObjectWithProperty<K extends string, T> = Record<string, unknown> & {
+type RecordWithProperty<K extends string, T> = Record<string, unknown> & {
   [P in K]: T;
 };
 
-export function assertBytesHexProperty<K extends string>(
+export function isRecordBytesHexProperty<K extends string>(
+  o: unknown,
+  property: K,
+): o is RecordWithProperty<K, BytesHex> {
+  if (!isNonNullableRecordProperty(o, property)) {
+    return false;
+  }
+  return isBytesHex(o[property]);
+}
+
+export function assertRecordBytesHexProperty<K extends string>(
   o: unknown,
   property: K,
   objName: string,
-): asserts o is ObjectWithProperty<K, BytesHex> {
-  assertNonNullableRecordProperty(o, property, objName);
-  if (!isBytesHex(o[property])) {
-    throw new Error(`Invalid bytes hex ${objName}.${property}`);
+): asserts o is RecordWithProperty<K, BytesHex> {
+  if (!isRecordBytesHexProperty(o, property)) {
+    throw new InvalidPropertyError({
+      objName,
+      property,
+      expectedType: 'BytesHex',
+      type: typeofProperty(o, property),
+    });
   }
 }
 
-export function assertBytesHexNo0xProperty<K extends string>(
+export function isRecordBytesHexNo0xProperty<K extends string>(
+  o: unknown,
+  property: K,
+): o is RecordWithProperty<K, BytesHexNo0x> {
+  if (!isNonNullableRecordProperty(o, property)) {
+    return false;
+  }
+  return isBytesHexNo0x(o[property]);
+}
+
+export function assertRecordBytesHexNo0xProperty<K extends string>(
   o: unknown,
   property: K,
   objName: string,
-): asserts o is ObjectWithProperty<K, BytesHexNo0x> {
-  assertNonNullableRecordProperty(o, property, objName);
-  if (!isBytesHexNo0x(o[property])) {
-    throw new Error(
-      `Invalid bytes hex without 0x prefix ${objName}.${property}`,
-    );
+): asserts o is RecordWithProperty<K, BytesHexNo0x> {
+  if (!isRecordBytesHexNo0xProperty(o, property)) {
+    throw new InvalidPropertyError({
+      objName,
+      property,
+      expectedType: 'BytesHexNo0x',
+      type: typeofProperty(o, property),
+    });
   }
 }
 
-export function assertBytes32HexProperty<K extends string>(
+export function isRecordBytes32HexProperty<K extends string>(
+  o: unknown,
+  property: K,
+): o is RecordWithProperty<K, Bytes32Hex> {
+  if (!isNonNullableRecordProperty(o, property)) {
+    return false;
+  }
+  return isBytes32Hex(o[property]);
+}
+
+export function assertRecordBytes32HexProperty<K extends string>(
   o: unknown,
   property: K,
   objName: string,
-): asserts o is ObjectWithProperty<K, Bytes32Hex> {
-  assertNonNullableRecordProperty(o, property, objName);
-  if (!isBytes32Hex(o[property])) {
-    throw new Error(`Invalid bytes32 hex ${objName}.${property}`);
+): asserts o is RecordWithProperty<K, Bytes32Hex> {
+  if (!isRecordBytes32HexProperty(o, property)) {
+    throw new InvalidPropertyError({
+      objName,
+      property,
+      expectedType: 'Bytes32Hex',
+      type: typeofProperty(o, property),
+    });
   }
 }
 
-export function assertBytes32HexArrayProperty<K extends string>(
+export function assertRecordBytes32HexArrayProperty<K extends string>(
   o: unknown,
   property: K,
   objName: string,
-): asserts o is ObjectWithProperty<K, Array<Bytes32Hex>> {
+): asserts o is RecordWithProperty<K, Array<Bytes32Hex>> {
   assertRecordArrayProperty(o, property, objName);
   const arr = o[property];
   for (let i = 0; i < arr.length; ++i) {
     if (!isBytes32Hex(arr[i])) {
-      throw new Error(`Invalid bytes32 hex ${objName}.${property}[${i}]`);
+      throw new InvalidPropertyError({
+        objName,
+        property: `${property}[${i}]`,
+        expectedType: 'Bytes32Hex',
+        type: typeof arr[i],
+      });
     }
   }
 }
 
-export function assertBytesHexArrayProperty<K extends string>(
+export function assertRecordBytesHexArrayProperty<K extends string>(
   o: unknown,
   property: K,
   objName: string,
-): asserts o is ObjectWithProperty<K, Array<BytesHex>> {
+): asserts o is RecordWithProperty<K, Array<BytesHex>> {
   assertRecordArrayProperty(o, property, objName);
   const arr = o[property];
   for (let i = 0; i < arr.length; ++i) {
     if (!isBytesHex(arr[i])) {
-      throw new Error(`Invalid bytes hex ${objName}.${property}[${i}]`);
+      throw new InvalidPropertyError({
+        objName,
+        property: `${property}[${i}]`,
+        expectedType: 'BytesHex',
+        type: typeof arr[i],
+      });
     }
   }
 }
 
-export function assertBytesHexNo0xArrayProperty<K extends string>(
+export function assertRecordBytesHexNo0xArrayProperty<K extends string>(
   o: unknown,
   property: K,
   objName: string,
-): asserts o is ObjectWithProperty<K, Array<BytesHexNo0x>> {
+): asserts o is RecordWithProperty<K, Array<BytesHexNo0x>> {
   assertRecordArrayProperty(o, property, objName);
   const arr = o[property];
   for (let i = 0; i < arr.length; ++i) {
     if (!isBytesHexNo0x(arr[i])) {
-      throw new Error(
-        `Invalid bytes hex without 0x prefix ${objName}.${property}[${i}]`,
-      );
+      throw new InvalidPropertyError({
+        objName,
+        property: `${property}[${i}]`,
+        expectedType: 'BytesHexNo0x',
+        type: typeof arr[i],
+      });
     }
   }
 }
@@ -175,9 +239,14 @@ export function assertUint8ArrayProperty<K extends string>(
   o: unknown,
   property: K,
   objName: string,
-): asserts o is ObjectWithProperty<K, Uint8Array> {
+): asserts o is RecordWithProperty<K, Uint8Array> {
   if (!isRecordUint8ArrayProperty(o, property)) {
-    throw new Error(`Invalid Uint8Array ${objName}.${property}`);
+    throw new InvalidPropertyError({
+      objName,
+      property,
+      expectedType: 'Uint8Array',
+      type: typeofProperty(o, property),
+    });
   }
 }
 

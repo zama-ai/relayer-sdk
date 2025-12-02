@@ -1,13 +1,13 @@
 module.exports = {
   preset: 'ts-jest',
   transform: {
-    '^.+\\.tsx?$': [
+    '^.+\\.ts$': [
       'ts-jest',
       {
         tsconfig: 'tsconfig.json',
       },
     ],
-    '^.+\\.jsx?$': [
+    '^.+\\.js$': [
       'ts-jest',
       {
         tsconfig: 'tsconfig.json',
@@ -16,10 +16,9 @@ module.exports = {
     '^.+\\.bin$': ['<rootDir>config/rawLoader.cjs'],
   },
   testEnvironment: 'node',
-  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+  moduleFileExtensions: ['ts', 'js', 'json', 'node'],
   collectCoverageFrom: [
     'src/**/*.ts',
-    'src/**/*.tsx',
     '!src/**/*.d.ts',
     '!src/kms/*',
     '!src/init.ts',
@@ -27,7 +26,7 @@ module.exports = {
     '!src/web.ts',
   ],
   setupFiles: ['./setupJest.cjs'],
-  testRegex: '\\.test\\.tsx?$',
+  testRegex: '\\.test\\.ts$',
   coverageReporters: ['lcov', 'text-summary', 'json'],
   transformIgnorePatterns: ['/node_modules/'],
   coverageThreshold: {

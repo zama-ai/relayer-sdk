@@ -6,6 +6,7 @@ import {
 } from './types';
 import { assertIsRelayerV2ResponseFailed } from './RelayerV2ResponseFailed';
 import { assertIsRelayerV2ResultQueued } from './RelayerV2ResultQueued';
+import { InvalidPropertyError } from '../../../errors/InvalidPropertyError';
 
 export function assertIsRelayerV2ResponseQueuedOrFailed(
   value: unknown,
@@ -17,9 +18,10 @@ export function assertIsRelayerV2ResponseQueuedOrFailed(
   } else if (value.status === 'queued') {
     assertIsRelayerV2ResponseQueued(value, name);
   } else {
-    throw new Error(
-      `Invalid value for ${name}.status. Expected 'failed' | 'queued'. Got '${value.status}'.`,
-    );
+    throw InvalidPropertyError.invalidFormat({
+      objName: name,
+      property: 'result',
+    });
   }
 }
 

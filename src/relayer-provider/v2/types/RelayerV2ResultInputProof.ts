@@ -1,8 +1,8 @@
 import { assertRecordBooleanProperty } from '../../../utils/record';
 import {
-  assertBytes32HexArrayProperty,
-  assertBytesHexArrayProperty,
-  assertBytesHexProperty,
+  assertRecordBytes32HexArrayProperty,
+  assertRecordBytesHexArrayProperty,
+  assertRecordBytesHexProperty,
 } from '../../../utils/bytes';
 import type {
   RelayerV2ResultInputProof,
@@ -33,13 +33,10 @@ export function assertIsRelayerV2ResultInputProofAccepted(
   value: unknown,
   name: string,
 ): asserts value is RelayerV2ResultInputProofAcceped {
-  assertBytesHexProperty(value, 'extra_data', name);
-  assertRecordBooleanProperty(value, 'accepted', name);
-  if (value.accepted !== true) {
-    throw new Error(`Invalid ${name}.accepted`);
-  }
-  assertBytes32HexArrayProperty(value, 'handles', name);
-  assertBytesHexArrayProperty(value, 'signatures', name);
+  assertRecordBytesHexProperty(value, 'extra_data', name);
+  assertRecordBooleanProperty(value, 'accepted', name, true);
+  assertRecordBytes32HexArrayProperty(value, 'handles', name);
+  assertRecordBytesHexArrayProperty(value, 'signatures', name);
 }
 
 /*
@@ -52,9 +49,6 @@ export function assertIsRelayerV2ResultInputProofRejected(
   value: unknown,
   name: string,
 ): asserts value is RelayerV2ResultInputProofRejected {
-  assertBytesHexProperty(value, 'extra_data', name);
-  assertRecordBooleanProperty(value, 'accepted', name);
-  if (value.accepted !== false) {
-    throw new Error(`Invalid ${name}.accepted`);
-  }
+  assertRecordBytesHexProperty(value, 'extra_data', name);
+  assertRecordBooleanProperty(value, 'accepted', name, false);
 }
