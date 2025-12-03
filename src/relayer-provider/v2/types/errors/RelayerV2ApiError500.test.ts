@@ -1,7 +1,7 @@
-import { InvalidPropertyError } from '../../../errors/InvalidPropertyError';
+import { InvalidPropertyError } from '../../../../errors/InvalidPropertyError';
 import { assertIsRelayerV2ApiError500 } from './RelayerV2ApiError500';
 
-// npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v2/types/RelayerV2ApiError500.test.ts --collectCoverageFrom=./src/relayer-provider/v2/types/RelayerV2ApiError500.ts
+// npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v2/types/errors/RelayerV2ApiError500.test.ts --collectCoverageFrom=./src/relayer-provider/v2/types/errors/RelayerV2ApiError500.ts
 
 describe('RelayerV2ApiError500', () => {
   it('assertIsRelayerV2ApiError500', () => {
@@ -18,11 +18,11 @@ describe('RelayerV2ApiError500', () => {
 
     // Failure
     expect(() => assertIsRelayerV2ApiError500({}, 'Foo')).toThrow(
-      new InvalidPropertyError({
+      InvalidPropertyError.missingProperty({
         objName: 'Foo',
         property: 'label',
         expectedType: 'string',
-        type: 'undefined',
+        expectedValue: 'internal_server_error',
       }),
     );
 

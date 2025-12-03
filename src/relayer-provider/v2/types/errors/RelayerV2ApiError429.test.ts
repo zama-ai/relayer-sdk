@@ -1,12 +1,12 @@
-import { assertIsRelayerV2ApiPostError429 } from './RelayerV2ApiPostError429';
+import { assertIsRelayerV2ApiError429 } from './RelayerV2ApiError429';
 
-// npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v2/types/RelayerV2ApiPostError429.test.ts --collectCoverageFrom=./src/relayer-provider/v2/types/RelayerV2ApiPostError429.ts
+// npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v2/types/errors/RelayerV2ApiError429.test.ts --collectCoverageFrom=./src/relayer-provider/v2/types/errors/RelayerV2ApiError429.ts
 
-describe('RelayerV2ApiPostError429', () => {
-  it('assertIsRelayerV2ApiPostError429', () => {
+describe('RelayerV2ApiError429', () => {
+  it('assertIsRelayerV2ApiError429', () => {
     // True
     expect(() =>
-      assertIsRelayerV2ApiPostError429(
+      assertIsRelayerV2ApiError429(
         {
           label: 'rate_limited',
           message: 'hello',
@@ -16,7 +16,7 @@ describe('RelayerV2ApiPostError429', () => {
     ).not.toThrow();
 
     expect(() =>
-      assertIsRelayerV2ApiPostError429(
+      assertIsRelayerV2ApiError429(
         {
           label: 'rate_limited',
           message: 'hello',
@@ -26,10 +26,10 @@ describe('RelayerV2ApiPostError429', () => {
     ).not.toThrow();
 
     // False
-    expect(() => assertIsRelayerV2ApiPostError429({}, 'Foo')).toThrow();
+    expect(() => assertIsRelayerV2ApiError429({}, 'Foo')).toThrow();
 
     expect(() =>
-      assertIsRelayerV2ApiPostError429(
+      assertIsRelayerV2ApiError429(
         {
           label: 'foo',
         },
@@ -38,7 +38,7 @@ describe('RelayerV2ApiPostError429', () => {
     ).toThrow();
 
     expect(() =>
-      assertIsRelayerV2ApiPostError429(
+      assertIsRelayerV2ApiError429(
         {
           label: 'rate_limited',
         },
@@ -47,7 +47,7 @@ describe('RelayerV2ApiPostError429', () => {
     ).toThrow();
 
     expect(() =>
-      assertIsRelayerV2ApiPostError429(
+      assertIsRelayerV2ApiError429(
         {
           label: 'rate_limited',
           message: 123,

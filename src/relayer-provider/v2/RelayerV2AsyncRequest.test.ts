@@ -4,7 +4,7 @@ import { SepoliaConfig } from '../..';
 import { RelayerInputProofPayload } from '../../relayer/fetchRelayer';
 import { RelayerV2ApiError500, RelayerV2ResponseFailed } from './types/types';
 
-// npx jest --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Request.test.ts --testNamePattern=BBB
+// npx jest --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2AsyncRequest.test.ts --testNamePattern=BBB
 
 const SepoliaConfigeRelayerUrl = SepoliaConfig.relayerUrl!;
 const requestUrl = `${SepoliaConfigeRelayerUrl}/v2/input-proof`;
@@ -121,38 +121,5 @@ describe('RelayerV2Request', () => {
     expect((runCatchReason as any).name).toBe('AbortError');
 
     console.log('[🚚 Jest] test ended.');
-
-    // p.then((value) => {
-    //   console.log('-> relayerRequest.run() then value:' + value);
-    // }).catch((reason) => {
-    //   console.log('-> relayerRequest.run() catch reason:' + reason);
-    // });
-
-    // const t0 = Date.now();
-
-    // setTimeout(() => {
-    //   console.log(`-> Aborting... ${Date.now() - t0}`);
-    //   controller.abort();
-    //   console.log(`-> Aborted!    ${Date.now() - t0}`);
-    // }, 1000);
-
-    // console.log('Start...');
-
-    // try {
-    //   await p;
-    // } catch (e) {
-    //   console.log('-> catched error: ' + e);
-    // }
-
-    //console.log('Final Sleep...');
-
-    // Wait for end of setTimeout
-    //await sleep(1000);
-
-    //console.log('Final Sleep Done...');
-
-    // await expect(() => p).rejects.toThrow(
-    //   '{"status":500,"relayerError":{"code":"internal_server_error","message":"foo","request_id":"bar"}}',
-    // );
   });
 });

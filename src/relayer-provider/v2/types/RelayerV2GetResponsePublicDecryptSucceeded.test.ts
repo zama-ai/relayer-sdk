@@ -1,60 +1,13 @@
+import { assertIsRelayerV2GetResponsePublicDecryptSucceeded } from './RelayerV2GetResponsePublicDecryptSucceeded';
 import { InvalidPropertyError } from '../../../errors/InvalidPropertyError';
-import { assertIsRelayerV2GetResponseSucceeded } from './RelayerV2GetResponseSucceeded';
 
-// npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v2/types/RelayerV2GetResponseSucceeded.test.ts --collectCoverageFrom=./src/relayer-provider/v2/types/RelayerV2GetResponseSucceeded.ts
+// npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v2/types/RelayerV2GetResponsePublicDecryptSucceeded.test.ts --collectCoverageFrom=./src/relayer-provider/v2/types/RelayerV2GetResponsePublicDecryptSucceeded.ts
 
-describe('RelayerV2GetResponseSucceeded', () => {
-  it('assertIsRelayerV2ResultPublicDecrypt', () => {
-    expect(() => assertIsRelayerV2GetResponseSucceeded({}, 'Foo')).toThrow(
-      new InvalidPropertyError({
-        objName: 'Foo',
-        property: 'result',
-        expectedType: 'non-nullable',
-        type: 'undefined',
-      }),
-    );
-    expect(() =>
-      assertIsRelayerV2GetResponseSucceeded({ result: null }, 'Foo'),
-    ).toThrow(
-      new InvalidPropertyError({
-        objName: 'Foo',
-        property: 'result',
-        expectedType: 'non-nullable',
-        type: 'undefined',
-      }),
-    );
-    expect(() =>
-      assertIsRelayerV2GetResponseSucceeded({ result: {} }, 'Foo'),
-    ).toThrow(
-      new InvalidPropertyError({
-        objName: 'Foo',
-        property: 'status',
-        expectedType: 'string',
-        expectedValue: 'succeeded',
-        type: 'undefined',
-      }),
-    );
-    expect(() =>
-      assertIsRelayerV2GetResponseSucceeded(
-        { result: {}, status: 'hello' },
-        'Foo',
-      ),
-    ).toThrow(
-      new InvalidPropertyError({
-        objName: 'Foo',
-        property: 'status',
-        expectedType: 'string',
-        expectedValue: 'succeeded',
-        value: 'hello',
-        type: 'string',
-      }),
-    );
-  });
-
-  it('assertIsRelayerV2ResultPublicDecrypt succeeded', () => {
+describe('RelayerV2GetResponsePublicDecryptSucceeded', () => {
+  it('assertIsRelayerV2GetResponsePublicDecryptSucceeded', () => {
     // True
     expect(() =>
-      assertIsRelayerV2GetResponseSucceeded(
+      assertIsRelayerV2GetResponsePublicDecryptSucceeded(
         {
           result: {
             decrypted_value: 'dead',
@@ -69,20 +22,71 @@ describe('RelayerV2GetResponseSucceeded', () => {
 
     // False
     expect(() =>
-      assertIsRelayerV2GetResponseSucceeded(
-        { result: {}, status: 'succeeded' },
+      assertIsRelayerV2GetResponsePublicDecryptSucceeded({}, 'Foo'),
+    ).toThrow(
+      new InvalidPropertyError({
+        objName: 'Foo',
+        property: 'result',
+        expectedType: 'non-nullable',
+        type: 'undefined',
+      }),
+    );
+    expect(() =>
+      assertIsRelayerV2GetResponsePublicDecryptSucceeded(
+        { result: null },
         'Foo',
       ),
     ).toThrow(
       new InvalidPropertyError({
         objName: 'Foo',
         property: 'result',
-        expectedType: 'unknown',
+        expectedType: 'non-nullable',
+        type: 'undefined',
+      }),
+    );
+    expect(() =>
+      assertIsRelayerV2GetResponsePublicDecryptSucceeded({ result: {} }, 'Foo'),
+    ).toThrow(
+      new InvalidPropertyError({
+        objName: 'Foo',
+        property: 'status',
+        expectedType: 'string',
+        expectedValue: 'succeeded',
+        type: 'undefined',
+      }),
+    );
+    expect(() =>
+      assertIsRelayerV2GetResponsePublicDecryptSucceeded(
+        { result: {}, status: 'hello' },
+        'Foo',
+      ),
+    ).toThrow(
+      new InvalidPropertyError({
+        objName: 'Foo',
+        property: 'status',
+        expectedType: 'string',
+        expectedValue: 'succeeded',
+        value: 'hello',
+        type: 'string',
+      }),
+    );
+
+    // False
+    expect(() =>
+      assertIsRelayerV2GetResponsePublicDecryptSucceeded(
+        { result: {}, status: 'succeeded' },
+        'Foo',
+      ),
+    ).toThrow(
+      InvalidPropertyError.missingProperty({
+        objName: 'Foo.result',
+        property: 'extra_data',
+        expectedType: 'BytesHex',
       }),
     );
 
     expect(() =>
-      assertIsRelayerV2GetResponseSucceeded(
+      assertIsRelayerV2GetResponsePublicDecryptSucceeded(
         {
           result: { decrypted_value: 'hello', extra_data: 'hello' },
           status: 'succeeded',
@@ -99,7 +103,7 @@ describe('RelayerV2GetResponseSucceeded', () => {
     );
 
     expect(() =>
-      assertIsRelayerV2GetResponseSucceeded(
+      assertIsRelayerV2GetResponsePublicDecryptSucceeded(
         {
           result: { decrypted_value: 'hello', extra_data: '0xdead' },
           status: 'succeeded',
@@ -116,7 +120,7 @@ describe('RelayerV2GetResponseSucceeded', () => {
     );
 
     expect(() =>
-      assertIsRelayerV2GetResponseSucceeded(
+      assertIsRelayerV2GetResponsePublicDecryptSucceeded(
         {
           result: {
             decrypted_value: 'hello',
@@ -137,7 +141,7 @@ describe('RelayerV2GetResponseSucceeded', () => {
     );
 
     expect(() =>
-      assertIsRelayerV2GetResponseSucceeded(
+      assertIsRelayerV2GetResponsePublicDecryptSucceeded(
         {
           result: {
             decrypted_value: 'hello',
@@ -159,7 +163,7 @@ describe('RelayerV2GetResponseSucceeded', () => {
     );
 
     expect(() =>
-      assertIsRelayerV2GetResponseSucceeded(
+      assertIsRelayerV2GetResponsePublicDecryptSucceeded(
         {
           result: {
             decrypted_value: 'hello',
@@ -181,7 +185,7 @@ describe('RelayerV2GetResponseSucceeded', () => {
     );
 
     expect(() =>
-      assertIsRelayerV2GetResponseSucceeded(
+      assertIsRelayerV2GetResponsePublicDecryptSucceeded(
         {
           result: {
             decrypted_value: 'hello',
@@ -202,7 +206,7 @@ describe('RelayerV2GetResponseSucceeded', () => {
     );
 
     expect(() =>
-      assertIsRelayerV2GetResponseSucceeded(
+      assertIsRelayerV2GetResponsePublicDecryptSucceeded(
         {
           result: {
             decrypted_value: '0xdead',

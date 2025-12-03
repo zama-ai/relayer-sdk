@@ -1,5 +1,5 @@
-import { assertRecordStringProperty } from '../../../utils/string';
-import { RelayerV2ApiError503 } from './types';
+import { assertRecordStringProperty } from '../../../../utils/string';
+import { RelayerV2ApiError503 } from '../types';
 
 /*
     export type RelayerV2ApiError503 = {

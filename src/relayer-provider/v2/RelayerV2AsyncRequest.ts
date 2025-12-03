@@ -1,25 +1,30 @@
 import { isUint } from '../../utils/uint';
 import { setAuth, type Auth } from '../../auth';
-import { assertIsRelayerV2GetResponseSucceeded } from './types/RelayerV2GetResponseSucceeded';
 import {
   assertIsRelayerV2ResponseFailedWithError500,
   assertIsRelayerV2ResponseFailedWithError400,
-  assertIsRelayerV2ResponseFailedWithPostError429,
+  assertIsRelayerV2ResponseFailedWithError429,
+  assertIsRelayerV2ResponseFailedWithError503,
+  assertIsRelayerV2ResponseFailedWithError504,
 } from './types/RelayerV2ResponseFailed';
-import { assertIsRelayerV2ResponseQueued } from './types/RelayerV2ResponseQueuedOrFailed';
 import type {
   RelayerV2ApiError,
   RelayerV2ResultInputProof,
   RelayerV2ResultPublicDecrypt,
   RelayerV2ResultUserDecrypt,
+  RelayerV2PostResponseStatus,
+  RelayerV2GetResponseStatus,
 } from './types/types';
 import { RelayerV2InvalidPostResponseError } from './errors/RelayerV2InvalidPostResponseError';
-import { RelayerOperation } from 'src/relayer/fetchRelayer';
 import { RelayerV2UnexpectedPostStatusError } from './errors/RelayerV2UnexpectedPostStatusError';
-import { RelayerV2InternalError } from './errors/RelayerV2InternalError';
 import { RelayerV2InvalidGetResponseError } from './errors/RelayerV2InvalidGetResponseError';
 import { RelayerV2UnexpectedGetStatusError } from './errors/RelayerV2UnexpectedGetStatusError';
 import { RelayerV2FetchError } from './errors/RelayerV2FetchError';
+import { assertIsRelayerV2GetResponseInputProofSucceeded } from './types/RelayerV2GetResponseInputProofSucceeded';
+import { assertIsRelayerV2GetResponsePublicDecryptSucceeded } from './types/RelayerV2GetResponsePublicDecryptSucceeded';
+import { assertIsRelayerV2GetResponseUserDecryptSucceeded } from './types/RelayerV2GetResponseUserDecryptSucceeded';
+import { RelayerV2InternalRequestError } from './errors/RelayerV2InternalRequestError';
+import { assertIsRelayerV2ResponseQueued } from './types/RelayerV2ResponseQueued';
 
 /*
     Actions:
@@ -69,7 +74,7 @@ export class RelayerV2AsyncRequest {
     terminated: boolean;
     fetching: boolean;
   };
-  private _relayerOperation: RelayerOperation;
+  private _relayerOperation: 'INPUT_PROOF' | 'PUBLIC_DECRYPT' | 'USER_DECRYPT';
   private _publicAPINoReentrancy: boolean;
   private _abortController: AbortController;
   private _terminateReason: string | undefined;
@@ -92,7 +97,7 @@ export class RelayerV2AsyncRequest {
   private static readonly MAX_POST_RETRY = 100;
 
   constructor(params: {
-    relayerOperation: RelayerOperation;
+    relayerOperation: 'INPUT_PROOF' | 'PUBLIC_DECRYPT' | 'USER_DECRYPT';
     url: string;
     payload: Record<string, unknown>;
     timeoutInSeconds?: number;
@@ -100,6 +105,14 @@ export class RelayerV2AsyncRequest {
     onProgress?: () => void;
     options?: { auth?: Auth };
   }) {
+    if (
+      params.relayerOperation !== 'INPUT_PROOF' &&
+      params.relayerOperation !== 'PUBLIC_DECRYPT' &&
+      params.relayerOperation !== 'USER_DECRYPT'
+    ) {
+      throw new Error(`Invalid relayerOperation ${params.relayerOperation}`);
+    }
+
     this._relayerOperation = params.relayerOperation;
     this._abortController = new AbortController();
     this._abortSignal = this._abortController.signal;
@@ -243,6 +256,7 @@ export class RelayerV2AsyncRequest {
   // Post Loop
   //////////////////////////////////////////////////////////////////////////////
 
+  // POST : 202 | 400 | 429 | 500 | 503
   private async _runPostLoop(): Promise<
     | RelayerV2ResultPublicDecrypt
     | RelayerV2ResultUserDecrypt
@@ -253,17 +267,20 @@ export class RelayerV2AsyncRequest {
     while (i < RelayerV2AsyncRequest.MAX_POST_RETRY) {
       ++i;
 
-      this._assertCanContinueAfterAwait(`_runPostLoop()`);
+      this._assertCanContinueAfterAwait('POST');
 
-      // At this stage: `terminated` is always `false`.
+      // At this stage: `terminated` is guaranteed to be `false`.
       // However, the `fetch` call can potentially throw an `AbortError`. In this case
       // in the error catch the `terminated` flag will be `true`! But, that's ok because the
       // next part of the function will never be executed (thrown error).
       const response = await this._fetchPost();
 
-      // Here the `terminated` flag is guaranteed to false.
+      // At this stage: `terminated` is guaranteed to be `false`.
 
-      switch (response.status) {
+      const responseStatus: RelayerV2PostResponseStatus =
+        response.status as RelayerV2PostResponseStatus;
+
+      switch (responseStatus) {
         // RelayerV2ResponseQueued
         case 202: {
           // response.json() errors:
@@ -272,10 +289,7 @@ export class RelayerV2AsyncRequest {
           // 2. if body is invalid JSON
           //    - SyntaxError: Unexpected end of JSON input
           //    - SyntaxError: Expected property name or '}' in JSON at position 1 (line 1 column 2) at JSON.parse (<anonymous>)
-          const bodyJson = await this._getResponseJson(
-            response,
-            '_runPostLoop()',
-          );
+          const bodyJson = await this._getResponseJson(response, 'POST');
 
           try {
             assertIsRelayerV2ResponseQueued(bodyJson, 'body');
@@ -291,8 +305,8 @@ export class RelayerV2AsyncRequest {
           const retry_after_ms =
             this._getRetryAfterHeaderValueInSecs(response) * 1000;
 
-          this._assert(this._jobId === undefined, 'this._jobId === undefined');
-          this._jobId = bodyJson.result.job_id;
+          // Debug: will throw an assert failed error if jobId has already been set
+          this._setJobIdOnce(bodyJson.result.job_id);
 
           // Async onProgress callback
           this._postAsyncOnProgressCallback();
@@ -300,17 +314,14 @@ export class RelayerV2AsyncRequest {
           // Wait if needed (minimum 1s)
           await this._setRetryAfterTimeout(retry_after_ms);
 
-          const json = await this._runGetLoop(bodyJson.result.job_id);
+          const json = await this._runGetLoop();
           return json;
         }
         // RelayerV2ResponseFailed
         // RelayerV2ApiError400
         // RelayerV2ApiError400WithDetails
         case 400: {
-          const bodyJson = await this._getResponseJson(
-            response,
-            '_runPostLoop()',
-          );
+          const bodyJson = await this._getResponseJson(response, 'POST');
 
           try {
             assertIsRelayerV2ResponseFailedWithError400(bodyJson, 'body');
@@ -329,15 +340,14 @@ export class RelayerV2AsyncRequest {
           });
         }
         // RelayerV2ResponseFailed
-        // RelayerV2ApiPostError429
+        // RelayerV2ApiError429
         case 429: {
-          const bodyJson = await this._getResponseJson(
-            response,
-            '_runPostLoop()',
-          );
+          // Retry
+          // Rate Limit error (Cloudflare/Kong/Relayer), reason in message
+          const bodyJson = await this._getResponseJson(response, 'POST');
 
           try {
-            assertIsRelayerV2ResponseFailedWithPostError429(bodyJson, 'body');
+            assertIsRelayerV2ResponseFailedWithError429(bodyJson, 'body');
           } catch (e) {
             throw new RelayerV2InvalidPostResponseError({
               status: response.status,
@@ -361,10 +371,9 @@ export class RelayerV2AsyncRequest {
         // RelayerV2ResponseFailed
         // RelayerV2ApiError500
         case 500: {
-          const bodyJson = await this._getResponseJson(
-            response,
-            '_runPostLoop()',
-          );
+          // Abort
+          // Relayer internal error
+          const bodyJson = await this._getResponseJson(response, 'POST');
 
           try {
             assertIsRelayerV2ResponseFailedWithError500(bodyJson, 'body');
@@ -382,17 +391,44 @@ export class RelayerV2AsyncRequest {
             relayerError: bodyJson.error,
           });
         }
-        default: {
-          throw new RelayerV2UnexpectedPostStatusError({
+        // RelayerV2ResponseFailed
+        // RelayerV2ApiError503
+        case 503: {
+          // Abort
+          // Possible Reasons: Gateway has some internal error (dont known)
+          const bodyJson = await this._getResponseJson(response, 'POST');
+
+          try {
+            assertIsRelayerV2ResponseFailedWithError503(bodyJson, 'body');
+          } catch (e) {
+            throw new RelayerV2InvalidPostResponseError({
+              status: response.status,
+              url: this._url,
+              operation: this._relayerOperation,
+              cause: e,
+            });
+          }
+
+          this._throwError({
             status: response.status,
-            url: this._url,
-            operation: this._relayerOperation,
+            relayerError: bodyJson.error,
           });
+        }
+        default: {
+          // Use TS compiler + `never` to guarantee the switch integrity
+          const throwUnsupportedStatus = (unsupportedStatus: never) => {
+            throw new RelayerV2UnexpectedPostStatusError({
+              status: unsupportedStatus,
+              url: this._url,
+              operation: this._relayerOperation,
+            });
+          };
+          throwUnsupportedStatus(responseStatus);
         }
       }
     }
     // Infinite loop error
-    throw new RelayerV2InternalError({
+    throw new RelayerV2InternalRequestError({
       fetchMethod: 'POST',
       url: this._url,
       operation: this._relayerOperation,
@@ -404,39 +440,50 @@ export class RelayerV2AsyncRequest {
   // Get Loop
   //////////////////////////////////////////////////////////////////////////////
 
-  // status: 200 | 202 | 400 | 404 | 429 | 500 | 503 | 504
-  private async _runGetLoop(
-    jobId: string,
-  ): Promise<
+  // GET: 200 | 202 | 404 | 500 | 503 | 504
+  // GET is not rate-limited, therefore there is not 429 error
+  private async _runGetLoop(): Promise<
     | RelayerV2ResultPublicDecrypt
     | RelayerV2ResultUserDecrypt
     | RelayerV2ResultInputProof
   > {
-    this._assert(this._jobId !== undefined, 'this._jobId !== undefined');
-
     let i = 0;
     while (i < RelayerV2AsyncRequest.MAX_GET_RETRY) {
       ++i;
 
-      this._assertCanContinueAfterAwait(`_runGetLoop(${jobId})`);
+      this._assertCanContinueAfterAwait('GET');
 
-      const response = await this._fetchGet(jobId);
+      const response = await this._fetchGet();
 
-      switch (response.status) {
+      // At this stage: `terminated` is guaranteed to be `false`.
+
+      const responseStatus: RelayerV2GetResponseStatus =
+        response.status as RelayerV2GetResponseStatus;
+
+      switch (responseStatus) {
         // RelayerV2GetResponseSucceeded
         case 200: {
-          const bodyJson = await this._getResponseJson(
-            response,
-            `_runGetLoop(${jobId})`,
-          );
+          const bodyJson = await this._getResponseJson(response, 'GET');
 
           try {
-            assertIsRelayerV2GetResponseSucceeded(bodyJson, 'body');
+            if (this._relayerOperation === 'INPUT_PROOF') {
+              assertIsRelayerV2GetResponseInputProofSucceeded(bodyJson, 'body');
+            } else if (this._relayerOperation === 'PUBLIC_DECRYPT') {
+              assertIsRelayerV2GetResponsePublicDecryptSucceeded(
+                bodyJson,
+                'body',
+              );
+            } else if (this._relayerOperation === 'USER_DECRYPT') {
+              assertIsRelayerV2GetResponseUserDecryptSucceeded(
+                bodyJson,
+                'body',
+              );
+            }
           } catch (e) {
             throw new RelayerV2InvalidGetResponseError({
               status: response.status,
               url: this._url,
-              jobId,
+              jobId: this.jobId,
               operation: this._relayerOperation,
               cause: e,
             });
@@ -449,10 +496,7 @@ export class RelayerV2AsyncRequest {
         }
         // RelayerV2ResponseQueued
         case 202: {
-          const bodyJson = await this._getResponseJson(
-            response,
-            `_runGetLoop(${jobId})`,
-          );
+          const bodyJson = await this._getResponseJson(response, 'GET');
 
           try {
             assertIsRelayerV2ResponseQueued(bodyJson, 'body');
@@ -460,7 +504,7 @@ export class RelayerV2AsyncRequest {
             throw new RelayerV2InvalidGetResponseError({
               status: response.status,
               url: this._url,
-              jobId,
+              jobId: this.jobId,
               operation: this._relayerOperation,
               cause: e,
             });
@@ -476,18 +520,25 @@ export class RelayerV2AsyncRequest {
           await this._setRetryAfterTimeout(retry_after_ms);
           continue;
         }
-        case 400: {
-          const bodyJson = await this._getResponseJson(
-            response,
-            `_runGetLoop(${jobId})`,
-          );
+        case 404: {
+          // Abort
+          // Wrong jobId, incorrect format or unknown value etc.
+          throw new Error(`Get Error 404 not yet implemented`);
+        }
+        // RelayerV2ResponseFailed
+        // RelayerV2ApiError500
+        case 500: {
+          // Abort
+          // Relayer internal error
+          const bodyJson = await this._getResponseJson(response, 'GET');
 
           try {
-            assertIsRelayerV2ResponseFailedWithError400(bodyJson, 'body');
+            assertIsRelayerV2ResponseFailedWithError500(bodyJson, 'body');
           } catch (e) {
-            throw new RelayerV2InvalidPostResponseError({
+            throw new RelayerV2InvalidGetResponseError({
               status: response.status,
               url: this._url,
+              jobId: this.jobId,
               operation: this._relayerOperation,
               cause: e,
             });
@@ -498,45 +549,86 @@ export class RelayerV2AsyncRequest {
             relayerError: bodyJson.error,
           });
         }
-        case 404: {
-          throw new Error(`Get Error 404 not yet implemented`);
-        }
-        case 429: {
-          throw new Error(`Get Error 429 not yet implemented`);
-        }
-        case 500: {
-          throw new Error(`Get Error 500 not yet implemented`);
-        }
+        // RelayerV2ResponseFailed
+        // RelayerV2ApiError503
         case 503: {
-          throw new Error(`Get Error 503 not yet implemented`);
+          // Abort
+          // Possible Reasons: Gateway has some internal error (dont known)
+          const bodyJson = await this._getResponseJson(response, 'GET');
+
+          try {
+            assertIsRelayerV2ResponseFailedWithError503(bodyJson, 'body');
+          } catch (e) {
+            throw new RelayerV2InvalidGetResponseError({
+              status: response.status,
+              url: this._url,
+              jobId: this.jobId,
+              operation: this._relayerOperation,
+              cause: e,
+            });
+          }
+
+          this._throwError({
+            status: response.status,
+            relayerError: bodyJson.error,
+          });
         }
+        // RelayerV2ResponseFailed
+        // RelayerV2ApiError504
         case 504: {
-          throw new Error(`Get Error 504 not yet implemented`);
+          // Abort
+          // Possible Reasons: Gateway has not responded in time (gateway timeout)
+          const bodyJson = await this._getResponseJson(response, 'GET');
+
+          try {
+            assertIsRelayerV2ResponseFailedWithError504(bodyJson, 'body');
+          } catch (e) {
+            throw new RelayerV2InvalidGetResponseError({
+              status: response.status,
+              url: this._url,
+              jobId: this.jobId,
+              operation: this._relayerOperation,
+              cause: e,
+            });
+          }
+
+          this._throwError({
+            status: response.status,
+            relayerError: bodyJson.error,
+          });
         }
         default: {
-          throw new RelayerV2UnexpectedGetStatusError({
-            status: response.status,
-            url: this._url,
-            operation: this._relayerOperation,
-          });
+          // Use TS compiler + `never` to guarantee the switch integrity
+          const throwUnsupportedStatus = (unsupportedStatus: never) => {
+            throw new RelayerV2UnexpectedGetStatusError({
+              status: unsupportedStatus,
+              url: this._url,
+              operation: this._relayerOperation,
+            });
+          };
+          throwUnsupportedStatus(responseStatus);
         }
       }
     }
     // Infinite loop error
-    throw new RelayerV2InternalError({
+    throw new RelayerV2InternalRequestError({
       fetchMethod: 'GET',
       url: this._url,
       operation: this._relayerOperation,
       message: 'Inifinite loop',
+      jobId: this.jobId,
     });
   }
 
   //////////////////////////////////////////////////////////////////////////////
 
-  private async _getResponseJson(response: Response, op: string): Promise<any> {
+  private async _getResponseJson(
+    response: Response,
+    fetchMethod: 'GET' | 'POST',
+  ): Promise<any> {
     const bodyJson = await response.json();
 
-    this._assertCanContinueAfterAwait(op);
+    this._assertCanContinueAfterAwait(fetchMethod);
 
     return bodyJson;
   }
@@ -568,13 +660,48 @@ export class RelayerV2AsyncRequest {
   }
 
   //////////////////////////////////////////////////////////////////////////////
+  // JobId
+  //////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * Sets the unique job identifier for this request.
+   *
+   * This function enforces a strict initialization constraint: the jobId must be
+   * set exactly once during the entire lifecycle of the state machine instance.
+   *
+   * This immutability ensures that all subsequent operations, logging, and state
+   * transitions are consistently associated with the correct external request.
+   *
+   * @param jobId - The unique identifier associated with the asynchronous job request.
+   * @private
+   * @throws {RelayerV2InternalRequestError} Thrown if jobId is undefined or if the jobId has already been set.
+   */
+  private _setJobIdOnce(jobId: string) {
+    this._assert(jobId !== undefined, 'jobId !== undefined');
+    this._assert(this._jobId === undefined, 'this._jobId === undefined');
+
+    this._jobId = jobId;
+  }
+
+  private get jobId(): string {
+    this._assert(this._jobId !== undefined, 'this._jobId !== undefined');
+    return this._jobId;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
   // Fetch functions
   //////////////////////////////////////////////////////////////////////////////
 
   private async _fetchPost() {
-    this._trace('_fetchPost', 'enter');
-
+    // Debug state-check guards:
+    // - the jobId is guaranteed to be undefined.
+    // - `terminated` is guaranteed to be `false`
+    // - `fetching` is guaranteed to be `false`
+    this._assert(this._jobId === undefined, 'this._jobId === undefined');
+    this._assert(!this._state.terminated, '!this._state.terminated');
     this._assert(!this._state.fetching, '!this._state.fetching');
+
+    this._trace('_fetchPost', 'enter');
 
     const init = setAuth(
       {
@@ -589,29 +716,41 @@ export class RelayerV2AsyncRequest {
     );
 
     this._state.fetching = true;
-    let response;
 
+    let response;
     try {
       response = await fetch(this._url, init);
     } catch (e) {
       this._state.fetching = false;
+
       // Warning: `terminated` can be `true` here!
       // (ex: if `controller.abort()` has been called from the outside while still executing `fetch`)
+
       this._trace('_fetchPost', 'catch(e) + throw e: ' + e);
-      throw new RelayerV2FetchError({
-        fetchMethod: 'POST',
-        url: this._url,
-        operation: this._relayerOperation,
-        cause: e,
-      });
+
+      // Keep the standard 'AbortError'
+      if ((e as any).name === 'AbortError') {
+        throw e;
+      } else {
+        throw new RelayerV2FetchError({
+          fetchMethod: 'POST',
+          url: this._url,
+          operation: this._relayerOperation,
+          cause: e,
+        });
+      }
     }
 
     this._state.fetching = false;
 
-    // here: `terminated` is guaranteed to be `false`
+    // Debug state-check guards:
+    // - the jobId is guaranteed to be undefined.
+    // - `terminated` is guaranteed to be `false`
+    this._assert(this._jobId === undefined, 'this._jobId === undefined');
+    this._assert(!this._state.terminated, '!this._state.terminated');
 
     // Debug
-    this._assertCanContinueAfterAwait(`_runPostLoop()`);
+    this._assertCanContinueAfterAwait('POST');
 
     this._trace('_fetchPost', 'return response Ok');
 
@@ -620,10 +759,16 @@ export class RelayerV2AsyncRequest {
 
   //////////////////////////////////////////////////////////////////////////////
 
-  private async _fetchGet(jobId: string) {
-    this._trace('_fetchGet', `jobId=${jobId}`);
-
+  private async _fetchGet() {
+    // Debug state-check guards:
+    // - the jobId is guaranteed to be set.
+    // - `terminated` is guaranteed to be `false`
+    // - `fetching` is guaranteed to be `false`
+    this._assert(this._jobId !== undefined, 'this._jobId !== undefined');
+    this._assert(!this._state.terminated, '!this._state.terminated');
     this._assert(!this._state.fetching, '!this._state.fetching');
+
+    this._trace('_fetchGet', `jobId=${this.jobId}`);
 
     const init: RequestInit | undefined = this._abortSignal
       ? { signal: this._abortSignal }
@@ -633,25 +778,39 @@ export class RelayerV2AsyncRequest {
 
     let response;
     try {
-      response = await fetch(`${this._url}/${jobId}`, init);
+      response = await fetch(`${this._url}/${this.jobId}`, init);
     } catch (e) {
       this._state.fetching = false;
-      this._trace('_fetchGet', `jobId=${jobId}, catch(e) + throw e: ${e}`);
-      throw new RelayerV2FetchError({
-        fetchMethod: 'GET',
-        url: `${this._url}/${jobId}`,
-        jobId,
-        operation: this._relayerOperation,
-        cause: e,
-      });
+      // Warning: `terminated` can be `true` here!
+      // (ex: if `controller.abort()` has been called from the outside while still executing `fetch`)
+      this._trace('_fetchGet', `jobId=${this.jobId}, catch(e) + throw e: ${e}`);
+
+      // Keep the standard 'AbortError'
+      if ((e as any).name === 'AbortError') {
+        throw e;
+      } else {
+        throw new RelayerV2FetchError({
+          fetchMethod: 'GET',
+          url: `${this._url}/${this.jobId}`,
+          jobId: this.jobId,
+          operation: this._relayerOperation,
+          cause: e,
+        });
+      }
     }
 
     this._state.fetching = false;
 
-    // Debug
-    this._assertCanContinueAfterAwait(`_runGetLoop(${jobId})`);
+    // Debug state-check guards:
+    // - the jobId is guaranteed to be set.
+    // - `terminated` is guaranteed to be `false`
+    this._assert(this._jobId !== undefined, 'this._jobId !== undefined');
+    this._assert(!this._state.terminated, '!this._state.terminated');
 
-    this._trace('_fetchGet', `jobId=${jobId}, return response Ok`);
+    // Debug
+    this._assertCanContinueAfterAwait('GET');
+
+    this._trace('_fetchGet', `jobId=${this.jobId}, return response Ok`);
     return response;
   }
 
@@ -667,7 +826,7 @@ export class RelayerV2AsyncRequest {
 
     const signal = ev.currentTarget as AbortSignal;
 
-    // Debug
+    // Debug state-check guards:
     this._assert(
       this instanceof RelayerV2AsyncRequest,
       `this instanceof RelayerV2AsyncRequest`,
@@ -697,7 +856,10 @@ export class RelayerV2AsyncRequest {
     // ex: call cancel while fetch is running
 
     if (this._state.terminated) {
-      this._trace('_terminate', `reason=${reason} already terminated. IGNORE`);
+      this._trace(
+        '_terminate',
+        `already terminated with reason='${this._terminateReason}'. IGNORE`,
+      );
       this._assert(
         this._terminateReason !== undefined,
         'this._terminateReason !== undefined',
@@ -851,15 +1013,11 @@ export class RelayerV2AsyncRequest {
   private _postAsyncOnProgressCallback() {
     const onProgressFunc = this._onProgress;
     if (onProgressFunc) {
-      // Debug (defensive programming)
-      this._publicAPINoReentrancy = true;
-
       Promise.resolve().then(() => {
+        // onProgressFunc() will execute asynchronously in the next cycle of
+        // the JavaScript event loop (the microtask queue).
         onProgressFunc();
       });
-
-      // Debug (defensive programming)
-      this._publicAPINoReentrancy = false;
     }
   }
 
@@ -876,7 +1034,13 @@ export class RelayerV2AsyncRequest {
 
   private _assert(condition: boolean, message: string): asserts condition {
     if (!condition) {
-      throw new Error(`Assertion failed: ${message}`);
+      throw new RelayerV2InternalRequestError({
+        operation: this._relayerOperation,
+        url: this._url,
+        message: `Assertion failed: ${message}`,
+        state: JSON.stringify(this._state),
+        jobId: this._jobId, // internal value
+      });
     }
   }
 
@@ -889,9 +1053,36 @@ export class RelayerV2AsyncRequest {
     );
   }
 
-  private _assertCanContinueAfterAwait(op: string) {
+  /**
+   * Assert Continuation Guard
+   *
+   * This internal method implements a state-check guard to ensure the state machine
+   * can safely proceed after an asynchronous operation has completed.
+   *
+   * In a state machine with asynchronous calls (e.g., fetch, timer delays), the system's
+   * state (e.g., this._state) might change externally during the 'await' pause
+   * (e.g., due to a timeout, an external abort signal, or a concurrent state transition).
+   *
+   * If the internal check (this._canContinue()) returns false, it means the current
+   * operation is no longer valid, and execution must stop immediately to prevent state corruption.
+   * This pattern is essential for reliable asynchronous state machines.
+   *
+   * @param fetchMethod - The HTTP method ('GET' or 'POST') used in the operation
+   * that just completed (used for debugging/logging the context of the error).
+   * @throws {RelayerV2InternalRequestError} Thrown if the state check fails (i.e., this._canContinue() is false).
+   * The error includes relevant state information (like current state and jobId)
+   * to aid in debugging the exact point of the integrity failure.
+   */
+  private _assertCanContinueAfterAwait(fetchMethod: 'GET' | 'POST') {
     if (!this._canContinue()) {
-      throw new Error(`${op} cannot continue ${JSON.stringify(this._state)}`);
+      throw new RelayerV2InternalRequestError({
+        fetchMethod,
+        operation: this._relayerOperation,
+        url: this._url,
+        message: `cannot continue.`,
+        state: JSON.stringify(this._state),
+        jobId: this._jobId, // internal value
+      });
     }
   }
 

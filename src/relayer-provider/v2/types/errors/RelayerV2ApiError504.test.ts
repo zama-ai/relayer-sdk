@@ -1,13 +1,13 @@
-import { InvalidPropertyError } from '../../../errors/InvalidPropertyError';
-import { assertIsRelayerV2ApiGetError504 } from './RelayerV2ApiGetError504';
+import { InvalidPropertyError } from '../../../../errors/InvalidPropertyError';
+import { assertIsRelayerV2ApiError504 } from './RelayerV2ApiError504';
 
-// npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v2/types/RelayerV2ApiGetError504.test.ts --collectCoverageFrom=./src/relayer-provider/v2/types/RelayerV2ApiGetError504.ts
+// npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v2/types/errors/RelayerV2ApiError504.test.ts --collectCoverageFrom=./src/relayer-provider/v2/types/errors/RelayerV2ApiError504.ts
 
-describe('RelayerV2ApiGetError504', () => {
-  it('assertIsRelayerV2ApiGetError504', () => {
+describe('RelayerV2ApiError504', () => {
+  it('assertIsRelayerV2ApiError504', () => {
     // Success
     expect(() =>
-      assertIsRelayerV2ApiGetError504(
+      assertIsRelayerV2ApiError504(
         {
           label: 'readiness_check_timedout',
           message: 'hello',
@@ -18,7 +18,7 @@ describe('RelayerV2ApiGetError504', () => {
 
     // Success
     expect(() =>
-      assertIsRelayerV2ApiGetError504(
+      assertIsRelayerV2ApiError504(
         {
           label: 'response_timedout',
           message: 'hello',
@@ -28,7 +28,7 @@ describe('RelayerV2ApiGetError504', () => {
     ).not.toThrow();
 
     // Failure
-    expect(() => assertIsRelayerV2ApiGetError504({}, 'Foo')).toThrow(
+    expect(() => assertIsRelayerV2ApiError504({}, 'Foo')).toThrow(
       InvalidPropertyError.missingProperty({
         objName: 'Foo',
         property: 'label',
@@ -38,7 +38,7 @@ describe('RelayerV2ApiGetError504', () => {
     );
 
     expect(() =>
-      assertIsRelayerV2ApiGetError504(
+      assertIsRelayerV2ApiError504(
         {
           label: 'foo',
         },
@@ -56,7 +56,7 @@ describe('RelayerV2ApiGetError504', () => {
     );
 
     expect(() =>
-      assertIsRelayerV2ApiGetError504(
+      assertIsRelayerV2ApiError504(
         {
           label: 'readiness_check_timedout',
         },
@@ -71,7 +71,7 @@ describe('RelayerV2ApiGetError504', () => {
     );
 
     expect(() =>
-      assertIsRelayerV2ApiGetError504(
+      assertIsRelayerV2ApiError504(
         {
           label: 'response_timedout',
         },
@@ -86,7 +86,7 @@ describe('RelayerV2ApiGetError504', () => {
     );
 
     expect(() =>
-      assertIsRelayerV2ApiGetError504(
+      assertIsRelayerV2ApiError504(
         {
           label: 'readiness_check_timedout',
           message: 123,

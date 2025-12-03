@@ -24,4 +24,9 @@ export class RelayerV2FetchError extends RelayerV2RequestError {
       cause: ensureError(params.cause),
     });
   }
+
+  public get isAbort(): boolean {
+    // AbortError is not an instance of Error!
+    return this.cause ? (this.cause as any).name === 'AbortError' : false;
+  }
 }

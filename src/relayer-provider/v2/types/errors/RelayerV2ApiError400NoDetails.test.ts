@@ -1,4 +1,4 @@
-import { InvalidPropertyError } from '../../../errors/InvalidPropertyError';
+import { InvalidPropertyError } from '../../../../errors/InvalidPropertyError';
 import {
   assertIsRelayerV2ApiError400NoDetails,
   isRelayerV2ApiError400NoDetails,

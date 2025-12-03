@@ -116,6 +116,7 @@ describe('RelayerV2ResponseFailed', () => {
         objName: 'Foo',
         property: 'status',
         expectedType: 'string',
+        expectedValue: 'failed',
       }),
     );
 

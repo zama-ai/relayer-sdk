@@ -13,16 +13,16 @@ export type RelayerV2RequestErrorParams = Prettify<
   RelayerBaseErrorParams & {
     url: string;
     operation: RelayerOperation;
-    fetchMethod: 'POST' | 'GET';
-    jobId?: string | undefined;
+    fetchMethod?: 'POST' | 'GET';
+    jobId?: string;
   }
 >;
 
 export abstract class RelayerV2RequestError extends RelayerBaseError {
-  private _fetchMethod: 'POST' | 'GET';
   private _url: string;
   private _operation: RelayerOperation;
-  private _jobId?: string | undefined;
+  private _fetchMethod?: 'POST' | 'GET';
+  private _jobId?: string;
 
   constructor(params: RelayerV2RequestErrorParams) {
     super(params);
@@ -44,7 +44,7 @@ export abstract class RelayerV2RequestError extends RelayerBaseError {
     return this._operation;
   }
 
-  public get fetchMethod(): 'POST' | 'GET' {
+  public get fetchMethod(): 'POST' | 'GET' | undefined {
     return this._fetchMethod;
   }
 }

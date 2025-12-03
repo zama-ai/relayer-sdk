@@ -1,12 +1,8 @@
+import { RelayerV2ResponseQueuedOrFailed } from './types';
 import { assertRecordStringProperty } from '../../../utils/string';
-import { assertNonNullableRecordProperty } from '../../../utils/record';
-import {
-  RelayerV2ResponseQueued,
-  RelayerV2ResponseQueuedOrFailed,
-} from './types';
-import { assertIsRelayerV2ResponseFailed } from './RelayerV2ResponseFailed';
-import { assertIsRelayerV2ResultQueued } from './RelayerV2ResultQueued';
 import { InvalidPropertyError } from '../../../errors/InvalidPropertyError';
+import { assertIsRelayerV2ResponseFailed } from './RelayerV2ResponseFailed';
+import { assertIsRelayerV2ResponseQueued } from './RelayerV2ResponseQueued';
 
 export function assertIsRelayerV2ResponseQueuedOrFailed(
   value: unknown,
@@ -23,19 +19,4 @@ export function assertIsRelayerV2ResponseQueuedOrFailed(
       property: 'result',
     });
   }
-}
-
-/*
-  type RelayerV2ResponseQueued = {
-    status: "queued";
-    result: RelayerV2ResultQueued;
-  }
-*/
-export function assertIsRelayerV2ResponseQueued(
-  value: unknown,
-  name: string,
-): asserts value is RelayerV2ResponseQueued {
-  assertRecordStringProperty(value, 'status', name, 'queued');
-  assertNonNullableRecordProperty(value, 'result', name);
-  assertIsRelayerV2ResultQueued(value.result, `${name}.result`);
 }

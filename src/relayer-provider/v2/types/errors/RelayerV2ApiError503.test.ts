@@ -1,7 +1,7 @@
-import { InvalidPropertyError } from '../../../errors/InvalidPropertyError';
+import { InvalidPropertyError } from '../../../../errors/InvalidPropertyError';
 import { assertIsRelayerV2ApiError503 } from './RelayerV2ApiError503';
 
-// npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v2/types/RelayerV2ApiError503.test.ts --collectCoverageFrom=./src/relayer-provider/v2/types/RelayerV2ApiError503.ts
+// npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v2/types/errors/RelayerV2ApiError503.test.ts --collectCoverageFrom=./src/relayer-provider/v2/types/errors/RelayerV2ApiError503.ts
 
 describe('RelayerV2ApiError503', () => {
   it('assertIsRelayerV2ApiError503', () => {

@@ -1,32 +1,40 @@
-import type { RelayerV2GetResponseSucceeded } from './types';
 import { assertRecordStringProperty } from '../../../utils/string';
-import {
-  assertNonNullableRecordProperty,
-  isNonNullableRecordProperty,
-} from '../../../utils/record';
-import { InvalidPropertyError } from '../../../errors/InvalidPropertyError';
-import { assertIsRelayerV2ResultPublicDecrypt } from './RelayerV2ResultPublicDecrypt';
+import { assertNonNullableRecordProperty } from '../../../utils/record';
 import { assertIsRelayerV2ResultUserDecrypt } from './RelayerV2ResultUserDecrypt';
 import { assertIsRelayerV2ResultInputProof } from './RelayerV2ResultInputProof';
 
-export function assertIsRelayerV2GetResponseSucceeded(
+import {
+  RelayerV2GetResponseSucceededMap,
+  RelayerV2Operation,
+  RelayerV2OperationResultMap,
+} from './types';
+import { assertIsRelayerV2ResultPublicDecrypt } from './RelayerV2ResultPublicDecrypt';
+import { assertNever } from '../../../errors/utils';
+
+export function assertIsRelayerV2GetResponseSucceeded<
+  T extends RelayerV2Operation,
+>(
+  operation: T,
   value: unknown,
   name: string,
-): asserts value is RelayerV2GetResponseSucceeded {
+): asserts value is RelayerV2GetResponseSucceededMap[T] {
   assertNonNullableRecordProperty(value, 'result', name);
   assertRecordStringProperty(value, 'status', name, 'succeeded');
+  assertIsRelayerV2Result(operation, value.result, `${name}.result`);
+}
 
-  const result = value.result;
-  if (isNonNullableRecordProperty(result, 'decrypted_value')) {
-    assertIsRelayerV2ResultPublicDecrypt(result, `${name}.result`);
-  } else if (isNonNullableRecordProperty(result, 'payloads')) {
-    assertIsRelayerV2ResultUserDecrypt(result, `${name}.result`);
-  } else if (isNonNullableRecordProperty(result, 'accepted')) {
-    assertIsRelayerV2ResultInputProof(result, `${name}.result`);
+export function assertIsRelayerV2Result<T extends RelayerV2Operation>(
+  operation: T,
+  value: unknown,
+  name: string,
+): asserts value is RelayerV2OperationResultMap[T] {
+  if (operation === 'INPUT_PROOF') {
+    assertIsRelayerV2ResultInputProof(value, name);
+  } else if (operation === 'PUBLIC_DECRYPT') {
+    assertIsRelayerV2ResultPublicDecrypt(value, name);
+  } else if (operation === 'USER_DECRYPT') {
+    assertIsRelayerV2ResultUserDecrypt(value, name);
   } else {
-    throw InvalidPropertyError.invalidFormat({
-      objName: name,
-      property: 'result',
-    });
+    assertNever(operation, `Unexpected operation ${operation}`);
   }
 }

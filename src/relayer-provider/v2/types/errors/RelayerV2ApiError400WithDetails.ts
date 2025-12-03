@@ -1,13 +1,13 @@
-import { InvalidPropertyError } from '../../../errors/InvalidPropertyError';
+import { InvalidPropertyError } from '../../../../errors/InvalidPropertyError';
 import {
   assertRecordArrayProperty,
   isRecordArrayProperty,
-} from '../../../utils/record';
+} from '../../../../utils/record';
 import {
   assertRecordStringProperty,
   isRecordStringProperty,
-} from '../../../utils/string';
-import { RelayerV2ApiError400WithDetails } from './types';
+} from '../../../../utils/string';
+import { RelayerV2ApiError400WithDetails } from '../types';
 
 /*
     type RelayerV2ApiError400WithDetails = {

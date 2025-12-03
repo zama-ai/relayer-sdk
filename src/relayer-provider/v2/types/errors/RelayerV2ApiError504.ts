@@ -1,16 +1,16 @@
-import { assertRecordStringProperty } from '../../../utils/string';
-import { RelayerV2ApiGetError504 } from './types';
+import { assertRecordStringProperty } from '../../../../utils/string';
+import { RelayerV2ApiError504 } from '../types';
 
 /*
-    export type RelayerV2ApiGetError504 = {
+    export type RelayerV2ApiError504 = {
       label: 'readiness_check_timedout' | 'response_timedout';
       message: string;
     };
 */
-export function assertIsRelayerV2ApiGetError504(
+export function assertIsRelayerV2ApiError504(
   value: unknown,
   name: string,
-): asserts value is RelayerV2ApiGetError504 {
+): asserts value is RelayerV2ApiError504 {
   assertRecordStringProperty(value, 'label', name, [
     'readiness_check_timedout',
     'response_timedout',

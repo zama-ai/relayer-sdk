@@ -8,14 +8,14 @@ export type RelayerBaseErrorType = RelayerBaseError & {
 };
 
 export type RelayerBaseErrorParams = {
-  cause?: RelayerBaseError | Error | undefined;
+  cause?: RelayerBaseError | Error;
   message: string;
-  docsBaseUrl?: string | undefined;
-  docsPath?: string | undefined;
-  docsSlug?: string | undefined;
-  metaMessages?: string[] | undefined;
-  details?: string | undefined;
-  name?: string | undefined;
+  docsBaseUrl?: string;
+  docsPath?: string;
+  docsSlug?: string;
+  metaMessages?: string[];
+  details?: string;
+  name?: string;
 };
 
 export class RelayerBaseError extends Error {
