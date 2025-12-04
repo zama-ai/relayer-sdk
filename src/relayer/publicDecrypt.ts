@@ -44,7 +44,7 @@ function isThresholdReached(
   return recoveredAddresses.length >= threshold;
 }
 
-function abiEncodeClearValues(clearValues: ClearValues) {
+export function abiEncodeClearValues(clearValues: ClearValues) {
   const handlesBytes32Hex = Object.keys(clearValues) as `0x${string}`[];
 
   const abiTypes: string[] = [];
