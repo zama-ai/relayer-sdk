@@ -1,6 +1,7 @@
-import { publicDecryptRequest } from './publicDecrypt';
+import { publicDecryptRequest, abiEncodeClearValues } from './publicDecrypt';
 import fetchMock from '@fetch-mock/core';
 import { ethers } from 'ethers';
+import { ClearValues } from './decryptUtils';
 import {
   fetchRelayerJsonRpcPost,
   RelayerPublicDecryptPayload,
@@ -195,5 +196,115 @@ describe('fetchRelayerPublicDecrypt', () => {
       RELAYER_PUBLIC_DECRYPT_URL,
       dummyRelayerUserDecryptPayload,
     );
+  });
+});
+
+describe('abiEncodeClearValues', () => {
+  const createHandle = (typeId: number): `0x${string}` => {
+    const typeHex = typeId.toString(16).padStart(2, '0');
+    return `0x${'0'.repeat(60)}${typeHex}00` as `0x${string}`;
+  };
+
+  describe('ebool (type 0)', () => {
+    it('should encode ebool with value true', () => {
+      const handle = createHandle(0);
+      const clearValues: ClearValues = {
+        [handle]: true,
+      };
+
+      const result = abiEncodeClearValues(clearValues);
+
+      expect(result.abiTypes).toEqual(['uint256']);
+      expect(result.abiValues).toEqual([BigInt(1)]);
+      expect(result.abiEncodedClearValues).toBeDefined();
+    });
+
+    it('should encode ebool with value false', () => {
+      const handle = createHandle(0);
+      const clearValues: ClearValues = {
+        [handle]: false,
+      };
+
+      const result = abiEncodeClearValues(clearValues);
+
+      expect(result.abiTypes).toEqual(['uint256']);
+      expect(result.abiValues).toEqual([BigInt(0)]);
+      expect(result.abiEncodedClearValues).toBeDefined();
+    });
+
+    it('should encode ebool with bigint value 0n', () => {
+      const handle = createHandle(0);
+      const clearValues: ClearValues = {
+        [handle]: BigInt(0),
+      };
+
+      const result = abiEncodeClearValues(clearValues);
+
+      expect(result.abiTypes).toEqual(['uint256']);
+      expect(result.abiValues).toEqual([BigInt(0)]);
+    });
+
+    it('should encode ebool with bigint value 1n', () => {
+      const handle = createHandle(0);
+      const clearValues: ClearValues = {
+        [handle]: BigInt(1),
+      };
+
+      const result = abiEncodeClearValues(clearValues);
+
+      expect(result.abiTypes).toEqual(['uint256']);
+      expect(result.abiValues).toEqual([BigInt(1)]);
+    });
+
+    it('should throw error for invalid ebool value', () => {
+      const handle = createHandle(0);
+      const clearValues: ClearValues = {
+        [handle]: BigInt(2),
+      };
+
+      expect(() => abiEncodeClearValues(clearValues)).toThrow(
+        'Invalid ebool clear text value 2. Expecting 0 or 1.',
+      );
+    });
+  });
+
+  describe('eaddress (type 7)', () => {
+    it('should encode eaddress with valid address', () => {
+      const handle = createHandle(7);
+      const address = '0x1234567890123456789012345678901234567890';
+      const clearValues: ClearValues = {
+        [handle]: BigInt(address),
+      };
+
+      const result = abiEncodeClearValues(clearValues);
+
+      expect(result.abiTypes).toEqual(['uint256']);
+      expect(result.abiValues).toEqual([address.toLowerCase()]);
+      expect(result.abiEncodedClearValues).toBeDefined();
+    });
+
+    it('should encode eaddress with zero address', () => {
+      const handle = createHandle(7);
+      const clearValues: ClearValues = {
+        [handle]: BigInt(0),
+      };
+
+      const result = abiEncodeClearValues(clearValues);
+
+      expect(result.abiTypes).toEqual(['uint256']);
+      expect(result.abiValues).toEqual(['0x0000000000000000000000000000000000000000']);
+    });
+
+    it('should pad eaddress to 40 hex characters', () => {
+      const handle = createHandle(7);
+      // Small address that needs padding
+      const clearValues: ClearValues = {
+        [handle]: BigInt('0x1'),
+      };
+
+      const result = abiEncodeClearValues(clearValues);
+
+      expect(result.abiValues[0]).toBe('0x0000000000000000000000000000000000000001');
+    });
   });
 });
