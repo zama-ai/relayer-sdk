@@ -11,8 +11,8 @@ describe('RelayerV2ResponseQueued', () => {
         {
           status: 'queued',
           result: {
-            job_id: 'hello',
-            retry_after_seconds: 2,
+            jobId: 'hello',
+            retryAfterSeconds: 2,
           },
         },
         'Foo',

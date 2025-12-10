@@ -10,5 +10,5 @@ export function assertIsRelayerV2ResultUserDecrypt(
 ): asserts value is RelayerV2ResultUserDecrypt {
   assertRecordBytesHexNo0xArrayProperty(value, 'payloads', name);
   assertRecordBytesHexNo0xArrayProperty(value, 'signatures', name);
-  assertRecordBytesHexProperty(value, 'extra_data', name);
+  assertRecordBytesHexProperty(value, 'extraData', name);
 }

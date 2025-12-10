@@ -14,7 +14,7 @@ describe('RelayerV2ResultUserDecrypt', () => {
         {
           payloads: ['deadbeef'],
           signatures: ['deadbeef'],
-          extra_data: '0x00',
+          extraData: '0x00',
         },
         'Foo',
       ),
@@ -113,7 +113,7 @@ describe('RelayerV2ResultUserDecrypt', () => {
     ).toThrow(
       InvalidPropertyError.missingProperty({
         objName: 'Foo',
-        property: 'extra_data',
+        property: 'extraData',
         expectedType: 'BytesHex',
       }),
     );

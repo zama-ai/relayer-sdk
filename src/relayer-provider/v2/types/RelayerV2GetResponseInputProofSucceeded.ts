@@ -9,6 +9,6 @@ export function assertIsRelayerV2GetResponseInputProofSucceeded(
 ): asserts value is RelayerV2GetResponseInputProofSucceeded {
   assertNonNullableRecordProperty(value, 'result', name);
   assertRecordStringProperty(value, 'status', name, 'succeeded');
-  assertRecordStringProperty(value, 'request_id', name);
+  assertRecordStringProperty(value, 'requestId', name);
   assertIsRelayerV2ResultInputProof(value.result, `${name}.result`);
 }

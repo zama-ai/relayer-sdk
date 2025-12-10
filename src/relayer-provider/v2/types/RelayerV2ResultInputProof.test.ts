@@ -21,7 +21,7 @@ describe('RelayerV2ResultInputProof', () => {
             '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
           ],
           signatures: ['0x12'],
-          extra_data: '0xdead',
+          extraData: '0xdead',
         },
         'Foo',
       ),
@@ -160,7 +160,7 @@ describe('RelayerV2ResultInputProof', () => {
       new InvalidPropertyError({
         objName: 'Foo',
         expectedType: 'BytesHex',
-        property: 'extra_data',
+        property: 'extraData',
         type: 'undefined',
       }),
     );
@@ -201,7 +201,7 @@ describe('RelayerV2ResultInputProof', () => {
     ).toThrow(
       InvalidPropertyError.missingProperty({
         objName: 'Foo',
-        property: 'extra_data',
+        property: 'extraData',
         expectedType: 'BytesHex',
       }),
     );
@@ -214,14 +214,14 @@ describe('RelayerV2ResultInputProof', () => {
             '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
           ],
           signatures: ['0xdead'],
-          extra_data: 'hello',
+          extraData: 'hello',
         },
         'Foo',
       ),
     ).toThrow(
       new InvalidPropertyError({
         objName: 'Foo',
-        property: 'extra_data',
+        property: 'extraData',
         expectedType: 'BytesHex',
         type: 'string',
       }),
@@ -229,21 +229,21 @@ describe('RelayerV2ResultInputProof', () => {
 
     expect(() =>
       assertIsRelayerV2ResultInputProof(
-        { accepted: false, extra_data: 'dead' },
+        { accepted: false, extraData: 'dead' },
         'Foo',
       ),
     ).toThrow(
       new InvalidPropertyError({
         objName: 'Foo',
         expectedType: 'BytesHex',
-        property: 'extra_data',
+        property: 'extraData',
         type: 'string',
       }),
     );
 
     expect(() =>
       assertIsRelayerV2ResultInputProof(
-        { accepted: false, extra_data: '0xdead' },
+        { accepted: false, extraData: '0xdead' },
         'Foo',
       ),
     ).not.toThrow();

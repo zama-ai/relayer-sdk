@@ -6,6 +6,6 @@ export function assertIsRelayerV2ResultQueued(
   value: unknown,
   name: string,
 ): asserts value is RelayerV2ResultQueued {
-  assertRecordStringProperty(value, 'job_id', name);
-  assertRecordUintProperty(value, 'retry_after_seconds', name);
+  assertRecordStringProperty(value, 'jobId', name);
+  assertRecordUintProperty(value, 'retryAfterSeconds', name);
 }

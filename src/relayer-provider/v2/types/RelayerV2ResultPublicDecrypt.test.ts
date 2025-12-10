@@ -12,9 +12,9 @@ describe('RelayerV2ResultPublicDecrypt', () => {
     expect(() =>
       assertIsRelayerV2ResultPublicDecrypt(
         {
-          extra_data: '0x00',
+          extraData: '0x00',
           signatures: ['deadbeef'],
-          decrypted_value: 'dead',
+          decryptedValue: 'dead',
         },
         'Foo',
       ),
@@ -73,7 +73,7 @@ describe('RelayerV2ResultPublicDecrypt', () => {
     ).toThrow(
       new InvalidPropertyError({
         objName: 'Foo',
-        property: 'decrypted_value',
+        property: 'decryptedValue',
         expectedType: 'BytesHexNo0x',
         type: 'undefined',
       }),
@@ -84,7 +84,7 @@ describe('RelayerV2ResultPublicDecrypt', () => {
     ).toThrow(
       new InvalidPropertyError({
         objName: 'Foo',
-        property: 'decrypted_value',
+        property: 'decryptedValue',
         expectedType: 'BytesHexNo0x',
         type: 'undefined',
       }),
@@ -92,13 +92,13 @@ describe('RelayerV2ResultPublicDecrypt', () => {
 
     expect(() =>
       assertIsRelayerV2ResultPublicDecrypt(
-        { signatures: ['deadbeef'], decrypted_value: 'deadbeef' },
+        { signatures: ['deadbeef'], decryptedValue: 'deadbeef' },
         'Foo',
       ),
     ).toThrow(
       InvalidPropertyError.missingProperty({
         objName: 'Foo',
-        property: 'extra_data',
+        property: 'extraData',
         expectedType: 'BytesHex',
       }),
     );
@@ -107,15 +107,15 @@ describe('RelayerV2ResultPublicDecrypt', () => {
       assertIsRelayerV2ResultPublicDecrypt(
         {
           signatures: ['deadbeef'],
-          decrypted_value: 'deadbeef',
-          extra_data: 123,
+          decryptedValue: 'deadbeef',
+          extraData: 123,
         },
         'Foo',
       ),
     ).toThrow(
       new InvalidPropertyError({
         objName: 'Foo',
-        property: 'extra_data',
+        property: 'extraData',
         expectedType: 'BytesHex',
         type: 'number',
       }),

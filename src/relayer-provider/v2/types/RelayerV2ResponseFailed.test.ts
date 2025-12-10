@@ -14,7 +14,7 @@ describe('RelayerV2ResponseFailed', () => {
     const err = {
       code: 'request_error',
       message: 'hello',
-      request_id: 'world',
+      requestId: 'world',
     };
 
     // True
@@ -75,7 +75,7 @@ describe('RelayerV2ResponseFailed', () => {
           error: {
             ...err,
             label: 'rate_limited',
-            retry_after_seconds: 'Thu, 14 Nov 2024 15:30:00 GMT',
+            retryAfterSeconds: 'Thu, 14 Nov 2024 15:30:00 GMT',
           },
         },
         'Foo',

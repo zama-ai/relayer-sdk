@@ -7,20 +7,20 @@ describe('RelayerV2ResultQueued', () => {
   it('assertIsRelayerV2ResultQueued', () => {
     expect(() =>
       assertIsRelayerV2ResultQueued(
-        { job_id: 'abc', retry_after_seconds: 3 },
+        { jobId: 'abc', retryAfterSeconds: 3 },
         'Foo',
       ),
     ).not.toThrow();
 
     expect(() =>
       assertIsRelayerV2ResultQueued(
-        { job_id: 'abc', retry_after_seconds: 'Thu' },
+        { jobId: 'abc', retryAfterSeconds: 'Thu' },
         'Foo',
       ),
     ).toThrow(
       new InvalidPropertyError({
         objName: 'Foo',
-        property: 'retry_after_seconds',
+        property: 'retryAfterSeconds',
         expectedType: 'Uint',
         type: 'string',
       }),
@@ -28,13 +28,13 @@ describe('RelayerV2ResultQueued', () => {
 
     expect(() =>
       assertIsRelayerV2ResultQueued(
-        { job_id: 123, retry_after_seconds: 2 },
+        { jobId: 123, retryAfterSeconds: 2 },
         'Foo',
       ),
     ).toThrow(
       new InvalidPropertyError({
         objName: 'Foo',
-        property: 'job_id',
+        property: 'jobId',
         expectedType: 'string',
         type: 'number',
       }),
@@ -43,7 +43,7 @@ describe('RelayerV2ResultQueued', () => {
     expect(() => assertIsRelayerV2ResultQueued({}, 'Foo')).toThrow(
       InvalidPropertyError.missingProperty({
         objName: 'Foo',
-        property: 'job_id',
+        property: 'jobId',
         expectedType: 'string',
       }),
     );

@@ -15,14 +15,14 @@ describe('RelayerV2GetResponseInputProofSucceeded', () => {
         {
           result: {
             accepted: true,
-            extra_data: '0xdead',
+            extraData: '0xdead',
             handles: [
               '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
             ],
             signatures: ['0xdead'],
           },
           status: 'succeeded',
-          request_id: 'hello',
+          requestId: 'hello',
         },
         'Foo',
       ),
@@ -87,14 +87,14 @@ describe('RelayerV2GetResponseInputProofSucceeded', () => {
     ).toThrow(
       InvalidPropertyError.missingProperty({
         objName: 'Foo',
-        property: 'request_id',
+        property: 'requestId',
         expectedType: 'string',
       }),
     );
 
     expect(() =>
       assertIsRelayerV2GetResponseInputProofSucceeded(
-        { result: {}, status: 'succeeded', request_id: 'hello' },
+        { result: {}, status: 'succeeded', requestId: 'hello' },
         'Foo',
       ),
     ).toThrow(
@@ -110,7 +110,7 @@ describe('RelayerV2GetResponseInputProofSucceeded', () => {
         {
           result: { accepted: true },
           status: 'succeeded',
-          request_id: 'hello',
+          requestId: 'hello',
         },
         'Foo',
       ),
@@ -130,7 +130,7 @@ describe('RelayerV2GetResponseInputProofSucceeded', () => {
             handles: ['hello'],
           },
           status: 'succeeded',
-          request_id: 'hello',
+          requestId: 'hello',
         },
         'Foo',
       ),
@@ -154,7 +154,7 @@ describe('RelayerV2GetResponseInputProofSucceeded', () => {
             ],
           },
           status: 'succeeded',
-          request_id: 'hello',
+          requestId: 'hello',
         },
         'Foo',
       ),
@@ -177,7 +177,7 @@ describe('RelayerV2GetResponseInputProofSucceeded', () => {
             signatures: ['dead'],
           },
           status: 'succeeded',
-          request_id: 'hello',
+          requestId: 'hello',
         },
         'Foo',
       ),
@@ -202,14 +202,14 @@ describe('RelayerV2GetResponseInputProofSucceeded', () => {
             signatures: ['0xdead'],
           },
           status: 'succeeded',
-          request_id: 'hello',
+          requestId: 'hello',
         },
         'Foo',
       ),
     ).toThrow(
       InvalidPropertyError.missingProperty({
         objName: 'Foo.result',
-        property: 'extra_data',
+        property: 'extraData',
         expectedType: 'BytesHex',
       }),
     );
@@ -223,17 +223,17 @@ describe('RelayerV2GetResponseInputProofSucceeded', () => {
               '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
             ],
             signatures: ['0xdead'],
-            extra_data: 123,
+            extraData: 123,
           },
           status: 'succeeded',
-          request_id: 'hello',
+          requestId: 'hello',
         },
         'Foo',
       ),
     ).toThrow(
       new InvalidPropertyError({
         objName: 'Foo.result',
-        property: 'extra_data',
+        property: 'extraData',
         expectedType: 'BytesHex',
         type: 'number',
       }),

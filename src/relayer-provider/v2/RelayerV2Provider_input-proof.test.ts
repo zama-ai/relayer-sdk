@@ -165,7 +165,7 @@ describe('RelayerV2Provider', () => {
         operation: 'INPUT_PROOF',
         cause: InvalidPropertyError.missingProperty({
           objName: 'body.result',
-          property: 'job_id',
+          property: 'jobId',
           expectedType: 'string',
         }),
       }),
@@ -173,7 +173,7 @@ describe('RelayerV2Provider', () => {
   });
 
   it('v2:input-proof: 202 - status:queued, result no timestamp', async () => {
-    post202({ status: 'queued', result: { job_id: '123' } });
+    post202({ status: 'queued', result: { jobId: '123' } });
     await expect(() =>
       relayerProvider.fetchPostInputProof(payload),
     ).rejects.toThrow(
@@ -183,7 +183,7 @@ describe('RelayerV2Provider', () => {
         operation: 'INPUT_PROOF',
         cause: InvalidPropertyError.missingProperty({
           objName: 'body.result',
-          property: 'retry_after_seconds',
+          property: 'retryAfterSeconds',
           expectedType: 'Uint',
         }),
       }),
@@ -193,15 +193,15 @@ describe('RelayerV2Provider', () => {
   it('xxx v2:input-proof: 202 - status:queued, result ok', async () => {
     post202({
       status: 'queued',
-      result: { job_id: '123', retry_after_seconds: 3 },
+      result: { jobId: '123', retryAfterSeconds: 3 },
     });
 
     fetchMock.get(`${relayerUrlV2}/input-proof/123`, {
       status: 200,
       body: {
         status: 'succeeded',
-        request_id: 'hello',
-        result: { accepted: false, extra_data: `0x00` },
+        requestId: 'hello',
+        result: { accepted: false, extraData: `0x00` },
       },
       headers: { 'Content-Type': 'application/json' },
     });

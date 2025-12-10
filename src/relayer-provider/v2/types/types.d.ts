@@ -135,13 +135,13 @@ export type RelayerV2ApiError404 = {
 
 export type RelayerV2ResponseQueued = {
   status: 'queued';
-  request_id: string; // request id field. use it for identifying the request and asking support
+  requestId: string; // request id field. use it for identifying the request and asking support
   result: RelayerV2ResultQueued;
 };
 
 export type RelayerV2ResultQueued = {
-  job_id: string;
-  retry_after_seconds: number;
+  jobId: string;
+  retryAfterSeconds: number;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -151,7 +151,7 @@ export type RelayerV2ResultQueued = {
 export type RelayerV2GetResponseSucceeded<R extends RelayerV2OperationResult> =
   {
     status: 'succeeded';
-    request_id: string; // request id field. use it for identifying the request and asking support
+    requestId: string; // request id field. use it for identifying the request and asking support
     result: R;
   };
 
@@ -170,10 +170,10 @@ export type RelayerV2GetResponseUserDecryptSucceeded =
 
 export type RelayerV2ResultPublicDecrypt = {
   // Hex encoded value without 0x prefix.
-  decrypted_value: BytesHexNo0x;
+  decryptedValue: BytesHexNo0x;
   // Hex encoded value without 0x prefix.
   signatures: BytesHexNo0x[];
-  extra_data: BytesHex;
+  extraData: BytesHex;
 };
 
 export type RelayerV2ResultUserDecrypt = {
@@ -181,7 +181,7 @@ export type RelayerV2ResultUserDecrypt = {
   payloads: BytesHexNo0x[];
   // Hex encoded key without 0x prefix. (len=130)
   signatures: BytesHexNo0x[];
-  extra_data: BytesHex;
+  extraData: BytesHex;
 };
 
 export type RelayerV2ResultInputProof =
@@ -194,12 +194,12 @@ export type RelayerV2ResultInputProofAcceped = {
   handles: Bytes32Hex[];
   // Attestation signatures for Input verification for the ordered list of handles with 0x prefix.
   signatures: BytesHex[];
-  extra_data: BytesHex;
+  extraData: BytesHex;
 };
 
 export type RelayerV2ResultInputProofRejected = {
   accepted: false;
-  extra_data: BytesHex;
+  extraData: BytesHex;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

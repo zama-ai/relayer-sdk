@@ -161,15 +161,15 @@ describe('RelayerV2Provider', () => {
         operation: 'PUBLIC_DECRYPT',
         cause: InvalidPropertyError.missingProperty({
           objName: 'body.result',
-          property: 'job_id',
+          property: 'jobId',
           expectedType: 'string',
         }),
       }),
     );
   });
 
-  it('v2:public-decrypt: 202 - status:queued, result no retry_after_seconds', async () => {
-    post202({ status: 'queued', result: { job_id: '123' } });
+  it('v2:public-decrypt: 202 - status:queued, result no retryAfterSeconds', async () => {
+    post202({ status: 'queued', result: { jobId: '123' } });
     await expect(() =>
       relayerProvider.fetchPostPublicDecrypt(payload),
     ).rejects.toThrow(
@@ -179,7 +179,7 @@ describe('RelayerV2Provider', () => {
         operation: 'PUBLIC_DECRYPT',
         cause: InvalidPropertyError.missingProperty({
           objName: 'body.result',
-          property: 'retry_after_seconds',
+          property: 'retryAfterSeconds',
           expectedType: 'Uint',
         }),
       }),
@@ -189,18 +189,18 @@ describe('RelayerV2Provider', () => {
   it('v2:public-decrypt: 202 - status:queued, result ok', async () => {
     post202({
       status: 'queued',
-      result: { job_id: '123', retry_after_seconds: 3 },
+      result: { jobId: '123', retryAfterSeconds: 3 },
     });
 
     fetchMock.get(`${relayerUrlV2}/public-decrypt/123`, {
       status: 200,
       body: {
         status: 'succeeded',
-        request_id: 'hello',
+        requestId: 'hello',
         result: {
-          decrypted_value: 'deadbeef',
+          decryptedValue: 'deadbeef',
           signatures: ['deadbeef'],
-          extra_data: '0x00',
+          extraData: '0x00',
         },
       },
       headers: { 'Content-Type': 'application/json' },

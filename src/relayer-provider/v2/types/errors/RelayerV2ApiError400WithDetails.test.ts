@@ -237,7 +237,7 @@ describe('RelayerV2ApiError400WithDetails', () => {
         {
           label: 'missing_fields',
           message: 'foo',
-          request_id: 'bar',
+          requestId: 'bar',
           details: [{ field: 'hello' }],
         },
         'Foo',

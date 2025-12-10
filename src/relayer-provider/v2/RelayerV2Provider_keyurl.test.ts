@@ -163,7 +163,7 @@ describe('RelayerV2Provider', () => {
   it('v2:keyurl: fetchGetKeyUrl - 404+headers - cause', async () => {
     const bodyObj = {
       message: 'no Route matched with those values',
-      request_id: 'e4d9e74d3cf53270ecdee649b55d1666',
+      requestId: 'e4d9e74d3cf53270ecdee649b55d1666',
     };
     const body = JSON.stringify(bodyObj, null, 2);
     fetchMock.getOnce(`${relayerUrlV2}/keyurl`, {

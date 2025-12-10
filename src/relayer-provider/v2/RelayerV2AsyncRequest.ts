@@ -438,14 +438,14 @@ export class RelayerV2AsyncRequest<O extends RelayerV2Operation> {
           if (retry_after_sec < 1) retry_after_sec = 1;
 
           // Debug: will throw an assert failed error if jobId has already been set
-          this._setJobIdOnce(bodyJson.result.job_id);
+          this._setJobIdOnce(bodyJson.result.jobId);
 
           // Async onProgress callback
           this._postAsyncOnProgressCallback({
             type: 'queued',
             method: 'POST',
             status: responseStatus,
-            requestId: bodyJson.request_id,
+            requestId: bodyJson.requestId,
             jobId: this.jobId,
             operation: this._relayerOperation,
             retryCount: this._retryCount,
@@ -648,7 +648,7 @@ export class RelayerV2AsyncRequest<O extends RelayerV2Operation> {
             method: 'GET',
             status: responseStatus,
             jobId: this.jobId,
-            requestId: bodyJson.request_id,
+            requestId: bodyJson.requestId,
             operation: this._relayerOperation as O,
             retryCount: this._retryCount,
             result: bodyJson.result,
@@ -683,7 +683,7 @@ export class RelayerV2AsyncRequest<O extends RelayerV2Operation> {
             type: 'queued',
             method: 'GET',
             status: responseStatus,
-            requestId: bodyJson.request_id,
+            requestId: bodyJson.requestId,
             operation: this._relayerOperation,
             jobId: this.jobId,
             retryAfter: retry_after_sec,
