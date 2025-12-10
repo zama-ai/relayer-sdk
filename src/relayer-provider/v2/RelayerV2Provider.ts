@@ -14,9 +14,7 @@ import {
 import { RelayerV2GetKeyUrlInvalidResponseError } from './errors/RelayerV2GetKeyUrlError';
 import {
   RelayerV2AsyncRequest,
-  RelayerV2ProgressArgsInputProof,
-  RelayerV2ProgressArgsPublicDecrypt,
-  RelayerV2ProgressArgsUserDecrypt,
+  RelayerV2ProgressArgs,
 } from './RelayerV2AsyncRequest';
 import { assertIsRelayerV2GetResponseKeyUrl } from './types/RelayerV2GetResponseKeyUrl';
 import type { RelayerV2GetResponseKeyUrl } from './types/types';
@@ -48,9 +46,7 @@ export class RelayerV2Provider extends AbstractRelayerProvider {
   public override async fetchPostInputProof(
     payload: RelayerInputProofPayload,
     instanceOptions?: FhevmInstanceOptions,
-    fetchOptions?: Prettify<
-      RelayerProviderFetchOptions<RelayerV2ProgressArgsInputProof>
-    >,
+    fetchOptions?: Prettify<RelayerProviderFetchOptions<RelayerV2ProgressArgs>>,
   ) {
     const request = new RelayerV2AsyncRequest({
       relayerOperation: 'INPUT_PROOF',
@@ -66,9 +62,7 @@ export class RelayerV2Provider extends AbstractRelayerProvider {
   public override async fetchPostPublicDecrypt(
     payload: RelayerPublicDecryptPayload,
     instanceOptions?: FhevmInstanceOptions,
-    fetchOptions?: Prettify<
-      RelayerProviderFetchOptions<RelayerV2ProgressArgsPublicDecrypt>
-    >,
+    fetchOptions?: Prettify<RelayerProviderFetchOptions<RelayerV2ProgressArgs>>,
   ) {
     const request = new RelayerV2AsyncRequest({
       relayerOperation: 'PUBLIC_DECRYPT',
@@ -84,9 +78,7 @@ export class RelayerV2Provider extends AbstractRelayerProvider {
   public override async fetchPostUserDecrypt(
     payload: RelayerUserDecryptPayload,
     instanceOptions?: FhevmInstanceOptions,
-    fetchOptions?: Prettify<
-      RelayerProviderFetchOptions<RelayerV2ProgressArgsUserDecrypt>
-    >,
+    fetchOptions?: Prettify<RelayerProviderFetchOptions<RelayerV2ProgressArgs>>,
   ) {
     const request = new RelayerV2AsyncRequest({
       relayerOperation: 'USER_DECRYPT',

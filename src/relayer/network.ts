@@ -15,9 +15,6 @@ export const getKeysFromRelayer = async (
     `${versionUrl}/keyurl`,
   );
 
-  console.log('publicKeyId=' + publicKeyId);
-  console.log(JSON.stringify(data));
-
   try {
     let pubKeyUrl: string;
 
@@ -42,8 +39,6 @@ export const getKeysFromRelayer = async (
       // TODO: Get a given party's public key url instead of the first one
       pubKeyUrl = keyInfo.fhe_public_key.urls[0];
     }
-
-    console.log('DGSGDFSDFSDSDFDSSFDF ' + pubKeyUrl);
 
     const publicKeyResponse = await fetch(pubKeyUrl);
     if (!publicKeyResponse.ok) {

@@ -37,8 +37,8 @@ const consoleLogSpy = jest
     process.stdout.write(`${message}\n`);
   });
 
-describe("RelayerV2Request<'INPUT_PROOF'>", () => {
-  let relayerRequest: RelayerV2AsyncRequest<'INPUT_PROOF'>;
+describe('RelayerV2Request', () => {
+  let relayerRequest: RelayerV2AsyncRequest;
   let start: number;
 
   function trace(message: string) {

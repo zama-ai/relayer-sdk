@@ -49,8 +49,15 @@ export type Timestamp = string;
 export type RelayerV2PostResponseStatus = 202 | 400 | 429 | 500 | 503;
 export type RelayerV2PostResponse = RelayerV2ResponseQueuedOrFailed;
 
-// GET:  200 | 202 | 404 | 500 | 503 | 504
-export type RelayerV2GetResponseStatus = 200 | 202 | 404 | 500 | 503 | 504;
+// GET:  200 | 202 | 400 | 404 | 500 | 503 | 504
+export type RelayerV2GetResponseStatus =
+  | 200
+  | 202
+  | 400
+  | 404
+  | 500
+  | 503
+  | 504;
 export type RelayerV2GetResponse =
   | RelayerV2ResponseQueuedOrFailed
   | RelayerV2GetResponseSucceeded;

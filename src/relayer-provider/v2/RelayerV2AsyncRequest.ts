@@ -78,23 +78,12 @@ export type RelayerV2AsyncRequestState = {
   fetching: boolean;
 };
 
-export interface RelayerV2ProgressSuccessMap {
-  INPUT_PROOF: RelayerV2ProgressInputProofSucceeded;
-  PUBLIC_DECRYPT: RelayerV2ProgressPublicDecryptSucceeded;
-  USER_DECRYPT: RelayerV2ProgressUserDecryptSucceeded;
-}
-
-export type RelayerV2ProgressArgsInputProof =
-  RelayerV2ProgressArgs<'INPUT_PROOF'>;
-export type RelayerV2ProgressArgsUserDecrypt =
-  RelayerV2ProgressArgs<'USER_DECRYPT'>;
-export type RelayerV2ProgressArgsPublicDecrypt =
-  RelayerV2ProgressArgs<'PUBLIC_DECRYPT'>;
-
-export type RelayerV2ProgressArgs<O extends RelayerV2Operation> =
+export type RelayerV2ProgressArgs =
   | RelayerV2ProgressQueued
   | RelayerV2ProgressRateLimited
-  | RelayerV2ProgressSuccessMap[O]
+  | RelayerV2ProgressInputProofSucceeded
+  | RelayerV2ProgressPublicDecryptSucceeded
+  | RelayerV2ProgressUserDecryptSucceeded
   | RelayerV2ProgressFailed;
 
 export type RelayerV2ProgressQueued = {
@@ -146,14 +135,14 @@ export type RelayerV2ProgressFailed = {
   operation: RelayerV2Operation;
 };
 
-type RelayerV2AsyncRequestParams<O extends RelayerV2Operation> = {
-  relayerOperation: O;
+type RelayerV2AsyncRequestParams = {
+  relayerOperation: RelayerV2Operation;
   url: string;
   payload: Record<string, unknown>;
   timeoutInSeconds?: number;
   throwErrorIfNoRetryAfter?: boolean;
   instanceOptions?: FhevmInstanceOptions;
-} & RelayerProviderFetchOptions<RelayerV2ProgressArgs<O>>;
+} & RelayerProviderFetchOptions<RelayerV2ProgressArgs>;
 
 export type RelayerV2TerminateReason =
   | 'succeeded'
@@ -161,10 +150,10 @@ export type RelayerV2TerminateReason =
   | 'timeout'
   | 'abort';
 
-export class RelayerV2AsyncRequest<O extends RelayerV2Operation> {
+export class RelayerV2AsyncRequest {
   private _jobId: string | undefined;
   private _state: RelayerV2AsyncRequestState;
-  private _relayerOperation: O;
+  private _relayerOperation: RelayerV2Operation;
   private _publicAPINoReentrancy: boolean;
   private _internalAbortController: AbortController | undefined;
   private _internalAbortSignal: AbortSignal | undefined;
@@ -177,7 +166,7 @@ export class RelayerV2AsyncRequest<O extends RelayerV2Operation> {
   private _payload: Record<string, unknown>;
   private _fhevmInstanceOptions: FhevmInstanceOptions | undefined;
   private _retryAfterTimeoutPromiseFuncReject?: (reason?: any) => void;
-  private _onProgress?: (args: RelayerV2ProgressArgs<O>) => void;
+  private _onProgress?: (args: RelayerV2ProgressArgs) => void;
   private _requestMaxDurationInSecs: number;
   private _requestStartTimestamp: number | undefined;
   private _requestGlobalTimeoutID: any;
@@ -188,7 +177,7 @@ export class RelayerV2AsyncRequest<O extends RelayerV2Operation> {
   private static readonly MAX_GET_RETRY = 100;
   private static readonly MAX_POST_RETRY = 100;
 
-  constructor(params: RelayerV2AsyncRequestParams<O>) {
+  constructor(params: RelayerV2AsyncRequestParams) {
     if (
       params.relayerOperation !== 'INPUT_PROOF' &&
       params.relayerOperation !== 'PUBLIC_DECRYPT' &&
@@ -613,6 +602,8 @@ export class RelayerV2AsyncRequest<O extends RelayerV2Operation> {
       const responseStatus: RelayerV2GetResponseStatus =
         response.status as RelayerV2GetResponseStatus;
 
+      console.log(responseStatus);
+
       switch (responseStatus) {
         // RelayerV2GetResponseSucceeded
         case 200: {
@@ -621,16 +612,52 @@ export class RelayerV2AsyncRequest<O extends RelayerV2Operation> {
           try {
             if (this._relayerOperation === 'INPUT_PROOF') {
               assertIsRelayerV2GetResponseInputProofSucceeded(bodyJson, 'body');
+
+              // Async onProgress callback
+              this._postAsyncOnProgressCallback({
+                type: 'succeeded',
+                method: 'GET',
+                status: responseStatus,
+                jobId: this.jobId,
+                requestId: bodyJson.requestId,
+                operation: this._relayerOperation,
+                retryCount: this._retryCount,
+                result: bodyJson.result,
+              } satisfies RelayerV2ProgressSucceeded<'INPUT_PROOF'>);
             } else if (this._relayerOperation === 'PUBLIC_DECRYPT') {
               assertIsRelayerV2GetResponsePublicDecryptSucceeded(
                 bodyJson,
                 'body',
               );
+
+              // Async onProgress callback
+              this._postAsyncOnProgressCallback({
+                type: 'succeeded',
+                method: 'GET',
+                status: responseStatus,
+                jobId: this.jobId,
+                requestId: bodyJson.requestId,
+                operation: this._relayerOperation,
+                retryCount: this._retryCount,
+                result: bodyJson.result,
+              } satisfies RelayerV2ProgressSucceeded<'PUBLIC_DECRYPT'>);
             } else if (this._relayerOperation === 'USER_DECRYPT') {
               assertIsRelayerV2GetResponseUserDecryptSucceeded(
                 bodyJson,
                 'body',
               );
+
+              // Async onProgress callback
+              this._postAsyncOnProgressCallback({
+                type: 'succeeded',
+                method: 'GET',
+                status: responseStatus,
+                jobId: this.jobId,
+                requestId: bodyJson.requestId,
+                operation: this._relayerOperation,
+                retryCount: this._retryCount,
+                result: bodyJson.result,
+              } satisfies RelayerV2ProgressSucceeded<'USER_DECRYPT'>);
             }
           } catch (e) {
             throw new RelayerV2InvalidGetResponseError({
@@ -641,18 +668,6 @@ export class RelayerV2AsyncRequest<O extends RelayerV2Operation> {
               cause: e,
             });
           }
-
-          // Async onProgress callback
-          this._postAsyncOnProgressCallback({
-            type: 'succeeded',
-            method: 'GET',
-            status: responseStatus,
-            jobId: this.jobId,
-            requestId: bodyJson.requestId,
-            operation: this._relayerOperation as O,
-            retryCount: this._retryCount,
-            result: bodyJson.result,
-          } satisfies RelayerV2ProgressSucceeded<O>);
 
           // RelayerV2ResultPublicDecrypt
           // RelayerV2ResultUserDecrypt
@@ -693,6 +708,29 @@ export class RelayerV2AsyncRequest<O extends RelayerV2Operation> {
           // Wait if needed (minimum 1s)
           await this._setRetryAfterTimeout(retry_after_sec * 1000);
           continue;
+        }
+        case 400: {
+          // Abort
+          // Wrong jobId, incorrect format or unknown value etc.
+          const bodyJson = await this._getResponseJson(response, 'GET');
+
+          try {
+            assertIsRelayerV2ResponseFailedWithError400(bodyJson, 'body');
+          } catch (e) {
+            throw new RelayerV2InvalidGetResponseError({
+              status: response.status,
+              url: this._url,
+              jobId: this.jobId,
+              operation: this._relayerOperation,
+              cause: e,
+            });
+          }
+
+          this._throwRelayerV2ApiError({
+            status: responseStatus,
+            fetchMethod: 'GET',
+            relayerError: bodyJson.error,
+          });
         }
         case 404: {
           // Abort
@@ -1017,7 +1055,10 @@ export class RelayerV2AsyncRequest<O extends RelayerV2Operation> {
     // Debug
     this._assertCanContinueAfterAwait('GET');
 
-    this._trace('_fetchGet', `jobId=${this.jobId}, return response Ok`);
+    this._trace(
+      '_fetchGet',
+      `jobId=${this.jobId}, return response Ok, status=${response.status}`,
+    );
     return response;
   }
 
@@ -1255,12 +1296,20 @@ export class RelayerV2AsyncRequest<O extends RelayerV2Operation> {
   // Progress
   //////////////////////////////////////////////////////////////////////////////
 
-  private _postAsyncOnProgressCallback(args: RelayerV2ProgressArgs<O>) {
+  private _postAsyncOnProgressCallback(args: RelayerV2ProgressArgs) {
     const onProgressFunc = this._onProgress;
     if (onProgressFunc) {
-      Promise.resolve().then(() => {
-        // onProgressFunc() will execute asynchronously in the next cycle of
-        // the JavaScript event loop (the microtask queue).
+      // setTimeout(() => {
+      //   onProgressFunc(args);
+      // }, 0);
+
+      // onProgressFunc() will execute asynchronously in the next cycle of
+      // the JavaScript event loop (the microtask queue).
+      // Promise.resolve().then(() => {
+      //   onProgressFunc(args);
+      // });
+
+      queueMicrotask(() => {
         onProgressFunc(args);
       });
     }
