@@ -164,7 +164,7 @@ export type RelayerV2TerminateReason =
 export class RelayerV2AsyncRequest<O extends RelayerV2Operation> {
   private _jobId: string | undefined;
   private _state: RelayerV2AsyncRequestState;
-  private _relayerOperation: RelayerV2Operation;
+  private _relayerOperation: O;
   private _publicAPINoReentrancy: boolean;
   private _internalAbortController: AbortController | undefined;
   private _internalAbortSignal: AbortSignal | undefined;
@@ -643,18 +643,16 @@ export class RelayerV2AsyncRequest<O extends RelayerV2Operation> {
           }
 
           // Async onProgress callback
-          // this._postAsyncOnProgressCallback({
-          //   type: 'succeeded',
-          //   method: 'GET',
-          //   status: responseStatus,
-          //   jobId: this.jobId,
-          //   requestId: bodyJson.request_id,
-          //   operation: this._relayerOperation,
-          //   retryCount: this._retryCount,
-          //   result: bodyJson.result,
-          // } satisfies RelayerV2ProgressSucceeded<
-          //   typeof this._relayerOperation
-          // >);
+          this._postAsyncOnProgressCallback({
+            type: 'succeeded',
+            method: 'GET',
+            status: responseStatus,
+            jobId: this.jobId,
+            requestId: bodyJson.request_id,
+            operation: this._relayerOperation as O,
+            retryCount: this._retryCount,
+            result: bodyJson.result,
+          } satisfies RelayerV2ProgressSucceeded<O>);
 
           // RelayerV2ResultPublicDecrypt
           // RelayerV2ResultUserDecrypt

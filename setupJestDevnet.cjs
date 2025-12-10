@@ -4,7 +4,7 @@ const fs = require('fs');
 global.TFHE = require('node-tfhe');
 global.TKMS = require('node-tkms');
 
-const parsedEnv = dotenv.parse(fs.readFileSync('.env.local'));
+const parsedEnv = dotenv.parse(fs.readFileSync('.env.devnet'));
 
 global.TEST_FHEVM_CONFIG = {
   aclContractAddress: parsedEnv['ACL_CONTRACT_ADDRESS'],

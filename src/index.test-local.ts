@@ -13,29 +13,17 @@ import type { FhevmInstanceConfig } from './config';
 // npx jest --config jest.local.config.cjs --colors --passWithNoTests ./src/index.test-local.ts
 
 // curl http://localhost:8545 -X POST -H "Content-Type: application/json" --data '{"method":"eth_chainId","params":[],"id":1,"jsonrpc":"2.0"}'
-export const SepoliaConfigLocalV1: FhevmInstanceConfig = {
-  // ACL_CONTRACT_ADDRESS (FHEVM Host chain)
-  aclContractAddress: '0x05fD9B5EFE0a996095f42Ed7e77c390810CF660c',
-  // KMS_VERIFIER_CONTRACT_ADDRESS (FHEVM Host chain)
-  kmsContractAddress: '0xa1880e99d86F081E8D3868A8C4732C8f65dfdB11',
-  // INPUT_VERIFIER_CONTRACT_ADDRESS (FHEVM Host chain)
-  inputVerifierContractAddress: '0x857Ca72A957920Fa0FB138602995839866Bd4005',
-  // DECRYPTION_ADDRESS (Gateway chain)
-  verifyingContractAddressDecryption:
-    '0x35760912360E875DA50D40a74305575c23D55783',
-  // INPUT_VERIFICATION_ADDRESS (Gateway chain)
-  verifyingContractAddressInputVerification:
-    '0x1ceFA8E3F3271358218B52c33929Cf76078004c1',
-  // FHEVM Host chain id
-  chainId: 31337,
-  // Gateway chain id
-  gatewayChainId: 54321,
-  // Optional RPC provider to host chain
-  network: 'http://localhost:8545',
-  // Relayer URL
-  relayerUrl: 'http://localhost:3000',
-} as const;
-Object.freeze(SepoliaConfigLocalV1);
+
+const SepoliaConfigLocal: FhevmInstanceConfig = (global as any)
+  .TEST_FHEVM_CONFIG;
+const SepoliaConfigLocalV1: FhevmInstanceConfig = {
+  ...SepoliaConfigLocal,
+  relayerUrl: SepoliaConfigLocal.relayerUrl + '/v1',
+};
+const SepoliaConfigLocalV2: FhevmInstanceConfig = {
+  ...SepoliaConfigLocal,
+  relayerUrl: SepoliaConfigLocal.relayerUrl + '/v2',
+};
 
 // jest.mock('ethers', () => ({
 //   JsonRpcProvider: () => ({
@@ -91,7 +79,23 @@ describe('index', () => {
     config = SepoliaConfigLocalV1;
   });
 
-  it('xxx v1: createInstance', async () => {
+  it('xxx v1: aa', async () => {
+    console.log(SepoliaConfigLocalV1.relayerUrl);
+    console.log(SepoliaConfigLocalV2.relayerUrl);
+    // const instance = await createInstance(config);
+    // expect(instance.createEIP712).toBeDefined();
+    // expect(instance.generateKeypair).toBeDefined();
+    // expect(instance.createEncryptedInput).toBeDefined();
+    // expect(instance.getPublicKey()).toStrictEqual({
+    //   publicKey: assetPublicKeyBytes,
+    //   publicKeyId: assetPublicKeyId,
+    // });
+    // expect(instance.getPublicParams(2048)?.publicParamsId).toBe(
+    //   assetPublicParamsId,
+    // );
+  });
+
+  it('v1: createInstance', async () => {
     const instance = await createInstance(config);
     expect(instance.createEIP712).toBeDefined();
     expect(instance.generateKeypair).toBeDefined();

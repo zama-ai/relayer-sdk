@@ -1,10 +1,10 @@
 import { SepoliaConfig } from '../..';
 import type { RelayerInputProofPayload } from '../../relayer/fetchRelayer';
-import { AbstractRelayerProvider } from '../AbstractRelayerProvider';
 import { createRelayerProvider } from '../createRelayerFhevm';
 import fetchMock from 'fetch-mock';
 import { RelayerV2InvalidPostResponseError } from './errors/RelayerV2InvalidPostResponseError';
 import { InvalidPropertyError } from '../../errors/InvalidPropertyError';
+import { RelayerV2Provider } from './RelayerV2Provider';
 
 // Jest Command line
 // =================
@@ -42,7 +42,7 @@ const consoleLogSpy = jest
   });
 
 describe('RelayerV2Provider', () => {
-  let relayerProvider: AbstractRelayerProvider;
+  let relayerProvider: RelayerV2Provider;
 
   beforeEach(() => {
     fetchMock.removeRoutes();
@@ -190,7 +190,7 @@ describe('RelayerV2Provider', () => {
     );
   });
 
-  it('v2:input-proof: 202 - status:queued, result ok', async () => {
+  it('xxx v2:input-proof: 202 - status:queued, result ok', async () => {
     post202({
       status: 'queued',
       result: { job_id: '123', retry_after_seconds: 3 },
@@ -206,6 +206,11 @@ describe('RelayerV2Provider', () => {
       headers: { 'Content-Type': 'application/json' },
     });
 
-    await relayerProvider.fetchPostInputProof(payload);
+    await relayerProvider.fetchPostInputProof(payload, undefined, {
+      onProgress: (args) => {
+        console.log('Hey! ' + args.type);
+        console.log('Hey! ' + args.method);
+      },
+    });
   });
 });
