@@ -1,5 +1,5 @@
 import { userDecryptRequest } from './userDecrypt';
-import fetchMock from '@fetch-mock/core';
+import fetchMock from 'fetch-mock';
 import { ethers } from 'ethers';
 import {
   fetchRelayerJsonRpcPost,
@@ -8,9 +8,16 @@ import {
 import { getErrorCause, getErrorCauseErrorMessage } from './error';
 import { createRelayerProvider } from '../relayer-provider/createRelayerFhevm';
 
+// Jest Command line
+// =================
+// npx jest --colors --passWithNoTests --coverage ./src/relayer/userDecrypt.test.ts --collectCoverageFrom=./src/relayer/userDecrypt.ts --testNamePattern=xxx
 // npx jest --colors --passWithNoTests --coverage ./src/relayer/userDecrypt.test.ts --collectCoverageFrom=./src/relayer/userDecrypt.ts
 
-const relayerProvider = createRelayerProvider('https://test-fhevm-relayer/v1');
+const defaultRelayerVersion = 1;
+const relayerProvider = createRelayerProvider(
+  'https://test-fhevm-relayer',
+  defaultRelayerVersion,
+);
 const RELAYER_USER_DECRYPT_URL = relayerProvider.userDecrypt;
 
 const dummyRelayerUserDecryptPayload: RelayerUserDecryptPayload = {
@@ -82,13 +89,27 @@ describe('fetchRelayerUserDecrypt', () => {
         'Error: User decrypt failed: relayer respond with HTTP code 403',
       );
       const cause = getErrorCause(e);
-      expect(cause).toEqual({
-        code: 'RELAYER_FETCH_ERROR',
-        operation: 'USER_DECRYPT',
-        status: 403,
-        statusText: 'Forbidden',
-        url: RELAYER_USER_DECRYPT_URL,
-      });
+      expect(cause).not.toBe(null);
+      expect(typeof cause).toBe('object');
+
+      const c = cause as any;
+      expect(c).toEqual(
+        expect.objectContaining({
+          code: 'RELAYER_FETCH_ERROR',
+          operation: 'USER_DECRYPT',
+          status: 403,
+          statusText: 'Forbidden',
+          url: RELAYER_USER_DECRYPT_URL,
+          responseJson: '',
+        }),
+      );
+      expect(c.response).toEqual(
+        expect.objectContaining({
+          status: 403,
+          statusText: 'Forbidden',
+          ok: false,
+        }),
+      );
     }
   });
 
@@ -100,6 +121,10 @@ describe('fetchRelayerUserDecrypt', () => {
         'Content-Type': 'text/plain',
       },
     });
+
+    expect(RELAYER_USER_DECRYPT_URL).toBe(
+      'https://test-fhevm-relayer/v1/user-decrypt',
+    );
 
     fetchMock.postOnce(RELAYER_USER_DECRYPT_URL, response);
 
@@ -114,13 +139,27 @@ describe('fetchRelayerUserDecrypt', () => {
         'Error: Relayer rate limit exceeded: Please wait and try again later.',
       );
       const cause = getErrorCause(e);
-      expect(cause).toEqual({
-        code: 'RELAYER_FETCH_ERROR',
-        operation: 'USER_DECRYPT',
-        status: 429,
-        statusText: 'Rate Limit',
-        url: RELAYER_USER_DECRYPT_URL,
-      });
+      expect(cause).not.toBe(null);
+      expect(typeof cause).toBe('object');
+
+      const c = cause as any;
+      expect(c).toEqual(
+        expect.objectContaining({
+          code: 'RELAYER_FETCH_ERROR',
+          operation: 'USER_DECRYPT',
+          status: 429,
+          statusText: 'Rate Limit',
+          url: RELAYER_USER_DECRYPT_URL,
+          responseJson: '',
+        }),
+      );
+      expect(c.response).toEqual(
+        expect.objectContaining({
+          status: 429,
+          statusText: 'Rate Limit',
+          ok: false,
+        }),
+      );
     }
   });
 
@@ -140,7 +179,11 @@ describe('fetchRelayerUserDecrypt', () => {
       expect(String(e)).toBe(
         "Error: User decrypt failed: Relayer didn't respond",
       );
+
       const cause = getErrorCause(e);
+      expect(cause).not.toBe(null);
+      expect(typeof cause).toBe('object');
+
       expect(cause).toEqual({
         code: 'RELAYER_UNKNOWN_ERROR',
         operation: 'USER_DECRYPT',
@@ -165,11 +208,17 @@ describe('fetchRelayerUserDecrypt', () => {
         "Error: User decrypt failed: Relayer didn't return a JSON",
       );
       const cause = getErrorCause(e);
-      expect(cause).toEqual({
-        code: 'RELAYER_NO_JSON_ERROR',
-        operation: 'USER_DECRYPT',
-        error: new Error(),
-      });
+      expect(cause).not.toBe(null);
+      expect(typeof cause).toBe('object');
+
+      const c = cause as any;
+      expect(c).toEqual(
+        expect.objectContaining({
+          code: 'RELAYER_NO_JSON_ERROR',
+          operation: 'USER_DECRYPT',
+          error: new Error(),
+        }),
+      );
       expect(String(getErrorCauseErrorMessage(e))).toBe(
         'Unexpected token \'D\', "DeadBeef" is not valid JSON',
       );
@@ -193,6 +242,9 @@ describe('fetchRelayerUserDecrypt', () => {
         'Error: User decrypt failed: Relayer returned an unexpected JSON response',
       );
       const cause = getErrorCause(e);
+      expect(cause).not.toBe(null);
+      expect(typeof cause).toBe('object');
+
       expect(cause).toEqual({
         code: 'RELAYER_UNEXPECTED_JSON_ERROR',
         operation: 'USER_DECRYPT',

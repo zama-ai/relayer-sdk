@@ -1,4 +1,4 @@
-import type { Auth } from '../auth';
+import type { FhevmInstanceOptions } from '../config';
 import type {
   RelayerFetchResponseJson,
   RelayerInputProofPayload,
@@ -6,6 +6,11 @@ import type {
   RelayerPublicDecryptPayload,
   RelayerUserDecryptPayload,
 } from '../relayer/fetchRelayer';
+
+export type RelayerProviderFetchOptions<T> = {
+  signal?: AbortSignal;
+  onProgress?: (args: T) => void;
+};
 
 export abstract class AbstractRelayerProvider {
   private readonly _relayerUrl: string;
@@ -34,23 +39,17 @@ export abstract class AbstractRelayerProvider {
   public abstract fetchGetKeyUrl(): Promise<RelayerKeyUrlResponse>;
   public abstract fetchPostInputProof(
     payload: RelayerInputProofPayload,
-    options?: {
-      auth?: Auth;
-      signal?: AbortSignal;
-    },
+    instanceOptions?: FhevmInstanceOptions,
+    fetchOptions?: RelayerProviderFetchOptions<unknown>,
   ): Promise<RelayerFetchResponseJson>;
   public abstract fetchPostPublicDecrypt(
     payload: RelayerPublicDecryptPayload,
-    options?: {
-      auth?: Auth;
-      signal?: AbortSignal;
-    },
+    instanceOptions?: FhevmInstanceOptions,
+    fetchOptions?: RelayerProviderFetchOptions<unknown>,
   ): Promise<RelayerFetchResponseJson>;
   public abstract fetchPostUserDecrypt(
     payload: RelayerUserDecryptPayload,
-    options?: {
-      auth?: Auth;
-      signal?: AbortSignal;
-    },
+    instanceOptions?: FhevmInstanceOptions,
+    fetchOptions?: RelayerProviderFetchOptions<unknown>,
   ): Promise<RelayerFetchResponseJson>;
 }

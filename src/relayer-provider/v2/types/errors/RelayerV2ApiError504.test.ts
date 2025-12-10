@@ -1,6 +1,10 @@
 import { InvalidPropertyError } from '../../../../errors/InvalidPropertyError';
 import { assertIsRelayerV2ApiError504 } from './RelayerV2ApiError504';
 
+// Jest Command line
+// =================
+// npx jest --colors --passWithNoTests ./src/relayer-provider/v2/types/errors/RelayerV2ApiError504.test.ts
+// npx jest --colors --passWithNoTests ./src/relayer-provider/v2/types/errors/RelayerV2ApiError504.test.ts --testNamePattern=xxx
 // npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v2/types/errors/RelayerV2ApiError504.test.ts --collectCoverageFrom=./src/relayer-provider/v2/types/errors/RelayerV2ApiError504.ts
 
 describe('RelayerV2ApiError504', () => {

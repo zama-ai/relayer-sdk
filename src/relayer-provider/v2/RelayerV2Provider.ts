@@ -1,5 +1,5 @@
+import { Prettify } from '../../utils/types';
 import { ensureError } from '../../errors/utils';
-import { type Auth } from '../../auth';
 import {
   fetchRelayerGet,
   type RelayerPublicDecryptPayload,
@@ -7,11 +7,20 @@ import {
   type RelayerInputProofPayload,
   type RelayerFetchResponseJson,
 } from '../../relayer/fetchRelayer';
-import { AbstractRelayerProvider } from '../AbstractRelayerProvider';
+import {
+  AbstractRelayerProvider,
+  RelayerProviderFetchOptions,
+} from '../AbstractRelayerProvider';
 import { RelayerV2GetKeyUrlInvalidResponseError } from './errors/RelayerV2GetKeyUrlError';
-import { RelayerV2AsyncRequest } from './RelayerV2AsyncRequest';
+import {
+  RelayerV2AsyncRequest,
+  RelayerV2ProgressArgsInputProof,
+  RelayerV2ProgressArgsPublicDecrypt,
+  RelayerV2ProgressArgsUserDecrypt,
+} from './RelayerV2AsyncRequest';
 import { assertIsRelayerV2GetResponseKeyUrl } from './types/RelayerV2GetResponseKeyUrl';
 import type { RelayerV2GetResponseKeyUrl } from './types/types';
+import type { FhevmInstanceOptions } from '../../config';
 
 export class RelayerV2Provider extends AbstractRelayerProvider {
   constructor(relayerUrl: string) {
@@ -36,77 +45,57 @@ export class RelayerV2Provider extends AbstractRelayerProvider {
     return response;
   }
 
-  public async fetchPostInputProof(
+  public override async fetchPostInputProof(
     payload: RelayerInputProofPayload,
-    options?: {
-      auth?: Auth;
-    },
+    instanceOptions?: FhevmInstanceOptions,
+    fetchOptions?: Prettify<
+      RelayerProviderFetchOptions<RelayerV2ProgressArgsInputProof>
+    >,
   ) {
     const request = new RelayerV2AsyncRequest({
       relayerOperation: 'INPUT_PROOF',
       url: this.inputProof,
       payload,
-      options,
+      instanceOptions,
+      ...fetchOptions,
     });
     const response = await request.run();
     return { response } as RelayerFetchResponseJson;
-
-    // await this._fetchPost(this.inputProof, payload, options);
-    // return { response: {} } as RelayerFetchResponseJson;
-    // const json = await fetchRelayerJsonRpcPost(
-    //   'INPUT_PROOF',
-    //   this.inputProof,
-    //   payload,
-    //   options,
-    // );
-    // return json;
   }
 
-  public async fetchPostPublicDecrypt(
+  public override async fetchPostPublicDecrypt(
     payload: RelayerPublicDecryptPayload,
-    options?: {
-      auth?: Auth;
-    },
+    instanceOptions?: FhevmInstanceOptions,
+    fetchOptions?: Prettify<
+      RelayerProviderFetchOptions<RelayerV2ProgressArgsPublicDecrypt>
+    >,
   ) {
     const request = new RelayerV2AsyncRequest({
       relayerOperation: 'PUBLIC_DECRYPT',
       url: this.publicDecrypt,
       payload,
-      options,
+      instanceOptions,
+      ...fetchOptions,
     });
     const response = await request.run();
     return { response } as RelayerFetchResponseJson;
-
-    // const json = await fetchRelayerJsonRpcPost(
-    //   'PUBLIC_DECRYPT',
-    //   this.publicDecrypt,
-    //   payload,
-    //   options,
-    // );
-    // return json;
   }
 
-  public async fetchPostUserDecrypt(
+  public override async fetchPostUserDecrypt(
     payload: RelayerUserDecryptPayload,
-    options?: {
-      auth?: Auth;
-    },
+    instanceOptions?: FhevmInstanceOptions,
+    fetchOptions?: Prettify<
+      RelayerProviderFetchOptions<RelayerV2ProgressArgsUserDecrypt>
+    >,
   ) {
     const request = new RelayerV2AsyncRequest({
       relayerOperation: 'USER_DECRYPT',
       url: this.userDecrypt,
       payload,
-      options,
+      instanceOptions,
+      ...fetchOptions,
     });
     const response = await request.run();
     return { response } as RelayerFetchResponseJson;
-
-    // const json = await fetchRelayerJsonRpcPost(
-    //   'USER_DECRYPT',
-    //   this.userDecrypt,
-    //   payload,
-    //   options,
-    // );
-    // return json;
   }
 }

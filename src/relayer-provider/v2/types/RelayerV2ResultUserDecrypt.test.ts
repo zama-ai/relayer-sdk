@@ -1,6 +1,9 @@
 import { InvalidPropertyError } from '../../../errors/InvalidPropertyError';
 import { assertIsRelayerV2ResultUserDecrypt } from './RelayerV2ResultUserDecrypt';
 
+// Jest Command line
+// =================
+// npx jest --colors --passWithNoTests ./src/relayer-provider/v2/types/RelayerV2ResultUserDecrypt.test.ts
 // npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v2/types/RelayerV2ResultUserDecrypt.test.ts --collectCoverageFrom=./src/relayer-provider/v2/types/RelayerV2ResultUserDecrypt.ts
 
 describe('RelayerV2ResultUserDecrypt', () => {
@@ -8,7 +11,11 @@ describe('RelayerV2ResultUserDecrypt', () => {
     // True
     expect(() =>
       assertIsRelayerV2ResultUserDecrypt(
-        { payloads: ['deadbeef'], signatures: ['deadbeef'] },
+        {
+          payloads: ['deadbeef'],
+          signatures: ['deadbeef'],
+          extra_data: '0x00',
+        },
         'Foo',
       ),
     ).not.toThrow();
@@ -95,6 +102,19 @@ describe('RelayerV2ResultUserDecrypt', () => {
         index: 0,
         expectedType: 'BytesHexNo0x',
         type: 'string',
+      }),
+    );
+
+    expect(() =>
+      assertIsRelayerV2ResultUserDecrypt(
+        { payloads: ['deadbeef'], signatures: ['deadbeef'] },
+        'Foo',
+      ),
+    ).toThrow(
+      InvalidPropertyError.missingProperty({
+        objName: 'Foo',
+        property: 'extra_data',
+        expectedType: 'BytesHex',
       }),
     );
   });

@@ -1,6 +1,6 @@
 import { SepoliaConfig } from '../..';
 import { createRelayerFhevm } from '../createRelayerFhevm';
-import fetchMock from '@fetch-mock/core';
+import fetchMock from 'fetch-mock';
 import {
   publicKey as assetPublicKey,
   publicParams as assetPublicParams,
@@ -11,6 +11,10 @@ import {
 } from '../../utils';
 import { RelayerV2Fhevm } from './RelayerV2Fhevm';
 
+// Jest Command line
+// =================
+// npx jest --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Fhevm.test.ts
+// npx jest --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Fhevm.test.ts --testNamePattern=xxx
 // npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v2/RelayerV2Fhevm.test.ts --collectCoverageFrom=./src/relayer-provider/v2/RelayerV2Fhevm.ts
 
 // curl https://relayer.testnet.zama.org/v2/keyurl

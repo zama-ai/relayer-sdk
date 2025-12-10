@@ -8,9 +8,9 @@ import {
   getHandleType,
 } from './decryptUtils';
 import type { RelayerPublicDecryptPayload } from './fetchRelayer';
-import type { Auth } from '../auth';
 import { ensure0x } from '../utils/string';
 import { AbstractRelayerProvider } from '../relayer-provider/AbstractRelayerProvider';
+import type { FhevmInstanceOptions } from '../config';
 
 const aclABI = [
   'function isAllowedForDecryption(bytes32 handle) view returns (bool)',
@@ -200,13 +200,11 @@ export const publicDecryptRequest =
     //relayerUrl: string,
     relayerProvider: AbstractRelayerProvider,
     provider: ethers.JsonRpcProvider | ethers.BrowserProvider,
-    instanceOptions?: {
-      auth?: Auth;
-    },
+    instanceOptions?: FhevmInstanceOptions,
   ) =>
   async (
     _handles: (Uint8Array | string)[],
-    options?: { auth?: Auth },
+    options?: FhevmInstanceOptions,
   ): Promise<PublicDecryptResults> => {
     const extraData: `0x${string}` = '0x00';
     const acl = new ethers.Contract(aclContractAddress, aclABI, provider);

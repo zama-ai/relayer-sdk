@@ -4,7 +4,11 @@ import { SepoliaConfig } from '../..';
 import { RelayerInputProofPayload } from '../../relayer/fetchRelayer';
 import { RelayerV2ApiError500, RelayerV2ResponseFailed } from './types/types';
 
-// npx jest --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2AsyncRequest.test.ts --testNamePattern=BBB
+// Jest Command line
+// =================
+// npx jest --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2AsyncRequest.test.ts --testNamePattern=xxx
+// npx jest --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2AsyncRequest.test.ts --testNamePattern=xxx --detectOpenHandles
+// npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v2/RelayerV2AsyncRequest.test.ts --collectCoverageFrom=./src/relayer-provider/v2/RelayerV2AsyncRequest.ts
 
 const SepoliaConfigeRelayerUrl = SepoliaConfig.relayerUrl!;
 const requestUrl = `${SepoliaConfigeRelayerUrl}/v2/input-proof`;
@@ -33,18 +37,43 @@ const consoleLogSpy = jest
     process.stdout.write(`${message}\n`);
   });
 
-describe('RelayerV2Request', () => {
-  let relayerRequest: RelayerV2AsyncRequest;
+describe("RelayerV2Request<'INPUT_PROOF'>", () => {
+  let relayerRequest: RelayerV2AsyncRequest<'INPUT_PROOF'>;
+  let start: number;
+
+  function trace(message: string) {
+    console.log(`[🚚 Jest - ${Date.now() - start}ms] ${message}`);
+  }
 
   beforeEach(() => {
     fetchMock.removeRoutes();
+    start = Date.now();
   });
 
   afterAll(() => {
     consoleLogSpy.mockRestore();
   });
 
-  it('v2: BBB long post + cancel', async () => {
+  it('v2: cancel before run', async () => {
+    relayerRequest = new RelayerV2AsyncRequest({
+      relayerOperation: 'INPUT_PROOF',
+      url: requestUrl,
+      payload,
+      onProgress: () => {
+        trace('onProgress()');
+      },
+    });
+
+    relayerRequest.cancel();
+
+    trace(`relayerRequest.run() enter...`);
+    await expect(() => relayerRequest.run()).rejects.toThrow(
+      'Relayer request already terminated',
+    );
+    trace(`relayerRequest.run() done.`);
+  });
+
+  it('v2: cancel before first fetch completed', async () => {
     const error: RelayerV2ApiError500 = {
       label: 'internal_server_error',
       message: 'foo',
@@ -65,7 +94,8 @@ describe('RelayerV2Request', () => {
         };
       },
       {
-        delay: 20000,
+        // User must wait 2s before receiving fetch reply
+        delay: 2000,
       },
     );
 
@@ -74,27 +104,29 @@ describe('RelayerV2Request', () => {
       url: requestUrl,
       payload,
       onProgress: () => {
-        console.log('[🚚 Jest] onProgress()');
+        trace('onProgress()');
       },
     });
 
-    console.log('[🚚 Jest] relayerRequest.run() enter...');
+    trace(`relayerRequest.run() enter...`);
+    expect(relayerRequest.running).toBe(false);
     const p = relayerRequest.run();
-    console.log('[🚚 Jest] relayerRequest.run() done.');
+    expect(relayerRequest.running).toBe(true);
+    trace(`relayerRequest.run() done.`);
 
     let runThen = false;
     let runCatch = false;
     let runCatchReason = undefined;
-    console.log('[🚚 Jest] p.then().catch() enter...');
+    trace('p.then().catch() enter...');
     p.then(() => {
-      console.log('[🚚 Jest]   -> in p.then()');
+      trace('   -> in p.then()');
       runThen = true;
     }).catch((reason) => {
-      console.log('[🚚 Jest]   -> in p.catch()');
+      trace('   -> in p.catch()');
       runCatch = true;
       runCatchReason = reason;
     });
-    console.log('[🚚 Jest] p.then().catch() done.');
+    trace('p.then().catch() done.');
 
     await sleep(500);
 
@@ -102,15 +134,21 @@ describe('RelayerV2Request', () => {
     expect(runCatch).toBe(false);
     expect(runThen).toBe(false);
 
-    console.log('[🚚 Jest] relayerRequest.cancel() enter...');
+    trace('relayerRequest.cancel() enter...');
     relayerRequest.cancel();
-    console.log('[🚚 Jest] relayerRequest.cancel() done.');
+    trace('relayerRequest.cancel() done.');
 
-    expect(relayerRequest.fetching).toBe(true);
-    expect(relayerRequest.canceled).toBe(true);
-    expect(relayerRequest.terminated).toBe(true);
+    expect(relayerRequest.state).toEqual({
+      running: true,
+      canceled: true,
+      terminated: true,
+      succeeded: false,
+      aborted: true,
+      failed: false,
+      fetching: true,
+    });
 
-    console.log('[🚚 Jest] wait for end of test...');
+    trace(`wait for end of test...`);
     while (!(runCatch || runThen)) {
       await sleep(200);
     }
@@ -120,6 +158,25 @@ describe('RelayerV2Request', () => {
     expect(runThen).toBe(false);
     expect((runCatchReason as any).name).toBe('AbortError');
 
-    console.log('[🚚 Jest] test ended.');
+    expect(relayerRequest.state).toEqual({
+      running: true,
+      canceled: true,
+      terminated: true,
+      succeeded: false,
+      aborted: true,
+      failed: true,
+      fetching: false,
+    });
+
+    trace('test ended.');
+
+    await fetchMock.callHistory.flush(true);
+
+    // Important node!
+    // ===============
+    // Wait for fetchMock delay to expire.
+    // Otherwise, jest will detect an unreleased timer handle coming
+    // from fetch-mock (the timer used internaly to simulate fetch delay)
+    await sleep(2000);
   });
 });

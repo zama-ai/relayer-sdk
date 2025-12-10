@@ -16,6 +16,11 @@ export function isUint(value: any): value is Uint {
   return false;
 }
 
+export function uintToHex(num: number): `0x${string}` {
+  let hex = num.toString(16);
+  return hex.length % 2 ? `0x0${hex}` : `0x${hex}`;
+}
+
 export function assertIsUint(value: unknown): asserts value is Uint {
   if (!isUint(value)) {
     throw new InvalidTypeError({

@@ -43,20 +43,27 @@ export class InvalidPropertyError extends RelayerBaseError {
     expectedValue?: string | string[];
     expectedType: ExpectedType;
   }) {
-    let message =
+    let missing = type === 'undefined' && expectedValue !== undefined;
+
+    const varname =
       index !== undefined
-        ? `InvalidPropertyError ${objName}.${property}[${index}]`
-        : `InvalidPropertyError ${objName}.${property}`;
+        ? `${objName}.${property}[${index}]`
+        : `${objName}.${property}`;
+
+    let message = missing
+      ? `InvalidPropertyError: Missing '${varname}'`
+      : `InvalidPropertyError: ${varname}`;
+
     if (type === expectedType) {
       if (value !== undefined) {
         message += ` unexpected value ${value}`;
       }
     } else {
-      if (type === 'undefined' && expectedValue !== undefined) {
+      if (missing) {
         if (Array.isArray(expectedValue)) {
           expectedValue = expectedValue.join('|');
         }
-        message += ` expected value ${expectedValue}`;
+        message += `, expected '${varname}: ${expectedValue}'.`;
       } else if (expectedType !== 'unknown' && type !== 'unknown') {
         message += ` not a ${expectedType}`;
         if (type) {

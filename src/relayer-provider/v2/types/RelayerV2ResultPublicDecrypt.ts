@@ -9,7 +9,7 @@ export function assertIsRelayerV2ResultPublicDecrypt(
   value: unknown,
   name: string,
 ): asserts value is RelayerV2ResultPublicDecrypt {
-  assertRecordBytesHexProperty(value, 'extra_data', name);
   assertRecordBytesHexNo0xArrayProperty(value, 'signatures', name);
   assertRecordBytesHexNo0xProperty(value, 'decrypted_value', name);
+  assertRecordBytesHexProperty(value, 'extra_data', name);
 }

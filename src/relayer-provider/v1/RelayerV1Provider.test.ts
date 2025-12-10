@@ -1,6 +1,6 @@
 import { SepoliaConfig } from '../..';
 import { createRelayerProvider } from '../createRelayerFhevm';
-import fetchMock from '@fetch-mock/core';
+import fetchMock from 'fetch-mock';
 import {
   publicKey as assetPublicKey,
   publicParams as assetPublicParams,
@@ -11,6 +11,9 @@ import {
   SERIALIZED_SIZE_LIMIT_PK,
 } from '../../utils';
 
+// Jest Command line
+// =================
+// npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v1/RelayerV1Provider.test.ts --collectCoverageFrom=./src/relayer-provider/v1/RelayerV1Provider.ts --testNamePattern=xxx
 // npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v1/RelayerV1Provider.test.ts --collectCoverageFrom=./src/relayer-provider/v1/RelayerV1Provider.ts
 
 // curl https://relayer.testnet.zama.org/v1/keyurl
@@ -45,7 +48,7 @@ describe('RelayerV1Provider', () => {
   beforeEach(() => {
     fetchMock.removeRoutes();
     const SepoliaConfigeRelayerUrl = SepoliaConfig.relayerUrl!;
-    relayerProvider = createRelayerProvider(`${SepoliaConfigeRelayerUrl}`);
+    relayerProvider = createRelayerProvider(`${SepoliaConfigeRelayerUrl}`, 1);
     expect(relayerProvider.version).toBe(1);
     expect(relayerProvider.url).toBe(`${SepoliaConfigeRelayerUrl}/v1`);
   });
@@ -54,7 +57,7 @@ describe('RelayerV1Provider', () => {
     fetchMock.get(`${relayerUrlV1}/keyurl`, relayerV1ResponseGetKeyUrl);
 
     const SepoliaConfigeRelayerUrl = SepoliaConfig.relayerUrl!;
-    const relayerProvider = createRelayerProvider(SepoliaConfigeRelayerUrl);
+    const relayerProvider = createRelayerProvider(SepoliaConfigeRelayerUrl, 1);
     expect(relayerProvider.version).toBe(1);
     const response = await relayerProvider.fetchGetKeyUrl();
     expect(response).toEqual(relayerV1ResponseGetKeyUrl);
@@ -77,7 +80,7 @@ describe('RelayerV1Provider', () => {
     );
 
     const SepoliaConfigeRelayerUrl = SepoliaConfig.relayerUrl!;
-    const relayerProvider = createRelayerProvider(SepoliaConfigeRelayerUrl);
+    const relayerProvider = createRelayerProvider(SepoliaConfigeRelayerUrl, 1);
     expect(relayerProvider.version).toBe(1);
     const response = await relayerProvider.fetchGetKeyUrl();
     expect(response).toEqual(relayerV1ResponseGetKeyUrl);

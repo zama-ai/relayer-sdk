@@ -4,6 +4,7 @@
 
 import { Bytes32Hex, BytesHex, BytesHexNo0x } from 'src/utils/bytes';
 
+// Do not add KEYURL here!
 export type RelayerV2OperationResult =
   | RelayerV2OperationResultMap['INPUT_PROOF']
   | RelayerV2OperationResultMap['PUBLIC_DECRYPT']
@@ -64,7 +65,7 @@ export type RelayerV2ResponseQueuedOrFailed =
 
 export type RelayerV2ResponseFailed = {
   status: 'failed';
-  request_id?: string; // Optional request id field. Would be empty in case of 429 from Cloudflare/Kong. In other cases, use it for identifying the request and asking support
+  requestId?: string; // Optional request id field. Would be empty in case of 429 from Cloudflare/Kong. In other cases, use it for identifying the request and asking support
   error: RelayerV2ApiError;
 };
 
@@ -180,6 +181,7 @@ export type RelayerV2ResultUserDecrypt = {
   payloads: BytesHexNo0x[];
   // Hex encoded key without 0x prefix. (len=130)
   signatures: BytesHexNo0x[];
+  extra_data: BytesHex;
 };
 
 export type RelayerV2ResultInputProof =
@@ -188,11 +190,11 @@ export type RelayerV2ResultInputProof =
 
 export type RelayerV2ResultInputProofAcceped = {
   accepted: true;
-  extra_data: BytesHex;
   // Ordered List of hex encoded handles with 0x prefix.
   handles: Bytes32Hex[];
   // Attestation signatures for Input verification for the ordered list of handles with 0x prefix.
   signatures: BytesHex[];
+  extra_data: BytesHex;
 };
 
 export type RelayerV2ResultInputProofRejected = {

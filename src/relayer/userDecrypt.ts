@@ -9,8 +9,8 @@ import {
   HandleContractPairRelayer,
   RelayerUserDecryptPayload,
 } from './fetchRelayer';
-import { Auth } from '../auth';
 import { AbstractRelayerProvider } from '../relayer-provider/AbstractRelayerProvider';
+import type { FhevmInstanceOptions } from '../config';
 
 // Add type checking
 const getAddress = (value: string): `0x${string}` =>
@@ -101,7 +101,7 @@ export const userDecryptRequest =
     //relayerUrl: string,
     relayerProvider: AbstractRelayerProvider,
     provider: ethers.JsonRpcProvider | ethers.BrowserProvider,
-    instanceOptions?: { auth?: Auth },
+    instanceOptions?: FhevmInstanceOptions,
   ) =>
   async (
     _handles: HandleContractPair[],
@@ -112,7 +112,7 @@ export const userDecryptRequest =
     userAddress: string,
     startTimestamp: string | number,
     durationDays: string | number,
-    options?: { auth?: Auth },
+    options?: FhevmInstanceOptions,
   ): Promise<UserDecryptResults> => {
     const extraData: `0x${string}` = '0x00';
     let pubKey;

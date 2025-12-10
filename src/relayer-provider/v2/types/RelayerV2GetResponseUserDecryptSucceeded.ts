@@ -9,5 +9,6 @@ export function assertIsRelayerV2GetResponseUserDecryptSucceeded(
 ): asserts value is RelayerV2GetResponseUserDecryptSucceeded {
   assertNonNullableRecordProperty(value, 'result', name);
   assertRecordStringProperty(value, 'status', name, 'succeeded');
+  assertRecordStringProperty(value, 'request_id', name);
   assertIsRelayerV2ResultUserDecrypt(value.result, `${name}.result`);
 }

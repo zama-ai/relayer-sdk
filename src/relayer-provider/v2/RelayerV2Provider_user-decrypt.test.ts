@@ -1,5 +1,5 @@
 import { SepoliaConfig } from '../..';
-import type { RelayerInputProofPayload } from '../../relayer/fetchRelayer';
+import type { RelayerUserDecryptPayload } from '../../relayer/fetchRelayer';
 import { AbstractRelayerProvider } from '../AbstractRelayerProvider';
 import { createRelayerProvider } from '../createRelayerFhevm';
 import fetchMock from 'fetch-mock';
@@ -8,27 +8,36 @@ import { InvalidPropertyError } from '../../errors/InvalidPropertyError';
 
 // Jest Command line
 // =================
-// npx jest --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_input-proof.test.ts --testNamePattern=xxx
-// npx jest --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_input-proof.test.ts
-// npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v2/RelayerV2Provider_input-proof.test.ts --collectCoverageFrom=./src/relayer-provider/v2/RelayerV2Provider.ts
+// npx jest --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_user-decrypt.test.ts --testNamePattern=xxx
+// npx jest --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_user-decrypt.test.ts
+// npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v2/RelayerV2Provider_user-decrypt.test.ts --collectCoverageFrom=./src/relayer-provider/v2/RelayerV2Provider.ts
 
 const relayerUrlV2 = `${SepoliaConfig.relayerUrl!}/v2`;
 
 const contractAddress = '0x8ba1f109551bd432803012645ac136ddd64dba72';
 const userAddress = '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80';
-const ciphertextWithInputVerification = '0xdeadbeef';
-const contractChainId: `0x${string}` = ('0x' +
-  Number(31337).toString(16)) as `0x${string}`;
-const payload: RelayerInputProofPayload = {
-  contractAddress,
+
+const payload: RelayerUserDecryptPayload = {
+  handleContractPairs: [
+    {
+      handle: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+      contractAddress,
+    },
+  ],
+  requestValidity: {
+    startTimestamp: '123',
+    durationDays: '456',
+  },
+  contractsChainId: '1234',
+  contractAddresses: [contractAddress],
   userAddress,
-  ciphertextWithInputVerification,
-  contractChainId,
+  signature: 'deadbeef',
+  publicKey: 'deadbeef',
   extraData: '0x00',
 };
 
 function post202(body: any) {
-  fetchMock.post(`${relayerUrlV2}/input-proof`, {
+  fetchMock.post(`${relayerUrlV2}/user-decrypt`, {
     status: 202,
     body,
     headers: { 'Content-Type': 'application/json' },
@@ -50,8 +59,8 @@ describe('RelayerV2Provider', () => {
     relayerProvider = createRelayerProvider(`${SepoliaConfigeRelayerUrl}/v2`);
     expect(relayerProvider.version).toBe(2);
     expect(relayerProvider.url).toBe(`${SepoliaConfigeRelayerUrl}/v2`);
-    expect(relayerProvider.inputProof).toBe(
-      `${SepoliaConfigeRelayerUrl}/v2/input-proof`,
+    expect(relayerProvider.userDecrypt).toBe(
+      `${SepoliaConfigeRelayerUrl}/v2/user-decrypt`,
     );
   });
 
@@ -59,7 +68,7 @@ describe('RelayerV2Provider', () => {
     consoleLogSpy.mockRestore();
   });
 
-  it('v2:input-proof: 202 - malformed json', async () => {
+  it('v2:user-decrypt: 202 - malformed json', async () => {
     const malformedBodyJson = '{ "some_key": "incomplete_json"';
 
     let syntaxError;
@@ -71,19 +80,19 @@ describe('RelayerV2Provider', () => {
 
     post202(malformedBodyJson);
     await expect(() =>
-      relayerProvider.fetchPostInputProof(payload),
+      relayerProvider.fetchPostUserDecrypt(payload),
     ).rejects.toThrow(syntaxError);
   });
 
-  it('v2:input-proof: 202 - empty json', async () => {
+  it('v2:user-decrypt: 202 - empty json', async () => {
     post202({});
     await expect(() =>
-      relayerProvider.fetchPostInputProof(payload),
+      relayerProvider.fetchPostUserDecrypt(payload),
     ).rejects.toThrow(
       new RelayerV2InvalidPostResponseError({
         status: 202,
-        url: `${relayerUrlV2}/input-proof`,
-        operation: 'INPUT_PROOF',
+        url: `${relayerUrlV2}/user-decrypt`,
+        operation: 'USER_DECRYPT',
         cause: InvalidPropertyError.missingProperty({
           objName: 'body',
           property: 'status',
@@ -94,15 +103,15 @@ describe('RelayerV2Provider', () => {
     );
   });
 
-  it('v2:input-proof: 202 - status:failed', async () => {
+  it('v2:user-decrypt: 202 - status:failed', async () => {
     post202({ status: 'failed' });
     await expect(() =>
-      relayerProvider.fetchPostInputProof(payload),
+      relayerProvider.fetchPostUserDecrypt(payload),
     ).rejects.toThrow(
       new RelayerV2InvalidPostResponseError({
         status: 202,
-        url: `${relayerUrlV2}/input-proof`,
-        operation: 'INPUT_PROOF',
+        url: `${relayerUrlV2}/user-decrypt`,
+        operation: 'USER_DECRYPT',
         cause: new InvalidPropertyError({
           objName: 'body',
           property: 'status',
@@ -115,15 +124,15 @@ describe('RelayerV2Provider', () => {
     );
   });
 
-  it('v2:input-proof: 202 - status:succeeded', async () => {
+  it('v2:user-decrypt: 202 - status:succeeded', async () => {
     post202({ status: 'succeeded' });
     await expect(() =>
-      relayerProvider.fetchPostInputProof(payload),
+      relayerProvider.fetchPostUserDecrypt(payload),
     ).rejects.toThrow(
       new RelayerV2InvalidPostResponseError({
         status: 202,
-        url: `${relayerUrlV2}/input-proof`,
-        operation: 'INPUT_PROOF',
+        url: `${relayerUrlV2}/user-decrypt`,
+        operation: 'USER_DECRYPT',
         cause: new InvalidPropertyError({
           objName: 'body',
           property: 'status',
@@ -136,15 +145,15 @@ describe('RelayerV2Provider', () => {
     );
   });
 
-  it('v2:input-proof: 202 - status:queued', async () => {
+  it('v2:user-decrypt: 202 - status:queued', async () => {
     post202({ status: 'queued' });
     await expect(() =>
-      relayerProvider.fetchPostInputProof(payload),
+      relayerProvider.fetchPostUserDecrypt(payload),
     ).rejects.toThrow(
       new RelayerV2InvalidPostResponseError({
         status: 202,
-        url: `${relayerUrlV2}/input-proof`,
-        operation: 'INPUT_PROOF',
+        url: `${relayerUrlV2}/user-decrypt`,
+        operation: 'USER_DECRYPT',
         cause: InvalidPropertyError.missingProperty({
           objName: 'body',
           property: 'result',
@@ -154,15 +163,15 @@ describe('RelayerV2Provider', () => {
     );
   });
 
-  it('v2:input-proof: 202 - status:queued, result empty', async () => {
+  it('v2:user-decrypt: 202 - status:queued, result empty', async () => {
     post202({ status: 'queued', result: {} });
     await expect(() =>
-      relayerProvider.fetchPostInputProof(payload),
+      relayerProvider.fetchPostUserDecrypt(payload),
     ).rejects.toThrow(
       new RelayerV2InvalidPostResponseError({
         status: 202,
-        url: `${relayerUrlV2}/input-proof`,
-        operation: 'INPUT_PROOF',
+        url: `${relayerUrlV2}/user-decrypt`,
+        operation: 'USER_DECRYPT',
         cause: InvalidPropertyError.missingProperty({
           objName: 'body.result',
           property: 'job_id',
@@ -172,15 +181,15 @@ describe('RelayerV2Provider', () => {
     );
   });
 
-  it('v2:input-proof: 202 - status:queued, result no timestamp', async () => {
+  it('v2:user-decrypt: 202 - status:queued, result no retry_after_seconds', async () => {
     post202({ status: 'queued', result: { job_id: '123' } });
     await expect(() =>
-      relayerProvider.fetchPostInputProof(payload),
+      relayerProvider.fetchPostUserDecrypt(payload),
     ).rejects.toThrow(
       new RelayerV2InvalidPostResponseError({
         status: 202,
-        url: `${relayerUrlV2}/input-proof`,
-        operation: 'INPUT_PROOF',
+        url: `${relayerUrlV2}/user-decrypt`,
+        operation: 'USER_DECRYPT',
         cause: InvalidPropertyError.missingProperty({
           objName: 'body.result',
           property: 'retry_after_seconds',
@@ -190,22 +199,31 @@ describe('RelayerV2Provider', () => {
     );
   });
 
-  it('v2:input-proof: 202 - status:queued, result ok', async () => {
+  it('xxx v2:user-decrypt: 202 - status:queued, result ok', async () => {
     post202({
       status: 'queued',
       result: { job_id: '123', retry_after_seconds: 3 },
     });
 
-    fetchMock.get(`${relayerUrlV2}/input-proof/123`, {
+    fetchMock.get(`${relayerUrlV2}/user-decrypt/123`, {
       status: 200,
       body: {
         status: 'succeeded',
         request_id: 'hello',
-        result: { accepted: false, extra_data: `0x00` },
+        result: {
+          payloads: ['deadbeef'],
+          signatures: ['deadbeef'],
+          extra_data: '0x00',
+        },
       },
       headers: { 'Content-Type': 'application/json' },
     });
 
-    await relayerProvider.fetchPostInputProof(payload);
+    const result = await relayerProvider.fetchPostUserDecrypt(
+      payload,
+      undefined,
+      undefined,
+    );
+    console.log(JSON.stringify(result, null, 2));
   });
 });

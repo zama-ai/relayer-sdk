@@ -1,8 +1,13 @@
 import { getKeysFromRelayer } from './network';
 import { publicKey, publicParams } from '../test';
 import { SERIALIZED_SIZE_LIMIT_CRS, SERIALIZED_SIZE_LIMIT_PK } from '../utils';
-import fetchMock from '@fetch-mock/core';
+import fetchMock from 'fetch-mock';
 import { RelayerKeyUrlResponse } from './fetchRelayer';
+
+// Jest Command line
+// =================
+// npx jest --colors --passWithNoTests --coverage ./src/relayer/network.test.ts --collectCoverageFrom=./src/relayer/network.ts --testNamePattern=xxx
+// npx jest --colors --passWithNoTests --coverage ./src/relayer/network.test.ts --collectCoverageFrom=./src/relayer/network.ts
 
 // const oldPayload = {
 //   response: {

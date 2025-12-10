@@ -4,18 +4,27 @@ import {
   RelayerEncryptedInput,
 } from './sendEncryption';
 import { publicKey, publicParams } from '../test';
-import fetchMock from '@fetch-mock/core';
+import fetchMock from 'fetch-mock';
 import { computeHandles } from './handles';
 import { fromHexString, toHexString } from '../utils';
 import type { Auth } from '../auth';
 import { createRelayerProvider } from '../relayer-provider/createRelayerFhevm';
+
+// Jest Command line
+// =================
+// npx jest --colors --passWithNoTests --coverage ./src/relayer/sendEncryption.test.ts --collectCoverageFrom=./src/relayer/sendEncryption.ts --testNamePattern=xxx
+// npx jest --colors --passWithNoTests --coverage ./src/relayer/sendEncryption.test.ts --collectCoverageFrom=./src/relayer/sendEncryption.ts
 
 const aclContractAddress = '0x325ea1b59F28e9e1C51d3B5b47b7D3965CC5D8C8';
 const verifyingContractAddressInputVerification =
   '0x0C475a195D5C16bb730Ae2d5B1196844A83899A5';
 const chainId = 1234;
 const gatewayChainId = 4321;
-const relayerProvider = createRelayerProvider('https://test-fhevm-relayer');
+const defaultRelayerVersion = 1;
+const relayerProvider = createRelayerProvider(
+  'https://test-fhevm-relayer',
+  defaultRelayerVersion,
+);
 
 const autoMock = (input: RelayerEncryptedInput, opts?: { auth?: Auth }) => {
   fetchMock.postOnce(relayerProvider.inputProof, function (params: any) {

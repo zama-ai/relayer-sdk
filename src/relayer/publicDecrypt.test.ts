@@ -1,5 +1,5 @@
 import { publicDecryptRequest } from './publicDecrypt';
-import fetchMock from '@fetch-mock/core';
+import fetchMock from 'fetch-mock';
 import { ethers } from 'ethers';
 import {
   fetchRelayerJsonRpcPost,
@@ -8,11 +8,16 @@ import {
 import { getErrorCause, getErrorCauseErrorMessage } from './error';
 import { createRelayerProvider } from '../relayer-provider/createRelayerFhevm';
 
+// Jest Command line
+// =================
+// npx jest --colors --passWithNoTests --coverage ./src/relayer/publicDecrypt.test.ts --collectCoverageFrom=./src/relayer/publicDecrypt.ts --testNamePattern=xxx
 // npx jest --colors --passWithNoTests --coverage ./src/relayer/publicDecrypt.test.ts --collectCoverageFrom=./src/relayer/publicDecrypt.ts
 
-// const RELAYER_URL: string = 'https://test-relayer.net';
-// const RELAYER_PUBLIC_DECRYPT_URL = `${RELAYER_URL}/v1/public-decrypt`;
-const relayerProvider = createRelayerProvider('https://test-fhevm-relayer/v1');
+const defaultRelayerVersion = 1;
+const relayerProvider = createRelayerProvider(
+  'https://test-fhevm-relayer',
+  defaultRelayerVersion,
+);
 const RELAYER_PUBLIC_DECRYPT_URL = relayerProvider.publicDecrypt;
 
 const dummyRelayerUserDecryptPayload: RelayerPublicDecryptPayload = {
@@ -78,13 +83,25 @@ describe('fetchRelayerPublicDecrypt', () => {
         'Error: Public decrypt failed: relayer respond with HTTP code 403',
       );
       const cause = getErrorCause(e);
-      expect(cause).toEqual({
-        code: 'RELAYER_FETCH_ERROR',
-        operation: 'PUBLIC_DECRYPT',
-        status: 403,
-        statusText: 'Forbidden',
-        url: RELAYER_PUBLIC_DECRYPT_URL,
-      });
+
+      const c = cause as any;
+      expect(c).toEqual(
+        expect.objectContaining({
+          code: 'RELAYER_FETCH_ERROR',
+          operation: 'PUBLIC_DECRYPT',
+          status: 403,
+          statusText: 'Forbidden',
+          url: RELAYER_PUBLIC_DECRYPT_URL,
+          responseJson: '',
+        }),
+      );
+      expect(c.response).toEqual(
+        expect.objectContaining({
+          status: 403,
+          statusText: 'Forbidden',
+          ok: false,
+        }),
+      );
     }
   });
 
@@ -110,13 +127,23 @@ describe('fetchRelayerPublicDecrypt', () => {
         'Error: Relayer rate limit exceeded: Please wait and try again later.',
       );
       const cause = getErrorCause(e);
-      expect(cause).toEqual({
-        code: 'RELAYER_FETCH_ERROR',
-        operation: 'PUBLIC_DECRYPT',
-        status: 429,
-        statusText: 'Rate Limit',
-        url: RELAYER_PUBLIC_DECRYPT_URL,
-      });
+
+      const c = cause as any;
+      expect(c).toEqual(
+        expect.objectContaining({
+          code: 'RELAYER_FETCH_ERROR',
+          operation: 'PUBLIC_DECRYPT',
+          status: 429,
+          statusText: 'Rate Limit',
+          url: RELAYER_PUBLIC_DECRYPT_URL,
+          responseJson: '',
+        }),
+      );
+      // For some reason, `expect.objectContaining` does not work in this specific situation.
+      expect(c.response.status).toEqual(429);
+      expect(c.response.statusText).toEqual('Rate Limit');
+      expect(c.response.ok).toEqual(false);
+      expect(c.response.url).toEqual(RELAYER_PUBLIC_DECRYPT_URL);
     }
   });
 
@@ -161,14 +188,15 @@ describe('fetchRelayerPublicDecrypt', () => {
         "Error: Public decrypt failed: Relayer didn't return a JSON",
       );
       const cause = getErrorCause(e);
-      expect(cause).toEqual({
-        code: 'RELAYER_NO_JSON_ERROR',
-        operation: 'PUBLIC_DECRYPT',
-        error: new Error(),
-      });
-      expect(String(getErrorCauseErrorMessage(e))).toBe(
-        'Unexpected token \'D\', "DeadBeef" is not valid JSON',
-      );
+      const c = cause as any;
+
+      expect(c.code).toEqual('RELAYER_NO_JSON_ERROR');
+      expect(c.operation).toEqual('PUBLIC_DECRYPT');
+
+      const msg = 'Unexpected token \'D\', "DeadBeef" is not valid JSON';
+
+      expect(c.error.message).toEqual(msg);
+      expect(String(getErrorCauseErrorMessage(e))).toBe(msg);
     }
   });
 
@@ -189,13 +217,17 @@ describe('fetchRelayerPublicDecrypt', () => {
         'Error: Public decrypt failed: Relayer returned an unexpected JSON response',
       );
       const cause = getErrorCause(e);
-      expect(cause).toEqual({
-        code: 'RELAYER_UNEXPECTED_JSON_ERROR',
-        operation: 'PUBLIC_DECRYPT',
-        error: new Error(
-          "Unexpected response JSON format: missing 'response' property.",
-        ),
-      });
+
+      const c = cause as any;
+
+      expect(c.code).toEqual('RELAYER_UNEXPECTED_JSON_ERROR');
+      expect(c.operation).toEqual('PUBLIC_DECRYPT');
+
+      const msg =
+        "Unexpected response JSON format: missing 'response' property.";
+
+      expect(c.error.message).toEqual(msg);
+      expect(String(getErrorCauseErrorMessage(e))).toBe(msg);
     }
   });
 

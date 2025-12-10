@@ -1,6 +1,6 @@
 import { SepoliaConfig } from '../..';
 import { createRelayerFhevm } from '../createRelayerFhevm';
-import fetchMock from '@fetch-mock/core';
+import fetchMock from 'fetch-mock';
 import {
   publicKey as assetPublicKey,
   publicParams as assetPublicParams,
@@ -11,6 +11,9 @@ import {
 } from '../../utils';
 import { RelayerV1Fhevm } from './RelayerV1Fhevm';
 
+// Jest Command line
+// =================
+// npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v1/RelayerV1Fhevm.test.ts --collectCoverageFrom=./src/relayer-provider/v1/RelayerV1Fhevm.ts --testNamePattern=xxx
 // npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v1/RelayerV1Fhevm.test.ts --collectCoverageFrom=./src/relayer-provider/v1/RelayerV1Fhevm.ts
 
 // curl https://relayer.testnet.zama.org/v1/keyurl
@@ -37,6 +40,7 @@ const relayerV1ResponseGetKeyUrl = {
   },
 };
 
+const defaultRelayerVersion = 1;
 const relayerUrlV1 = `${SepoliaConfig.relayerUrl!}/v1`;
 const assetPublicKeyBytes = assetPublicKey.safe_serialize(
   SERIALIZED_SIZE_LIMIT_PK,
@@ -67,6 +71,7 @@ describe('RelayerV1Fhevm', () => {
     const SepoliaConfigeRelayerUrl = SepoliaConfig.relayerUrl!;
     const relayerFhevm = await createRelayerFhevm({
       relayerUrl: `${SepoliaConfigeRelayerUrl}`,
+      defaultRelayerVersion,
     });
     expect(relayerFhevm.version).toBe(1);
   });
@@ -75,6 +80,7 @@ describe('RelayerV1Fhevm', () => {
     const SepoliaConfigeRelayerUrl = SepoliaConfig.relayerUrl!;
     const relayerFhevm = await createRelayerFhevm({
       relayerUrl: `${SepoliaConfigeRelayerUrl}`,
+      defaultRelayerVersion,
     });
     const pub_key = relayerFhevm.getPublicKeyBytes();
     expect(pub_key.publicKeyId).toBe('fhe-public-key-data-id');
@@ -84,6 +90,7 @@ describe('RelayerV1Fhevm', () => {
     const SepoliaConfigeRelayerUrl = SepoliaConfig.relayerUrl!;
     const relayerFhevm = await createRelayerFhevm({
       relayerUrl: `${SepoliaConfigeRelayerUrl}`,
+      defaultRelayerVersion,
     });
     const pub_key = relayerFhevm.getPublicKeyBytes();
     expect(pub_key.publicKey).toStrictEqual(assetPublicKeyBytes);
@@ -93,6 +100,7 @@ describe('RelayerV1Fhevm', () => {
     const SepoliaConfigeRelayerUrl = SepoliaConfig.relayerUrl!;
     const relayerFhevm = await createRelayerFhevm({
       relayerUrl: `${SepoliaConfigeRelayerUrl}`,
+      defaultRelayerVersion,
     });
     const pub_params = relayerFhevm.getPublicParamsBytes(2048);
     expect(pub_params.publicParamsId).toBe('crs-data-id');
@@ -102,6 +110,7 @@ describe('RelayerV1Fhevm', () => {
     const SepoliaConfigeRelayerUrl = SepoliaConfig.relayerUrl!;
     const relayerFhevm = await createRelayerFhevm({
       relayerUrl: `${SepoliaConfigeRelayerUrl}`,
+      defaultRelayerVersion,
     });
     const pub_params = relayerFhevm.getPublicParamsBytes(2048);
     expect(pub_params.publicParams).toStrictEqual(assetPublicParams2048Bytes);
@@ -111,6 +120,7 @@ describe('RelayerV1Fhevm', () => {
     const SepoliaConfigeRelayerUrl = SepoliaConfig.relayerUrl!;
     const relayerFhevm = await createRelayerFhevm({
       relayerUrl: `${SepoliaConfigeRelayerUrl}`,
+      defaultRelayerVersion,
     });
     expect(() => relayerFhevm.getPublicParamsBytes(123)).toThrow(
       'Unsupported PublicParams bits format 123',
@@ -121,6 +131,7 @@ describe('RelayerV1Fhevm', () => {
     const SepoliaConfigeRelayerUrl = SepoliaConfig.relayerUrl!;
     const relayerFhevm = await createRelayerFhevm({
       relayerUrl: `${SepoliaConfigeRelayerUrl}`,
+      defaultRelayerVersion,
     });
     expect(relayerFhevm instanceof RelayerV1Fhevm).toBe(true);
     const relayerFhevmV1 = relayerFhevm as RelayerV1Fhevm;
@@ -132,12 +143,14 @@ describe('RelayerV1Fhevm', () => {
     const SepoliaConfigRelayerUrl = SepoliaConfig.relayerUrl!;
     const relayerFhevm1 = await createRelayerFhevm({
       relayerUrl: `${SepoliaConfigRelayerUrl}`,
+      defaultRelayerVersion,
     });
     const pub_key = relayerFhevm1.getPublicKeyBytes();
     const pub_params = relayerFhevm1.getPublicParamsBytes(2048);
 
     const relayerFhevm2 = await createRelayerFhevm({
       relayerUrl: `${SepoliaConfigRelayerUrl}`,
+      defaultRelayerVersion,
       publicKey: {
         data: pub_key.publicKey,
         id: pub_key.publicKeyId,

@@ -4,6 +4,6 @@ const baseConfig = require('./jest.base.config.cjs');
 module.exports = {
   ...baseConfig,
 
-  setupFiles: ['./setupJestMock.cjs'],
-  testRegex: '\\.test-mock\\.ts$',
+  setupFiles: ['./setupJestDom.cjs'],
+  testRegex: '\\.test-dom\\.ts$',
 };

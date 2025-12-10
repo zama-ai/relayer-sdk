@@ -1,7 +1,10 @@
 import { SepoliaConfig } from '../index';
 import { createRelayerProvider } from './createRelayerFhevm';
 
-// npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/createRelayerProvider.test.ts --collectCoverageFrom=./src/relayer-provider/createRelayerProvider.ts
+// Jest Command line
+// =================
+// npx jest --colors --passWithNoTests ./src/relayer-provider/createRelayerFhevm.test.ts --testNamePattern=xxx
+// npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/createRelayerFhevm.test.ts --collectCoverageFrom=./src/relayer-provider/createRelayerFhevm.ts
 
 describe('createRelayerProvider', () => {
   it('v1: <SepoliaConfig.relayerUrl>', () => {
@@ -9,15 +12,27 @@ describe('createRelayerProvider', () => {
     expect(SepoliaConfigeRelayerUrl).not.toBeNull();
     expect(SepoliaConfigeRelayerUrl).not.toBeUndefined();
 
-    const relayerProvider = createRelayerProvider(SepoliaConfigeRelayerUrl);
-    expect(relayerProvider.version).toBe(1);
-    expect(relayerProvider.url).toBe(`${SepoliaConfigeRelayerUrl}/v1`);
+    const defaultRelayerVersion = 1;
+    const relayerProvider = createRelayerProvider(
+      SepoliaConfigeRelayerUrl,
+      defaultRelayerVersion,
+    );
+    expect(relayerProvider.version).toBe(defaultRelayerVersion);
+    expect(relayerProvider.url).toBe(
+      `${SepoliaConfigeRelayerUrl}/v${defaultRelayerVersion}`,
+    );
   });
 
   it('v1: https://foo-relayer.org', () => {
-    const relayerProvider = createRelayerProvider('https://foo-relayer.org');
-    expect(relayerProvider.version).toBe(1);
-    expect(relayerProvider.url).toBe('https://foo-relayer.org');
+    const defaultRelayerVersion = 1;
+    const relayerProvider = createRelayerProvider(
+      'https://foo-relayer.org',
+      defaultRelayerVersion,
+    );
+    expect(relayerProvider.version).toBe(defaultRelayerVersion);
+    expect(relayerProvider.url).toBe(
+      `https://foo-relayer.org/v${defaultRelayerVersion}`,
+    );
   });
 
   it('v1: https://foo-relayer.org/v1', () => {
@@ -28,7 +43,7 @@ describe('createRelayerProvider', () => {
 
   it('v1: https://foo-relayer.org/v2', () => {
     const relayerProvider = createRelayerProvider('https://foo-relayer.org/v2');
-    expect(relayerProvider.version).toBe(1);
+    expect(relayerProvider.version).toBe(2);
     expect(relayerProvider.url).toBe('https://foo-relayer.org/v2');
   });
 

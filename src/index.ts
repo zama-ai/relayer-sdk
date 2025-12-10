@@ -20,7 +20,7 @@ import { generateKeypair, createEIP712 } from './sdk/keypair';
 import type { EIP712, EIP712Type } from './sdk/keypair';
 import type { Auth, BearerToken, ApiKeyCookie, ApiKeyHeader } from './auth';
 
-import fetchRetry from 'fetch-retry';
+//import fetchRetry from 'fetch-retry';
 import type {
   PublicDecryptResults,
   UserDecryptResults,
@@ -30,7 +30,10 @@ import type {
 import { isChecksummedAddress } from './utils/address';
 import { createRelayerFhevm } from './relayer-provider/createRelayerFhevm';
 
-global.fetch = fetchRetry(global.fetch, { retries: 5, retryDelay: 500 });
+// Disable global use of fetch-retry
+// Make sure `workerHelpers.js` behaviour is consistant and tfhe WASM module is
+// still running in MT mode
+//global.fetch = fetchRetry(global.fetch, { retries: 5, retryDelay: 500 });
 
 export { generateKeypair, createEIP712 };
 export type {
@@ -153,6 +156,7 @@ export const createInstance = async (
     relayerUrl,
     publicKey: config.publicKey,
     publicParams: config.publicParams,
+    defaultRelayerVersion: 1,
   });
 
   const chainId = await getChainId(provider, config);

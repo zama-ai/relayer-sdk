@@ -1,4 +1,4 @@
-import type { Auth } from '../../auth';
+import type { FhevmInstanceOptions } from '../../config';
 import {
   fetchRelayerGet,
   fetchRelayerJsonRpcPost,
@@ -23,11 +23,9 @@ export class RelayerV1Provider extends AbstractRelayerProvider {
     return response;
   }
 
-  public async fetchPostInputProof(
+  public override async fetchPostInputProof(
     payload: RelayerInputProofPayload,
-    options?: {
-      auth?: Auth;
-    },
+    options?: FhevmInstanceOptions,
   ) {
     const json = await fetchRelayerJsonRpcPost(
       'INPUT_PROOF',
@@ -38,11 +36,9 @@ export class RelayerV1Provider extends AbstractRelayerProvider {
     return json;
   }
 
-  public async fetchPostPublicDecrypt(
+  public override async fetchPostPublicDecrypt(
     payload: RelayerPublicDecryptPayload,
-    options?: {
-      auth?: Auth;
-    },
+    options?: FhevmInstanceOptions,
   ) {
     const json = await fetchRelayerJsonRpcPost(
       'PUBLIC_DECRYPT',
@@ -53,11 +49,9 @@ export class RelayerV1Provider extends AbstractRelayerProvider {
     return json;
   }
 
-  public async fetchPostUserDecrypt(
+  public override async fetchPostUserDecrypt(
     payload: RelayerUserDecryptPayload,
-    options?: {
-      auth?: Auth;
-    },
+    options?: FhevmInstanceOptions,
   ) {
     const json = await fetchRelayerJsonRpcPost(
       'USER_DECRYPT',

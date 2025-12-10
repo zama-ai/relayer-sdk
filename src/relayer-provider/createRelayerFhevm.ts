@@ -1,6 +1,5 @@
-import { SepoliaConfig } from '../index';
 import type { PublicParams } from '../sdk/encrypt';
-import { cleanURL } from '../utils';
+import { removeSlashSuffix } from '../utils';
 import { AbstractRelayerProvider } from './AbstractRelayerProvider';
 import { RelayerV1Provider } from './v1/RelayerV1Provider';
 import { RelayerV2Provider } from './v2/RelayerV2Provider';
@@ -15,10 +14,11 @@ export async function createRelayerFhevm(config: {
     id: string | null;
   };
   publicParams?: PublicParams<Uint8Array> | null;
+  defaultRelayerVersion?: 1 | 2;
 }): Promise<AbstractRelayerFhevm> {
   const resolved = _resolveRelayerUrl(
     config.relayerUrl,
-    SepoliaConfig.relayerUrl!,
+    config.defaultRelayerVersion,
   );
   if (!resolved) {
     throw new Error(`Invalid relayerUrl: ${config.relayerUrl}`);
@@ -41,8 +41,9 @@ export async function createRelayerFhevm(config: {
 
 export function createRelayerProvider(
   relayerUrl: string,
+  defaultRelayerVersion?: 1 | 2,
 ): AbstractRelayerProvider {
-  const resolved = _resolveRelayerUrl(relayerUrl, SepoliaConfig.relayerUrl!);
+  const resolved = _resolveRelayerUrl(relayerUrl, defaultRelayerVersion);
   if (!resolved) {
     throw new Error(`Invalid relayerUrl: ${relayerUrl}`);
   }
@@ -54,40 +55,39 @@ export function createRelayerProvider(
   return new RelayerV1Provider(resolved.url);
 }
 
-const DEFAULT_RELAYER_ROUTE_VERSION = 1;
-
 function _resolveRelayerUrl(
   value: unknown,
-  defaultRelayerBaseUrl: string,
-): { url: string; version: number } | null {
+  defaultVersion?: 1 | 2,
+): { url: string; version: 1 | 2 } | null {
   if (!value || typeof value !== 'string') {
     return null;
   }
 
-  const url = cleanURL(value);
-  if (url === defaultRelayerBaseUrl) {
-    return {
-      url: `${defaultRelayerBaseUrl}/v${DEFAULT_RELAYER_ROUTE_VERSION}`,
-      version: DEFAULT_RELAYER_ROUTE_VERSION,
-    };
-  }
-
-  if (!URL.canParse(url)) {
+  const urlNoSlash = removeSlashSuffix(value);
+  if (!URL.canParse(urlNoSlash)) {
     return null;
   }
 
-  // Try to parse version number:
-  // https://relayer.testnet.zama.org/vXXX
-  const prefix = `${defaultRelayerBaseUrl}/v`;
-  if (url.startsWith(prefix)) {
-    // Determine version
-    const version = Number.parseInt(url.substring(prefix.length));
-    if (!Number.isInteger(version) || version <= 1) {
-      return null;
-    }
-
-    return { url, version };
+  if (urlNoSlash.endsWith('/v1')) {
+    return {
+      url: value,
+      version: 1,
+    };
   }
 
-  return { url, version: DEFAULT_RELAYER_ROUTE_VERSION };
+  if (urlNoSlash.endsWith('/v2')) {
+    return {
+      url: value,
+      version: 2,
+    };
+  }
+
+  if (typeof defaultVersion !== 'number') {
+    throw new Error(`relayerUrl cannot be resolved. (value=${value})`);
+  }
+
+  return {
+    url: `${urlNoSlash}/v${defaultVersion}`,
+    version: defaultVersion,
+  };
 }

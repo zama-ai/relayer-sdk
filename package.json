@@ -35,6 +35,7 @@
     "build:bundle": "vite build --config config/vite.config.js",
     "test": "jest --colors --passWithNoTests --coverage",
     "test:mock": "jest --colors --passWithNoTests --coverage --config jest.mock.config.cjs",
+    "test:dom": "jest --colors --passWithNoTests --coverage --config jest.dom.config.cjs",
     "test:watch": "jest --colors --passWithNoTests --watch",
     "prettier": "prettier --write \"**/*.{js,json,md,sol,ts,yml}\"",
     "prettier:check": "prettier --check \"**/*.{js,json,md,sol,ts,yml}\"",
@@ -67,7 +68,6 @@
     "wasm-feature-detect": "^1.8.0"
   },
   "devDependencies": {
-    "@fetch-mock/core": "0.7.1",
     "@fetch-mock/jest": "0.2.16",
     "@jest/globals": "30.0.4",
     "@microsoft/api-extractor": "7.52.8",
@@ -87,6 +87,7 @@
     "crypto-browserify": "3.12.1",
     "fetch-mock": "^12.6.0",
     "jest": "^30.0.4",
+    "jest-environment-jsdom": "^30.2.0",
     "jest-raw-loader": "1.0.1",
     "path-browserify": "1.0.1",
     "prettier": "3.6.2",

@@ -2,6 +2,8 @@ import { InvalidPropertyError } from '../errors/InvalidPropertyError';
 import { InvalidTypeError } from '../errors/InvalidTypeError';
 import { assertIsUint, assertRecordUintProperty, isUint } from './uint';
 
+// Jest Command line
+// =================
 // npx jest --colors --passWithNoTests --coverage ./src/utils/uint.test.ts --collectCoverageFrom=./src/utils/uint.ts --testNamePattern=BBB
 // npx jest --colors --passWithNoTests --coverage ./src/utils/uint.test.ts --collectCoverageFrom=./src/utils/uint.ts
 

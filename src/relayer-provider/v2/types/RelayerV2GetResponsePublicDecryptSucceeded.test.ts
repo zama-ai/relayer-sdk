@@ -1,6 +1,10 @@
 import { assertIsRelayerV2GetResponsePublicDecryptSucceeded } from './RelayerV2GetResponsePublicDecryptSucceeded';
 import { InvalidPropertyError } from '../../../errors/InvalidPropertyError';
 
+// Jest Command line
+// =================
+// npx jest --colors --passWithNoTests ./src/relayer-provider/v2/types/RelayerV2GetResponsePublicDecryptSucceeded.test.ts
+// npx jest --colors --passWithNoTests ./src/relayer-provider/v2/types/RelayerV2GetResponsePublicDecryptSucceeded.test.ts --testNamePattern=xxx
 // npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v2/types/RelayerV2GetResponsePublicDecryptSucceeded.test.ts --collectCoverageFrom=./src/relayer-provider/v2/types/RelayerV2GetResponsePublicDecryptSucceeded.ts
 
 describe('RelayerV2GetResponsePublicDecryptSucceeded', () => {
@@ -14,6 +18,7 @@ describe('RelayerV2GetResponsePublicDecryptSucceeded', () => {
             extra_data: '0xdead',
             signatures: ['dead'],
           },
+          request_id: 'hello',
           status: 'succeeded',
         },
         'Foo',
@@ -79,34 +84,18 @@ describe('RelayerV2GetResponsePublicDecryptSucceeded', () => {
       ),
     ).toThrow(
       InvalidPropertyError.missingProperty({
-        objName: 'Foo.result',
-        property: 'extra_data',
-        expectedType: 'BytesHex',
+        objName: 'Foo',
+        property: 'request_id',
+        expectedType: 'string',
       }),
     );
 
     expect(() =>
       assertIsRelayerV2GetResponsePublicDecryptSucceeded(
         {
-          result: { decrypted_value: 'hello', extra_data: 'hello' },
+          result: { decrypted_value: 'hello' },
           status: 'succeeded',
-        },
-        'Foo',
-      ),
-    ).toThrow(
-      new InvalidPropertyError({
-        objName: 'Foo.result',
-        property: 'extra_data',
-        expectedType: 'BytesHex',
-        type: 'string',
-      }),
-    );
-
-    expect(() =>
-      assertIsRelayerV2GetResponsePublicDecryptSucceeded(
-        {
-          result: { decrypted_value: 'hello', extra_data: '0xdead' },
-          status: 'succeeded',
+          request_id: 'hello',
         },
         'Foo',
       ),
@@ -124,10 +113,10 @@ describe('RelayerV2GetResponsePublicDecryptSucceeded', () => {
         {
           result: {
             decrypted_value: 'hello',
-            extra_data: '0xdead',
             signatures: 123,
           },
           status: 'succeeded',
+          request_id: 'hello',
         },
         'Foo',
       ),
@@ -145,10 +134,10 @@ describe('RelayerV2GetResponsePublicDecryptSucceeded', () => {
         {
           result: {
             decrypted_value: 'hello',
-            extra_data: '0xdead',
             signatures: ['hello'],
           },
           status: 'succeeded',
+          request_id: 'hello',
         },
         'Foo',
       ),
@@ -167,10 +156,10 @@ describe('RelayerV2GetResponsePublicDecryptSucceeded', () => {
         {
           result: {
             decrypted_value: 'hello',
-            extra_data: '0xdead',
             signatures: ['0xdead'],
           },
           status: 'succeeded',
+          request_id: 'hello',
         },
         'Foo',
       ),
@@ -189,10 +178,10 @@ describe('RelayerV2GetResponsePublicDecryptSucceeded', () => {
         {
           result: {
             decrypted_value: 'hello',
-            extra_data: '0xdead',
             signatures: ['dead'],
           },
           status: 'succeeded',
+          request_id: 'hello',
         },
         'Foo',
       ),
@@ -210,10 +199,10 @@ describe('RelayerV2GetResponsePublicDecryptSucceeded', () => {
         {
           result: {
             decrypted_value: '0xdead',
-            extra_data: '0xdead',
             signatures: ['dead'],
           },
           status: 'succeeded',
+          request_id: 'hello',
         },
         'Foo',
       ),
@@ -222,6 +211,48 @@ describe('RelayerV2GetResponsePublicDecryptSucceeded', () => {
         objName: 'Foo.result',
         property: 'decrypted_value',
         expectedType: 'BytesHexNo0x',
+        type: 'string',
+      }),
+    );
+
+    expect(() =>
+      assertIsRelayerV2GetResponsePublicDecryptSucceeded(
+        {
+          result: {
+            decrypted_value: 'dead',
+            signatures: ['dead'],
+          },
+          status: 'succeeded',
+          request_id: 'hello',
+        },
+        'Foo',
+      ),
+    ).toThrow(
+      InvalidPropertyError.missingProperty({
+        objName: 'Foo.result',
+        property: 'extra_data',
+        expectedType: 'BytesHex',
+      }),
+    );
+
+    expect(() =>
+      assertIsRelayerV2GetResponsePublicDecryptSucceeded(
+        {
+          result: {
+            decrypted_value: 'dead',
+            signatures: ['dead'],
+            extra_data: 'hello',
+          },
+          status: 'succeeded',
+          request_id: 'hello',
+        },
+        'Foo',
+      ),
+    ).toThrow(
+      new InvalidPropertyError({
+        objName: 'Foo.result',
+        property: 'extra_data',
+        expectedType: 'BytesHex',
         type: 'string',
       }),
     );

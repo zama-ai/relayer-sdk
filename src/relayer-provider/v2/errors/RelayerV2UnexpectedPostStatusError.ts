@@ -1,5 +1,5 @@
-import { RelayerOperation } from 'src/relayer/fetchRelayer';
-import { RelayerBaseError } from 'src/errors/RelayerBaseError';
+import { RelayerOperation } from '../../../relayer/fetchRelayer';
+import { RelayerBaseError } from '../../../errors/RelayerBaseError';
 import { RelayerV2ResponseError } from './RelayerV2ResponseError';
 
 export type RelayerV2UnexpectedPostStatusErrorType =

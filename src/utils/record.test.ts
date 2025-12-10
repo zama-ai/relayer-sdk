@@ -6,7 +6,9 @@ import {
   typeofProperty,
 } from './record';
 
-// npx jest --colors --passWithNoTests --coverage ./src/utils/record.test.ts --collectCoverageFrom=./src/utils/record.ts --testNamePattern=BBB
+// Jest Command line
+// =================
+// npx jest --colors --passWithNoTests --coverage ./src/utils/record.test.ts --collectCoverageFrom=./src/utils/record.ts --testNamePattern=xxx
 // npx jest --colors --passWithNoTests --coverage ./src/utils/record.test.ts --collectCoverageFrom=./src/utils/record.ts
 
 describe('record', () => {
@@ -20,53 +22,53 @@ describe('record', () => {
       assertNonNullableRecordProperty({ foo: 0 }, 'foo', 'Foo'),
     ).not.toThrow();
 
-    const e = (expectedType: 'non-nullable', type?: string) =>
-      new InvalidPropertyError({
+    const missing = () => {
+      return InvalidPropertyError.missingProperty({
         objName: 'Foo',
         property: 'foo',
-        expectedType,
-        type,
+        expectedType: 'non-nullable',
       });
+    };
 
     // False
     expect(() =>
       assertNonNullableRecordProperty({ foo: null }, 'foo', 'Foo'),
-    ).toThrow(e('non-nullable'));
+    ).toThrow(missing());
 
     expect(() =>
       assertNonNullableRecordProperty({ foo: undefined }, 'foo', 'Foo'),
-    ).toThrow(e('non-nullable'));
+    ).toThrow(missing());
 
     expect(() => assertNonNullableRecordProperty('', 'foo', 'Foo')).toThrow(
-      e('non-nullable'),
+      missing(),
     );
 
     expect(() => assertNonNullableRecordProperty('', 'foo', 'Foo')).toThrow(
-      e('non-nullable'),
+      missing(),
     );
 
     expect(() => assertNonNullableRecordProperty(null, 'foo', 'Foo')).toThrow(
-      e('non-nullable'),
+      missing(),
     );
 
     expect(() =>
       assertNonNullableRecordProperty(undefined, 'foo', 'Foo'),
-    ).toThrow(e('non-nullable'));
+    ).toThrow(missing());
 
     expect(() => assertNonNullableRecordProperty({}, 'foo', 'Foo')).toThrow(
-      e('non-nullable'),
+      missing(),
     );
 
     expect(() => assertNonNullableRecordProperty([], 'foo', 'Foo')).toThrow(
-      e('non-nullable'),
+      missing(),
     );
 
     expect(() =>
       assertNonNullableRecordProperty(['foo'], 'foo', 'Foo'),
-    ).toThrow(e('non-nullable'));
+    ).toThrow(missing());
 
     expect(() => assertNonNullableRecordProperty('foo', 'foo', 'Foo')).toThrow(
-      e('non-nullable'),
+      missing(),
     );
   });
 
@@ -99,21 +101,30 @@ describe('record', () => {
       });
     };
 
+    const missing = (expectedType: 'Array', type?: string) => {
+      return InvalidPropertyError.missingProperty({
+        objName: 'Foo',
+        property: 'foo',
+        expectedType,
+        ...(type ? { type } : {}),
+      });
+    };
+
     // False
     expect(() =>
       assertRecordArrayProperty({ foo: null }, 'foo', 'Foo'),
-    ).toThrow(e('non-nullable'));
+    ).toThrow(missing('Array', 'undefined'));
 
     expect(() =>
       assertRecordArrayProperty({ foo: undefined }, 'foo', 'Foo'),
-    ).toThrow(e('non-nullable'));
+    ).toThrow(missing('Array', 'undefined'));
 
     expect(() => assertRecordArrayProperty({}, 'foo', 'Foo')).toThrow(
-      e('non-nullable'),
+      missing('Array', 'undefined'),
     );
 
     expect(() => assertRecordArrayProperty(null, 'foo', 'Foo')).toThrow(
-      e('non-nullable'),
+      missing('Array', 'undefined'),
     );
 
     expect(() =>
@@ -144,21 +155,30 @@ describe('record', () => {
       });
     };
 
+    const missing = (expectedType: 'boolean', type?: string) => {
+      return InvalidPropertyError.missingProperty({
+        objName: 'Foo',
+        property: 'foo',
+        expectedType,
+        ...(type ? { type } : {}),
+      });
+    };
+
     // False
     expect(() =>
       assertRecordBooleanProperty({ foo: null }, 'foo', 'Foo'),
-    ).toThrow(e('non-nullable'));
+    ).toThrow(missing('boolean', 'undefined'));
 
     expect(() =>
       assertRecordBooleanProperty({ foo: undefined }, 'foo', 'Foo'),
-    ).toThrow(e('non-nullable'));
+    ).toThrow(missing('boolean', 'undefined'));
 
     expect(() => assertRecordBooleanProperty({}, 'foo', 'Foo')).toThrow(
-      e('non-nullable'),
+      missing('boolean', 'undefined'),
     );
 
     expect(() => assertRecordBooleanProperty(null, 'foo', 'Foo')).toThrow(
-      e('non-nullable'),
+      missing('boolean', 'undefined'),
     );
 
     expect(() =>

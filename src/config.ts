@@ -8,12 +8,13 @@ import {
 import { PublicParams } from './sdk/encrypt';
 import { getKeysFromRelayer } from './relayer/network';
 import {
-  cleanURL,
+  removeSlashSuffix,
   SERIALIZED_SIZE_LIMIT_PK,
   SERIALIZED_SIZE_LIMIT_CRS,
 } from './utils';
 import type { TFHEType } from './tfheType';
 import { Auth } from './auth';
+import { Prettify } from './utils/types';
 
 const abiKmsVerifier = [
   'function getKmsSigners() view returns (address[])',
@@ -25,23 +26,28 @@ const abiInputVerifier = [
   'function getThreshold() view returns (uint256)',
 ];
 
-export type FhevmInstanceConfig = {
-  verifyingContractAddressDecryption: string;
-  verifyingContractAddressInputVerification: string;
-  kmsContractAddress: string;
-  inputVerifierContractAddress: string;
-  aclContractAddress: string;
-  gatewayChainId: number;
-  chainId?: number;
-  relayerUrl?: string;
-  network?: Eip1193Provider | string;
-  publicParams?: PublicParams<Uint8Array> | null;
-  publicKey?: {
-    data: Uint8Array | null;
-    id: string | null;
-  };
+export type FhevmInstanceOptions = {
   auth?: Auth;
 };
+
+export type FhevmInstanceConfig = Prettify<
+  {
+    verifyingContractAddressDecryption: string;
+    verifyingContractAddressInputVerification: string;
+    kmsContractAddress: string;
+    inputVerifierContractAddress: string;
+    aclContractAddress: string;
+    gatewayChainId: number;
+    chainId?: number;
+    relayerUrl?: string;
+    network?: Eip1193Provider | string;
+    publicParams?: PublicParams<Uint8Array> | null;
+    publicKey?: {
+      data: Uint8Array | null;
+      id: string | null;
+    };
+  } & FhevmInstanceOptions
+>;
 
 export const getProvider = (config: FhevmInstanceConfig) => {
   if (typeof config.network === 'string') {
@@ -79,7 +85,9 @@ export const getTfheCompactPublicKey = async (config: {
   publicKeyId: string;
 }> => {
   if (config.relayerVersionUrl && !config.publicKey) {
-    const inputs = await getKeysFromRelayer(cleanURL(config.relayerVersionUrl));
+    const inputs = await getKeysFromRelayer(
+      removeSlashSuffix(config.relayerVersionUrl),
+    );
     return { publicKey: inputs.publicKey, publicKeyId: inputs.publicKeyId };
   } else if (config.publicKey && config.publicKey.data && config.publicKey.id) {
     const buff = config.publicKey.data;
@@ -106,7 +114,9 @@ export const getPublicParams = async (config: {
   publicParams?: PublicParams<Uint8Array> | null;
 }): Promise<PublicParams> => {
   if (config.relayerVersionUrl && !config.publicParams) {
-    const inputs = await getKeysFromRelayer(cleanURL(config.relayerVersionUrl));
+    const inputs = await getKeysFromRelayer(
+      removeSlashSuffix(config.relayerVersionUrl),
+    );
     return inputs.publicParams;
   } else if (config.publicParams && config.publicParams['2048']) {
     const buff = config.publicParams['2048'].publicParams;

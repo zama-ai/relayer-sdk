@@ -33,10 +33,10 @@ export function assertIsRelayerV2ResultInputProofAccepted(
   value: unknown,
   name: string,
 ): asserts value is RelayerV2ResultInputProofAcceped {
-  assertRecordBytesHexProperty(value, 'extra_data', name);
   assertRecordBooleanProperty(value, 'accepted', name, true);
   assertRecordBytes32HexArrayProperty(value, 'handles', name);
   assertRecordBytesHexArrayProperty(value, 'signatures', name);
+  assertRecordBytesHexProperty(value, 'extra_data', name);
 }
 
 /*
@@ -49,6 +49,6 @@ export function assertIsRelayerV2ResultInputProofRejected(
   value: unknown,
   name: string,
 ): asserts value is RelayerV2ResultInputProofRejected {
-  assertRecordBytesHexProperty(value, 'extra_data', name);
   assertRecordBooleanProperty(value, 'accepted', name, false);
+  assertRecordBytesHexProperty(value, 'extra_data', name);
 }

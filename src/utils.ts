@@ -4,7 +4,7 @@ export const SERIALIZED_SIZE_LIMIT_CIPHERTEXT = BigInt(1024 * 1024 * 512);
 export const SERIALIZED_SIZE_LIMIT_PK = BigInt(1024 * 1024 * 512);
 export const SERIALIZED_SIZE_LIMIT_CRS = BigInt(1024 * 1024 * 512);
 
-export const cleanURL = (url: string | undefined) => {
+export const removeSlashSuffix = (url: string | undefined) => {
   if (!url) return '';
   return url.endsWith('/') ? url.slice(0, -1) : url;
 };

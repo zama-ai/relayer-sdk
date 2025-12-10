@@ -2,12 +2,14 @@ import { SepoliaConfig } from '../..';
 import { getErrorCause } from '../../relayer/error';
 import { AbstractRelayerProvider } from '../AbstractRelayerProvider';
 import { createRelayerProvider } from '../createRelayerFhevm';
-import fetchMock from '@fetch-mock/core';
+import fetchMock from 'fetch-mock';
 import { RelayerV2GetKeyUrlInvalidResponseError } from './errors/RelayerV2GetKeyUrlError';
 import { InvalidPropertyError } from '../../errors/InvalidPropertyError';
 
+// Jest Command line
+// =================
 // npx jest --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_keyurl.test.ts
-// npx jest --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_keyurl.test.ts --testNamePattern=BBB
+// npx jest --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_keyurl.test.ts --testNamePattern=xxx
 // npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v2/RelayerV2Provider_keyurl.test.ts --collectCoverageFrom=./src/relayer-provider/v2/RelayerV2Provider.ts
 
 // curl https://relayer.testnet.zama.org/v2/keyurl
@@ -50,14 +52,14 @@ describe('RelayerV2Provider', () => {
     );
   });
 
-  it('v2: RelayerV2Provider', async () => {
+  it('v2:keyurl: RelayerV2Provider', async () => {
     fetchMock.get(`${relayerUrlV2}/keyurl`, relayerV2ResponseGetKeyUrl);
 
     const response = await relayerProvider.fetchGetKeyUrl();
     expect(response).toEqual(relayerV2ResponseGetKeyUrl);
   });
 
-  it("v2: fetchGetKeyUrl - response = { hello: '123' }", async () => {
+  it("v2:keyurl: fetchGetKeyUrl - response = { hello: '123' }", async () => {
     fetchMock.get(`${relayerUrlV2}/keyurl`, { hello: '123' });
 
     await expect(() => relayerProvider.fetchGetKeyUrl()).rejects.toThrow(
@@ -65,7 +67,7 @@ describe('RelayerV2Provider', () => {
     );
   });
 
-  it('v2: fetchGetKeyUrl - response = 123 ', async () => {
+  it('v2:keyurl: fetchGetKeyUrl - response = 123 ', async () => {
     fetchMock.get(`${relayerUrlV2}/keyurl`, 123);
 
     await expect(() => relayerProvider.fetchGetKeyUrl()).rejects.toThrow(
@@ -73,7 +75,7 @@ describe('RelayerV2Provider', () => {
     );
   });
 
-  it('v2: fetchGetKeyUrl - response = { response: undefined }', async () => {
+  it('v2:keyurl: fetchGetKeyUrl - response = { response: undefined }', async () => {
     fetchMock.get(`${relayerUrlV2}/keyurl`, { response: undefined });
 
     await expect(() => relayerProvider.fetchGetKeyUrl()).rejects.toThrow(
@@ -81,7 +83,7 @@ describe('RelayerV2Provider', () => {
     );
   });
 
-  it('v2: fetchGetKeyUrl - response = { response: null }', async () => {
+  it('v2:keyurl: fetchGetKeyUrl - response = { response: null }', async () => {
     fetchMock.get(`${relayerUrlV2}/keyurl`, { response: null });
 
     await expect(() => relayerProvider.fetchGetKeyUrl()).rejects.toThrow(
@@ -89,7 +91,7 @@ describe('RelayerV2Provider', () => {
     );
   });
 
-  it('v2: fetchGetKeyUrl - response = { response: {} }', async () => {
+  it('v2:keyurl: fetchGetKeyUrl - response = { response: {} }', async () => {
     fetchMock.get(`${relayerUrlV2}/keyurl`, { response: {} });
 
     await expect(() => relayerProvider.fetchGetKeyUrl()).rejects.toThrow(
@@ -103,7 +105,7 @@ describe('RelayerV2Provider', () => {
     );
   });
 
-  it('v2: fetchGetKeyUrl - response = { response: { crs: {} } }', async () => {
+  it('v2:keyurl: fetchGetKeyUrl - response = { response: { crs: {} } }', async () => {
     fetchMock.get(`${relayerUrlV2}/keyurl`, { response: { crs: {} } });
 
     await expect(() => relayerProvider.fetchGetKeyUrl()).rejects.toThrow(
@@ -117,7 +119,7 @@ describe('RelayerV2Provider', () => {
     );
   });
 
-  it('v2: fetchGetKeyUrl - response = { response: { crs: {}, fhe_key_info: {} } }', async () => {
+  it('v2:keyurl: fetchGetKeyUrl - response = { response: { crs: {}, fhe_key_info: {} } }', async () => {
     fetchMock.get(`${relayerUrlV2}/keyurl`, {
       response: { crs: {}, fhe_key_info: {} },
     });
@@ -134,14 +136,14 @@ describe('RelayerV2Provider', () => {
     );
   });
 
-  it('v2: fetchGetKeyUrl - 404', async () => {
+  it('v2:keyurl: fetchGetKeyUrl - 404', async () => {
     fetchMock.getOnce(`${relayerUrlV2}/keyurl`, { status: 404 });
     await expect(() => relayerProvider.fetchGetKeyUrl()).rejects.toThrow(
       'HTTP error! status: 404',
     );
   });
 
-  it('v2: fetchGetKeyUrl - 404 - cause', async () => {
+  it('v2:keyurl: fetchGetKeyUrl - 404 - cause', async () => {
     fetchMock.getOnce(`${relayerUrlV2}/keyurl`, { status: 404 });
 
     try {
@@ -158,7 +160,7 @@ describe('RelayerV2Provider', () => {
     }
   });
 
-  it('v2: fetchGetKeyUrl - 404+headers - cause', async () => {
+  it('v2:keyurl: fetchGetKeyUrl - 404+headers - cause', async () => {
     const bodyObj = {
       message: 'no Route matched with those values',
       request_id: 'e4d9e74d3cf53270ecdee649b55d1666',

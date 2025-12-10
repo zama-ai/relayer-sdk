@@ -182,9 +182,11 @@ export async function fetchRelayerGet(
 ): Promise<RelayerFetchResponseJson> {
   let response: Response;
   let json: RelayerFetchResponseJson;
+  console.log('======== ' + url);
   try {
     response = await fetch(url);
   } catch (e) {
+    console.log(e);
     throwRelayerUnknownError(relayerOperation, e);
   }
 
