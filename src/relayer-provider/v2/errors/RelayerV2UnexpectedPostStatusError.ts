@@ -1,13 +1,13 @@
 import { RelayerOperation } from '../../../relayer/fetchRelayer';
 import { RelayerBaseError } from '../../../errors/RelayerBaseError';
-import { RelayerV2ResponseError } from './RelayerV2ResponseError';
+import { RelayerV2BasePostResponseError } from './RelayerV2ResponseError';
 
 export type RelayerV2UnexpectedPostStatusErrorType =
   RelayerV2UnexpectedPostStatusError & {
     name: 'RelayerV2InvalidPostStatusError';
   };
 
-export class RelayerV2UnexpectedPostStatusError extends RelayerV2ResponseError {
+export class RelayerV2UnexpectedPostStatusError extends RelayerV2BasePostResponseError {
   constructor(params: {
     status: number;
     url: string;
@@ -16,7 +16,6 @@ export class RelayerV2UnexpectedPostStatusError extends RelayerV2ResponseError {
   }) {
     super({
       ...params,
-      fetchMethod: 'POST',
       name: 'RelayerV2UnexpectedPostStatusError',
       message: `fetchMethod: POST status:${params.status} url:${params.url} operation:${params.operation}`,
     });

@@ -244,6 +244,7 @@ export const publicDecryptRequest =
       payloadForRequest,
       options ?? instanceOptions,
     );
+    console.log(JSON.stringify(json));
     // const json = await fetchRelayerJsonRpcPost(
     //   'PUBLIC_DECRYPT',
     //   `${relayerUrl}/v1/public-decrypt`,

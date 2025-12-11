@@ -7,6 +7,11 @@ import {
   assertRecordStringArrayProperty,
   assertRecordStringProperty,
 } from '../../../utils/string';
+import {
+  RelayerKeyData,
+  RelayerKeyInfo,
+  RelayerKeyUrlResponse,
+} from '../../../relayer/fetchRelayer';
 
 export function isRelayerV2GetResponseKeyUrl(
   value: unknown,
@@ -35,13 +40,13 @@ export function assertIsRelayerV2GetResponseKeyUrl(
   }
 
   // fhe_key_info
-  assertRecordArrayProperty(value.response, 'fhe_key_info', `${name}.response`);
-  const fhe_key_info = value.response.fhe_key_info;
-  for (let i = 0; i < fhe_key_info.length; ++i) {
-    const ki = fhe_key_info[i];
-    const kiName = `${name}.response.fhe_key_info[${i}]`;
-    assertNonNullableRecordProperty(ki, 'fhe_public_key', kiName);
-    assertIsRelayerV2KeyData(ki.fhe_public_key, `${kiName}.fhe_public_key`);
+  assertRecordArrayProperty(value.response, 'fheKeyInfo', `${name}.response`);
+  const fheKeyInfo = value.response.fheKeyInfo;
+  for (let i = 0; i < fheKeyInfo.length; ++i) {
+    const ki = fheKeyInfo[i];
+    const kiName = `${name}.response.fheKeyInfo[${i}]`;
+    assertNonNullableRecordProperty(ki, 'fhePublicKey', kiName);
+    assertIsRelayerV2KeyData(ki.fhePublicKey, `${kiName}.fhePublicKey`);
   }
 }
 
@@ -49,6 +54,34 @@ export function assertIsRelayerV2KeyData(
   value: unknown,
   name: string,
 ): asserts value is RelayerV2KeyData {
-  assertRecordStringProperty(value, 'data_id', name);
+  assertRecordStringProperty(value, 'dataId', name);
   assertRecordStringArrayProperty(value, 'urls', name);
+}
+
+export function toRelayerKeyUrlResponse(
+  response: RelayerV2GetResponseKeyUrl,
+): RelayerKeyUrlResponse {
+  const fheKeyInfoV1: Array<RelayerKeyInfo> = response.response.fheKeyInfo.map(
+    (v2Info) => ({
+      fhe_public_key: {
+        data_id: v2Info.fhePublicKey.dataId,
+        urls: v2Info.fhePublicKey.urls,
+      },
+    }),
+  );
+
+  const crsV1: Record<string, RelayerKeyData> = {};
+  for (const [key, v2Data] of Object.entries(response.response.crs)) {
+    crsV1[key] = {
+      data_id: v2Data.dataId,
+      urls: v2Data.urls,
+    };
+  }
+
+  return {
+    response: {
+      fhe_key_info: fheKeyInfoV1,
+      crs: crsV1,
+    },
+  };
 }

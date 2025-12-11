@@ -6,6 +6,7 @@ import {
   type RelayerUserDecryptPayload,
   type RelayerInputProofPayload,
   type RelayerFetchResponseJson,
+  RelayerKeyUrlResponse,
 } from '../../relayer/fetchRelayer';
 import {
   AbstractRelayerProvider,
@@ -16,9 +17,12 @@ import {
   RelayerV2AsyncRequest,
   RelayerV2ProgressArgs,
 } from './RelayerV2AsyncRequest';
-import { assertIsRelayerV2GetResponseKeyUrl } from './types/RelayerV2GetResponseKeyUrl';
-import type { RelayerV2GetResponseKeyUrl } from './types/types';
+import {
+  assertIsRelayerV2GetResponseKeyUrl,
+  toRelayerKeyUrlResponse,
+} from './types/RelayerV2GetResponseKeyUrl';
 import type { FhevmInstanceOptions } from '../../config';
+import { RelayerV2GetResponseKeyUrl } from './types/types';
 
 export class RelayerV2Provider extends AbstractRelayerProvider {
   constructor(relayerUrl: string) {
@@ -29,7 +33,7 @@ export class RelayerV2Provider extends AbstractRelayerProvider {
     return 2;
   }
 
-  public async fetchGetKeyUrl(): Promise<RelayerV2GetResponseKeyUrl> {
+  public async fetchGetKeyUrlV2(): Promise<RelayerV2GetResponseKeyUrl> {
     const response = await fetchRelayerGet('KEY_URL', this.keyUrl);
 
     // Relayer error
@@ -40,7 +44,13 @@ export class RelayerV2Provider extends AbstractRelayerProvider {
         cause: ensureError(e),
       });
     }
+
     return response;
+  }
+
+  public async fetchGetKeyUrl(): Promise<RelayerKeyUrlResponse> {
+    const response = await this.fetchGetKeyUrlV2();
+    return toRelayerKeyUrlResponse(response);
   }
 
   public override async fetchPostInputProof(

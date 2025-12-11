@@ -5,30 +5,23 @@ import {
 } from '../../../errors/RelayerBaseError';
 import { Prettify } from '../../../utils/types';
 
-export type RelayerV2RequestErrorType = RelayerV2RequestError & {
-  name: 'RelayerV2RequestError';
-};
-
-export type RelayerV2RequestErrorParams = Prettify<
+export type RelayerV2RequestBaseErrorParams = Prettify<
   RelayerBaseErrorParams & {
     url: string;
     operation: RelayerOperation;
-    fetchMethod?: 'POST' | 'GET';
     jobId?: string;
   }
 >;
 
-export abstract class RelayerV2RequestError extends RelayerBaseError {
+export abstract class RelayerV2RequestBaseError extends RelayerBaseError {
   private _url: string;
   private _operation: RelayerOperation;
-  private _fetchMethod?: 'POST' | 'GET';
   private _jobId?: string;
 
-  constructor(params: RelayerV2RequestErrorParams) {
+  constructor(params: RelayerV2RequestBaseErrorParams) {
     super(params);
     this._url = params.url;
     this._operation = params.operation;
-    this._fetchMethod = params.fetchMethod;
     this._jobId = params.jobId;
   }
 
@@ -42,9 +35,5 @@ export abstract class RelayerV2RequestError extends RelayerBaseError {
 
   public get operation(): RelayerOperation {
     return this._operation;
-  }
-
-  public get fetchMethod(): 'POST' | 'GET' | undefined {
-    return this._fetchMethod;
   }
 }

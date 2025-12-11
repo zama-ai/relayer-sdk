@@ -47,7 +47,11 @@ describe('RelayerV2Provider', () => {
   beforeEach(() => {
     fetchMock.removeRoutes();
     const SepoliaConfigeRelayerUrl = SepoliaConfig.relayerUrl!;
-    relayerProvider = createRelayerProvider(`${SepoliaConfigeRelayerUrl}/v2`);
+    const p = createRelayerProvider(`${SepoliaConfigeRelayerUrl}/v2`);
+    if (!(p instanceof RelayerV2Provider)) {
+      throw new Error(`Unable to create relayer provider`);
+    }
+    relayerProvider = p;
     expect(relayerProvider.version).toBe(2);
     expect(relayerProvider.url).toBe(`${SepoliaConfigeRelayerUrl}/v2`);
     expect(relayerProvider.inputProof).toBe(

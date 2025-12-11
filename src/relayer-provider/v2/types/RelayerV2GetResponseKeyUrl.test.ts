@@ -10,13 +10,13 @@ describe('RelayerV2GetResponseKeyUrl', () => {
     expect(
       isRelayerV2GetResponseKeyUrl({
         response: {
-          fhe_key_info: [
+          fheKeyInfo: [
             {
-              fhe_public_key: { data_id: 'hello', urls: ['world'] },
+              fhePublicKey: { dataId: 'hello', urls: ['world'] },
             },
           ],
           crs: {
-            foo: { data_id: 'hello', urls: ['world'] },
+            foo: { dataId: 'hello', urls: ['world'] },
           },
         },
       }),
@@ -31,13 +31,13 @@ describe('RelayerV2GetResponseKeyUrl', () => {
       assertIsRelayerV2GetResponseKeyUrl(
         {
           response: {
-            fhe_key_info: [
+            fheKeyInfo: [
               {
-                fhe_public_key: { data_id: 'hello', urls: ['world'] },
+                fhePublicKey: { dataId: 'hello', urls: ['world'] },
               },
             ],
             crs: {
-              foo: { data_id: 'hello', urls: ['world'] },
+              foo: { dataId: 'hello', urls: ['world'] },
             },
           },
         },
@@ -51,14 +51,14 @@ describe('RelayerV2GetResponseKeyUrl', () => {
           response: {
             crs: {
               foo: {
-                data_id: 'hello',
+                dataId: 'hello',
                 urls: ['world'],
               },
             },
-            fhe_key_info: [
+            fheKeyInfo: [
               {
-                fhe_public_key: {
-                  data_id: 'hello',
+                fhePublicKey: {
+                  dataId: 'hello',
                   urls: ['world'],
                 },
               },
@@ -95,7 +95,7 @@ describe('RelayerV2GetResponseKeyUrl', () => {
         {
           response: {
             crs: {},
-            fhe_key_info: {},
+            fheKeyInfo: {},
           },
         },
         'Foo',
@@ -106,7 +106,7 @@ describe('RelayerV2GetResponseKeyUrl', () => {
         {
           response: {
             crs: {},
-            fhe_key_info: ['hello'],
+            fheKeyInfo: ['hello'],
           },
         },
         'Foo',
@@ -117,7 +117,7 @@ describe('RelayerV2GetResponseKeyUrl', () => {
         {
           response: {
             crs: {},
-            fhe_key_info: [{}],
+            fheKeyInfo: [{}],
           },
         },
         'Foo',
@@ -128,9 +128,9 @@ describe('RelayerV2GetResponseKeyUrl', () => {
         {
           response: {
             crs: {},
-            fhe_key_info: [
+            fheKeyInfo: [
               {
-                fhe_public_key: {},
+                fhePublicKey: {},
               },
             ],
           },
@@ -143,10 +143,10 @@ describe('RelayerV2GetResponseKeyUrl', () => {
         {
           response: {
             crs: {},
-            fhe_key_info: [
+            fheKeyInfo: [
               {
-                fhe_public_key: {
-                  data_id: 123,
+                fhePublicKey: {
+                  dataId: 123,
                 },
               },
             ],
@@ -160,10 +160,10 @@ describe('RelayerV2GetResponseKeyUrl', () => {
         {
           response: {
             crs: {},
-            fhe_key_info: [
+            fheKeyInfo: [
               {
-                fhe_public_key: {
-                  data_id: 'hello',
+                fhePublicKey: {
+                  dataId: 'hello',
                 },
               },
             ],
@@ -177,10 +177,10 @@ describe('RelayerV2GetResponseKeyUrl', () => {
         {
           response: {
             crs: {},
-            fhe_key_info: [
+            fheKeyInfo: [
               {
-                fhe_public_key: {
-                  data_id: 'hello',
+                fhePublicKey: {
+                  dataId: 'hello',
                   urls: {},
                 },
               },
@@ -195,10 +195,10 @@ describe('RelayerV2GetResponseKeyUrl', () => {
         {
           response: {
             crs: {},
-            fhe_key_info: [
+            fheKeyInfo: [
               {
-                fhe_public_key: {
-                  data_id: 'hello',
+                fhePublicKey: {
+                  dataId: 'hello',
                   urls: [123],
                 },
               },
@@ -215,10 +215,10 @@ describe('RelayerV2GetResponseKeyUrl', () => {
             crs: {
               foo: '123',
             },
-            fhe_key_info: [
+            fheKeyInfo: [
               {
-                fhe_public_key: {
-                  data_id: 'hello',
+                fhePublicKey: {
+                  dataId: 'hello',
                   urls: ['world'],
                 },
               },
@@ -234,13 +234,13 @@ describe('RelayerV2GetResponseKeyUrl', () => {
           response: {
             crs: {
               foo: {
-                data_id: 234,
+                dataId: 234,
               },
             },
-            fhe_key_info: [
+            fheKeyInfo: [
               {
-                fhe_public_key: {
-                  data_id: 'hello',
+                fhePublicKey: {
+                  dataId: 'hello',
                   urls: ['world'],
                 },
               },
@@ -256,13 +256,13 @@ describe('RelayerV2GetResponseKeyUrl', () => {
           response: {
             crs: {
               foo: {
-                data_id: '234',
+                dataId: '234',
               },
             },
-            fhe_key_info: [
+            fheKeyInfo: [
               {
-                fhe_public_key: {
-                  data_id: 'hello',
+                fhePublicKey: {
+                  dataId: 'hello',
                   urls: ['world'],
                 },
               },
@@ -278,14 +278,14 @@ describe('RelayerV2GetResponseKeyUrl', () => {
           response: {
             crs: {
               foo: {
-                data_id: 'hello',
+                dataId: 'hello',
                 urls: 'world',
               },
             },
-            fhe_key_info: [
+            fheKeyInfo: [
               {
-                fhe_public_key: {
-                  data_id: 'hello',
+                fhePublicKey: {
+                  dataId: 'hello',
                   urls: ['world'],
                 },
               },

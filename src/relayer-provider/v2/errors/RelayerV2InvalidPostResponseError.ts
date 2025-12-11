@@ -1,6 +1,6 @@
 import { RelayerOperation } from '../../../relayer/fetchRelayer';
 import { RelayerBaseError } from '../../../errors/RelayerBaseError';
-import { RelayerV2ResponseError } from './RelayerV2ResponseError';
+import { RelayerV2BasePostResponseError } from './RelayerV2ResponseError';
 import { ensureError } from '../../../errors/utils';
 
 export type RelayerV2InvalidPostResponseErrorType =
@@ -8,7 +8,7 @@ export type RelayerV2InvalidPostResponseErrorType =
     name: 'RelayerV2InvalidPostResponseError';
   };
 
-export class RelayerV2InvalidPostResponseError extends RelayerV2ResponseError {
+export class RelayerV2InvalidPostResponseError extends RelayerV2BasePostResponseError {
   constructor(params: {
     status: number;
     url: string;
@@ -18,7 +18,6 @@ export class RelayerV2InvalidPostResponseError extends RelayerV2ResponseError {
     super({
       ...params,
       cause: ensureError(params.cause),
-      fetchMethod: 'POST',
       name: 'RelayerV2InvalidPostResponseError',
       message: `fetchMethod: POST status:${params.status} url:${params.url} operation:${params.operation}`,
     });

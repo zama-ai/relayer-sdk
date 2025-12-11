@@ -36,7 +36,7 @@ export class RelayerV2Fhevm extends AbstractRelayerFhevm {
 
     if (!relayerPublicKey) {
       const response: RelayerV2GetResponseKeyUrl =
-        await relayerProvider.fetchGetKeyUrl();
+        await relayerProvider.fetchGetKeyUrlV2();
       relayerPublicKey = await RelayerV2PublicKey.fromRelayerResponse(response);
     }
 

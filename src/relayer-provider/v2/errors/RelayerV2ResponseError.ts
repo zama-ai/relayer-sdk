@@ -5,31 +5,33 @@ import {
 } from '../../../errors/RelayerBaseError';
 import { Prettify } from '../../../utils/types';
 
-export type RelayerV2ResponseErrorType = RelayerV2ResponseError & {
+export type RelayerV2ResponseErrorType = RelayerV2BaseResponseError & {
   name: 'RelayerV2ResponseError';
 };
 
-export type RelayerV2ResponseErrorParams = Prettify<
+export type RelayerV2BaseResponseErrorParams = Prettify<
   RelayerBaseErrorParams & {
     url: string;
     operation: RelayerOperation;
     status: number;
-    fetchMethod: 'POST' | 'GET';
   }
 >;
 
-export abstract class RelayerV2ResponseError extends RelayerBaseError {
+export abstract class RelayerV2BaseResponseError extends RelayerBaseError {
   private _fetchMethod: 'POST' | 'GET';
   private _status: number;
   private _url: string;
   private _operation: RelayerOperation;
 
-  constructor(params: RelayerV2ResponseErrorParams) {
+  constructor(
+    fetchMethod: 'GET' | 'POST',
+    params: RelayerV2BaseResponseErrorParams,
+  ) {
     super(params);
+    this._fetchMethod = fetchMethod;
     this._status = params.status;
     this._url = params.url;
     this._operation = params.operation;
-    this._fetchMethod = params.fetchMethod;
   }
 
   public get url(): string {
@@ -49,17 +51,14 @@ export abstract class RelayerV2ResponseError extends RelayerBaseError {
   }
 }
 
-export type RelayerV2GetResponseErrorParams = Prettify<
-  Omit<RelayerBaseErrorParams, 'fetchMethod'> & {
-    url: string;
-    operation: RelayerOperation;
-    status: number;
-    jobId: string;
-  } & { fetchMethod: 'GET' }
->;
+export abstract class RelayerV2BaseGetResponseError extends RelayerV2BaseResponseError {
+  constructor(params: RelayerV2BaseResponseErrorParams) {
+    super('GET', params);
+  }
+}
 
-export abstract class RelayerV2GetResponseError extends RelayerV2ResponseError {
-  constructor(params: RelayerV2ResponseErrorParams) {
-    super(params);
+export abstract class RelayerV2BasePostResponseError extends RelayerV2BaseResponseError {
+  constructor(params: RelayerV2BaseResponseErrorParams) {
+    super('POST', params);
   }
 }

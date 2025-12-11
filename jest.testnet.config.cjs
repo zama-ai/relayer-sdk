@@ -4,6 +4,6 @@ const baseConfig = require('./jest.base.config.cjs');
 module.exports = {
   ...baseConfig,
 
-  setupFiles: ['./setupJestLocal.cjs'],
-  testRegex: '\\.test-local\\.ts$',
+  setupFiles: ['./setupJestTestnet.cjs'],
+  testRegex: '\\.test-sepolia\\.ts$',
 };

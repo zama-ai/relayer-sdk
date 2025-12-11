@@ -1,29 +1,29 @@
 import {
-  RelayerV2RequestError,
-  RelayerV2RequestErrorParams,
+  RelayerV2RequestBaseError,
+  RelayerV2RequestBaseErrorParams,
 } from './RelayerV2RequestError';
 import { Prettify } from '../../../utils/types';
 
 export type RelayerV2InternalRequestErrorType =
-  RelayerV2InternalRequestError & {
-    name: 'RelayerV2InternalRequestError';
+  RelayerV2RequestInternalError & {
+    name: 'RelayerV2RequestInternalError';
   };
 
 export type RelayerV2InternalRequestErrorParams = Prettify<
-  Omit<RelayerV2RequestErrorParams, 'name'> & {
+  Omit<RelayerV2RequestBaseErrorParams, 'name'> & {
     status?: number;
     state?: string;
   }
 >;
 
-export class RelayerV2InternalRequestError extends RelayerV2RequestError {
+export class RelayerV2RequestInternalError extends RelayerV2RequestBaseError {
   private _status?: number;
   private _state?: string;
 
   constructor(params: RelayerV2InternalRequestErrorParams) {
     super({
       ...params,
-      name: 'RelayerV2InternalRequestError',
+      name: 'RelayerV2RequestInternalError',
       message: params.message ?? 'internal error',
     });
     this._status = params.status;

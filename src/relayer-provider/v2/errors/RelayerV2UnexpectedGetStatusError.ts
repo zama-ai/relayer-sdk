@@ -1,13 +1,13 @@
 import { RelayerOperation } from '../../../relayer/fetchRelayer';
 import { RelayerBaseError } from '../../../errors/RelayerBaseError';
-import { RelayerV2ResponseError } from './RelayerV2ResponseError';
+import { RelayerV2BaseGetResponseError } from './RelayerV2ResponseError';
 
 export type RelayerV2UnexpectedGetStatusErrorType =
   RelayerV2UnexpectedGetStatusError & {
     name: 'RelayerV2UnexpectedGetStatusError';
   };
 
-export class RelayerV2UnexpectedGetStatusError extends RelayerV2ResponseError {
+export class RelayerV2UnexpectedGetStatusError extends RelayerV2BaseGetResponseError {
   constructor(params: {
     status: number;
     url: string;
@@ -16,7 +16,6 @@ export class RelayerV2UnexpectedGetStatusError extends RelayerV2ResponseError {
   }) {
     super({
       ...params,
-      fetchMethod: 'GET',
       name: 'RelayerV2UnexpectedGetStatusError',
       message: `fetchMethod: GET status:${params.status} url:${params.url} operation:${params.operation}`,
     });

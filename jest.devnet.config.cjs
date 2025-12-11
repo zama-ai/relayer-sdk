@@ -5,5 +5,5 @@ module.exports = {
   ...baseConfig,
 
   setupFiles: ['./setupJestDevnet.cjs'],
-  testRegex: '\\.test-local\\.ts$',
+  testRegex: '\\.test-sepolia\\.ts$',
 };

@@ -66,12 +66,12 @@ export class RelayerV2PublicKey {
         'RelayerV2GetResponseKeyUrl',
       );
 
-      const pub_key_0 = response.response.fhe_key_info[0].fhe_public_key;
-      const tfheCompactPublicKeyId = pub_key_0.data_id;
+      const pub_key_0 = response.response.fheKeyInfo[0].fhePublicKey;
+      const tfheCompactPublicKeyId = pub_key_0.dataId;
       const tfheCompactPublicKeyUrl = pub_key_0.urls[0];
 
       const crs_2048 = response.response.crs['2048'];
-      const compactPkeCrs2048Id = crs_2048.data_id;
+      const compactPkeCrs2048Id = crs_2048.dataId;
       const compactPkeCrs2048Url = crs_2048.urls[0];
 
       const publicKey: TFHEPublicKey = await TFHEPublicKey.fromUrl({
