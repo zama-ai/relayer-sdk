@@ -20,6 +20,8 @@
 
 fhevm SDK is a javascript library that enables developers to interact with blockchains using Zama's cutting-edge technology based on TFHE (Fully Homomorphic Encryption over the Torus). This library provides a seamless integration of TFHE encryption capabilities into web3 applications, allowing for secure and private interactions with smart contracts.
 
+For step-by-step integration guides and runnable examples, see the [Relayer SDK Guides](https://docs.zama.org/protocol/relayer-sdk-guides) in the Protocol documentation.
+
 ## Installation
 
 ```bash
