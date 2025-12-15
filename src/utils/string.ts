@@ -7,6 +7,11 @@ import {
 } from './record';
 import { InternalError } from '../errors/InternalError';
 
+export const removeSlashSuffix = (url: string | undefined) => {
+  if (!url) return '';
+  return url.endsWith('/') ? url.slice(0, -1) : url;
+};
+
 export function ensure0x(s: string): `0x${string}` {
   return !s.startsWith('0x') ? `0x${s}` : (s as `0x${string}`);
 }

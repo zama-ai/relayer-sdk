@@ -1,22 +1,22 @@
 import { assertIsUint, uintToHexNoPrefix } from '../utils/uint';
-import {
-  assertIsChecksummedAddress,
-  type ChecksummedAddress,
-} from '../utils/address';
+import { assertIsChecksummedAddress } from '../utils/address';
 import {
   assertIsBytes32HexArray,
   assertIsBytes65HexArray,
   assertIsBytesHex,
-  Bytes32HexNo0x,
-  Bytes65Hex,
-  BytesHexNo0x,
-  type Bytes32Hex,
-  type BytesHex,
 } from '../utils/bytes';
 import { remove0x } from '../utils/string';
 import { assertRelayer } from '../errors/InternalError';
 import { ethers, Wallet } from 'ethers';
 import { multiSignEIP712 } from './eip712';
+import {
+  Bytes32Hex,
+  Bytes32HexNo0x,
+  Bytes65Hex,
+  BytesHex,
+  BytesHexNo0x,
+  ChecksummedAddress,
+} from '../types/primitives';
 
 // cast wallet address 0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef
 // 0xC96aAa54E2d44c299564da76e1cD3184A2386B8D

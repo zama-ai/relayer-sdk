@@ -1,3 +1,9 @@
+import {
+  Bytes32Hex,
+  Bytes65Hex,
+  BytesHex,
+  BytesHexNo0x,
+} from '../types/primitives';
 import { InvalidPropertyError } from '../errors/InvalidPropertyError';
 import { InvalidTypeError } from '../errors/InvalidTypeError';
 import {
@@ -5,15 +11,6 @@ import {
   isNonNullableRecordProperty,
   typeofProperty,
 } from './record';
-
-export type Bytes = Uint8Array;
-export type Bytes32 = Uint8Array;
-export type BytesHex = `0x${string}`;
-export type BytesHexNo0x = string;
-export type Bytes32Hex = `0x${string}`;
-export type Bytes32HexNo0x = string;
-export type Bytes65Hex = `0x${string}`;
-export type Bytes65HexNo0x = string;
 
 export function isBytesHex(value: unknown): value is BytesHex {
   if (typeof value !== 'string') {
@@ -466,4 +463,30 @@ export async function fetchBytes(url: string): Promise<Uint8Array> {
       : new Uint8Array(await response.arrayBuffer());
 
   return bytes;
+}
+
+export function fromHexString(hexString: string): Uint8Array {
+  const arr = hexString.replace(/^(0x)/, '').match(/.{1,2}/g);
+  if (!arr) return new Uint8Array();
+  return Uint8Array.from(arr.map((byte) => parseInt(byte, 16)));
+}
+
+export function bytesToBigInt(byteArray: Uint8Array): bigint {
+  if (!byteArray || byteArray?.length === 0) {
+    return BigInt(0);
+  }
+  const hex = Array.from(byteArray)
+    .map((b) => b.toString(16).padStart(2, '0')) // byte to hex
+    .join('');
+
+  return BigInt(`0x${hex}`);
+}
+
+export function toHexString(bytes: Uint8Array, with0x: true): `0x${string}`;
+export function toHexString(bytes: Uint8Array, with0x?: false): string;
+export function toHexString(bytes: Uint8Array, with0x = false): string {
+  return `${with0x ? '0x' : ''}${bytes.reduce(
+    (str, byte) => str + byte.toString(16).padStart(2, '0'),
+    '',
+  )}`;
 }

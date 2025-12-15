@@ -9,6 +9,7 @@ import {
 
 // Jest Command line
 // =================
+// npx jest --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2AsyncRequest.test.ts
 // npx jest --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2AsyncRequest.test.ts --testNamePattern=xxx
 // npx jest --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2AsyncRequest.test.ts --testNamePattern=xxx --detectOpenHandles
 // npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v2/RelayerV2AsyncRequest.test.ts --collectCoverageFrom=./src/relayer-provider/v2/RelayerV2AsyncRequest.ts

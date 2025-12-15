@@ -2,7 +2,11 @@
 // V2
 ////////////////////////////////////////////////////////////////////////////////
 
-import type { Bytes32Hex, BytesHex, BytesHexNo0x } from '../../../utils/bytes';
+import type {
+  BytesHex,
+  BytesHexNo0x,
+  Bytes32Hex,
+} from '../../../types/primitives';
 
 // Do not add KEYURL here!
 export type RelayerV2OperationResult =

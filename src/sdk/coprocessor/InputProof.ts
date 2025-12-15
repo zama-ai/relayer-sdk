@@ -4,14 +4,12 @@ import {
   assertIsBytes65HexArray,
   assertIsBytesHex,
   bytesToHex,
-  type Bytes32Hex,
-  type Bytes65Hex,
-  type BytesHex,
 } from '../../utils/bytes';
 import { RelayerTooManyHandlesError } from '../../errors/RelayerTooManyHandlesError';
 import { assertRelayer } from '../../errors/InternalError';
 import { remove0x } from '../../utils/string';
 import { RelayerInvalidProofError } from '../../errors/RelayerInvalidProofError';
+import { Bytes32Hex, Bytes65Hex, BytesHex } from '../../types/primitives';
 
 export class InputProof {
   private readonly _proof: BytesHex;

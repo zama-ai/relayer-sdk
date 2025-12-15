@@ -1,5 +1,4 @@
 import { ethers } from 'ethers';
-import { type BytesHex } from '../../utils/bytes';
 import { KmsSigner } from './KmsSigner';
 import { EIP712Signers } from './EIP712Signers';
 import {
@@ -9,6 +8,7 @@ import {
   type KmsEIP712Type,
 } from '../../sdk/kms/KmsEIP712';
 import { Prettify } from '../../utils/types';
+import { BytesHex } from '../../types/primitives';
 
 ////////////////////////////////////////////////////////////////////////////////
 // KmsSigners (Multi-sig for KMS)

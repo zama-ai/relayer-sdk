@@ -22,12 +22,12 @@ export function assertIsRelayerV2ResultUserDecrypt(
     assertRecordBytesHexNo0xProperty(
       value.result[i],
       'payload',
-      `${name}.result[i]`,
+      `${name}.result[${i}]`,
     );
     assertRecordBytesHexNo0xProperty(
       value.result[i],
       'signature',
-      `${name}.result[i]`,
+      `${name}.result[${i}]`,
     );
   }
 }

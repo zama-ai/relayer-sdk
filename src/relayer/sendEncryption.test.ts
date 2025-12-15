@@ -6,25 +6,30 @@ import {
 import { publicKey, publicParams } from '../test';
 import fetchMock from 'fetch-mock';
 import { computeHandles } from './handles';
-import { fromHexString, toHexString } from '../utils';
+import { fromHexString, toHexString } from '../utils/bytes';
 import type { Auth } from '../auth';
 import { createRelayerProvider } from '../relayer-provider/createRelayerFhevm';
+import { InvalidPropertyError } from '../errors/InvalidPropertyError';
+import { TEST_CONFIG } from '../test/config';
 
 // Jest Command line
 // =================
+// npx jest --colors --passWithNoTests ./src/relayer/sendEncryption.test.ts --testNamePattern=xxx
+// npx jest --colors --passWithNoTests ./src/relayer/sendEncryption.test.ts
 // npx jest --colors --passWithNoTests --coverage ./src/relayer/sendEncryption.test.ts --collectCoverageFrom=./src/relayer/sendEncryption.ts --testNamePattern=xxx
 // npx jest --colors --passWithNoTests --coverage ./src/relayer/sendEncryption.test.ts --collectCoverageFrom=./src/relayer/sendEncryption.ts
+//
+// Devnet:
+// =======
+// npx jest --config jest.devnet.config.cjs --colors --passWithNoTests ./src/relayer/sendEncryption.test.ts
+//
 
-const aclContractAddress = '0x325ea1b59F28e9e1C51d3B5b47b7D3965CC5D8C8';
+const aclContractAddress = TEST_CONFIG.fhevmInstanceConfig.aclContractAddress;
 const verifyingContractAddressInputVerification =
-  '0x0C475a195D5C16bb730Ae2d5B1196844A83899A5';
-const chainId = 1234;
-const gatewayChainId = 4321;
-const defaultRelayerVersion = 1;
-const relayerProvider = createRelayerProvider(
-  'https://test-fhevm-relayer',
-  defaultRelayerVersion,
-);
+  TEST_CONFIG.fhevmInstanceConfig.verifyingContractAddressInputVerification;
+const chainId = TEST_CONFIG.fhevmInstanceConfig.chainId!;
+const gatewayChainId = TEST_CONFIG.fhevmInstanceConfig.gatewayChainId;
+const relayerProvider = createRelayerProvider(TEST_CONFIG.v1.urls.base);
 
 const autoMock = (input: RelayerEncryptedInput, opts?: { auth?: Auth }) => {
   fetchMock.postOnce(relayerProvider.inputProof, function (params: any) {
@@ -70,7 +75,7 @@ const autoMock = (input: RelayerEncryptedInput, opts?: { auth?: Auth }) => {
       aclContractAddress,
       chainId,
       currentCiphertextVersion(),
-    ).map((handle: Uint8Array) => toHexString(handle));
+    ).map((handle: Uint8Array) => toHexString(handle, true));
     return {
       options: options,
       response: {
@@ -81,7 +86,24 @@ const autoMock = (input: RelayerEncryptedInput, opts?: { auth?: Auth }) => {
   });
 };
 
-describe('encrypt', () => {
+const describeIfFetchMock =
+  TEST_CONFIG.type === 'fetch-mock' ? describe : describe.skip;
+
+const consoleLogSpy = jest
+  .spyOn(console, 'log')
+  .mockImplementation((message) => {
+    process.stdout.write(`${message}\n`);
+  });
+
+describeIfFetchMock('encrypt', () => {
+  beforeEach(() => {
+    fetchMock.removeRoutes();
+  });
+
+  afterAll(() => {
+    consoleLogSpy.mockRestore();
+  });
+
   it('encrypt', async () => {
     const input = createRelayerEncryptedInput(
       aclContractAddress,
@@ -324,7 +346,13 @@ describe('encrypt', () => {
       };
     });
     await expect(input.encrypt()).rejects.toThrow(
-      /Incorrect Handle 0: \(expected\) [0-9a-z]{64} != [0-9a-z]{64} \(received\)/,
+      new InvalidPropertyError({
+        objName: 'fetchPostInputProof()',
+        property: 'signatures',
+        index: 0,
+        expectedType: 'Bytes65Hex',
+        type: 'string',
+      }),
     );
   });
 

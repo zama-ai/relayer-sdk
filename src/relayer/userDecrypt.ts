@@ -1,4 +1,3 @@
-import { bytesToBigInt, fromHexString, toHexString } from '../utils';
 import { ethers, getAddress as ethersGetAddress } from 'ethers';
 import {
   ClearValueType,
@@ -11,6 +10,7 @@ import {
 } from './fetchRelayer';
 import { AbstractRelayerProvider } from '../relayer-provider/AbstractRelayerProvider';
 import type { FhevmInstanceOptions } from '../config';
+import { bytesToBigInt, fromHexString, toHexString } from '../utils/bytes';
 
 // Add type checking
 const getAddress = (value: string): `0x${string}` =>

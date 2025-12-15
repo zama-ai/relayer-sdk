@@ -1,11 +1,4 @@
 import { ethers } from 'ethers';
-import {
-  Bytes32Hex,
-  Bytes32HexNo0x,
-  Bytes65Hex,
-  Bytes65HexNo0x,
-  type BytesHex,
-} from '../../utils/bytes';
 import { CoprocessorSigner } from './CoprocessorSigner';
 import { EIP712Signers } from './EIP712Signers';
 import type {
@@ -16,6 +9,13 @@ import type {
 import { CoprocessorEIP712 } from '../../sdk/coprocessor/CoprocessorEIP712';
 import type { Prettify } from '../../utils/types';
 import { remove0x } from '../../utils/string';
+import {
+  Bytes32Hex,
+  Bytes32HexNo0x,
+  Bytes65Hex,
+  Bytes65HexNo0x,
+  BytesHex,
+} from '../../types/primitives';
 
 ////////////////////////////////////////////////////////////////////////////////
 // CoprocessorSigners (Multi-sig for Coprocessor)
@@ -144,47 +144,4 @@ export class CoprocessorSigners extends EIP712Signers<
       handles: res.handles.map((handleHex) => remove0x(handleHex)),
     };
   }
-
-  // TODO
-  // public async aaa({
-  //   contractAddress,
-  //   userAddress,
-  //   extraData,
-  //   ciphertextWithInputVerification,
-  //   bitwidths,
-  // }: {
-  //   contractAddress: ChecksummedAddress;
-  //   userAddress: ChecksummedAddress;
-  //   extraData: BytesHex;
-  //   ciphertextWithInputVerification: BytesHex;
-  //   bitwidths: (keyof typeof ENCRYPTION_TYPES)[];
-  // }) {
-  //   const ciphertext = fromHexString(ciphertextWithInputVerification);
-
-  //   const handlesUint8ArrayList: Uint8Array[] = computeHandles(
-  //     ciphertext,
-  //     bitwidths,
-  //     this._aclContractAddress,
-  //     this._chainId,
-  //     currentCiphertextVersion(),
-  //   );
-
-  //   const handlesBytes32HexList: Bytes32Hex[] = handlesUint8ArrayList.map((h) =>
-  //     toHexString(h, true),
-  //   );
-
-  //   const params = {
-  //     ctHandles: handlesBytes32HexList,
-  //     contractChainId: this._chainId,
-  //     contractAddress,
-  //     userAddress,
-  //     extraData,
-  //   };
-
-  //   if (no0x) {
-  //     return await this.computeSignaturesNo0x(params);
-  //   } else {
-  //     return await this.computeSignatures(params);
-  //   }
-  // }
 }

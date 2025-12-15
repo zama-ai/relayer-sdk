@@ -1,11 +1,9 @@
 import {
   assertRecordBytes32HexArrayProperty,
   assertRecordBytes65HexArrayProperty,
-  assertRecordBytesHexArrayProperty,
+  assertRecordBytesHexNo0xArrayProperty,
   assertRecordBytesHexNo0xProperty,
   assertRecordBytesHexProperty,
-  BytesHex,
-  BytesHexNo0x,
 } from '../utils/bytes';
 import type { FhevmInstanceOptions } from '../config';
 import type {
@@ -16,6 +14,7 @@ import type {
 } from '../relayer/fetchRelayer';
 import { assertRecordStringProperty } from '../utils/string';
 import { InvalidPropertyError } from '../errors/InvalidPropertyError';
+import { BytesHex, BytesHexNo0x } from '../types/primitives';
 
 export type RelayerProviderFetchOptions<T> = {
   signal?: AbortSignal;
@@ -110,7 +109,7 @@ export function assertIsRelayerPublicDecryptResult(
   value: unknown,
   name: string,
 ): asserts value is RelayerPublicDecryptResult {
-  assertRecordBytesHexArrayProperty(value, 'signatures', name);
+  assertRecordBytesHexNo0xArrayProperty(value, 'signatures', name);
   assertRecordStringProperty(value, 'decryptedValue', name);
   assertRecordBytesHexProperty(value, 'extraData', name);
 }

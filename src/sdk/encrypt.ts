@@ -1,8 +1,9 @@
 import { isAddress } from 'ethers';
 
-import { fromHexString, SERIALIZED_SIZE_LIMIT_CIPHERTEXT } from '../utils';
+import { SERIALIZED_SIZE_LIMIT_CIPHERTEXT } from '../constants';
 import { EncryptionBits } from './encryptionTypes';
 import { TFHEType } from '../tfheType';
+import { fromHexString } from '../utils/bytes';
 
 export type EncryptedInput = {
   addBool: (value: boolean | number | bigint) => EncryptedInput;

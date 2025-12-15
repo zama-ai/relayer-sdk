@@ -9,8 +9,6 @@ import {
   isAddress,
   isChecksummedAddress,
 } from './address';
-import { TEST_CONFIG } from '../test/utils';
-import { SepoliaConfig } from '..';
 
 // Jest Command line
 // =================

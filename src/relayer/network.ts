@@ -1,4 +1,7 @@
-import { SERIALIZED_SIZE_LIMIT_PK, SERIALIZED_SIZE_LIMIT_CRS } from '../utils';
+import {
+  SERIALIZED_SIZE_LIMIT_PK,
+  SERIALIZED_SIZE_LIMIT_CRS,
+} from '../constants';
 import { fetchRelayerGet, RelayerKeyUrlResponse } from './fetchRelayer';
 
 const keyurlCache: { [key: string]: any } = {};

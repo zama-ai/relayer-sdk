@@ -1,6 +1,6 @@
 import fetchMock, { CallLog } from 'fetch-mock';
 import type { RelayerV2AsyncRequestState } from '../../relayer-provider/v2/RelayerV2AsyncRequest';
-import { fetchMockInputProof, TEST_CONFIG } from '../utils';
+import { fetchMockInputProof, TEST_CONFIG } from '../config';
 import {
   publicKey as assetPublicKey,
   publicParams as assetPublicParams,
@@ -8,7 +8,7 @@ import {
 import {
   SERIALIZED_SIZE_LIMIT_CRS,
   SERIALIZED_SIZE_LIMIT_PK,
-} from '../../utils';
+} from '../../constants';
 import { RelayerV2ResponseInvalidBodyError } from '../../relayer-provider/v2/errors/RelayerV2ResponseInvalidBodyError';
 import { InvalidPropertyError } from '../../errors/InvalidPropertyError';
 import { ENCRYPTION_TYPES } from '../../sdk/encryptionTypes';
@@ -141,11 +141,7 @@ export function setupV2RoutesInputProof(
   fetchMock.get(
     `${TEST_CONFIG.v2.urls.inputProof}/${jobId}`,
     async (args: CallLog) => {
-      const res = await fetchMockInputProof(
-        receivedArgs,
-        bitwidths,
-        false /* no0x */,
-      );
+      const res = await fetchMockInputProof(receivedArgs, bitwidths);
       return {
         status: 200,
         body: {

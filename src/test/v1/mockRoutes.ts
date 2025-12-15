@@ -1,5 +1,5 @@
 import fetchMock, { type CallLog } from 'fetch-mock';
-import { fetchMockInputProof, TEST_CONFIG } from '../utils';
+import { fetchMockInputProof, TEST_CONFIG } from '../config';
 import {
   publicKey as assetPublicKey,
   publicParams as assetPublicParams,
@@ -7,7 +7,7 @@ import {
 import {
   SERIALIZED_SIZE_LIMIT_CRS,
   SERIALIZED_SIZE_LIMIT_PK,
-} from '../../utils';
+} from '../../constants';
 import { ENCRYPTION_TYPES } from '../../sdk/encryptionTypes';
 
 // curl https://relayer.dev.zama.cloud/v1/keyurl
@@ -71,7 +71,7 @@ export function setupV1RoutesInputProof(
 
     const json = JSON.parse(body);
 
-    const result = await fetchMockInputProof(json, bitwidths, true /* no0x */);
+    const result = await fetchMockInputProof(json, bitwidths);
     return {
       status: 200,
       body: {

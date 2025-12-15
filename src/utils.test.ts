@@ -1,21 +1,26 @@
-import { bytesToBigInt, bytesToHex, fromHexString } from './utils';
+import { bytesToBigInt } from './utils/bytes';
+import { bytesToHex, fromHexString } from './utils/bytes';
+
+// Jest Command line
+// =================
+// npx jest --colors --passWithNoTests ./src/utils.test.ts
 
 describe('decrypt-utils', () => {
   it('converts a hex to bytes', async () => {
     const value = '0xff';
-    const bytes = fromHexString(value);
-    expect(bytes).toEqual(new Uint8Array([255]));
+    const bytes1 = fromHexString(value);
+    expect(bytes1).toEqual(new Uint8Array([255]));
 
     const bytes2 = fromHexString('0x');
     expect(bytes2).toEqual(new Uint8Array([]));
   });
 
   it('converts a bytes to hex', async () => {
-    const bytes = bytesToHex(new Uint8Array([255]));
-    expect(bytes).toEqual('0xff');
+    const bytes1 = bytesToHex(new Uint8Array([255]));
+    expect(bytes1).toEqual('0xff');
 
     const bytes2 = bytesToHex(new Uint8Array());
-    expect(bytes2).toEqual('0x0');
+    expect(bytes2).toEqual('0x');
   });
 
   it('converts bytes to number', async () => {

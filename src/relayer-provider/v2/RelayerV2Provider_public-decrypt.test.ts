@@ -12,7 +12,7 @@ import {
   removeAllFetchMockRoutes,
   setupAllFetchMockRoutes,
   TEST_CONFIG,
-} from '../../test/utils';
+} from '../../test/config';
 import { RUNNING_REQ_STATE } from '../../test/v2/mockRoutes';
 
 // Jest Command line
@@ -182,10 +182,10 @@ describeIfFetchMock('RelayerV2Provider:public-decrypt:mock:', () => {
     );
   });
 
-  it('xxx v2:public-decrypt: 202 - status:queued, result ok', async () => {
+  it('v2:public-decrypt: 202 - status:queued, result ok', async () => {
     post202({
       status: 'queued',
-      result: { jobId: '123', retryAfterSeconds: 3 },
+      result: { jobId: '123' },
     });
 
     fetchMock.get(`${TEST_CONFIG.v2.urls.publicDecrypt}/123`, {
@@ -238,7 +238,7 @@ describeIfFetch('RelayerV2Provider:public-decrypt:sepolia:', () => {
     await instance.publicDecrypt([eCount]);
   }, 60000);
 
-  it('xxx v1: succeeded', async () => {
+  it('v1: succeeded', async () => {
     setupAllFetchMockRoutes({});
 
     const config = TEST_CONFIG.v1.fhevmInstanceConfig;

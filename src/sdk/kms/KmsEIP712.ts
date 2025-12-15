@@ -2,17 +2,16 @@ import { assertIsUint256, assertIsUint32 } from '../../utils/uint';
 import {
   assertIsChecksummedAddress,
   assertIsChecksummedAddressArray,
-  type ChecksummedAddress,
 } from '../../utils/address';
-import {
-  assertIsBytes65HexArray,
-  assertIsBytesHex,
-  Bytes65Hex,
-  BytesHex,
-} from '../../utils/bytes';
+import { assertIsBytes65HexArray, assertIsBytesHex } from '../../utils/bytes';
 import { Prettify } from '../../utils/types';
 import type { ethers as EthersT } from 'ethers';
 import { verifySignature } from '../../utils/signature';
+import {
+  Bytes65Hex,
+  BytesHex,
+  ChecksummedAddress,
+} from '../../types/primitives';
 
 ////////////////////////////////////////////////////////////////////////////////
 // KmsEIP712 Types

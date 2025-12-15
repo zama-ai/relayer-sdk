@@ -8,7 +8,7 @@ import {
 import {
   SERIALIZED_SIZE_LIMIT_CRS,
   SERIALIZED_SIZE_LIMIT_PK,
-} from '../../utils';
+} from '../../constants';
 import { RelayerV1Fhevm } from './RelayerV1Fhevm';
 
 // Jest Command line

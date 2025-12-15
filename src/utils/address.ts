@@ -11,8 +11,7 @@ import { ChecksummedAddressError } from '../errors/ChecksummedAddressError';
 import { AddressError } from '../errors/AddressError';
 import { InvalidPropertyError } from '../errors/InvalidPropertyError';
 import { InvalidTypeError } from '../errors/InvalidTypeError';
-
-export type ChecksummedAddress = `0x${string}`;
+import type { ChecksummedAddress } from '../types/primitives';
 
 export function isChecksummedAddress(
   value: unknown,
@@ -30,6 +29,9 @@ export function isChecksummedAddress(
     const a = ethersGetAddress(value);
     return a === value;
   } catch (e) {
+    console.log('=================');
+    console.log(e);
+    console.log('=================');
     return false;
   }
 }

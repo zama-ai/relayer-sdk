@@ -1,7 +1,7 @@
 import createHash from 'keccak';
 
 import { ENCRYPTION_TYPES } from '../sdk/encryptionTypes';
-import { fromHexString } from '../utils';
+import { fromHexString } from '../utils/bytes';
 
 type EncryptionBitwidths = keyof typeof ENCRYPTION_TYPES;
 

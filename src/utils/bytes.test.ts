@@ -335,7 +335,7 @@ describe('bytes', () => {
     );
   });
 
-  it('assertBytesHexArrayProperty', () => {
+  it('assertRecordBytesHexArrayProperty', () => {
     // True
     expect(() =>
       assertRecordBytesHexArrayProperty(

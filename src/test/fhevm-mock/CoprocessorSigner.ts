@@ -1,7 +1,7 @@
 import type { ethers as EthersT } from 'ethers';
-import { type ChecksummedAddress } from '../../utils/address';
 import { EIP712Signer } from './EIP712Signer';
 import { type CoprocessorEIP712Type } from '../../sdk/coprocessor/CoprocessorEIP712';
+import { ChecksummedAddress } from '../../types/primitives';
 
 ////////////////////////////////////////////////////////////////////////////////
 // CoprocessorSigner

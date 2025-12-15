@@ -5,7 +5,10 @@ import {
   publicParams as assetPublicParams,
   publicKeyId as assetPublicKeyId,
 } from './test';
-import { SERIALIZED_SIZE_LIMIT_CRS, SERIALIZED_SIZE_LIMIT_PK } from './utils';
+import {
+  SERIALIZED_SIZE_LIMIT_CRS,
+  SERIALIZED_SIZE_LIMIT_PK,
+} from './constants';
 import type { FhevmInstanceConfig } from './config';
 
 // Jest Command line

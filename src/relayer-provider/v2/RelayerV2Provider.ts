@@ -29,6 +29,7 @@ import {
 import type { FhevmInstanceOptions } from '../../config';
 import {
   RelayerV2GetResponseKeyUrl,
+  RelayerV2ResultInputProof,
   RelayerV2ResultUserDecrypt,
 } from './types/types';
 
@@ -73,7 +74,7 @@ export class RelayerV2Provider extends AbstractRelayerProvider {
       instanceOptions,
       ...fetchOptions,
     });
-    const result = await request.run();
+    const result = (await request.run()) as RelayerV2ResultInputProof;
     assertIsRelayerInputProofResult(result, 'fetchPostInputProof()');
     return result as RelayerInputProofResult;
   }

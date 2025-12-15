@@ -1,7 +1,7 @@
 import { InvalidTypeError } from '../errors/InvalidTypeError';
 import { InvalidPropertyError } from '../errors/InvalidPropertyError';
 import { isNonNullableRecordProperty, typeofProperty } from './record';
-import type { BytesHexNo0x } from './bytes';
+import type { BytesHexNo0x } from '../types/primitives';
 
 type UintNumber = number;
 type UintBigInt = bigint;
@@ -13,6 +13,11 @@ export const MAX_UINT256 = BigInt(
   '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
 );
 export const MAX_UINT8 = 0xff;
+
+export function numberToHex(num: number): BytesHexNo0x {
+  let hex = num.toString(16);
+  return hex.length % 2 ? '0' + hex : hex;
+}
 
 export function isUintNumber(value: unknown): value is UintNumber {
   if (typeof value === 'number') {

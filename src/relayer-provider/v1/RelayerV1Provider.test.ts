@@ -9,7 +9,7 @@ import { AbstractRelayerProvider } from '../AbstractRelayerProvider';
 import {
   SERIALIZED_SIZE_LIMIT_CRS,
   SERIALIZED_SIZE_LIMIT_PK,
-} from '../../utils';
+} from '../../constants';
 
 // Jest Command line
 // =================

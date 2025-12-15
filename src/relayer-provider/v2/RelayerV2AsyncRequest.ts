@@ -30,6 +30,7 @@ import { RelayerProviderFetchOptions } from '../AbstractRelayerProvider';
 import { InvalidPropertyError } from '../../errors/InvalidPropertyError';
 import { RelayerV2ResponseApiError } from './errors/RelayerV2ResponseApiError';
 import { RelayerV2FetchError } from './errors/RelayerV2FetchError';
+import { RelayerV2ResponseInputProofRejectedError } from './errors/RelayerV2ResponseInputProofRejectedError';
 
 /*
     Actions:
@@ -660,6 +661,21 @@ export class RelayerV2AsyncRequest {
                 elapsed,
                 result: bodyJson.result,
               } satisfies RelayerV2ProgressSucceeded<'INPUT_PROOF'>);
+
+              if (!bodyJson.result.accepted) {
+                const e = new RelayerV2ResponseInputProofRejectedError({
+                  url: this._url,
+                  fetchMethod: 'GET',
+                  jobId: this.jobId,
+                  operation: this._relayerOperation,
+                  retryCount: this._retryCount,
+                  status: responseStatus,
+                  state: { ...this._state },
+                  elapsed,
+                  result: bodyJson.result,
+                });
+                throw e;
+              }
             } else if (this._relayerOperation === 'PUBLIC_DECRYPT') {
               assertIsRelayerV2GetResponsePublicDecryptSucceeded(
                 bodyJson,
@@ -700,6 +716,11 @@ export class RelayerV2AsyncRequest {
               } satisfies RelayerV2ProgressSucceeded<'USER_DECRYPT'>);
             }
           } catch (cause) {
+            // Special case for InputProof rejected
+            if (cause instanceof RelayerV2ResponseInputProofRejectedError) {
+              throw cause;
+            }
+
             this._throwResponseInvalidBodyError({
               fetchMethod: 'GET',
               status: responseStatus,

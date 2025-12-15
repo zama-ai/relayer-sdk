@@ -1,6 +1,9 @@
 import { getKeysFromRelayer } from './network';
 import { publicKey, publicParams } from '../test';
-import { SERIALIZED_SIZE_LIMIT_CRS, SERIALIZED_SIZE_LIMIT_PK } from '../utils';
+import {
+  SERIALIZED_SIZE_LIMIT_CRS,
+  SERIALIZED_SIZE_LIMIT_PK,
+} from '../constants';
 import fetchMock from 'fetch-mock';
 import { RelayerKeyUrlResponse } from './fetchRelayer';
 

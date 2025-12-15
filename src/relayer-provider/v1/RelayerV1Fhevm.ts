@@ -6,7 +6,7 @@ import { RelayerV1Provider } from './RelayerV1Provider';
 import {
   SERIALIZED_SIZE_LIMIT_CRS,
   SERIALIZED_SIZE_LIMIT_PK,
-} from '../../utils';
+} from '../../constants';
 
 type RelayerV1PublicKeyDataType = {
   publicKey: TFHEType['TfheCompactPublicKey'];

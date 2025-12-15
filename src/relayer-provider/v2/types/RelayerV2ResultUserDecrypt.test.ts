@@ -12,9 +12,13 @@ describe('RelayerV2ResultUserDecrypt', () => {
     expect(() =>
       assertIsRelayerV2ResultUserDecrypt(
         {
-          payloads: ['deadbeef'],
-          signatures: ['deadbeef'],
-          extraData: '0x00',
+          result: [
+            {
+              payload: 'deadbeef',
+              signature: 'deadbeef',
+              //extraData: '0x00',
+            },
+          ],
         },
         'Foo',
       ),
@@ -26,95 +30,84 @@ describe('RelayerV2ResultUserDecrypt', () => {
     ).toThrow(
       InvalidPropertyError.missingProperty({
         objName: 'Foo',
-        property: 'payloads',
+        property: 'result',
         expectedType: 'Array',
       }),
     );
 
     expect(() =>
-      assertIsRelayerV2ResultUserDecrypt({ payloads: 'bar' }, 'Foo'),
+      assertIsRelayerV2ResultUserDecrypt({ result: 'bar' }, 'Foo'),
     ).toThrow(
       new InvalidPropertyError({
         objName: 'Foo',
-        property: 'payloads',
+        property: 'result',
         expectedType: 'Array',
         type: 'string',
       }),
     );
 
     expect(() =>
-      assertIsRelayerV2ResultUserDecrypt({ payloads: ['bar'] }, 'Foo'),
-    ).toThrow(
-      new InvalidPropertyError({
-        objName: 'Foo',
-        property: 'payloads',
-        index: 0,
-        expectedType: 'BytesHexNo0x',
-        type: 'string',
-      }),
-    );
-
-    expect(() =>
-      assertIsRelayerV2ResultUserDecrypt({ payloads: ['deadbeef'] }, 'Foo'),
+      assertIsRelayerV2ResultUserDecrypt({ result: [{}] }, 'Foo'),
     ).toThrow(
       InvalidPropertyError.missingProperty({
-        objName: 'Foo',
-        property: 'signatures',
-        expectedType: 'Array',
-      }),
-    );
-
-    expect(() =>
-      assertIsRelayerV2ResultUserDecrypt({ payloads: ['0xdeadbeef'] }, 'Foo'),
-    ).toThrow(
-      new InvalidPropertyError({
-        objName: 'Foo',
-        property: 'payloads',
-        index: 0,
+        objName: 'Foo.result[0]',
+        property: 'payload',
         expectedType: 'BytesHexNo0x',
-        type: 'string',
       }),
     );
 
     expect(() =>
       assertIsRelayerV2ResultUserDecrypt(
-        { payloads: ['deadbeef'], signatures: 'hello' },
-        'Foo',
-      ),
-    ).toThrow(
-      new InvalidPropertyError({
-        objName: 'Foo',
-        property: 'signatures',
-        expectedType: 'Array',
-        type: 'string',
-      }),
-    );
-
-    expect(() =>
-      assertIsRelayerV2ResultUserDecrypt(
-        { payloads: ['deadbeef'], signatures: ['hello'] },
-        'Foo',
-      ),
-    ).toThrow(
-      new InvalidPropertyError({
-        objName: 'Foo',
-        property: 'signatures',
-        index: 0,
-        expectedType: 'BytesHexNo0x',
-        type: 'string',
-      }),
-    );
-
-    expect(() =>
-      assertIsRelayerV2ResultUserDecrypt(
-        { payloads: ['deadbeef'], signatures: ['deadbeef'] },
+        { result: [{ payload: 'deadbeef' }] },
         'Foo',
       ),
     ).toThrow(
       InvalidPropertyError.missingProperty({
-        objName: 'Foo',
-        property: 'extraData',
-        expectedType: 'BytesHex',
+        objName: 'Foo.result[0]',
+        property: 'signature',
+        expectedType: 'BytesHexNo0x',
+      }),
+    );
+
+    expect(() =>
+      assertIsRelayerV2ResultUserDecrypt(
+        { result: [{ payload: '0xdeadbeef' }] },
+        'Foo',
+      ),
+    ).toThrow(
+      new InvalidPropertyError({
+        objName: 'Foo.result[0]',
+        property: 'payload',
+        expectedType: 'BytesHexNo0x',
+        type: 'string',
+      }),
+    );
+
+    expect(() =>
+      assertIsRelayerV2ResultUserDecrypt(
+        { result: [{ payload: 'deadbeef', signature: 'hello' }] },
+        'Foo',
+      ),
+    ).toThrow(
+      new InvalidPropertyError({
+        objName: 'Foo.result[0]',
+        property: 'signature',
+        expectedType: 'BytesHexNo0x',
+        type: 'string',
+      }),
+    );
+
+    expect(() =>
+      assertIsRelayerV2ResultUserDecrypt(
+        { result: [{ payload: 'deadbeef', signature: '0xdeadbeef' }] },
+        'Foo',
+      ),
+    ).toThrow(
+      new InvalidPropertyError({
+        objName: 'Foo.result[0]',
+        property: 'signature',
+        expectedType: 'BytesHexNo0x',
+        type: 'string',
       }),
     );
   });

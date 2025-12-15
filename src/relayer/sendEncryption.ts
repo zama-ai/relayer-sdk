@@ -1,6 +1,5 @@
 import { isAddress, getAddress as ethersGetAddress } from 'ethers';
 
-import { fromHexString, numberToHex, toHexString } from '../utils';
 import {
   createEncryptedInput as createEncryptedInput,
   EncryptedInput,
@@ -14,6 +13,8 @@ import { throwRelayerInternalError } from './error';
 import { RelayerInputProofPayload } from './fetchRelayer';
 import { Auth } from '../auth';
 import { AbstractRelayerProvider } from '../relayer-provider/AbstractRelayerProvider';
+import { fromHexString, toHexString } from '../utils/bytes';
+import { numberToHex } from '../utils/uint';
 
 // Add type checking
 const getAddress = (value: string): `0x${string}` =>

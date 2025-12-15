@@ -1,7 +1,8 @@
 import type { ethers as EthersT } from 'ethers';
-import { assertIsBytes65Hex, type Bytes65Hex } from './bytes';
+import { assertIsBytes65Hex } from './bytes';
 import { verifyTypedData as ethersVerifyTypesData } from 'ethers';
-import { assertIsChecksummedAddress, type ChecksummedAddress } from './address';
+import { assertIsChecksummedAddress } from './address';
+import { Bytes65Hex, ChecksummedAddress } from '../types/primitives';
 
 export function verifySignature({
   signature,

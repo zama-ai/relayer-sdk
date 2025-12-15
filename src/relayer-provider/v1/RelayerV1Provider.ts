@@ -1,4 +1,4 @@
-import type { BytesHex, BytesHexNo0x } from '../../utils/bytes';
+import { BytesHex, BytesHexNo0x } from '../../types/primitives';
 import type { FhevmInstanceOptions } from '../../config';
 import {
   fetchRelayerGet,
@@ -36,12 +36,27 @@ export class RelayerV1Provider extends AbstractRelayerProvider {
     payload: RelayerInputProofPayload,
     options?: FhevmInstanceOptions,
   ): Promise<RelayerInputProofResult> {
+    /*
+    Expected v1 format:
+    ===================
+    {
+      "response": {
+        "handles": [
+          "0xb0b1af7734450c2b7d944571af7e5b438cc62a2a26000000000000aa36a70400"
+        ],
+        "signatures": [
+          "0x70dcb78534f05c4448d3441b4704d3ff4a8478af56a3464497533c2e3c476d77165b09028847f0c3ed4b342b1e8b4252a93b521a3d8d07b724bcff740383e1361b"
+        ]
+      }
+    }
+    */
     const json = await fetchRelayerJsonRpcPost(
       'INPUT_PROOF',
       this.inputProof,
       payload,
       options,
     );
+
     assertIsRelayerInputProofResult(json.response, 'fetchPostInputProof()');
     return json.response;
   }

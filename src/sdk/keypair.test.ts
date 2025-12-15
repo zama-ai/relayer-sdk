@@ -1,4 +1,4 @@
-import { fromHexString } from '../utils';
+import { fromHexString } from '../utils/bytes';
 import { generateKeypair, createEIP712 } from './keypair';
 import {
   ml_kem_pke_pk_to_u8vec,

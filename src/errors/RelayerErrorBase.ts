@@ -1,8 +1,3 @@
-import { version } from './version';
-
-const DEFAULT_DOCS_BASE_URL = 'https//docs.zama.org';
-const FULL_VERSION = `@zama-fhe/relayer-sdk@${version}`;
-
 export type RelayerBaseErrorType = RelayerErrorBase & {
   name: 'RelayerErrorBase';
 };
@@ -26,6 +21,12 @@ export abstract class RelayerErrorBase extends Error {
   private _docsUrl: string | undefined;
   private _version: string;
 
+  private static readonly VERSION = '0.3.0-6' as const;
+  private static readonly DEFAULT_DOCS_BASE_URL =
+    'https//docs.zama.org' as const;
+  private static readonly FULL_VERSION =
+    `@zama-fhe/relayer-sdk@${RelayerErrorBase.VERSION}` as const;
+
   constructor(params: RelayerErrorBaseParams) {
     let details;
     let docsPath;
@@ -39,7 +40,7 @@ export abstract class RelayerErrorBase extends Error {
     }
 
     const docsUrl = docsPath
-      ? `${params.docsBaseUrl ?? DEFAULT_DOCS_BASE_URL}${docsPath}${
+      ? `${params.docsBaseUrl ?? RelayerErrorBase.DEFAULT_DOCS_BASE_URL}${docsPath}${
           params.docsSlug ? `#${params.docsSlug}` : ''
         }`
       : undefined;
@@ -50,15 +51,19 @@ export abstract class RelayerErrorBase extends Error {
       ...(params.metaMessages ? [...params.metaMessages, ''] : []),
       ...(docsUrl ? [`Docs: ${docsUrl}`] : []),
       ...(details ? [`Details: ${details}`] : []),
-      `Version: ${FULL_VERSION}`,
+      `Version: ${RelayerErrorBase.FULL_VERSION}`,
     ].join('\n');
 
     super(message, params.cause ? { cause: params.cause } : undefined);
 
+    // This line is critical. If removed 'instanceof' will always fail
+    // Restore prototype chain (required when extending Error in TypeScript)
+    Object.setPrototypeOf(this, new.target.prototype);
+
     this._details = details;
     this._docsPath = docsPath;
     this._docsUrl = docsUrl;
-    this._version = version;
+    this._version = RelayerErrorBase.VERSION;
     this.name = params.name ?? this.name;
   }
 

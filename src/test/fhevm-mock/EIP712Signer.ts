@@ -1,8 +1,7 @@
 import type { ethers as EthersT } from 'ethers';
 import { ethers } from 'ethers';
-import { type ChecksummedAddress } from '../../utils/address';
-import { type BytesHex } from '../../utils/bytes';
 import { signEIP712 } from '../eip712';
+import { BytesHex, ChecksummedAddress } from '../../types/primitives';
 
 ////////////////////////////////////////////////////////////////////////////////
 // EIP712SignableType

@@ -1,4 +1,4 @@
-import { fromHexString, toHexString } from '../utils';
+import { fromHexString, toHexString } from '../utils/bytes';
 import { ethers, AbiCoder } from 'ethers';
 import {
   type ClearValueType,

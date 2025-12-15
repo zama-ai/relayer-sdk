@@ -1,22 +1,20 @@
-import fetchMock, { type CallLog } from 'fetch-mock';
-import type { ChecksummedAddress } from '../utils/address';
+import fetchMock from 'fetch-mock';
 import type { FhevmInstanceConfig } from '../config';
 import type { RelayerInputProofPayload } from '../relayer/fetchRelayer';
 import { Prettify } from '../utils/types';
-import { fromHexString, toHexString } from '../utils';
+import { fromHexString, toHexString } from '../utils/bytes';
 import { computeHandles } from '../relayer/handles';
 import { currentCiphertextVersion } from '../relayer/sendEncryption';
 import type {
   Bytes32Hex,
-  Bytes32HexNo0x,
   Bytes65Hex,
-  Bytes65HexNo0x,
-} from '../utils/bytes';
+  ChecksummedAddress,
+} from '../types/primitives';
 import { CoprocessorSigners } from './fhevm-mock/CoprocessorSigners';
 import { ENCRYPTION_TYPES } from '../sdk/encryptionTypes';
 import { getProvider as config_getProvider } from '../config';
 import { KmsSigners } from './fhevm-mock/KmsSigners';
-import { setupV1RoutesKeyUrl } from './v1/mockRoutes';
+import { setupV1RoutesInputProof, setupV1RoutesKeyUrl } from './v1/mockRoutes';
 import { setupV2RoutesInputProof, setupV2RoutesKeyUrl } from './v2/mockRoutes';
 import type { ethers as EthersT } from 'ethers';
 import { Contract } from 'ethers';
@@ -133,17 +131,10 @@ export async function fetchMockInputProof(
     ciphertextWithInputVerification: string;
   },
   bitwidths: (keyof typeof ENCRYPTION_TYPES)[],
-  no0x: boolean,
-): Promise<
-  | {
-      handles: Bytes32HexNo0x[];
-      signatures: Bytes65HexNo0x[];
-    }
-  | {
-      handles: Bytes32Hex[];
-      signatures: Bytes65Hex[];
-    }
-> {
+): Promise<{
+  handles: Bytes32Hex[];
+  signatures: Bytes65Hex[];
+}> {
   const ciphertext = fromHexString(args.ciphertextWithInputVerification);
 
   const handlesUint8ArrayList: Uint8Array[] = computeHandles(
@@ -166,34 +157,7 @@ export async function fetchMockInputProof(
     extraData: '0x00' as `0x${string}`,
   };
 
-  if (no0x) {
-    return await TEST_COPROCESSORS.computeSignaturesNo0x(params);
-  } else {
-    return await TEST_COPROCESSORS.computeSignatures(params);
-  }
-}
-
-export function setupV1RoutesInputProof(
-  bitwidths: (keyof typeof ENCRYPTION_TYPES)[],
-) {
-  if (TEST_CONFIG.type !== 'fetch-mock') {
-    throw new Error('Test is not running using fetch-mock');
-  }
-
-  fetchMock.post(TEST_CONFIG.v1.urls.inputProof, async (args: CallLog) => {
-    const body = args.options.body as string;
-
-    const json = JSON.parse(body);
-
-    const result = await fetchMockInputProof(json, bitwidths, true /* no0x */);
-    return {
-      status: 200,
-      body: {
-        response: result,
-      },
-      headers: { 'Content-Type': 'application/json' },
-    };
-  });
+  return await TEST_COPROCESSORS.computeSignatures(params);
 }
 
 export function setupAllFetchMockRoutes({

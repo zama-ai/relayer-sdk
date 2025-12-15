@@ -5,7 +5,7 @@ import fetchMock from 'fetch-mock';
 import { RelayerV2GetKeyUrlInvalidResponseError } from './errors/RelayerV2GetKeyUrlError';
 import { InvalidPropertyError } from '../../errors/InvalidPropertyError';
 import { RelayerV2Provider } from './RelayerV2Provider';
-import { TEST_CONFIG } from '../../test/utils';
+import { TEST_CONFIG } from '../../test/config';
 
 // Jest Command line
 // =================

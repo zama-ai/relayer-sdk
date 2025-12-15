@@ -1,4 +1,4 @@
-import { SERIALIZED_SIZE_LIMIT_PK } from '../../utils';
+import { SERIALIZED_SIZE_LIMIT_PK } from '../../constants';
 import { assertRecordStringProperty } from '../../utils/string';
 import { isNonNullableRecordProperty } from '../../utils/record';
 import { assertUint8ArrayProperty, fetchBytes } from '../../utils/bytes';

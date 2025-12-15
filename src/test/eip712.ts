@@ -1,7 +1,7 @@
 import type { ethers as EthersT } from 'ethers';
 import { Signature } from 'ethers';
 import { assertIs0xString, remove0x } from '../utils/string';
-import { type BytesHex } from '../utils/bytes';
+import { BytesHex } from '../types/primitives';
 
 export async function signEIP712(
   signer: EthersT.Signer,
@@ -15,10 +15,6 @@ export async function signEIP712(
   const typesToSign = primaryType
     ? { [primaryType]: types[primaryType]! }
     : types;
-
-  if (!primaryType) {
-    throw new Error(`Missing primaryType`);
-  }
 
   const signature = await signer.signTypedData(domain, typesToSign, message);
   const sigRSV = Signature.from(signature);

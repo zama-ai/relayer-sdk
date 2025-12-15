@@ -1,19 +1,19 @@
 import { assertIsUint256 } from '../../utils/uint';
-import {
-  assertIsChecksummedAddress,
-  type ChecksummedAddress,
-} from '../../utils/address';
+import { assertIsChecksummedAddress } from '../../utils/address';
 import {
   assertIsBytes32HexArray,
   assertIsBytes65HexArray,
   assertIsBytesHex,
-  Bytes32Hex,
-  Bytes65Hex,
-  BytesHex,
 } from '../../utils/bytes';
 import type { ethers as EthersT } from 'ethers';
 import { Prettify } from '../../utils/types';
 import { verifySignature } from '../../utils/signature';
+import {
+  Bytes32Hex,
+  Bytes65Hex,
+  BytesHex,
+  ChecksummedAddress,
+} from '../../types/primitives';
 
 ////////////////////////////////////////////////////////////////////////////////
 // CoprocessorEIP712 Types

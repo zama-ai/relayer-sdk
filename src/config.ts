@@ -8,13 +8,13 @@ import {
 import { PublicParams } from './sdk/encrypt';
 import { getKeysFromRelayer } from './relayer/network';
 import {
-  removeSlashSuffix,
   SERIALIZED_SIZE_LIMIT_PK,
   SERIALIZED_SIZE_LIMIT_CRS,
-} from './utils';
+} from './constants';
 import type { TFHEType } from './tfheType';
 import { Auth } from './auth';
 import { Prettify } from './utils/types';
+import { removeSlashSuffix } from './utils/string';
 
 const abiKmsVerifier = [
   'function getKmsSigners() view returns (address[])',

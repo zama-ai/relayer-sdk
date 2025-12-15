@@ -1,5 +1,5 @@
 import type { PublicParams } from '../../sdk/encrypt';
-import { SERIALIZED_SIZE_LIMIT_CRS } from '../../utils';
+import { SERIALIZED_SIZE_LIMIT_CRS } from '../../constants';
 import { assertRecordStringProperty } from '../../utils/string';
 import {
   assertNonNullableRecordProperty,

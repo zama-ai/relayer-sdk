@@ -1,5 +1,5 @@
 import type { PublicParams } from '../sdk/encrypt';
-import { removeSlashSuffix } from '../utils';
+import { removeSlashSuffix } from '../utils/string';
 import { AbstractRelayerProvider } from './AbstractRelayerProvider';
 import { RelayerV1Provider } from './v1/RelayerV1Provider';
 import { RelayerV2Provider } from './v2/RelayerV2Provider';

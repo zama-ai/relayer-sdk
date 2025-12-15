@@ -13,18 +13,14 @@ import {
   setupAllFetchMockRoutes,
   TEST_CONFIG,
   timestampNow,
-} from '../../test/utils';
+} from '../../test/config';
 import { createEIP712, createInstance, UserDecryptResults } from '../..';
 import { KmsSigner } from '../../test/fhevm-mock/KmsSigner';
 import { KmsEIP712 } from '../../sdk/kms/KmsEIP712';
-import {
-  assertIsBytes65Hex,
-  assertIsBytesHexNo0x,
-  Bytes65Hex,
-  BytesHex,
-} from '../../utils/bytes';
+import { assertIsBytes65Hex, assertIsBytesHexNo0x } from '../../utils/bytes';
 import { ensure0x } from '../../utils/string';
 import { FhevmInstanceConfig } from '../../config';
+import { Bytes65Hex, BytesHex } from '../../types/primitives';
 
 // Jest Command line
 // =================
@@ -218,7 +214,7 @@ describeIfFetchMock('RelayerV2Provider', () => {
             {
               payload: 'deadbeef',
               signature: 'deadbeef',
-              extraData: '0x00',
+              //extraData: '0x00',
             },
           ],
         },
@@ -256,9 +252,6 @@ describeIfFetch('FhevmInstance.userDecrypot:sepolia:', () => {
     }
 
     const userSigner = KmsSigner.fromMnemonic({ mnemonic });
-    if (!userSigner.address.startsWith('0x37')) {
-      throw new Error('sasd2');
-    }
 
     const eCount = await fheCounterGeCount(
       TEST_CONFIG.testContracts.FHECounterUserDecryptAddress,
@@ -369,9 +362,6 @@ describe('FhevmInstance.createEIP712', () => {
     }
 
     const userSigner = KmsSigner.fromMnemonic({ mnemonic });
-    if (!userSigner.address.startsWith('0x37')) {
-      throw new Error('sasd2');
-    }
 
     const startTimestamp = timestampNow();
     const durationDays = 365;
@@ -436,9 +426,6 @@ describe('FhevmInstance.createEIP712', () => {
     }
 
     const userSigner = KmsSigner.fromMnemonic({ mnemonic });
-    if (!userSigner.address.startsWith('0x37')) {
-      throw new Error('sasd2');
-    }
 
     const startTimestamp = timestampNow();
     const durationDays = 365;
