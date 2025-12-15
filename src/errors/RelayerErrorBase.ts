@@ -3,12 +3,12 @@ import { version } from './version';
 const DEFAULT_DOCS_BASE_URL = 'https//docs.zama.org';
 const FULL_VERSION = `@zama-fhe/relayer-sdk@${version}`;
 
-export type RelayerBaseErrorType = RelayerBaseError & {
-  name: 'RelayerBaseError';
+export type RelayerBaseErrorType = RelayerErrorBase & {
+  name: 'RelayerErrorBase';
 };
 
-export type RelayerBaseErrorParams = {
-  cause?: RelayerBaseError | Error;
+export type RelayerErrorBaseParams = {
+  cause?: RelayerErrorBase | Error;
   message: string;
   docsBaseUrl?: string;
   docsPath?: string;
@@ -18,19 +18,19 @@ export type RelayerBaseErrorParams = {
   name?: string;
 };
 
-export class RelayerBaseError extends Error {
-  override name = 'RelayerBaseError';
+export abstract class RelayerErrorBase extends Error {
+  override name = 'RelayerErrorBase';
 
   private _details: string | undefined;
   private _docsPath: string | undefined;
   private _docsUrl: string | undefined;
   private _version: string;
 
-  constructor(params: RelayerBaseErrorParams) {
+  constructor(params: RelayerErrorBaseParams) {
     let details;
     let docsPath;
 
-    if (params.cause instanceof RelayerBaseError) {
+    if (params.cause instanceof RelayerErrorBase) {
       docsPath = params.docsPath || params.cause.docsPath;
       details = params.details || params.cause.details;
     } else {

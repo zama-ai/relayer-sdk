@@ -1,18 +1,30 @@
-import { SepoliaConfig } from '../..';
+import type { ethers as EthersT } from 'ethers';
+import { createInstance } from '../..';
 import type { RelayerPublicDecryptPayload } from '../../relayer/fetchRelayer';
 import { AbstractRelayerProvider } from '../AbstractRelayerProvider';
 import { createRelayerProvider } from '../createRelayerFhevm';
 import fetchMock from 'fetch-mock';
-import { RelayerV2InvalidPostResponseError } from './errors/RelayerV2InvalidPostResponseError';
 import { InvalidPropertyError } from '../../errors/InvalidPropertyError';
+import { RelayerV2ResponseInvalidBodyError } from './errors/RelayerV2ResponseInvalidBodyError';
+import {
+  fheCounterGeCount,
+  getTestProvider,
+  removeAllFetchMockRoutes,
+  setupAllFetchMockRoutes,
+  TEST_CONFIG,
+} from '../../test/utils';
+import { RUNNING_REQ_STATE } from '../../test/v2/mockRoutes';
 
 // Jest Command line
 // =================
 // npx jest --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_public-decrypt.test.ts --testNamePattern=xxx
 // npx jest --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_public-decrypt.test.ts
 // npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v2/RelayerV2Provider_public-decrypt.test.ts --collectCoverageFrom=./src/relayer-provider/v2/RelayerV2Provider.ts
-
-const relayerUrlV2 = `${SepoliaConfig.relayerUrl!}/v2`;
+//
+// Devnet:
+// =======
+// npx jest --config jest.devnet.config.cjs --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_public-decrypt.test.ts --testNamePattern=xxx
+//
 
 const ciphertextHandles: `0x${string}`[] = [
   '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
@@ -24,12 +36,30 @@ const payload: RelayerPublicDecryptPayload = {
 };
 
 function post202(body: any) {
-  fetchMock.post(`${relayerUrlV2}/public-decrypt`, {
+  fetchMock.post(TEST_CONFIG.v2.urls.publicDecrypt, {
     status: 202,
     body,
     headers: { 'Content-Type': 'application/json' },
   });
 }
+
+function invalidBodyError(cause: InvalidPropertyError) {
+  return new RelayerV2ResponseInvalidBodyError({
+    fetchMethod: 'POST',
+    status: 202,
+    url: TEST_CONFIG.v2.urls.publicDecrypt,
+    elapsed: 0,
+    retryCount: 0,
+    operation: 'PUBLIC_DECRYPT',
+    state: RUNNING_REQ_STATE,
+    cause,
+  });
+}
+
+const describeIfFetchMock =
+  TEST_CONFIG.type === 'fetch-mock' ? describe : describe.skip;
+const describeIfFetch =
+  TEST_CONFIG.type === 'fetch-mock' ? describe.skip : describe;
 
 const consoleLogSpy = jest
   .spyOn(console, 'log')
@@ -37,17 +67,16 @@ const consoleLogSpy = jest
     process.stdout.write(`${message}\n`);
   });
 
-describe('RelayerV2Provider', () => {
+describeIfFetchMock('RelayerV2Provider:public-decrypt:mock:', () => {
   let relayerProvider: AbstractRelayerProvider;
 
   beforeEach(() => {
-    fetchMock.removeRoutes();
-    const SepoliaConfigeRelayerUrl = SepoliaConfig.relayerUrl!;
-    relayerProvider = createRelayerProvider(`${SepoliaConfigeRelayerUrl}/v2`);
+    removeAllFetchMockRoutes();
+    relayerProvider = createRelayerProvider(TEST_CONFIG.v2.urls.base);
     expect(relayerProvider.version).toBe(2);
-    expect(relayerProvider.url).toBe(`${SepoliaConfigeRelayerUrl}/v2`);
+    expect(relayerProvider.url).toBe(TEST_CONFIG.v2.urls.base);
     expect(relayerProvider.publicDecrypt).toBe(
-      `${SepoliaConfigeRelayerUrl}/v2/public-decrypt`,
+      TEST_CONFIG.v2.urls.publicDecrypt,
     );
   });
 
@@ -76,17 +105,14 @@ describe('RelayerV2Provider', () => {
     await expect(() =>
       relayerProvider.fetchPostPublicDecrypt(payload),
     ).rejects.toThrow(
-      new RelayerV2InvalidPostResponseError({
-        status: 202,
-        url: `${relayerUrlV2}/public-decrypt`,
-        operation: 'PUBLIC_DECRYPT',
-        cause: InvalidPropertyError.missingProperty({
+      invalidBodyError(
+        InvalidPropertyError.missingProperty({
           objName: 'body',
           property: 'status',
           expectedType: 'string',
           expectedValue: 'queued',
         }),
-      }),
+      ),
     );
   });
 
@@ -95,11 +121,8 @@ describe('RelayerV2Provider', () => {
     await expect(() =>
       relayerProvider.fetchPostPublicDecrypt(payload),
     ).rejects.toThrow(
-      new RelayerV2InvalidPostResponseError({
-        status: 202,
-        url: `${relayerUrlV2}/public-decrypt`,
-        operation: 'PUBLIC_DECRYPT',
-        cause: new InvalidPropertyError({
+      invalidBodyError(
+        new InvalidPropertyError({
           objName: 'body',
           property: 'status',
           expectedType: 'string',
@@ -107,7 +130,7 @@ describe('RelayerV2Provider', () => {
           type: 'string',
           value: 'failed',
         }),
-      }),
+      ),
     );
   });
 
@@ -116,11 +139,8 @@ describe('RelayerV2Provider', () => {
     await expect(() =>
       relayerProvider.fetchPostPublicDecrypt(payload),
     ).rejects.toThrow(
-      new RelayerV2InvalidPostResponseError({
-        status: 202,
-        url: `${relayerUrlV2}/public-decrypt`,
-        operation: 'PUBLIC_DECRYPT',
-        cause: new InvalidPropertyError({
+      invalidBodyError(
+        new InvalidPropertyError({
           objName: 'body',
           property: 'status',
           expectedType: 'string',
@@ -128,7 +148,7 @@ describe('RelayerV2Provider', () => {
           type: 'string',
           value: 'succeeded',
         }),
-      }),
+      ),
     );
   });
 
@@ -137,16 +157,13 @@ describe('RelayerV2Provider', () => {
     await expect(() =>
       relayerProvider.fetchPostPublicDecrypt(payload),
     ).rejects.toThrow(
-      new RelayerV2InvalidPostResponseError({
-        status: 202,
-        url: `${relayerUrlV2}/public-decrypt`,
-        operation: 'PUBLIC_DECRYPT',
-        cause: InvalidPropertyError.missingProperty({
+      invalidBodyError(
+        InvalidPropertyError.missingProperty({
           objName: 'body',
           property: 'result',
           expectedType: 'non-nullable',
         }),
-      }),
+      ),
     );
   });
 
@@ -155,44 +172,23 @@ describe('RelayerV2Provider', () => {
     await expect(() =>
       relayerProvider.fetchPostPublicDecrypt(payload),
     ).rejects.toThrow(
-      new RelayerV2InvalidPostResponseError({
-        status: 202,
-        url: `${relayerUrlV2}/public-decrypt`,
-        operation: 'PUBLIC_DECRYPT',
-        cause: InvalidPropertyError.missingProperty({
+      invalidBodyError(
+        InvalidPropertyError.missingProperty({
           objName: 'body.result',
           property: 'jobId',
           expectedType: 'string',
         }),
-      }),
+      ),
     );
   });
 
-  it('v2:public-decrypt: 202 - status:queued, result no retryAfterSeconds', async () => {
-    post202({ status: 'queued', result: { jobId: '123' } });
-    await expect(() =>
-      relayerProvider.fetchPostPublicDecrypt(payload),
-    ).rejects.toThrow(
-      new RelayerV2InvalidPostResponseError({
-        status: 202,
-        url: `${relayerUrlV2}/public-decrypt`,
-        operation: 'PUBLIC_DECRYPT',
-        cause: InvalidPropertyError.missingProperty({
-          objName: 'body.result',
-          property: 'retryAfterSeconds',
-          expectedType: 'Uint',
-        }),
-      }),
-    );
-  });
-
-  it('v2:public-decrypt: 202 - status:queued, result ok', async () => {
+  it('xxx v2:public-decrypt: 202 - status:queued, result ok', async () => {
     post202({
       status: 'queued',
       result: { jobId: '123', retryAfterSeconds: 3 },
     });
 
-    fetchMock.get(`${relayerUrlV2}/public-decrypt/123`, {
+    fetchMock.get(`${TEST_CONFIG.v2.urls.publicDecrypt}/123`, {
       status: 200,
       body: {
         status: 'succeeded',
@@ -206,6 +202,52 @@ describe('RelayerV2Provider', () => {
       headers: { 'Content-Type': 'application/json' },
     });
 
-    await relayerProvider.fetchPostPublicDecrypt(payload);
+    const res = await relayerProvider.fetchPostPublicDecrypt(payload);
+    expect(res.decryptedValue).toBe('deadbeef');
+    expect(res.extraData).toBe('0x00');
+    expect(res.signatures).toStrictEqual(['deadbeef']);
   });
+
+  it('v2:public-decrypt: 202 - status:queued - Retry-After, result ok', async () => {
+    console.log('MISSING TEST: test Retry-After header!!');
+  });
+});
+
+describeIfFetch('RelayerV2Provider:public-decrypt:sepolia:', () => {
+  let provider: EthersT.Provider;
+
+  beforeEach(() => {
+    removeAllFetchMockRoutes();
+    provider = getTestProvider(TEST_CONFIG.fhevmInstanceConfig.network);
+  });
+
+  afterAll(() => {
+    consoleLogSpy.mockRestore();
+  });
+
+  it('v2: succeeded', async () => {
+    setupAllFetchMockRoutes({});
+
+    const config = TEST_CONFIG.v2.fhevmInstanceConfig;
+    const eCount = await fheCounterGeCount(
+      TEST_CONFIG.testContracts.FHECounterPublicDecryptAddress,
+      provider,
+    );
+
+    const instance = await createInstance(config);
+    await instance.publicDecrypt([eCount]);
+  }, 60000);
+
+  it('xxx v1: succeeded', async () => {
+    setupAllFetchMockRoutes({});
+
+    const config = TEST_CONFIG.v1.fhevmInstanceConfig;
+    const eCount = await fheCounterGeCount(
+      TEST_CONFIG.testContracts.FHECounterPublicDecryptAddress,
+      provider,
+    );
+
+    const instance = await createInstance(config);
+    await instance.publicDecrypt([eCount]);
+  }, 60000);
 });

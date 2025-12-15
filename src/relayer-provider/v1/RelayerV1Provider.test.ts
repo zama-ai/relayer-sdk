@@ -13,6 +13,7 @@ import {
 
 // Jest Command line
 // =================
+// npx jest --colors --passWithNoTests ./src/relayer-provider/v1/RelayerV1Provider.test.ts
 // npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v1/RelayerV1Provider.test.ts --collectCoverageFrom=./src/relayer-provider/v1/RelayerV1Provider.ts --testNamePattern=xxx
 // npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v1/RelayerV1Provider.test.ts --collectCoverageFrom=./src/relayer-provider/v1/RelayerV1Provider.ts
 

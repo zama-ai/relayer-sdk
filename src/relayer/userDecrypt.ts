@@ -232,7 +232,7 @@ export const userDecryptRequest =
         client,
         payloadForVerification,
         eip712Domain,
-        json.response,
+        json, //json.response,
         pubKey,
         privKey,
         true,

@@ -1,39 +1,78 @@
-import { SepoliaConfig } from '../..';
-import type { RelayerInputProofPayload } from '../../relayer/fetchRelayer';
 import { createRelayerProvider } from '../createRelayerFhevm';
+import { createInstance, ENCRYPTION_TYPES } from '../..';
 import fetchMock from 'fetch-mock';
-import { RelayerV2InvalidPostResponseError } from './errors/RelayerV2InvalidPostResponseError';
 import { InvalidPropertyError } from '../../errors/InvalidPropertyError';
 import { RelayerV2Provider } from './RelayerV2Provider';
+import {
+  mockV2Post202,
+  post202InvalidBodyError,
+} from '../../test/v2/mockRoutes';
+import { CoprocessorSignersVerifier } from '../../sdk/coprocessor/CoprocessorSignersVerifier';
+import {
+  DEADBEEF_INPUT_PROOF_PAYLOAD,
+  removeAllFetchMockRoutes,
+  setupAllFetchMockRoutes,
+  TEST_CONFIG,
+} from '../../test/utils';
+import { FhevmInstanceConfig, getProvider } from '../../config';
+import { InputProof } from '../../sdk/coprocessor/InputProof';
 
 // Jest Command line
 // =================
 // npx jest --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_input-proof.test.ts --testNamePattern=xxx
 // npx jest --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_input-proof.test.ts
 // npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v2/RelayerV2Provider_input-proof.test.ts --collectCoverageFrom=./src/relayer-provider/v2/RelayerV2Provider.ts
+//
+// Devnet:
+// =======
+// npx jest --config jest.devnet.config.cjs --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_input-proof.test.ts --testNamePattern=xxx
+//
+// Testnet:
+// ========
+// npx jest --config jest.testnet.config.cjs --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_input-proof.test.ts --testNamePattern=xxx
 
-const relayerUrlV2 = `${SepoliaConfig.relayerUrl!}/v2`;
+jest.mock('ethers', () => {
+  const actual = jest.requireActual('ethers');
 
-const contractAddress = '0x8ba1f109551bd432803012645ac136ddd64dba72';
-const userAddress = '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80';
-const ciphertextWithInputVerification = '0xdeadbeef';
-const contractChainId: `0x${string}` = ('0x' +
-  Number(31337).toString(16)) as `0x${string}`;
-const payload: RelayerInputProofPayload = {
-  contractAddress,
-  userAddress,
-  ciphertextWithInputVerification,
-  contractChainId,
-  extraData: '0x00',
-};
-
-function post202(body: any) {
-  fetchMock.post(`${relayerUrlV2}/input-proof`, {
-    status: 202,
-    body,
-    headers: { 'Content-Type': 'application/json' },
-  });
-}
+  return {
+    ...actual,
+    JsonRpcProvider: jest.fn((...args: any[]) => {
+      // Lazy evaluation: check condition when constructor is called
+      const { TEST_CONFIG } = jest.requireActual('../../test/utils');
+      if (TEST_CONFIG.type !== 'fetch-mock') {
+        return new actual.JsonRpcProvider(...args);
+      }
+      return {};
+    }),
+    isAddress: (...args: any[]) => {
+      const { TEST_CONFIG } = jest.requireActual('../../test/utils');
+      if (TEST_CONFIG.type !== 'fetch-mock') {
+        return actual.isAddress(...args);
+      }
+      return true;
+    },
+    getAddress: (address: string) => {
+      const { TEST_CONFIG } = jest.requireActual('../../test/utils');
+      if (TEST_CONFIG.type !== 'fetch-mock') {
+        return actual.getAddress(address);
+      }
+      return address;
+    },
+    Contract: jest.fn((...args: any[]) => {
+      const { TEST_CONFIG, TEST_COPROCESSORS, TEST_KMS } =
+        jest.requireActual('../../test/utils');
+      if (TEST_CONFIG.type !== 'fetch-mock') {
+        return new actual.Contract(...args);
+      }
+      return {
+        getKmsSigners: () => Promise.resolve(TEST_KMS.addresses),
+        getCoprocessorSigners: () =>
+          Promise.resolve(TEST_COPROCESSORS.addresses),
+        getThreshold: () => Promise.resolve(BigInt(TEST_KMS.addresses.length)), // === TEST_COPROCESSORS.addresses.length
+      };
+    }),
+  };
+});
 
 const consoleLogSpy = jest
   .spyOn(console, 'log')
@@ -41,22 +80,27 @@ const consoleLogSpy = jest
     process.stdout.write(`${message}\n`);
   });
 
-describe('RelayerV2Provider', () => {
+const describeIfFetchMock =
+  TEST_CONFIG.type === 'fetch-mock' ? describe : describe.skip;
+
+// const describeIfFetch =
+//   TEST_CONFIG.type === 'fetch-mock' ? describe.skip : describe;
+
+describeIfFetchMock('RelayerV2Provider', () => {
   let relayerProvider: RelayerV2Provider;
 
   beforeEach(() => {
     fetchMock.removeRoutes();
-    const SepoliaConfigeRelayerUrl = SepoliaConfig.relayerUrl!;
-    const p = createRelayerProvider(`${SepoliaConfigeRelayerUrl}/v2`);
+    expect(TEST_CONFIG.type).toBe('fetch-mock');
+
+    const p = createRelayerProvider(TEST_CONFIG.v2.urls.base);
     if (!(p instanceof RelayerV2Provider)) {
       throw new Error(`Unable to create relayer provider`);
     }
     relayerProvider = p;
     expect(relayerProvider.version).toBe(2);
-    expect(relayerProvider.url).toBe(`${SepoliaConfigeRelayerUrl}/v2`);
-    expect(relayerProvider.inputProof).toBe(
-      `${SepoliaConfigeRelayerUrl}/v2/input-proof`,
-    );
+    expect(relayerProvider.url).toBe(TEST_CONFIG.v2.urls.base);
+    expect(relayerProvider.inputProof).toBe(TEST_CONFIG.v2.urls.inputProof);
   });
 
   afterAll(() => {
@@ -73,41 +117,35 @@ describe('RelayerV2Provider', () => {
       syntaxError = e as Error;
     }
 
-    post202(malformedBodyJson);
+    mockV2Post202('input-proof', malformedBodyJson);
     await expect(() =>
-      relayerProvider.fetchPostInputProof(payload),
+      relayerProvider.fetchPostInputProof(DEADBEEF_INPUT_PROOF_PAYLOAD),
     ).rejects.toThrow(syntaxError);
   });
 
   it('v2:input-proof: 202 - empty json', async () => {
-    post202({});
+    mockV2Post202('input-proof', {});
     await expect(() =>
-      relayerProvider.fetchPostInputProof(payload),
+      relayerProvider.fetchPostInputProof(DEADBEEF_INPUT_PROOF_PAYLOAD),
     ).rejects.toThrow(
-      new RelayerV2InvalidPostResponseError({
-        status: 202,
-        url: `${relayerUrlV2}/input-proof`,
-        operation: 'INPUT_PROOF',
-        cause: InvalidPropertyError.missingProperty({
+      post202InvalidBodyError(
+        InvalidPropertyError.missingProperty({
           objName: 'body',
           property: 'status',
           expectedType: 'string',
           expectedValue: 'queued',
         }),
-      }),
+      ),
     );
   });
 
   it('v2:input-proof: 202 - status:failed', async () => {
-    post202({ status: 'failed' });
+    mockV2Post202('input-proof', { status: 'failed' });
     await expect(() =>
-      relayerProvider.fetchPostInputProof(payload),
+      relayerProvider.fetchPostInputProof(DEADBEEF_INPUT_PROOF_PAYLOAD),
     ).rejects.toThrow(
-      new RelayerV2InvalidPostResponseError({
-        status: 202,
-        url: `${relayerUrlV2}/input-proof`,
-        operation: 'INPUT_PROOF',
-        cause: new InvalidPropertyError({
+      post202InvalidBodyError(
+        new InvalidPropertyError({
           objName: 'body',
           property: 'status',
           expectedType: 'string',
@@ -115,20 +153,17 @@ describe('RelayerV2Provider', () => {
           type: 'string',
           value: 'failed',
         }),
-      }),
+      ),
     );
   });
 
   it('v2:input-proof: 202 - status:succeeded', async () => {
-    post202({ status: 'succeeded' });
+    mockV2Post202('input-proof', { status: 'succeeded' });
     await expect(() =>
-      relayerProvider.fetchPostInputProof(payload),
+      relayerProvider.fetchPostInputProof(DEADBEEF_INPUT_PROOF_PAYLOAD),
     ).rejects.toThrow(
-      new RelayerV2InvalidPostResponseError({
-        status: 202,
-        url: `${relayerUrlV2}/input-proof`,
-        operation: 'INPUT_PROOF',
-        cause: new InvalidPropertyError({
+      post202InvalidBodyError(
+        new InvalidPropertyError({
           objName: 'body',
           property: 'status',
           expectedType: 'string',
@@ -136,71 +171,65 @@ describe('RelayerV2Provider', () => {
           type: 'string',
           value: 'succeeded',
         }),
-      }),
+      ),
     );
   });
 
   it('v2:input-proof: 202 - status:queued', async () => {
-    post202({ status: 'queued' });
+    mockV2Post202('input-proof', { status: 'queued' });
     await expect(() =>
-      relayerProvider.fetchPostInputProof(payload),
+      relayerProvider.fetchPostInputProof(DEADBEEF_INPUT_PROOF_PAYLOAD),
     ).rejects.toThrow(
-      new RelayerV2InvalidPostResponseError({
-        status: 202,
-        url: `${relayerUrlV2}/input-proof`,
-        operation: 'INPUT_PROOF',
-        cause: InvalidPropertyError.missingProperty({
+      post202InvalidBodyError(
+        InvalidPropertyError.missingProperty({
           objName: 'body',
           property: 'result',
           expectedType: 'non-nullable',
         }),
-      }),
+      ),
     );
   });
 
   it('v2:input-proof: 202 - status:queued, result empty', async () => {
-    post202({ status: 'queued', result: {} });
+    mockV2Post202('input-proof', { status: 'queued', result: {} });
     await expect(() =>
-      relayerProvider.fetchPostInputProof(payload),
+      relayerProvider.fetchPostInputProof(DEADBEEF_INPUT_PROOF_PAYLOAD),
     ).rejects.toThrow(
-      new RelayerV2InvalidPostResponseError({
-        status: 202,
-        url: `${relayerUrlV2}/input-proof`,
-        operation: 'INPUT_PROOF',
-        cause: InvalidPropertyError.missingProperty({
+      post202InvalidBodyError(
+        InvalidPropertyError.missingProperty({
           objName: 'body.result',
           property: 'jobId',
           expectedType: 'string',
         }),
-      }),
+      ),
     );
   });
 
   it('v2:input-proof: 202 - status:queued, result no timestamp', async () => {
-    post202({ status: 'queued', result: { jobId: '123' } });
+    mockV2Post202('input-proof', {
+      status: 'queued',
+      result: { jobId: '123' },
+    });
     await expect(() =>
-      relayerProvider.fetchPostInputProof(payload),
+      relayerProvider.fetchPostInputProof(DEADBEEF_INPUT_PROOF_PAYLOAD),
     ).rejects.toThrow(
-      new RelayerV2InvalidPostResponseError({
-        status: 202,
-        url: `${relayerUrlV2}/input-proof`,
-        operation: 'INPUT_PROOF',
-        cause: InvalidPropertyError.missingProperty({
+      post202InvalidBodyError(
+        InvalidPropertyError.missingProperty({
           objName: 'body.result',
           property: 'retryAfterSeconds',
           expectedType: 'Uint',
         }),
-      }),
+      ),
     );
   });
 
-  it('xxx v2:input-proof: 202 - status:queued, result ok', async () => {
-    post202({
+  it('v2:input-proof: 202 - status:queued, result ok', async () => {
+    mockV2Post202('input-proof', {
       status: 'queued',
       result: { jobId: '123', retryAfterSeconds: 3 },
     });
 
-    fetchMock.get(`${relayerUrlV2}/input-proof/123`, {
+    fetchMock.get(`${TEST_CONFIG.v2.urls.inputProof}/123`, {
       status: 200,
       body: {
         status: 'succeeded',
@@ -210,11 +239,110 @@ describe('RelayerV2Provider', () => {
       headers: { 'Content-Type': 'application/json' },
     });
 
-    await relayerProvider.fetchPostInputProof(payload, undefined, {
-      onProgress: (args) => {
-        console.log('Hey! ' + args.type);
-        console.log('Hey! ' + args.method);
+    await relayerProvider.fetchPostInputProof(
+      DEADBEEF_INPUT_PROOF_PAYLOAD,
+      undefined,
+      {
+        onProgress: (args) => {
+          console.log('onProgress: ' + JSON.stringify(args));
+        },
+      },
+    );
+  });
+});
+
+////////////////////////////////////////////////////////////////////////////////
+// Test createEncryptedInput
+////////////////////////////////////////////////////////////////////////////////
+
+describe('createEncryptedInput', () => {
+  beforeEach(() => {
+    removeAllFetchMockRoutes();
+  });
+
+  afterAll(() => {
+    consoleLogSpy.mockRestore();
+  });
+
+  async function prepareTest(params: {
+    config: FhevmInstanceConfig;
+    test: { values: number[]; bitWidths: (keyof typeof ENCRYPTION_TYPES)[] };
+  }) {
+    expect(params.test.bitWidths.length).toBe(params.test.values.length);
+    setupAllFetchMockRoutes({ bitWidths: params.test.bitWidths });
+
+    const config = params.config;
+    const provider = getProvider(config.network);
+    const verifier = await CoprocessorSignersVerifier.fromProvider({
+      provider,
+      gatewayChainId: config.gatewayChainId,
+      inputVerifierContractAddress:
+        config.inputVerifierContractAddress as `0x${string}`,
+      verifyingContractAddressInputVerification:
+        config.verifyingContractAddressInputVerification as `0x${string}`,
+    });
+
+    return verifier;
+  }
+
+  async function testCreateInstance(params: {
+    config: FhevmInstanceConfig;
+    test: { values: number[]; bitWidths: (keyof typeof ENCRYPTION_TYPES)[] };
+  }) {
+    const verifier: CoprocessorSignersVerifier = await prepareTest(params);
+
+    const config = params.config;
+    const test = params.test;
+    const numHandles = test.values.length;
+
+    const instance = await createInstance(config);
+
+    const builder = instance.createEncryptedInput(
+      TEST_CONFIG.testContracts.FHECounterPublicDecryptAddress,
+      TEST_CONFIG.testContracts.DeployerAddress,
+    );
+
+    for (let i = 0; i < numHandles; ++i) {
+      expect(test.bitWidths[i]).toBe(32);
+      builder.add32(test.values[i]);
+    }
+
+    const enc = await builder.encrypt();
+
+    expect(Array.isArray(enc.handles)).toBe(true);
+    expect(enc.handles.length).toBe(numHandles);
+    for (let i = 0; i < numHandles; ++i) {
+      expect(enc.handles[i] instanceof Uint8Array).toBe(true);
+      expect(enc.handles[i].length).toBe(test.bitWidths[i]);
+    }
+
+    expect(enc.inputProof instanceof Uint8Array).toBe(true);
+    expect(enc.inputProof.length).toBeGreaterThanOrEqual(
+      1 + 1 + numHandles * 32 + 65 * verifier.count,
+    );
+
+    const inputProof = InputProof.fromProofBytes(enc.inputProof);
+    expect(inputProof.handles.length).toBe(numHandles);
+    expect(inputProof.signatures.length).toBe(verifier.count);
+  }
+
+  it('xxx v1: succeeded', async () => {
+    await testCreateInstance({
+      config: TEST_CONFIG.v1.fhevmInstanceConfig,
+      test: {
+        values: [123],
+        bitWidths: [32],
       },
     });
-  });
+  }, 60000);
+
+  it('xxx v2: succeeded', async () => {
+    await testCreateInstance({
+      config: TEST_CONFIG.v2.fhevmInstanceConfig,
+      test: {
+        values: [123],
+        bitWidths: [32],
+      },
+    });
+  }, 60000);
 });

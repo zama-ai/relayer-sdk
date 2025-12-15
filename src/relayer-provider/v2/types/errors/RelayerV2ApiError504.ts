@@ -1,5 +1,5 @@
 import { assertRecordStringProperty } from '../../../../utils/string';
-import { RelayerV2ApiError504 } from '../types';
+import { RelayerV2ResponseApiError504 } from '../types';
 
 /*
     export type RelayerV2ApiError504 = {
@@ -10,7 +10,7 @@ import { RelayerV2ApiError504 } from '../types';
 export function assertIsRelayerV2ApiError504(
   value: unknown,
   name: string,
-): asserts value is RelayerV2ApiError504 {
+): asserts value is RelayerV2ResponseApiError504 {
   assertRecordStringProperty(value, 'label', name, [
     'readiness_check_timedout',
     'response_timedout',

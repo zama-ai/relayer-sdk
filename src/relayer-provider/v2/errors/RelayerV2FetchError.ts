@@ -1,52 +1,32 @@
-import { RelayerOperation } from '../../../relayer/fetchRelayer';
-import {
-  RelayerV2RequestBaseError,
-  RelayerV2RequestBaseErrorParams,
-} from './RelayerV2RequestError';
-import { RelayerBaseError } from '../../../errors/RelayerBaseError';
-import { ensureError } from '../../../errors/utils';
 import { Prettify } from '../../../utils/types';
+import { ensureError } from '../../../errors/utils';
+import { RelayerErrorBaseParams } from '../../../errors/RelayerErrorBase';
+import {
+  RelayerV2FetchErrorBase,
+  RelayerV2FetchErrorBaseParams,
+} from './RelayerV2FetchErrorBase';
 
-export type RelayerV2FetchErrorType = RelayerV2FetchError & {
+////////////////////////////////////////////////////////////////////////////////
+// RelayerV2FetchError
+////////////////////////////////////////////////////////////////////////////////
+
+export type RelayerV2FetchErrorType = RelayerV2FetchErrorBase & {
   name: 'RelayerV2FetchError';
 };
 
 export type RelayerV2FetchErrorParams = Prettify<
-  Omit<RelayerV2RequestBaseErrorParams, 'name'> & {
-    status?: number;
-    state?: string;
+  Omit<RelayerV2FetchErrorBaseParams, keyof RelayerErrorBaseParams> & {
+    cause?: unknown;
   }
 >;
 
-export class RelayerV2FetchError extends RelayerV2RequestBaseError {
-  private _fetchMethod: 'POST' | 'GET';
-
-  constructor(
-    fetchMethod: 'POST' | 'GET',
-    params: {
-      url: string;
-      jobId?: string;
-      operation: RelayerOperation;
-      status?: number;
-      cause?: RelayerBaseError | Error | unknown;
-      message?: string;
-    },
-  ) {
+export class RelayerV2FetchError extends RelayerV2FetchErrorBase {
+  constructor(params: RelayerV2FetchErrorParams) {
     super({
       ...params,
       name: 'RelayerV2FetchError',
-      message: params.message ?? 'fetch error',
+      message: `Fetch ${params.fetchMethod} error`,
       cause: ensureError(params.cause),
     });
-    this._fetchMethod = fetchMethod;
-  }
-
-  public get fetchMethod(): 'GET' | 'POST' {
-    return this._fetchMethod;
-  }
-
-  public get isAbort(): boolean {
-    // AbortError is not an instance of Error!
-    return this.cause ? (this.cause as any).name === 'AbortError' : false;
   }
 }

@@ -120,6 +120,7 @@ export const createInstance = async (
     verifyingContractAddressDecryption,
     verifyingContractAddressInputVerification,
     publicKey,
+    inputVerifierContractAddress,
     kmsContractAddress,
     aclContractAddress,
     gatewayChainId,
@@ -128,6 +129,9 @@ export const createInstance = async (
 
   if (!isChecksummedAddress(aclContractAddress)) {
     throw new Error('ACL contract address is not valid or empty');
+  }
+  if (!isChecksummedAddress(inputVerifierContractAddress)) {
+    throw new Error('InputVerifier contract address is not valid or empty');
   }
   if (!isChecksummedAddress(kmsContractAddress)) {
     throw new Error('KMS contract address is not valid or empty');
@@ -149,7 +153,7 @@ export const createInstance = async (
 
   // TODO change argument
   // provider is never undefined | null here!
-  const provider = getProvider(config);
+  const provider = getProvider(config.network);
 
   const relayerUrl = config.relayerUrl ?? SepoliaConfig.relayerUrl!;
   const relayerFhevm = await createRelayerFhevm({
@@ -175,15 +179,21 @@ export const createInstance = async (
   //   publicParams: config.publicParams,
   // });
 
-  const kmsSigners = await getKMSSigners(provider, config);
+  const kmsSigners = await getKMSSigners(provider, kmsContractAddress);
 
-  const thresholdKMSSigners = await getKMSSignersThreshold(provider, config);
+  const thresholdKMSSigners = await getKMSSignersThreshold(
+    provider,
+    kmsContractAddress,
+  );
 
-  const coprocessorSigners = await getCoprocessorSigners(provider, config);
+  const coprocessorSigners = await getCoprocessorSigners(
+    provider,
+    inputVerifierContractAddress,
+  );
 
   const thresholdCoprocessorSigners = await getCoprocessorSignersThreshold(
     provider,
-    config,
+    inputVerifierContractAddress,
   );
 
   return {

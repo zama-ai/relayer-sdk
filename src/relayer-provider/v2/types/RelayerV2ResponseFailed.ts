@@ -1,14 +1,14 @@
 import { assertNonNullableRecordProperty } from '../../../utils/record';
 import { assertRecordStringProperty } from '../../../utils/string';
 import {
-  RelayerV2ApiError,
-  RelayerV2ApiError500,
-  RelayerV2ApiError400,
-  RelayerV2ApiError429,
+  RelayerV2ResponseApiErrorCode,
+  RelayerV2ResponseApiError500,
+  RelayerV2ResponseApiError400,
+  RelayerV2ResponseApiError429,
   RelayerV2ResponseFailed,
-  RelayerV2ApiError404,
-  RelayerV2ApiError503,
-  RelayerV2ApiError504,
+  RelayerV2ResponseApiError404,
+  RelayerV2ResponseApiError503,
+  RelayerV2ResponseApiError504,
 } from './types';
 import { assertIsRelayerV2ApiError400NoDetails } from './errors/RelayerV2ApiError400NoDetails';
 import { assertIsRelayerV2ApiError400WithDetails } from './errors/RelayerV2ApiError400WithDetails';
@@ -31,7 +31,7 @@ export function assertIsRelayerV2ResponseFailed(
 export function assertIsRelayerV2ApiError(
   value: unknown,
   name: string,
-): asserts value is RelayerV2ApiError {
+): asserts value is RelayerV2ResponseApiErrorCode {
   assertRecordStringProperty(value, 'label', name);
   // 400
   if (
@@ -108,7 +108,7 @@ export function assertIsRelayerV2ResponseFailedWithError400(
   name: string,
 ): asserts value is {
   status: 'failed';
-  error: RelayerV2ApiError400;
+  error: RelayerV2ResponseApiError400;
 } {
   assertIsRelayerV2ResponseFailed(value, name);
   if (
@@ -149,7 +149,7 @@ export function assertIsRelayerV2ResponseFailedWithError404(
   name: string,
 ): asserts value is {
   status: 'failed';
-  error: RelayerV2ApiError404;
+  error: RelayerV2ResponseApiError404;
 } {
   assertIsRelayerV2ResponseFailed(value, name);
   assertIsRelayerV2ApiError404(value.error, `${name}.error`);
@@ -164,7 +164,7 @@ export function assertIsRelayerV2ResponseFailedWithError429(
   name: string,
 ): asserts value is {
   status: 'failed';
-  error: RelayerV2ApiError429;
+  error: RelayerV2ResponseApiError429;
 } {
   assertIsRelayerV2ResponseFailed(value, name);
   assertIsRelayerV2ApiError429(value.error, `${name}.error`);
@@ -179,7 +179,7 @@ export function assertIsRelayerV2ResponseFailedWithError500(
   name: string,
 ): asserts value is {
   status: 'failed';
-  error: RelayerV2ApiError500;
+  error: RelayerV2ResponseApiError500;
 } {
   assertIsRelayerV2ResponseFailed(value, name);
   assertIsRelayerV2ApiError500(value.error, `${name}.error`);
@@ -194,7 +194,7 @@ export function assertIsRelayerV2ResponseFailedWithError503(
   name: string,
 ): asserts value is {
   status: 'failed';
-  error: RelayerV2ApiError503;
+  error: RelayerV2ResponseApiError503;
 } {
   assertIsRelayerV2ResponseFailed(value, name);
   assertIsRelayerV2ApiError503(value.error, `${name}.error`);
@@ -209,7 +209,7 @@ export function assertIsRelayerV2ResponseFailedWithError504(
   name: string,
 ): asserts value is {
   status: 'failed';
-  error: RelayerV2ApiError504;
+  error: RelayerV2ResponseApiError504;
 } {
   assertIsRelayerV2ResponseFailed(value, name);
   assertIsRelayerV2ApiError504(value.error, `${name}.error`);

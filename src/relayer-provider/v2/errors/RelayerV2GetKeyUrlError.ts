@@ -1,16 +1,16 @@
 import { RelayerOperation } from '../../../relayer/fetchRelayer';
 import {
-  RelayerBaseError,
-  RelayerBaseErrorParams,
-} from '../../../errors/RelayerBaseError';
+  RelayerErrorBase,
+  RelayerErrorBaseParams,
+} from '../../../errors/RelayerErrorBase';
 
 ////////////////////////////////////////////////////////////////////////////////
 
-type RelayerV2ProviderErrorParams = RelayerBaseErrorParams & {
+type RelayerV2ProviderErrorParams = RelayerErrorBaseParams & {
   operation: RelayerOperation;
 };
 
-export class RelayerV2ProviderError extends RelayerBaseError {
+export class RelayerV2ProviderError extends RelayerErrorBase {
   private _operation: RelayerOperation;
 
   constructor(params: RelayerV2ProviderErrorParams) {
@@ -30,7 +30,7 @@ export type RelayerV2GetKeyUrlErrorType = RelayerV2GetKeyUrlError & {
 };
 
 export class RelayerV2GetKeyUrlError extends RelayerV2ProviderError {
-  constructor({ cause }: { cause: RelayerBaseError | Error }) {
+  constructor({ cause }: { cause: RelayerErrorBase | Error }) {
     super({
       message: `Invalid relayer response.`,
       name: 'RelayerV2GetKeyUrlError',
@@ -48,7 +48,7 @@ export type RelayerV2GetKeyUrlInvalidResponseErrorType =
   };
 
 export class RelayerV2GetKeyUrlInvalidResponseError extends RelayerV2GetKeyUrlError {
-  constructor({ cause }: { cause: RelayerBaseError | Error }) {
+  constructor({ cause }: { cause: RelayerErrorBase | Error }) {
     super({ cause });
   }
 }

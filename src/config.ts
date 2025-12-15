@@ -49,11 +49,11 @@ export type FhevmInstanceConfig = Prettify<
   } & FhevmInstanceOptions
 >;
 
-export const getProvider = (config: FhevmInstanceConfig) => {
-  if (typeof config.network === 'string') {
-    return new JsonRpcProvider(config.network);
-  } else if (config.network) {
-    return new BrowserProvider(config.network);
+export const getProvider = (network: string | Eip1193Provider | undefined) => {
+  if (typeof network === 'string') {
+    return new JsonRpcProvider(network);
+  } else if (network) {
+    return new BrowserProvider(network);
   }
   throw new Error(
     'You must provide a network URL or a EIP1193 object (eg: window.ethereum)',
@@ -142,10 +142,10 @@ export const getPublicParams = async (config: {
 
 export const getKMSSigners = async (
   provider: Provider,
-  config: FhevmInstanceConfig,
+  kmsContractAddress: `0x${string}`,
 ): Promise<string[]> => {
   const kmsContract = new Contract(
-    config.kmsContractAddress,
+    kmsContractAddress,
     abiKmsVerifier,
     provider,
   );
@@ -155,10 +155,10 @@ export const getKMSSigners = async (
 
 export const getKMSSignersThreshold = async (
   provider: Provider,
-  config: FhevmInstanceConfig,
+  kmsContractAddress: `0x${string}`,
 ): Promise<number> => {
   const kmsContract = new Contract(
-    config.kmsContractAddress,
+    kmsContractAddress,
     abiKmsVerifier,
     provider,
   );
@@ -168,10 +168,10 @@ export const getKMSSignersThreshold = async (
 
 export const getCoprocessorSigners = async (
   provider: Provider,
-  config: FhevmInstanceConfig,
+  inputVerifierContractAddress: `0x${string}`,
 ): Promise<string[]> => {
   const inputContract = new Contract(
-    config.inputVerifierContractAddress,
+    inputVerifierContractAddress,
     abiInputVerifier,
     provider,
   );
@@ -181,10 +181,10 @@ export const getCoprocessorSigners = async (
 
 export const getCoprocessorSignersThreshold = async (
   provider: Provider,
-  config: FhevmInstanceConfig,
+  inputVerifierContractAddress: `0x${string}`,
 ): Promise<number> => {
   const inputContract = new Contract(
-    config.inputVerifierContractAddress,
+    inputVerifierContractAddress,
     abiInputVerifier,
     provider,
   );

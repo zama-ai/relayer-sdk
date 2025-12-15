@@ -11,10 +11,7 @@ import { computeHandles } from './handles';
 import { ethers } from 'ethers';
 import { TFHEType } from '../tfheType';
 import { throwRelayerInternalError } from './error';
-import {
-  RelayerFetchResponseJson,
-  RelayerInputProofPayload,
-} from './fetchRelayer';
+import { RelayerInputProofPayload } from './fetchRelayer';
 import { Auth } from '../auth';
 import { AbstractRelayerProvider } from '../relayer-provider/AbstractRelayerProvider';
 
@@ -62,9 +59,10 @@ export type FhevmRelayerInputProofResponse = {
 };
 
 function isFhevmRelayerInputProofResponse(
-  json: RelayerFetchResponseJson,
+  json: unknown,
 ): json is FhevmRelayerInputProofResponse {
-  const response = json.response as unknown;
+  const response = json as unknown;
+  // const response = json.response as unknown;
   if (typeof response !== 'object' || response === null) {
     return false;
   }
@@ -177,6 +175,7 @@ export const createRelayerEncryptedInput =
         const bits = input.getBits();
         const ciphertext = input.encrypt();
 
+        //console.log(`ciphertext=${toHexString(ciphertext)}`);
         const payload: RelayerInputProofPayload = {
           contractAddress: getAddress(contractAddress),
           userAddress: getAddress(userAddress),
@@ -208,9 +207,12 @@ export const createRelayerEncryptedInput =
           currentCiphertextVersion(),
         );
 
+        //const result = json.response;
+        const result = json;
+
         // Note that the hex strings returned by the relayer do have have the 0x prefix
-        if (json.response.handles && json.response.handles.length > 0) {
-          const responseHandles = json.response.handles.map(fromHexString);
+        if (result.handles && result.handles.length > 0) {
+          const responseHandles = result.handles.map(fromHexString);
           if (handles.length != responseHandles.length) {
             throw new Error(
               `Incorrect Handles list sizes: (expected) ${handles.length} != ${responseHandles.length} (received)`,
@@ -229,7 +231,7 @@ export const createRelayerEncryptedInput =
           }
         }
 
-        const signatures: string[] = json.response.signatures;
+        const signatures: string[] = result.signatures;
 
         // verify signatures for inputs:
         const domain = {

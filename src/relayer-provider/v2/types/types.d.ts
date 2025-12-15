@@ -2,7 +2,7 @@
 // V2
 ////////////////////////////////////////////////////////////////////////////////
 
-import { Bytes32Hex, BytesHex, BytesHexNo0x } from 'src/utils/bytes';
+import type { Bytes32Hex, BytesHex, BytesHexNo0x } from '../../../utils/bytes';
 
 // Do not add KEYURL here!
 export type RelayerV2OperationResult =
@@ -73,29 +73,29 @@ export type RelayerV2ResponseQueuedOrFailed =
 export type RelayerV2ResponseFailed = {
   status: 'failed';
   requestId?: string; // Optional request id field. Would be empty in case of 429 from Cloudflare/Kong. In other cases, use it for identifying the request and asking support
-  error: RelayerV2ApiError;
+  error: RelayerV2ResponseApiErrorCode;
 };
 
-export type RelayerV2ApiError =
-  | RelayerV2ApiError400
-  | RelayerV2ApiError404
-  | RelayerV2ApiError429
-  | RelayerV2ApiError500
-  | RelayerV2ApiError503
-  | RelayerV2ApiError504;
+export type RelayerV2ResponseApiErrorCode =
+  | RelayerV2ResponseApiError400
+  | RelayerV2ResponseApiError404
+  | RelayerV2ResponseApiError429
+  | RelayerV2ResponseApiError500
+  | RelayerV2ResponseApiError503
+  | RelayerV2ResponseApiError504;
 
-export type RelayerV2ApiError500 = {
+export type RelayerV2ResponseApiError500 = {
   label: 'internal_server_error';
   message: string;
 };
 
-export type RelayerV2ApiError503 = {
+export type RelayerV2ResponseApiError503 = {
   label: 'protocol_paused' | 'gateway_not_reachable';
   message: string;
 };
 
 // 'readiness_check_timedout' is only for decrypt endpoints (user-decrypt, public-decrypt).
-export type RelayerV2ApiError504 = {
+export type RelayerV2ResponseApiError504 = {
   label: 'readiness_check_timedout' | 'response_timedout';
   message: string;
 };
@@ -105,12 +105,12 @@ export type RelayerV2ApiError504 = {
 // limiting element (Cloudflare, Kong, Relayer), it will always be an up to date
 // value.
 // Makes it simpler and avoids issues with clock skew between client and server.
-export type RelayerV2ApiError429 = {
+export type RelayerV2ResponseApiError429 = {
   label: 'rate_limited';
   message: string;
 };
 
-export type RelayerV2ApiError400 =
+export type RelayerV2ResponseApiError400 =
   | RelayerV2ApiError400NoDetails
   | RelayerV2ApiError400WithDetails;
 
@@ -130,7 +130,7 @@ export type RelayerV2ErrorDetail = {
   issue: string;
 };
 
-export type RelayerV2ApiError404 = {
+export type RelayerV2ResponseApiError404 = {
   label: 'not_found';
   message: string;
   details: Array<RelayerV2ErrorDetail>;
@@ -148,7 +148,6 @@ export type RelayerV2ResponseQueued = {
 
 export type RelayerV2ResultQueued = {
   jobId: string;
-  retryAfterSeconds: number;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -184,11 +183,13 @@ export type RelayerV2ResultPublicDecrypt = {
 };
 
 export type RelayerV2ResultUserDecrypt = {
-  // Hex encoded key without 0x prefix.
-  payloads: BytesHexNo0x[];
-  // Hex encoded key without 0x prefix. (len=130)
-  signatures: BytesHexNo0x[];
-  extraData: BytesHex[];
+  result: Array<{
+    // Hex encoded key without 0x prefix.
+    payload: BytesHexNo0x;
+    // Hex encoded key without 0x prefix. (len=130)
+    signature: BytesHexNo0x;
+    //extraData: BytesHex;
+  }>;
 };
 
 export type RelayerV2ResultInputProof =

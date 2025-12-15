@@ -1,4 +1,4 @@
-import { RelayerBaseError } from './RelayerBaseError';
+import { RelayerErrorBase } from './RelayerErrorBase';
 
 export type InvalidPropertyErrorType = InvalidPropertyError & {
   name: 'InvalidPropertyError';
@@ -12,13 +12,14 @@ type ExpectedType =
   | 'Array'
   | 'ChecksummedAddress'
   | 'Bytes32Hex'
+  | 'Bytes65Hex'
   | 'BytesHexNo0x'
   | 'Uint8Array'
   | 'BytesHex'
   | 'Timestamp'
   | 'unknown';
 
-export class InvalidPropertyError extends RelayerBaseError {
+export class InvalidPropertyError extends RelayerErrorBase {
   readonly _objName: string;
   readonly _property: string;
   readonly _expectedType: string;
@@ -45,10 +46,15 @@ export class InvalidPropertyError extends RelayerBaseError {
   }) {
     let missing = type === 'undefined' && expectedValue !== undefined;
 
-    const varname =
-      index !== undefined
-        ? `${objName}.${property}[${index}]`
-        : `${objName}.${property}`;
+    let varname;
+    if (!property || property === '') {
+      varname = index !== undefined ? `${objName}[${index}]` : `${objName}`;
+    } else {
+      varname =
+        index !== undefined
+          ? `${objName}.${property}[${index}]`
+          : `${objName}.${property}`;
+    }
 
     let message = missing
       ? `InvalidPropertyError: Missing '${varname}'`
@@ -115,6 +121,23 @@ export class InvalidPropertyError extends RelayerBaseError {
       objName,
       property,
       expectedType: 'unknown',
+    });
+  }
+
+  static invalidObject({
+    objName,
+    expectedType,
+    type,
+  }: {
+    objName: string;
+    expectedType: ExpectedType;
+    type?: string;
+  }): InvalidPropertyError {
+    return new InvalidPropertyError({
+      objName,
+      property: '',
+      expectedType,
+      type,
     });
   }
 }

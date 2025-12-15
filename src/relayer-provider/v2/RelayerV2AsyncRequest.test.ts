@@ -2,7 +2,10 @@ import fetchMock from 'fetch-mock';
 import { RelayerV2AsyncRequest } from './RelayerV2AsyncRequest';
 import { SepoliaConfig } from '../..';
 import { RelayerInputProofPayload } from '../../relayer/fetchRelayer';
-import { RelayerV2ApiError500, RelayerV2ResponseFailed } from './types/types';
+import {
+  RelayerV2ResponseApiError500,
+  RelayerV2ResponseFailed,
+} from './types/types';
 
 // Jest Command line
 // =================
@@ -74,7 +77,7 @@ describe('RelayerV2Request', () => {
   });
 
   it('v2: cancel before first fetch completed', async () => {
-    const error: RelayerV2ApiError500 = {
+    const error: RelayerV2ResponseApiError500 = {
       label: 'internal_server_error',
       message: 'foo',
     };

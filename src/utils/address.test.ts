@@ -9,9 +9,18 @@ import {
   isAddress,
   isChecksummedAddress,
 } from './address';
+import { TEST_CONFIG } from '../test/utils';
+import { SepoliaConfig } from '..';
 
+// Jest Command line
+// =================
+//
+// npx jest --colors --passWithNoTests ./src/utils/address.test.ts
+// npx jest --colors --passWithNoTests ./src/utils/address.test.ts --testNamePattern=xxx
+// npx jest --colors --passWithNoTests ./src/utils/address.test.ts --testNamePattern=xxx
 // npx jest --colors --passWithNoTests --coverage ./src/utils/address.test.ts --collectCoverageFrom=./src/utils/address.ts
-// npx jest --colors --passWithNoTests --coverage ./src/utils/address.test.ts --collectCoverageFrom=./src/utils/address.ts --testNamePattern=BBB
+// npx jest --colors --passWithNoTests --coverage ./src/utils/address.test.ts --collectCoverageFrom=./src/utils/address.ts --testNamePattern=xxx
+//
 
 describe('address', () => {
   it('isAddress', () => {

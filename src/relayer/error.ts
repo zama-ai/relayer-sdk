@@ -1,4 +1,4 @@
-import { RelayerFetchResponseJson, RelayerOperation } from './fetchRelayer';
+import { RelayerOperation } from './fetchRelayer';
 
 export type RelayerProviderErrorCause =
   | {
@@ -193,7 +193,7 @@ export function throwRelayerUnexpectedJSONError(
 
 export function throwRelayerInternalError(
   operation: RelayerOperation,
-  json: RelayerFetchResponseJson,
+  json: unknown,
 ): never {
   let message: string;
   switch (operation) {

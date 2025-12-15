@@ -1,10 +1,10 @@
-import { RelayerBaseError } from './RelayerBaseError';
+import { RelayerErrorBase } from './RelayerErrorBase';
 
 export type InvalidTypeErrorType = InvalidTypeError & {
   name: 'InvalidTypeError';
 };
 
-export class InvalidTypeError extends RelayerBaseError {
+export class InvalidTypeError extends RelayerErrorBase {
   readonly _objName?: string;
   readonly _type?: string | undefined;
   readonly _expectedType: string;
@@ -18,10 +18,18 @@ export class InvalidTypeError extends RelayerBaseError {
     expectedType:
       | 'string'
       | 'Uint'
+      | 'Uint32'
+      | 'Uint256'
       | 'ChecksummedAddress'
+      | 'ChecksummedAddressArray'
       | 'Bytes32Hex'
+      | 'Bytes65Hex'
       | 'BytesHexNo0x'
       | 'Uint8Array'
+      | 'BytesHexArray'
+      | 'Bytes32HexArray'
+      | 'Bytes65HexArray'
+      | 'Array'
       | 'BytesHex';
   }) {
     super({

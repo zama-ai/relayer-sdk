@@ -10,6 +10,7 @@ import {
 import { ChecksummedAddressError } from '../errors/ChecksummedAddressError';
 import { AddressError } from '../errors/AddressError';
 import { InvalidPropertyError } from '../errors/InvalidPropertyError';
+import { InvalidTypeError } from '../errors/InvalidTypeError';
 
 export type ChecksummedAddress = `0x${string}`;
 
@@ -38,6 +39,22 @@ export function assertIsChecksummedAddress(
 ): asserts value is ChecksummedAddress {
   if (!isChecksummedAddress(value)) {
     throw new ChecksummedAddressError({ address: String(value) });
+  }
+}
+
+export function assertIsChecksummedAddressArray(
+  value: unknown,
+): asserts value is ChecksummedAddress[] {
+  if (!Array.isArray(value)) {
+    throw new InvalidTypeError({
+      type: typeof value,
+      expectedType: 'ChecksummedAddressArray',
+    });
+  }
+  for (let i = 0; i < value.length; ++i) {
+    if (!isChecksummedAddress(value[i])) {
+      throw new ChecksummedAddressError({ address: String(value) });
+    }
   }
 }
 

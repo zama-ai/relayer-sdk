@@ -34,4 +34,5 @@ module.exports = {
       lines: 60,
     },
   },
+  testRegex: '\\.test\\.ts$',
 };

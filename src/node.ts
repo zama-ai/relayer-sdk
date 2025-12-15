@@ -34,5 +34,5 @@ export type {
   ApiKeyCookie,
   ApiKeyHeader,
 } from './index';
-export type { FhevmInstanceConfig } from './config';
+export type { FhevmInstanceConfig, FhevmInstanceOptions } from './config';
 export { createTfheKeypair, createTfhePublicKey } from './tfhe';

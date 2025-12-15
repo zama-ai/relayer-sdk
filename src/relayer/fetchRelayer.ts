@@ -108,13 +108,13 @@ export type RelayerInputProofJsonResponse = {
   };
 };
 
-export type RelayerFetchResponseJson = { response: any };
+export type RelayerV1FetchResponseJson = { response: any };
 
 ////////////////////////////////////////////////////////////////////////////////
 
-function assertIsRelayerFetchResponseJson(
+function assertIsRelayerV1FetchResponseJson(
   json: any,
-): asserts json is RelayerFetchResponseJson {
+): asserts json is RelayerV1FetchResponseJson {
   if (!json || typeof json !== 'object') {
     throw new Error('Unexpected response JSON.');
   }
@@ -136,7 +136,7 @@ export async function fetchRelayerJsonRpcPost(
   url: string,
   payload: any,
   options?: { auth?: Auth },
-): Promise<RelayerFetchResponseJson> {
+): Promise<RelayerV1FetchResponseJson> {
   const init = setAuth(
     {
       method: 'POST',
@@ -149,7 +149,7 @@ export async function fetchRelayerJsonRpcPost(
   );
 
   let response: Response;
-  let json: RelayerFetchResponseJson;
+  let json: RelayerV1FetchResponseJson;
   try {
     response = await fetch(url, init);
   } catch (e) {
@@ -167,7 +167,7 @@ export async function fetchRelayerJsonRpcPost(
   }
 
   try {
-    assertIsRelayerFetchResponseJson(parsed);
+    assertIsRelayerV1FetchResponseJson(parsed);
     json = parsed;
   } catch (e) {
     throwRelayerUnexpectedJSONError(relayerOperation, e);
@@ -179,12 +179,13 @@ export async function fetchRelayerJsonRpcPost(
 export async function fetchRelayerGet(
   relayerOperation: RelayerOperation,
   url: string,
-): Promise<RelayerFetchResponseJson> {
+): Promise<RelayerV1FetchResponseJson> {
   let response: Response;
-  let json: RelayerFetchResponseJson;
+  let json: RelayerV1FetchResponseJson;
   try {
     response = await fetch(url);
   } catch (e) {
+    console.log(e);
     throwRelayerUnknownError(relayerOperation, e);
   }
 
@@ -200,7 +201,7 @@ export async function fetchRelayerGet(
   }
 
   try {
-    assertIsRelayerFetchResponseJson(parsed);
+    assertIsRelayerV1FetchResponseJson(parsed);
     json = parsed;
   } catch (e) {
     throwRelayerUnexpectedJSONError(relayerOperation, e);

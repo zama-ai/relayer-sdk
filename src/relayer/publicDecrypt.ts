@@ -244,7 +244,6 @@ export const publicDecryptRequest =
       payloadForRequest,
       options ?? instanceOptions,
     );
-    console.log(JSON.stringify(json));
     // const json = await fetchRelayerJsonRpcPost(
     //   'PUBLIC_DECRYPT',
     //   `${relayerUrl}/v1/public-decrypt`,
@@ -266,7 +265,8 @@ export const publicDecryptRequest =
         { name: 'extraData', type: 'bytes' },
       ],
     };
-    const result = json.response[0];
+    //const result = json.response[0];
+    const result = json;
     const decryptedResult: `0x${string}` = ensure0x(result.decryptedValue);
     const kmsSignatures: `0x${string}`[] = result.signatures.map(ensure0x);
 

@@ -74,5 +74,5 @@ export type {
   ApiKeyHeader,
 } from './index';
 
-export type { FhevmInstanceConfig } from './config';
+export type { FhevmInstanceConfig, FhevmInstanceOptions } from './config';
 export { initSDK } from './init';

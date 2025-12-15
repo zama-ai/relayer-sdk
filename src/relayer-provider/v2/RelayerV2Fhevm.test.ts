@@ -20,10 +20,10 @@ import { RelayerV2Fhevm } from './RelayerV2Fhevm';
 // curl https://relayer.testnet.zama.org/v2/keyurl
 const relayerV2ResponseGetKeyUrl = {
   response: {
-    fhe_key_info: [
+    fheKeyInfo: [
       {
-        fhe_public_key: {
-          data_id: 'fhe-public-key-data-id',
+        fhePublicKey: {
+          dataId: 'fhe-public-key-data-id',
           urls: [
             'https://zama-mpc-testnet-public-efd88e2b.s3.eu-west-1.amazonaws.com/PUB-p1/PublicKey/0400000000000000000000000000000000000000000000000000000000000003',
           ],
@@ -32,7 +32,7 @@ const relayerV2ResponseGetKeyUrl = {
     ],
     crs: {
       '2048': {
-        data_id: 'crs-data-id',
+        dataId: 'crs-data-id',
         urls: [
           'https://zama-mpc-testnet-public-efd88e2b.s3.eu-west-1.amazonaws.com/PUB-p1/CRS/0500000000000000000000000000000000000000000000000000000000000004',
         ],
@@ -56,8 +56,7 @@ describe('RelayerV2Fhevm', () => {
     fetchMock.get(`${relayerUrlV2}/keyurl`, relayerV2ResponseGetKeyUrl);
 
     fetchMock.get(
-      relayerV2ResponseGetKeyUrl.response.fhe_key_info[0].fhe_public_key
-        .urls[0],
+      relayerV2ResponseGetKeyUrl.response.fheKeyInfo[0].fhePublicKey.urls[0],
       assetPublicKeyBytes,
     );
 

@@ -1,8 +1,12 @@
 import {
-  RelayerV2RequestBaseError,
-  RelayerV2RequestBaseErrorParams,
-} from './RelayerV2RequestError';
+  RelayerV2RequestErrorBase,
+  RelayerV2RequestErrorBaseParams,
+} from './RelayerV2RequestErrorBase';
 import { Prettify } from '../../../utils/types';
+
+////////////////////////////////////////////////////////////////////////////////
+// RelayerV2RequestInternalError
+////////////////////////////////////////////////////////////////////////////////
 
 export type RelayerV2InternalRequestErrorType =
   RelayerV2RequestInternalError & {
@@ -10,13 +14,13 @@ export type RelayerV2InternalRequestErrorType =
   };
 
 export type RelayerV2InternalRequestErrorParams = Prettify<
-  Omit<RelayerV2RequestBaseErrorParams, 'name'> & {
+  Omit<RelayerV2RequestErrorBaseParams, 'name'> & {
     status?: number;
     state?: string;
   }
 >;
 
-export class RelayerV2RequestInternalError extends RelayerV2RequestBaseError {
+export class RelayerV2RequestInternalError extends RelayerV2RequestErrorBase {
   private _status?: number;
   private _state?: string;
 

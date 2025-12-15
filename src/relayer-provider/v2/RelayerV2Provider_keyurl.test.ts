@@ -1,10 +1,11 @@
 import { SepoliaConfig } from '../..';
 import { getErrorCause } from '../../relayer/error';
-import { AbstractRelayerProvider } from '../AbstractRelayerProvider';
 import { createRelayerProvider } from '../createRelayerFhevm';
 import fetchMock from 'fetch-mock';
 import { RelayerV2GetKeyUrlInvalidResponseError } from './errors/RelayerV2GetKeyUrlError';
 import { InvalidPropertyError } from '../../errors/InvalidPropertyError';
+import { RelayerV2Provider } from './RelayerV2Provider';
+import { TEST_CONFIG } from '../../test/utils';
 
 // Jest Command line
 // =================
@@ -14,6 +15,29 @@ import { InvalidPropertyError } from '../../errors/InvalidPropertyError';
 
 // curl https://relayer.testnet.zama.org/v2/keyurl
 const relayerV2ResponseGetKeyUrl = {
+  response: {
+    fheKeyInfo: [
+      {
+        fhePublicKey: {
+          dataId: 'fhe-public-key-data-id',
+          urls: [
+            'https://zama-mpc-testnet-public-efd88e2b.s3.eu-west-1.amazonaws.com/PUB-p1/PublicKey/0400000000000000000000000000000000000000000000000000000000000003',
+          ],
+        },
+      },
+    ],
+    crs: {
+      '2048': {
+        dataId: 'crs-data-id',
+        urls: [
+          'https://zama-mpc-testnet-public-efd88e2b.s3.eu-west-1.amazonaws.com/PUB-p1/CRS/0500000000000000000000000000000000000000000000000000000000000004',
+        ],
+      },
+    },
+  },
+};
+
+const fetchGetKeyUrlReturn = {
   response: {
     fhe_key_info: [
       {
@@ -38,13 +62,19 @@ const relayerV2ResponseGetKeyUrl = {
 
 const relayerUrlV2 = `${SepoliaConfig.relayerUrl!}/v2`;
 
-describe('RelayerV2Provider', () => {
-  let relayerProvider: AbstractRelayerProvider;
+const describeIfFetchMock =
+  TEST_CONFIG.type === 'fetch-mock' ? describe : describe.skip;
+
+describeIfFetchMock('RelayerV2Provider', () => {
+  let relayerProvider: RelayerV2Provider;
 
   beforeEach(() => {
     fetchMock.removeRoutes();
     const SepoliaConfigeRelayerUrl = SepoliaConfig.relayerUrl!;
-    relayerProvider = createRelayerProvider(`${SepoliaConfigeRelayerUrl}/v2`);
+    relayerProvider = createRelayerProvider(
+      `${SepoliaConfigeRelayerUrl}/v2`,
+    ) as RelayerV2Provider;
+    expect(relayerProvider instanceof RelayerV2Provider).toBe(true);
     expect(relayerProvider.version).toBe(2);
     expect(relayerProvider.url).toBe(`${SepoliaConfigeRelayerUrl}/v2`);
     expect(relayerProvider.keyUrl).toBe(
@@ -56,7 +86,7 @@ describe('RelayerV2Provider', () => {
     fetchMock.get(`${relayerUrlV2}/keyurl`, relayerV2ResponseGetKeyUrl);
 
     const response = await relayerProvider.fetchGetKeyUrl();
-    expect(response).toEqual(relayerV2ResponseGetKeyUrl);
+    expect(response).toEqual(fetchGetKeyUrlReturn);
   });
 
   it("v2:keyurl: fetchGetKeyUrl - response = { hello: '123' }", async () => {
@@ -112,23 +142,23 @@ describe('RelayerV2Provider', () => {
       new RelayerV2GetKeyUrlInvalidResponseError({
         cause: InvalidPropertyError.missingProperty({
           objName: 'fetchGetKeyUrl().response',
-          property: 'fhe_key_info',
+          property: 'fheKeyInfo',
           expectedType: 'Array',
         }),
       }),
     );
   });
 
-  it('v2:keyurl: fetchGetKeyUrl - response = { response: { crs: {}, fhe_key_info: {} } }', async () => {
+  it('v2:keyurl: fetchGetKeyUrl - response = { response: { crs: {}, fheKeyInfo: {} } }', async () => {
     fetchMock.get(`${relayerUrlV2}/keyurl`, {
-      response: { crs: {}, fhe_key_info: {} },
+      response: { crs: {}, fheKeyInfo: {} },
     });
 
     await expect(() => relayerProvider.fetchGetKeyUrl()).rejects.toThrow(
       new RelayerV2GetKeyUrlInvalidResponseError({
         cause: new InvalidPropertyError({
           objName: 'fetchGetKeyUrl().response',
-          property: 'fhe_key_info',
+          property: 'fheKeyInfo',
           expectedType: 'Array',
           type: 'object',
         }),
