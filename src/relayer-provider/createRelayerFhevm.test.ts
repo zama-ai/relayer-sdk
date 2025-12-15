@@ -1,4 +1,5 @@
 import { SepoliaConfig } from '../index';
+import { TEST_CONFIG } from '../test/config';
 import { createRelayerProvider } from './createRelayerFhevm';
 
 // Jest Command line
@@ -6,7 +7,10 @@ import { createRelayerProvider } from './createRelayerFhevm';
 // npx jest --colors --passWithNoTests ./src/relayer-provider/createRelayerFhevm.test.ts --testNamePattern=xxx
 // npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/createRelayerFhevm.test.ts --collectCoverageFrom=./src/relayer-provider/createRelayerFhevm.ts
 
-describe('createRelayerProvider', () => {
+const describeIfFetchMock =
+  TEST_CONFIG.type === 'fetch-mock' ? describe : describe.skip;
+
+describeIfFetchMock('createRelayerProvider', () => {
   it('v1: <SepoliaConfig.relayerUrl>', () => {
     const SepoliaConfigeRelayerUrl = SepoliaConfig.relayerUrl!;
     expect(SepoliaConfigeRelayerUrl).not.toBeNull();

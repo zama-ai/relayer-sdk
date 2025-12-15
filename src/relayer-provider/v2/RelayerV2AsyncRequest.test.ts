@@ -6,6 +6,7 @@ import {
   RelayerV2ResponseApiError500,
   RelayerV2ResponseFailed,
 } from './types/types';
+import { TEST_CONFIG } from '../../test/config';
 
 // Jest Command line
 // =================
@@ -41,7 +42,10 @@ const consoleLogSpy = jest
     process.stdout.write(`${message}\n`);
   });
 
-describe('RelayerV2Request', () => {
+const describeIfFetchMock =
+  TEST_CONFIG.type === 'fetch-mock' ? describe : describe.skip;
+
+describeIfFetchMock('RelayerV2Request', () => {
   let relayerRequest: RelayerV2AsyncRequest;
   let start: number;
 

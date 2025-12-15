@@ -7,6 +7,7 @@ import {
 } from './fetchRelayer';
 import { getErrorCause, getErrorCauseErrorMessage } from './error';
 import { createRelayerProvider } from '../relayer-provider/createRelayerFhevm';
+import { TEST_CONFIG } from '../test/config';
 
 // Jest Command line
 // =================
@@ -40,7 +41,10 @@ const dummyRelayerUserDecryptPayload: RelayerUserDecryptPayload = {
   extraData: '0x00',
 };
 
-describe('userDecrypt', () => {
+const describeIfFetchMock =
+  TEST_CONFIG.type === 'fetch-mock' ? describe : describe.skip;
+
+describeIfFetchMock('userDecrypt', () => {
   beforeEach(() => {
     fetchMock.removeRoutes();
   });
@@ -62,7 +66,7 @@ describe('userDecrypt', () => {
   });
 });
 
-describe('fetchRelayerUserDecrypt', () => {
+describeIfFetchMock('fetchRelayerUserDecrypt', () => {
   beforeEach(() => {
     fetchMock.removeRoutes();
   });

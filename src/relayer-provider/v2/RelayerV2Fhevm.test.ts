@@ -10,6 +10,7 @@ import {
   SERIALIZED_SIZE_LIMIT_PK,
 } from '../../constants';
 import { RelayerV2Fhevm } from './RelayerV2Fhevm';
+import { TEST_CONFIG } from '../../test/config';
 
 // Jest Command line
 // =================
@@ -50,7 +51,10 @@ const assetPublicParams2048Bytes =
     SERIALIZED_SIZE_LIMIT_CRS,
   );
 
-describe('RelayerV2Fhevm', () => {
+const describeIfFetchMock =
+  TEST_CONFIG.type === 'fetch-mock' ? describe : describe.skip;
+
+describeIfFetchMock('RelayerV2Fhevm', () => {
   beforeEach(async () => {
     fetchMock.removeRoutes();
     fetchMock.get(`${relayerUrlV2}/keyurl`, relayerV2ResponseGetKeyUrl);

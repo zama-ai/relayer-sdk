@@ -10,6 +10,7 @@ import {
   SERIALIZED_SIZE_LIMIT_CRS,
   SERIALIZED_SIZE_LIMIT_PK,
 } from '../../constants';
+import { TEST_CONFIG } from '../../test/config';
 
 // Jest Command line
 // =================
@@ -43,7 +44,10 @@ const relayerV1ResponseGetKeyUrl = {
 
 const relayerUrlV1 = `${SepoliaConfig.relayerUrl!}/v1`;
 
-describe('RelayerV1Provider', () => {
+const describeIfFetchMock =
+  TEST_CONFIG.type === 'fetch-mock' ? describe : describe.skip;
+
+describeIfFetchMock('RelayerV1Provider', () => {
   let relayerProvider: AbstractRelayerProvider;
 
   beforeEach(() => {

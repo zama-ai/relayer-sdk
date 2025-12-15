@@ -34,6 +34,8 @@
     "build:lib": "npm run rollup:lib && npm run build:dts",
     "build:bundle": "vite build --config config/vite.config.js",
     "test": "jest --colors --passWithNoTests --coverage",
+    "test:testnet": "jest --colors --passWithNoTests --coverage --config jest.testnet.config.cjs",
+    "test:devnet": "jest --colors --passWithNoTests --coverage --config jest.devnet.config.cjs",
     "test:mock": "jest --colors --passWithNoTests --coverage --config jest.mock.config.cjs",
     "test:dom": "jest --colors --passWithNoTests --coverage --config jest.dom.config.cjs",
     "test:watch": "jest --colors --passWithNoTests --watch",

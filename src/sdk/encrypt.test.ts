@@ -1,7 +1,11 @@
 import { createEncryptedInput } from './encrypt';
 import { publicKey, publicParams } from '../test';
+import { TEST_CONFIG } from '../test/config';
 
-describe('encrypt', () => {
+const describeIfFetchMock =
+  TEST_CONFIG.type === 'fetch-mock' ? describe : describe.skip;
+
+describeIfFetchMock('encrypt', () => {
   it('encrypt', async () => {
     const input = createEncryptedInput({
       aclContractAddress: '0x325ea1b59F28e9e1C51d3B5b47b7D3965CC5D8C8',

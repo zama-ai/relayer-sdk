@@ -1,3 +1,4 @@
+import { TEST_CONFIG } from '../test/config';
 import { fromHexString } from '../utils/bytes';
 import { generateKeypair, createEIP712 } from './keypair';
 import {
@@ -7,7 +8,10 @@ import {
   u8vec_to_ml_kem_pke_sk,
 } from 'node-tkms';
 
-describe('token', () => {
+const describeIfFetchMock =
+  TEST_CONFIG.type === 'fetch-mock' ? describe : describe.skip;
+
+describeIfFetchMock('token', () => {
   it('generate a valid keypair', async () => {
     const keypair = generateKeypair();
 

@@ -6,6 +6,7 @@ import {
 } from '../constants';
 import fetchMock from 'fetch-mock';
 import { RelayerKeyUrlResponse } from './fetchRelayer';
+import { TEST_CONFIG } from '../test/config';
 
 // Jest Command line
 // =================
@@ -120,20 +121,23 @@ const payload: RelayerKeyUrlResponse = {
   },
 };
 
-fetchMock.get('https://test-relayer.net/v1/keyurl', payload);
+const describeIfFetchMock =
+  TEST_CONFIG.type === 'fetch-mock' ? describe : describe.skip;
 
-fetchMock.get(
-  'https://s3.amazonaws.com/bucket-name-1/PUB-p1/PublicKey/408d8cbaa51dece7f782fe04ba0b1c1d017b1088',
-  publicKey.safe_serialize(SERIALIZED_SIZE_LIMIT_PK),
-);
-
-fetchMock.get(
-  'https://s3.amazonaws.com/bucket-name-1/PUB-p1/CRS/d8d94eb3a23d22d3eb6b5e7b694e8afcd571d906',
-  publicParams[2048].publicParams.safe_serialize(SERIALIZED_SIZE_LIMIT_CRS),
-);
-
-describe('network', () => {
+describeIfFetchMock('network', () => {
   it('getInputsFromRelayer', async () => {
+    fetchMock.get('https://test-relayer.net/v1/keyurl', payload);
+
+    fetchMock.get(
+      'https://s3.amazonaws.com/bucket-name-1/PUB-p1/PublicKey/408d8cbaa51dece7f782fe04ba0b1c1d017b1088',
+      publicKey.safe_serialize(SERIALIZED_SIZE_LIMIT_PK),
+    );
+
+    fetchMock.get(
+      'https://s3.amazonaws.com/bucket-name-1/PUB-p1/CRS/d8d94eb3a23d22d3eb6b5e7b694e8afcd571d906',
+      publicParams[2048].publicParams.safe_serialize(SERIALIZED_SIZE_LIMIT_CRS),
+    );
+
     const material = await getKeysFromRelayer('https://test-relayer.net/v1');
 
     expect(
