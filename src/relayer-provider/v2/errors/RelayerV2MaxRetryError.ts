@@ -3,7 +3,7 @@ import {
   RelayerV2FetchErrorBase,
   RelayerV2FetchErrorBaseParams,
 } from './RelayerV2FetchErrorBase';
-import { RelayerErrorBaseParams } from 'src/errors/RelayerErrorBase';
+import { RelayerErrorBaseParams } from '../../../errors/RelayerErrorBase';
 
 ////////////////////////////////////////////////////////////////////////////////
 // RelayerV2MaxRetryError

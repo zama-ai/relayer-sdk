@@ -1,10 +1,10 @@
 import { Contract } from 'ethers';
 import type { ethers as EthersT } from 'ethers';
 import { Bytes32Hex, ChecksummedAddress } from '../types/primitives';
-import { isChecksummedAddress } from 'src/utils/address';
-import { ChecksummedAddressError } from 'src/errors/ChecksummedAddressError';
-import { assertIsBytes32HexArray } from 'src/utils/bytes';
-import { ACLPublicDecryptionError } from 'src/errors/ACLError';
+import { isChecksummedAddress } from '../utils/address';
+import { ChecksummedAddressError } from '../errors/ChecksummedAddressError';
+import { assertIsBytes32HexArray } from '../utils/bytes';
+import { ACLPublicDecryptionError } from '../errors/ACLError';
 
 ////////////////////////////////////////////////////////////////////////////////
 // ACL
