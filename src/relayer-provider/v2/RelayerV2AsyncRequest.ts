@@ -600,7 +600,7 @@ export class RelayerV2AsyncRequest {
         // RelayerV2ApiError503
         case 503: {
           // Abort
-          // Possible Reasons: Gateway has some internal error (dont known)
+          // Possible Reasons: Gateway has some internal error (unknown)
           const bodyJson = await this._getResponseJson(response);
 
           try {
@@ -879,7 +879,7 @@ export class RelayerV2AsyncRequest {
         // RelayerV2ApiError503
         case 503: {
           // Abort
-          // Possible Reasons: Gateway has some internal error (dont known)
+          // Possible Reasons: Gateway has some internal error (unknown)
           const bodyJson = await this._getResponseJson(response);
 
           try {
