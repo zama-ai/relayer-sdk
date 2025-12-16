@@ -76,7 +76,7 @@ describeIfFetchMock('RelayerV2Request', () => {
 
     trace(`relayerRequest.run() enter...`);
     await expect(() => relayerRequest.run()).rejects.toThrow(
-      'Relayer request already terminated',
+      'Relayer.run() failed. Request already terminated.',
     );
     trace(`relayerRequest.run() done.`);
   });
