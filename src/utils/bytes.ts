@@ -1,6 +1,9 @@
 import {
+  Bytes,
+  Bytes32,
   Bytes32Hex,
   Bytes32HexNo0x,
+  Bytes65,
   Bytes65Hex,
   Bytes65HexNo0x,
   BytesHex,
@@ -14,6 +17,16 @@ import {
   typeofProperty,
 } from './record';
 import { is0x, isNo0x } from './string';
+
+export function isBytes(value: unknown, bytewidth?: 32 | 65): value is Bytes {
+  if (!value) {
+    return false;
+  }
+  if (!(value instanceof Uint8Array)) {
+    return false;
+  }
+  return bytewidth ? value.length === bytewidth : true;
+}
 
 export function isBytesHex(
   value: unknown,
@@ -79,6 +92,14 @@ export function isBytes65HexNo0x(value: unknown): value is Bytes65HexNo0x {
   return isBytesHexNo0x(value, 65);
 }
 
+export function isBytes32(value: unknown): value is Bytes32 {
+  return isBytes(value, 32);
+}
+
+export function isBytes65(value: unknown): value is Bytes65 {
+  return isBytes(value, 65);
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // assert
 ////////////////////////////////////////////////////////////////////////////////
@@ -131,6 +152,24 @@ export function assertIsBytes32Hex(
     throw new InvalidTypeError({
       type: typeof value,
       expectedType: 'Bytes32Hex',
+    });
+  }
+}
+
+export function assertIsBytes32(value: unknown): asserts value is Bytes32 {
+  if (!isBytes32(value)) {
+    throw new InvalidTypeError({
+      type: typeof value,
+      expectedType: 'Bytes32',
+    });
+  }
+}
+
+export function assertIsBytes65(value: unknown): asserts value is Bytes65 {
+  if (!isBytes65(value)) {
+    throw new InvalidTypeError({
+      type: typeof value,
+      expectedType: 'Bytes65',
     });
   }
 }
@@ -525,4 +564,36 @@ export async function fetchBytes(url: string): Promise<Uint8Array> {
       : new Uint8Array(await response.arrayBuffer());
 
   return bytes;
+}
+
+export function concatBytes(...arrays: Uint8Array[]): Uint8Array {
+  let totalLength = 0;
+  for (const arr of arrays) {
+    totalLength += arr.length;
+  }
+
+  const result = new Uint8Array(totalLength);
+  let offset = 0;
+
+  for (const arr of arrays) {
+    result.set(arr, offset);
+    offset += arr.length;
+  }
+
+  return result;
+}
+
+export function bytesEquals(a: Bytes, b: Bytes): boolean {
+  if (!isBytes(a) || !isBytes(b)) {
+    return false;
+  }
+  if (a.length !== b.length) {
+    return false;
+  }
+  for (let i = 0; i < a.length; ++i) {
+    if (a[i] !== b[i]) {
+      return false;
+    }
+  }
+  return true;
 }

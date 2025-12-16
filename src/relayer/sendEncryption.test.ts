@@ -11,6 +11,8 @@ import type { Auth } from '../auth';
 import { createRelayerProvider } from '../relayer-provider/createRelayerFhevm';
 import { InvalidPropertyError } from '../errors/InvalidPropertyError';
 import { TEST_CONFIG } from '../test/config';
+import { assertRelayer } from '../errors/InternalError';
+import { FhevmHandle } from '../sdk/FhevmHandle';
 
 // Jest Command line
 // =================
@@ -69,13 +71,28 @@ const autoMock = (input: RelayerEncryptedInput, opts?: { auth?: Auth }) => {
     const options = {
       params: { ciphertextWithInputVerification },
     };
-    const handles = computeHandles(
+
+    const handles = FhevmHandle.createInputHandles({
+      ciphertextWithZKProof: ciphertextWithInputVerification as `0x${string}`,
+      aclAddress: aclContractAddress as `0x{string}`,
+      chainId,
+      fheTypeEncryptionBitwidths: input.getBits(),
+      ciphertextVersion: currentCiphertextVersion(),
+    }).map((handle: FhevmHandle) => handle.toBytes32Hex());
+
+    //////// TO BE REMOVED
+    const _handles = computeHandles(
       hexToBytes(ciphertextWithInputVerification),
       input.getBits(),
       aclContractAddress,
       chainId,
       currentCiphertextVersion(),
     ).map((handle: Uint8Array) => toHexString(handle, true));
+    for (let i = 0; i < handles.length; ++i) {
+      assertRelayer(handles[i] === _handles[i]);
+    }
+    //////// TO BE REMOVED
+
     return {
       options: options,
       response: {

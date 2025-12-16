@@ -27,6 +27,8 @@ export class InvalidTypeError extends RelayerErrorBase {
       | 'BytesHexNo0x'
       | 'Bytes32HexNo0x'
       | 'Bytes65HexNo0x'
+      | 'Bytes32'
+      | 'Bytes65'
       | 'Uint8Array'
       | 'BytesHexArray'
       | 'Bytes32HexArray'

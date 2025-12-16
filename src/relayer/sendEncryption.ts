@@ -6,7 +6,6 @@ import {
   PublicParams,
 } from '../sdk/encrypt';
 import { EncryptionBits } from '../sdk/encryptionTypes';
-import { computeHandles } from './handles';
 import { ethers } from 'ethers';
 import { TFHEType } from '../tfheType';
 import { throwRelayerInternalError } from './error';
@@ -15,6 +14,8 @@ import { Auth } from '../auth';
 import { AbstractRelayerProvider } from '../relayer-provider/AbstractRelayerProvider';
 import { hexToBytes, toHexString } from '../utils/bytes';
 import { numberToHex } from '../utils/uint';
+import { FhevmHandle } from '../sdk/FhevmHandle';
+import { ChecksummedAddress } from '../types/primitives';
 
 // Add type checking
 const getAddress = (value: string): `0x${string}` =>
@@ -200,13 +201,15 @@ export const createRelayerEncryptedInput =
           throwRelayerInternalError('INPUT_PROOF', json);
         }
 
-        const handles: Uint8Array[] = computeHandles(
-          ciphertext,
-          bits,
-          aclContractAddress,
+        const fhevmHandles: FhevmHandle[] = FhevmHandle.createInputHandles({
+          ciphertextWithZKProof: ciphertext,
           chainId,
-          currentCiphertextVersion(),
-        );
+          aclAddress: aclContractAddress as ChecksummedAddress,
+          ciphertextVersion: currentCiphertextVersion(),
+          fheTypeEncryptionBitwidths: bits,
+        });
+
+        const handles: Uint8Array[] = fhevmHandles.map((h) => h.toBytes32());
 
         //const result = json.response;
         const result = json;

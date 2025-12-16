@@ -12,6 +12,9 @@ import { AddressError } from '../errors/AddressError';
 import { InvalidPropertyError } from '../errors/InvalidPropertyError';
 import { InvalidTypeError } from '../errors/InvalidTypeError';
 import type { ChecksummedAddress } from '../types/primitives';
+import { remove0x } from './string';
+
+export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 export function isChecksummedAddress(
   value: unknown,
@@ -29,9 +32,6 @@ export function isChecksummedAddress(
     const a = ethersGetAddress(value);
     return a === value;
   } catch (e) {
-    console.log('=================');
-    console.log(e);
-    console.log('=================');
     return false;
   }
 }
@@ -130,4 +130,19 @@ export function assertRecordChecksummedAddressArrayProperty<K extends string>(
       });
     }
   }
+}
+
+export function checksummedAddressToBytes20(
+  address: ChecksummedAddress,
+): Uint8Array {
+  if (!isAddress(address)) {
+    throw new InvalidTypeError({ expectedType: 'ChecksummedAddress' });
+  }
+
+  const hex = remove0x(address);
+  const bytes = new Uint8Array(20);
+  for (let i = 0; i < 20; i++) {
+    bytes[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
+  }
+  return bytes;
 }

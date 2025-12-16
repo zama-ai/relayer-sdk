@@ -2,8 +2,7 @@ import fetchMock from 'fetch-mock';
 import type { FhevmInstanceConfig } from '../config';
 import type { RelayerInputProofPayload } from '../relayer/fetchRelayer';
 import { Prettify } from '../utils/types';
-import { hexToBytes, toHexString } from '../utils/bytes';
-import { computeHandles } from '../relayer/handles';
+import { hexToBytes } from '../utils/bytes';
 import { currentCiphertextVersion } from '../relayer/sendEncryption';
 import type {
   Bytes32Hex,
@@ -18,6 +17,7 @@ import { setupV1RoutesInputProof, setupV1RoutesKeyUrl } from './v1/mockRoutes';
 import { setupV2RoutesInputProof, setupV2RoutesKeyUrl } from './v2/mockRoutes';
 import type { ethers as EthersT } from 'ethers';
 import { Contract } from 'ethers';
+import { FhevmHandle } from '../sdk/FhevmHandle';
 
 export function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -137,17 +137,21 @@ export async function fetchMockInputProof(
 }> {
   const ciphertext = hexToBytes(args.ciphertextWithInputVerification);
 
-  const handlesUint8ArrayList: Uint8Array[] = computeHandles(
-    ciphertext,
-    bitwidths,
-    TEST_CONFIG.fhevmInstanceConfig.aclContractAddress,
-    TEST_CONFIG.fhevmInstanceConfig.chainId!,
-    currentCiphertextVersion(),
-  );
-
-  const handlesBytes32HexList: Bytes32Hex[] = handlesUint8ArrayList.map((h) =>
-    toHexString(h, true),
-  );
+  // const handlesUint8ArrayList: Uint8Array[] = computeHandles(
+  //   ciphertext,
+  //   bitwidths,
+  //   TEST_CONFIG.fhevmInstanceConfig.aclContractAddress,
+  //   TEST_CONFIG.fhevmInstanceConfig.chainId!,
+  //   currentCiphertextVersion(),
+  // );
+  const handlesBytes32HexList = FhevmHandle.createInputHandles({
+    ciphertextWithZKProof: ciphertext,
+    aclAddress: TEST_CONFIG.fhevmInstanceConfig
+      .aclContractAddress as `0x{string}`,
+    chainId: TEST_CONFIG.fhevmInstanceConfig.chainId!,
+    fheTypeEncryptionBitwidths: bitwidths,
+    ciphertextVersion: currentCiphertextVersion(),
+  }).map((handle: FhevmHandle) => handle.toBytes32Hex());
 
   const params = {
     ctHandles: handlesBytes32HexList,
