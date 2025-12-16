@@ -21,7 +21,7 @@ const DATA = {
 
 describe('handles', () => {
   it('compute from ZkPok', () => {
-    const h1 = FhevmHandle.createInputHandles({
+    const h1 = FhevmHandle.fromZKProof({
       ciphertextWithZKProof: hexToBytes(DATA.ciphertextWithZKProof),
       aclAddress: DATA.aclAddress as ChecksummedAddress,
       chainId: DATA.chainId,
@@ -45,7 +45,7 @@ describe('handles', () => {
       ciphertextVersion: 213,
       index: 0,
     };
-    const h1 = FhevmHandle.createInputHandles(args);
+    const h1 = FhevmHandle.fromZKProof(args);
     const h2 = computeHandles(
       args.ciphertextWithZKProof,
       args.bitWidths as any,

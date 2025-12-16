@@ -31,6 +31,8 @@ import { InvalidPropertyError } from '../../errors/InvalidPropertyError';
 import { RelayerV2ResponseApiError } from './errors/RelayerV2ResponseApiError';
 import { RelayerV2FetchError } from './errors/RelayerV2FetchError';
 import { RelayerV2ResponseInputProofRejectedError } from './errors/RelayerV2ResponseInputProofRejectedError';
+import { RelayerV2StateError } from './errors/RelayerV2StateError';
+import { RelayerV2MaxRetryError } from './errors/RelayerV2MaxRetryError';
 
 /*
     Actions:
@@ -185,7 +187,7 @@ export class RelayerV2AsyncRequest {
   private _throwErrorIfNoRetryAfter: boolean;
 
   private static readonly DEFAULT_RETRY_AFTER_SECS = 2;
-  private static readonly DEFAULT_GLOBAL_REQUEST_TIMEOUT_SECS = 60;
+  private static readonly DEFAULT_GLOBAL_REQUEST_TIMEOUT_SECS = 60 * 60;
   private static readonly MAX_GET_RETRY = 100;
   private static readonly MAX_POST_RETRY = 100;
 
@@ -195,7 +197,13 @@ export class RelayerV2AsyncRequest {
       params.relayerOperation !== 'PUBLIC_DECRYPT' &&
       params.relayerOperation !== 'USER_DECRYPT'
     ) {
-      throw new Error(`Invalid relayerOperation ${params.relayerOperation}`);
+      throw new InvalidPropertyError({
+        objName: 'RelayerV2AsyncRequestParams',
+        property: 'relayerOperation',
+        expectedType: 'string',
+        value: params.relayerOperation,
+        expectedValue: 'INPUT_PROOF | PUBLIC_DECRYPT | USER_DECRYPT',
+      });
     }
 
     this._relayerOperation = params.relayerOperation;
@@ -246,43 +254,66 @@ export class RelayerV2AsyncRequest {
     | RelayerV2ResultInputProof
   > {
     if (this._publicAPINoReentrancy) {
-      throw new Error(`Relayer.run() call not permitted`);
+      throw new RelayerV2StateError({
+        message: `Relayer.run() failed. Call not permitted.`,
+        state: { ...this._state },
+      });
     }
 
     if (this._state.terminated) {
-      throw new Error(`Relayer request already terminated`);
+      throw new RelayerV2StateError({
+        message: `Relayer.run() failed. Request already terminated.`,
+        state: { ...this._state },
+      });
     }
 
     if (this._state.canceled) {
-      throw new Error(`Relayer request already canceled`);
+      throw new RelayerV2StateError({
+        message: `Relayer.run() failed. Request already canceled.`,
+        state: { ...this._state },
+      });
     }
 
     if (this._state.succeeded) {
-      throw new Error(`Relayer request already succeeded`);
+      throw new RelayerV2StateError({
+        message: `Relayer.run() failed. Request already succeeded.`,
+        state: { ...this._state },
+      });
     }
 
     if (this._state.failed) {
-      throw new Error(`Relayer request already failed`);
+      throw new RelayerV2StateError({
+        message: `Relayer.run() failed. Request already failed.`,
+        state: { ...this._state },
+      });
     }
 
     if (this._state.aborted) {
-      throw new Error(`Relayer request already aborted`);
+      throw new RelayerV2StateError({
+        message: `Relayer.run() failed. Request already aborted.`,
+        state: { ...this._state },
+      });
     }
 
     if (this._externalAbortSignal?.aborted === true) {
-      throw new Error(
-        `Externally Aborted reason=` + this._externalAbortSignal.reason,
-      );
+      throw new RelayerV2StateError({
+        message: `Relayer.run() failed. External AbortSignal already aborted (reason:${this._externalAbortSignal?.reason}).`,
+        state: { ...this._state },
+      });
     }
 
     if (this._internalAbortSignal?.aborted === true) {
-      throw new Error(
-        `Internally Aborted reason=` + this._internalAbortSignal.reason,
-      );
+      throw new RelayerV2StateError({
+        message: `Relayer.run() failed. Internal AbortSignal already aborted (reason:${this._internalAbortSignal?.reason}).`,
+        state: { ...this._state },
+      });
     }
 
     if (this._state.running) {
-      throw new Error(`Relayer request already running`);
+      throw new RelayerV2StateError({
+        message: `Relayer.run() failed. Request already running.`,
+        state: { ...this._state },
+      });
     }
     this._state.running = true;
 
@@ -327,7 +358,10 @@ export class RelayerV2AsyncRequest {
 
   public cancel() {
     if (this._publicAPINoReentrancy) {
-      throw new Error(`Relayer.cancel() call not permitted`);
+      throw new RelayerV2StateError({
+        message: `Relayer.cancel() failed. Call not permitted.`,
+        state: { ...this._state },
+      });
     }
 
     if (!this._canContinue()) {
@@ -604,8 +638,8 @@ export class RelayerV2AsyncRequest {
         }
       }
     }
-    // Infinite loop error
-    this._throwInternalError('Inifinite loop');
+    // Max retry error
+    this._throwMaxRetryError({ fetchMethod: 'POST' });
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -909,8 +943,8 @@ export class RelayerV2AsyncRequest {
         }
       }
     }
-    // Infinite loop error
-    this._throwInternalError('Inifinite loop');
+    // Max retry error
+    this._throwMaxRetryError({ fetchMethod: 'GET' });
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -1417,6 +1451,21 @@ export class RelayerV2AsyncRequest {
       message,
       state: JSON.stringify(this._state),
       jobId: this._jobId, // internal value
+    });
+  }
+
+  private _throwMaxRetryError(params: { fetchMethod: 'GET' | 'POST' }): never {
+    const elapsed = this._jobIdTimestamp
+      ? Date.now() - this._jobIdTimestamp
+      : 0;
+    throw new RelayerV2MaxRetryError({
+      operation: this._relayerOperation,
+      url: this._url,
+      state: { ...this._state },
+      retryCount: this._retryCount,
+      jobId: this._jobId, // internal value
+      fetchMethod: params.fetchMethod,
+      elapsed,
     });
   }
 

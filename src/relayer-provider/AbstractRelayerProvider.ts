@@ -14,7 +14,7 @@ import type {
 } from '../relayer/fetchRelayer';
 import { assertRecordStringProperty } from '../utils/string';
 import { InvalidPropertyError } from '../errors/InvalidPropertyError';
-import { BytesHex, BytesHexNo0x } from '../types/primitives';
+import { Bytes32Hex, BytesHex, BytesHexNo0x } from '../types/primitives';
 
 export type RelayerProviderFetchOptions<T> = {
   signal?: AbortSignal;
@@ -42,15 +42,9 @@ export type RelayerUserDecryptResult = {
   //extraData: BytesHex;
 }[];
 
-export type RelayerV1UserDecryptResult = Array<{
-  payload: BytesHexNo0x;
-  signature: BytesHexNo0x;
-  extraData: BytesHexNo0x;
-}>;
-
 export type RelayerInputProofResult = {
   // Ordered List of hex encoded handles with 0x prefix.
-  handles: `0x${string}`[];
+  handles: Bytes32Hex[];
   // Attestation signatures for Input verification for the ordered list of handles with 0x prefix.
   signatures: `0x${string}`[];
 };

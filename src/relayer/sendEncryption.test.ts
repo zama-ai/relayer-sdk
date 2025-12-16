@@ -72,7 +72,7 @@ const autoMock = (input: RelayerEncryptedInput, opts?: { auth?: Auth }) => {
       params: { ciphertextWithInputVerification },
     };
 
-    const handles = FhevmHandle.createInputHandles({
+    const handles = FhevmHandle.fromZKProof({
       ciphertextWithZKProof: ciphertextWithInputVerification as `0x${string}`,
       aclAddress: aclContractAddress as `0x{string}`,
       chainId,

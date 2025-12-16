@@ -201,7 +201,7 @@ export const createRelayerEncryptedInput =
           throwRelayerInternalError('INPUT_PROOF', json);
         }
 
-        const fhevmHandles: FhevmHandle[] = FhevmHandle.createInputHandles({
+        const fhevmHandles: FhevmHandle[] = FhevmHandle.fromZKProof({
           ciphertextWithZKProof: ciphertext,
           chainId,
           aclAddress: aclContractAddress as ChecksummedAddress,

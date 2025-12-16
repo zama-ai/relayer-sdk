@@ -8,7 +8,12 @@ import {
   assertIsChecksummedAddress,
   checksummedAddressToBytes20,
 } from '../utils/address';
-import { assertIsUint, MAX_UINT64, uint32ToBytes32 } from '../utils/uint';
+import {
+  assertIsUint64,
+  assertIsUint8,
+  MAX_UINT64,
+  uint32ToBytes32,
+} from '../utils/uint';
 import { keccak256 } from 'ethers';
 import {
   Bytes32,
@@ -63,7 +68,7 @@ export class FhevmHandle {
       6: 128,
       7: 160,
       8: 256,
-    };
+    } as const;
 
   static readonly FheTypeEncryptionBitwidthsToId: FheTypeEncryptionBitwidthToIdMap =
     {
@@ -75,9 +80,14 @@ export class FhevmHandle {
       128: 6,
       160: 7,
       256: 8,
-    };
+    } as const;
 
-  constructor(
+  static {
+    Object.freeze(FhevmHandle.FheTypeIdToEncryptionBitwidths);
+    Object.freeze(FhevmHandle.FheTypeEncryptionBitwidthsToId);
+  }
+
+  private constructor(
     hash21: string,
     chainId: number,
     fheTypeId: FheTypeId,
@@ -119,7 +129,11 @@ export class FhevmHandle {
     return this._index;
   }
 
-  public static createInputHandles(params: CreateInputHandlesParams) {
+  public static fromZKProof(params: CreateInputHandlesParams) {
+    assertIsChecksummedAddress(params.aclAddress);
+    assertIsUint64(params.chainId);
+    assertIsUint8(params.ciphertextVersion);
+
     let fheTypeIds: FheTypeId[];
 
     if (params.fheTypeIds !== undefined) {
@@ -135,12 +149,20 @@ export class FhevmHandle {
       });
     }
 
+    assertIsUint8(fheTypeIds.length);
+
     let ciphertextWithZKProof: Uint8Array;
     if (typeof params.ciphertextWithZKProof === 'string') {
       ciphertextWithZKProof = hexToBytes(params.ciphertextWithZKProof);
     } else if (params.ciphertextWithZKProof instanceof Uint8Array) {
       ciphertextWithZKProof = params.ciphertextWithZKProof;
     } else {
+      throw new InternalError({
+        message: 'Invalid ciphertextWithZKProof argument',
+      });
+    }
+
+    if (ciphertextWithZKProof.length === 0) {
       throw new InternalError({
         message: 'Invalid ciphertextWithZKProof argument',
       });
@@ -210,8 +232,8 @@ export class FhevmHandle {
     */
     assertIsBytes32(blobHashBytes32);
     assertIsChecksummedAddress(aclAddress);
-    assertIsUint(index);
-    assertIsUint(chainId);
+    assertIsUint8(index);
+    assertIsUint64(chainId);
 
     const encryptionIndexByte1 = new Uint8Array([index]);
     const aclContractAddressBytes20 = checksummedAddressToBytes20(aclAddress);

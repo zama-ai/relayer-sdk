@@ -144,7 +144,7 @@ export async function fetchMockInputProof(
   //   TEST_CONFIG.fhevmInstanceConfig.chainId!,
   //   currentCiphertextVersion(),
   // );
-  const handlesBytes32HexList = FhevmHandle.createInputHandles({
+  const handlesBytes32HexList = FhevmHandle.fromZKProof({
     ciphertextWithZKProof: ciphertext,
     aclAddress: TEST_CONFIG.fhevmInstanceConfig
       .aclContractAddress as `0x{string}`,

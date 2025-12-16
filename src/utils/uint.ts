@@ -6,13 +6,16 @@ import type { Bytes32, BytesHexNo0x } from '../types/primitives';
 type UintNumber = number;
 type UintBigInt = bigint;
 type Uint = UintNumber | UintBigInt;
+type Uint8 = UintNumber | UintBigInt;
 type Uint32 = UintNumber | UintBigInt;
+type Uint64 = UintNumber | UintBigInt;
 type Uint256 = UintNumber | UintBigInt;
 
 export const MAX_UINT64 = BigInt('18446744073709551615'); // 2^64 - 1
 export const MAX_UINT256 = BigInt(
   '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
 );
+export const MAX_UINT32 = 0xffffffff;
 export const MAX_UINT8 = 0xff;
 
 export function numberToHex(num: number): BytesHexNo0x {
@@ -46,11 +49,25 @@ export function isUint(value: unknown): value is Uint {
   return false;
 }
 
+export function isUint8(value: unknown): value is Uint8 {
+  if (!isUint(value)) {
+    return false;
+  }
+  return value <= MAX_UINT8;
+}
+
 export function isUint32(value: unknown): value is Uint32 {
   if (!isUint(value)) {
     return false;
   }
-  return value <= 0xffffffff;
+  return value <= MAX_UINT32;
+}
+
+export function isUint64(value: unknown): value is Uint32 {
+  if (!isUint(value)) {
+    return false;
+  }
+  return value <= MAX_UINT64;
 }
 
 export function isUint256(value: unknown): value is Uint256 {
@@ -90,11 +107,29 @@ export function assertIsUint(value: unknown): asserts value is Uint {
   }
 }
 
-export function assertIsUint32(value: unknown): asserts value is Uint {
+export function assertIsUint8(value: unknown): asserts value is Uint32 {
+  if (!isUint8(value)) {
+    throw new InvalidTypeError({
+      type: typeof value,
+      expectedType: 'Uint8',
+    });
+  }
+}
+
+export function assertIsUint32(value: unknown): asserts value is Uint32 {
   if (!isUint32(value)) {
     throw new InvalidTypeError({
       type: typeof value,
       expectedType: 'Uint32',
+    });
+  }
+}
+
+export function assertIsUint64(value: unknown): asserts value is Uint64 {
+  if (!isUint64(value)) {
+    throw new InvalidTypeError({
+      type: typeof value,
+      expectedType: 'Uint64',
     });
   }
 }
