@@ -7,6 +7,7 @@ import { FhevmHandle } from '../sdk/FhevmHandle';
 
 type EncryptionBitwidths = keyof typeof ENCRYPTION_TYPES;
 
+// To Be Removed (only used in tests, replaced by FhevmHandle class)
 export const computeHandles = (
   ciphertextWithZKProof: Uint8Array,
   bitwidths: EncryptionBitwidths[],
