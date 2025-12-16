@@ -14,7 +14,7 @@ import {
 import type { TFHEType } from './tfheType';
 import { Auth } from './auth';
 import { Prettify } from './utils/types';
-import { removeSlashSuffix } from './utils/string';
+import { removeSuffix } from './utils/string';
 
 const abiKmsVerifier = [
   'function getKmsSigners() view returns (address[])',
@@ -86,7 +86,7 @@ export const getTfheCompactPublicKey = async (config: {
 }> => {
   if (config.relayerVersionUrl && !config.publicKey) {
     const inputs = await getKeysFromRelayer(
-      removeSlashSuffix(config.relayerVersionUrl),
+      removeSuffix(config.relayerVersionUrl, '/'),
     );
     return { publicKey: inputs.publicKey, publicKeyId: inputs.publicKeyId };
   } else if (config.publicKey && config.publicKey.data && config.publicKey.id) {
@@ -115,7 +115,7 @@ export const getPublicParams = async (config: {
 }): Promise<PublicParams> => {
   if (config.relayerVersionUrl && !config.publicParams) {
     const inputs = await getKeysFromRelayer(
-      removeSlashSuffix(config.relayerVersionUrl),
+      removeSuffix(config.relayerVersionUrl, '/'),
     );
     return inputs.publicParams;
   } else if (config.publicParams && config.publicParams['2048']) {

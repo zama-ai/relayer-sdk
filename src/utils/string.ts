@@ -7,10 +7,23 @@ import {
 } from './record';
 import { InternalError } from '../errors/InternalError';
 
-export const removeSlashSuffix = (url: string | undefined) => {
-  if (!url) return '';
-  return url.endsWith('/') ? url.slice(0, -1) : url;
-};
+export function removeSuffix(s: string | undefined, suffix: string): string {
+  if (!s) {
+    return '';
+  }
+  if (suffix.length === 0) {
+    return s;
+  }
+  return s.endsWith(suffix) ? s.slice(0, -suffix.length) : s;
+}
+
+export function is0x(s: unknown): s is `0x${string}` {
+  return typeof s === 'string' && s.startsWith('0x');
+}
+
+export function isNo0x(s: unknown): s is string {
+  return typeof s === 'string' && !s.startsWith('0x');
+}
 
 export function ensure0x(s: string): `0x${string}` {
   return !s.startsWith('0x') ? `0x${s}` : (s as `0x${string}`);

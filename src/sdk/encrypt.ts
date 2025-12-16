@@ -3,7 +3,7 @@ import { isAddress } from 'ethers';
 import { SERIALIZED_SIZE_LIMIT_CIPHERTEXT } from '../constants';
 import { EncryptionBits } from './encryptionTypes';
 import { TFHEType } from '../tfheType';
-import { fromHexString } from '../utils/bytes';
+import { hexToBytes } from '../utils/bytes';
 
 export type EncryptedInput = {
   addBool: (value: boolean | number | bigint) => EncryptedInput;
@@ -170,10 +170,10 @@ export const createEncryptedInput = ({
       };
       const closestPP = getClosestPP();
       const pp = publicParams[closestPP]!.publicParams;
-      const buffContract = fromHexString(contractAddress);
-      const buffUser = fromHexString(userAddress);
-      const buffAcl = fromHexString(aclContractAddress);
-      const buffChainId = fromHexString(chainId.toString(16).padStart(64, '0'));
+      const buffContract = hexToBytes(contractAddress);
+      const buffUser = hexToBytes(userAddress);
+      const buffAcl = hexToBytes(aclContractAddress);
+      const buffChainId = hexToBytes(chainId.toString(16).padStart(64, '0'));
       const auxData = new Uint8Array(
         buffContract.length + buffUser.length + buffAcl.length + 32, // buffChainId.length,
       );

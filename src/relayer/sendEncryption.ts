@@ -13,7 +13,7 @@ import { throwRelayerInternalError } from './error';
 import { RelayerInputProofPayload } from './fetchRelayer';
 import { Auth } from '../auth';
 import { AbstractRelayerProvider } from '../relayer-provider/AbstractRelayerProvider';
-import { fromHexString, toHexString } from '../utils/bytes';
+import { hexToBytes, toHexString } from '../utils/bytes';
 import { numberToHex } from '../utils/uint';
 
 // Add type checking
@@ -213,7 +213,7 @@ export const createRelayerEncryptedInput =
 
         // Note that the hex strings returned by the relayer do have have the 0x prefix
         if (result.handles && result.handles.length > 0) {
-          const responseHandles = result.handles.map(fromHexString);
+          const responseHandles = result.handles.map(hexToBytes);
           if (handles.length != responseHandles.length) {
             throw new Error(
               `Incorrect Handles list sizes: (expected) ${handles.length} != ${responseHandles.length} (received)`,
@@ -291,7 +291,7 @@ export const createRelayerEncryptedInput =
         inputProof += extraData.slice(2);
         return {
           handles,
-          inputProof: fromHexString(inputProof),
+          inputProof: hexToBytes(inputProof),
         };
       },
     };

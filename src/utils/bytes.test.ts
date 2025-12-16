@@ -9,19 +9,52 @@ import {
   isBytesHex,
   isBytesHexNo0x,
   assertIsBytesHexNo0x,
+  hexToBytes,
+  bytesToBigInt,
+  bytesToHex,
 } from './bytes';
 import { InvalidTypeError } from '../errors/InvalidTypeError';
 import { InvalidPropertyError } from '../errors/InvalidPropertyError';
+import { MAX_UINT256 } from './uint';
 
 // npx jest --colors --passWithNoTests --coverage ./src/utils/bytes.test.ts --collectCoverageFrom=./src/utils/bytes.ts
-// npx jest --colors --passWithNoTests --coverage ./src/utils/bytes.test.ts --collectCoverageFrom=./src/utils/bytes.ts --testNamePattern=BBB
+// npx jest --colors --passWithNoTests --coverage ./src/utils/bytes.test.ts --collectCoverageFrom=./src/utils/bytes.ts --testNamePattern=xxx
 
 describe('bytes', () => {
+  it('xxx hexToBytes', () => {
+    let arr = hexToBytes('0x');
+    expect(arr instanceof Uint8Array).toBe(true);
+    expect(arr.length).toBe(0);
+
+    arr = hexToBytes('');
+    expect(arr instanceof Uint8Array).toBe(true);
+    expect(arr.length).toBe(0);
+
+    arr = hexToBytes('0xff');
+    expect(arr instanceof Uint8Array).toBe(true);
+    expect(arr.length).toBe(1);
+    expect(arr[0]).toBe(255);
+
+    arr = hexToBytes('0xf');
+    expect(arr instanceof Uint8Array).toBe(true);
+    expect(arr.length).toBe(1);
+    expect(arr[0]).toBe(15);
+  });
+
   it('isBytesHex', () => {
     // True
     expect(isBytesHex('0x')).toEqual(true);
     expect(isBytesHex('0x00')).toEqual(true);
     expect(isBytesHex('0xdeadbeef')).toEqual(true);
+    expect(isBytesHex('0x00', 32)).toEqual(false);
+    expect(isBytesHex('0xdeadbeef')).toEqual(true);
+    expect(
+      isBytesHex(
+        '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+        32,
+      ),
+    ).toEqual(true);
+    expect(isBytesHex('0xdeadbeef', 32)).toEqual(false);
 
     // False
     expect(isBytesHex('deadbee')).toEqual(false);
@@ -455,5 +488,83 @@ describe('bytes', () => {
     expect(() => assertIsBytesHexNo0x({})).toThrow(e('object'));
     expect(() => assertIsBytesHexNo0x([])).toThrow(e('object'));
     expect(() => assertIsBytesHexNo0x([123])).toThrow(e('object'));
+  });
+});
+
+describe('bytesToBigInt', () => {
+  it('should return 0n for undefined input', () => {
+    expect(bytesToBigInt(undefined)).toBe(BigInt(0));
+  });
+
+  it('should return 0n for empty array', () => {
+    expect(bytesToBigInt(new Uint8Array([]))).toBe(BigInt(0));
+  });
+
+  it('should convert single byte correctly', () => {
+    expect(bytesToBigInt(new Uint8Array([0]))).toBe(BigInt(0));
+    expect(bytesToBigInt(new Uint8Array([1]))).toBe(BigInt(1));
+    expect(bytesToBigInt(new Uint8Array([255]))).toBe(BigInt(255));
+  });
+
+  it('should convert two bytes correctly (big-endian)', () => {
+    expect(bytesToBigInt(new Uint8Array([0x01, 0x00]))).toBe(BigInt(256));
+    expect(bytesToBigInt(new Uint8Array([0x01, 0x01]))).toBe(BigInt(257));
+    expect(bytesToBigInt(new Uint8Array([0xff, 0xff]))).toBe(BigInt(65535));
+  });
+
+  it('should convert multiple bytes correctly', () => {
+    // 0x010203 = 66051
+    expect(bytesToBigInt(new Uint8Array([0x01, 0x02, 0x03]))).toBe(
+      BigInt(66051),
+    );
+  });
+
+  it('should handle large values', () => {
+    // 32 bytes (256-bit value)
+    const bytes = new Uint8Array(32);
+    bytes[0] = 0x01;
+    expect(bytesToBigInt(bytes)).toBe(
+      BigInt(
+        '0x0100000000000000000000000000000000000000000000000000000000000000',
+      ),
+    );
+  });
+
+  it('should handle max uint256', () => {
+    const maxUint256 = new Uint8Array(32).fill(0xff);
+    expect(bytesToBigInt(maxUint256)).toBe(MAX_UINT256);
+  });
+});
+
+describe('bytesToHex - hexToBytes', () => {
+  it('converts a hex to bytes', async () => {
+    const value = '0xff';
+    const bytes1 = hexToBytes(value);
+    expect(bytes1).toEqual(new Uint8Array([255]));
+
+    const bytes2 = hexToBytes('0x');
+    expect(bytes2).toEqual(new Uint8Array([]));
+  });
+
+  it('converts a bytes to hex', async () => {
+    const bytes1 = bytesToHex(new Uint8Array([255]));
+    expect(bytes1).toEqual('0xff');
+
+    const bytes2 = bytesToHex(new Uint8Array());
+    expect(bytes2).toEqual('0x');
+  });
+
+  it('converts bytes to number', async () => {
+    const value = new Uint8Array([23, 200, 15]);
+    const bigint1 = bytesToBigInt(value);
+    expect(bigint1.toString()).toBe('1558543');
+
+    const value2 = new Uint8Array([37, 6, 210, 166, 239]);
+    const bigint2 = bytesToBigInt(value2);
+    expect(bigint2.toString()).toBe('159028258543');
+
+    const value0 = new Uint8Array();
+    const bigint0 = bytesToBigInt(value0);
+    expect(bigint0.toString()).toBe('0');
   });
 });

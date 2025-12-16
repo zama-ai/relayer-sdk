@@ -6,7 +6,7 @@ import {
 import { publicKey, publicParams } from '../test';
 import fetchMock from 'fetch-mock';
 import { computeHandles } from './handles';
-import { fromHexString, toHexString } from '../utils/bytes';
+import { hexToBytes, toHexString } from '../utils/bytes';
 import type { Auth } from '../auth';
 import { createRelayerProvider } from '../relayer-provider/createRelayerFhevm';
 import { InvalidPropertyError } from '../errors/InvalidPropertyError';
@@ -70,7 +70,7 @@ const autoMock = (input: RelayerEncryptedInput, opts?: { auth?: Auth }) => {
       params: { ciphertextWithInputVerification },
     };
     const handles = computeHandles(
-      fromHexString(ciphertextWithInputVerification),
+      hexToBytes(ciphertextWithInputVerification),
       input.getBits(),
       aclContractAddress,
       chainId,

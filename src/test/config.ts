@@ -2,7 +2,7 @@ import fetchMock from 'fetch-mock';
 import type { FhevmInstanceConfig } from '../config';
 import type { RelayerInputProofPayload } from '../relayer/fetchRelayer';
 import { Prettify } from '../utils/types';
-import { fromHexString, toHexString } from '../utils/bytes';
+import { hexToBytes, toHexString } from '../utils/bytes';
 import { computeHandles } from '../relayer/handles';
 import { currentCiphertextVersion } from '../relayer/sendEncryption';
 import type {
@@ -135,7 +135,7 @@ export async function fetchMockInputProof(
   handles: Bytes32Hex[];
   signatures: Bytes65Hex[];
 }> {
-  const ciphertext = fromHexString(args.ciphertextWithInputVerification);
+  const ciphertext = hexToBytes(args.ciphertextWithInputVerification);
 
   const handlesUint8ArrayList: Uint8Array[] = computeHandles(
     ciphertext,

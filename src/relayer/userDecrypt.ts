@@ -10,7 +10,7 @@ import {
 } from './fetchRelayer';
 import { AbstractRelayerProvider } from '../relayer-provider/AbstractRelayerProvider';
 import type { FhevmInstanceOptions } from '../config';
-import { bytesToBigInt, fromHexString, toHexString } from '../utils/bytes';
+import { bytesToBigInt, hexToBytes, toHexString } from '../utils/bytes';
 
 // Add type checking
 const getAddress = (value: string): `0x${string}` =>
@@ -118,8 +118,8 @@ export const userDecryptRequest =
     let pubKey;
     let privKey;
     try {
-      pubKey = TKMS.u8vec_to_ml_kem_pke_pk(fromHexString(publicKey));
-      privKey = TKMS.u8vec_to_ml_kem_pke_sk(fromHexString(privateKey));
+      pubKey = TKMS.u8vec_to_ml_kem_pke_pk(hexToBytes(publicKey));
+      privKey = TKMS.u8vec_to_ml_kem_pke_sk(hexToBytes(privateKey));
     } catch (e) {
       throw new Error('Invalid public or private key', { cause: e });
     }
@@ -131,7 +131,7 @@ export const userDecryptRequest =
     const handles: HandleContractPairRelayer[] = _handles.map((h) => ({
       handle:
         typeof h.handle === 'string'
-          ? toHexString(fromHexString(h.handle), true)
+          ? toHexString(hexToBytes(h.handle), true)
           : toHexString(h.handle, true),
       contractAddress: getAddress(h.contractAddress),
     }));

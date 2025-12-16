@@ -1,7 +1,7 @@
 import createHash from 'keccak';
 
 import { ENCRYPTION_TYPES } from '../sdk/encryptionTypes';
-import { fromHexString } from '../utils/bytes';
+import { hexToBytes } from '../utils/bytes';
 
 type EncryptionBitwidths = keyof typeof ENCRYPTION_TYPES;
 
@@ -22,9 +22,7 @@ export const computeHandles = (
     .update(Buffer.from(RAW_CT_HASH_DOMAIN_SEPARATOR))
     .update(Buffer.from(ciphertextWithZKProof))
     .digest();
-  const aclContractAddress20Bytes = Buffer.from(
-    fromHexString(aclContractAddress),
-  );
+  const aclContractAddress20Bytes = Buffer.from(hexToBytes(aclContractAddress));
   const hex = chainId.toString(16).padStart(64, '0'); // 64 hex chars = 32 bytes
   const chainId32Bytes = Buffer.from(hex, 'hex');
   const handles = bitwidths.map((bitwidth, encryptionIndex) => {
@@ -45,7 +43,7 @@ export const computeHandles = (
       throw new Error('ChainId exceeds maximum allowed value (8 bytes)'); // fhevm assumes chainID is only taking up to 8 bytes
     }
 
-    const chainId8Bytes = fromHexString(hex).slice(24, 32);
+    const chainId8Bytes = hexToBytes(hex).slice(24, 32);
     dataInput[21] = encryptionIndex;
     dataInput.set(chainId8Bytes, 22);
     dataInput[30] = encryptionType;

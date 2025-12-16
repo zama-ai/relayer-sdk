@@ -1,4 +1,4 @@
-import { fromHexString, toHexString } from '../utils/bytes';
+import { hexToBytes, toHexString } from '../utils/bytes';
 import { ethers, AbiCoder } from 'ethers';
 import {
   type ClearValueType,
@@ -215,7 +215,7 @@ export const publicDecryptRequest =
         _handles.map(async (_handle) => {
           const handle =
             typeof _handle === 'string'
-              ? toHexString(fromHexString(_handle), true)
+              ? toHexString(hexToBytes(_handle), true)
               : toHexString(_handle, true);
 
           const isAllowedForDecryption =
