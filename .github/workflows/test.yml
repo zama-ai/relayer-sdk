@@ -1,4 +1,4 @@
-name: PR test
+name: pr-test
 
 on:
   pull_request:
@@ -6,6 +6,7 @@ on:
       - main
 jobs:
   build:
+    name: pr-test/build
     runs-on: ubuntu-latest
 
     strategy:

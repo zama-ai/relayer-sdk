@@ -1,4 +1,4 @@
-name: Main
+name: main
 
 on:
   push:
@@ -7,19 +7,31 @@ on:
 
 jobs:
   build:
+    name: main/build
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
         node-version: [22.x]
+
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - name: Check out repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
-      - run: npm ci
-      - run: npm run prettier:check
-      - run: npm test
-      - run: npm run build
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run prettier
+        run: npm run prettier:check
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build package
+        run: npm run build

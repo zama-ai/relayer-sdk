@@ -1,13 +1,12 @@
-name: npm-publish
+name: test-npm-publish
 
 on:
-  release:
-    # 'published' fires for both stable releases and prereleases
-    types: [published]
+  # allow trigger action manually
+  workflow_dispatch:
 
 jobs:
   publish:
-    name: npm-publish/publish
+    name: test-npm-publish/publish
     permissions:
       security-events: 'write' # Required for zizmor to upload its results.
       id-token: 'write'
