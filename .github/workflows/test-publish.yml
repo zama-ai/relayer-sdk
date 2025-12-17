@@ -11,6 +11,7 @@ jobs:
   publish:
     name: test-npm-publish/publish
     permissions:
+      security-events: 'write'
       id-token: 'write'
     runs-on: ubuntu-latest
     steps:
