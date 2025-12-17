@@ -128,38 +128,45 @@ export const userDecryptRequest =
     const signatureSanitized = signature.replace(/^(0x)/, '');
     const publicKeySanitized = publicKey.replace(/^(0x)/, '');
 
-    const handles: HandleContractPairRelayer[] = _handles.map((h) => ({
-      handle:
-        typeof h.handle === 'string'
-          ? toHexString(hexToBytes(h.handle), true)
-          : toHexString(h.handle, true),
-      contractAddress: getAddress(h.contractAddress),
-    }));
+    const handleContractPairs: HandleContractPairRelayer[] = _handles.map(
+      (h) => ({
+        handle:
+          typeof h.handle === 'string'
+            ? toHexString(hexToBytes(h.handle), true)
+            : toHexString(h.handle, true),
+        contractAddress: getAddress(h.contractAddress),
+      }),
+    );
 
-    checkEncryptedBits(handles.map((h) => h.handle));
+    checkEncryptedBits(handleContractPairs.map((h) => h.handle));
 
     checkDeadlineValidity(BigInt(startTimestamp), BigInt(durationDays));
 
     const acl = new ethers.Contract(aclContractAddress, aclABI, provider);
-    const verifications = handles.map(async ({ handle, contractAddress }) => {
-      const userAllowed = await acl.persistAllowed(handle, userAddress);
-      const contractAllowed = await acl.persistAllowed(handle, contractAddress);
-      if (!userAllowed) {
-        throw new Error(
-          `User ${userAddress} is not authorized to user decrypt handle ${handle}!`,
+    const verifications = handleContractPairs.map(
+      async ({ handle, contractAddress }) => {
+        const userAllowed = await acl.persistAllowed(handle, userAddress);
+        const contractAllowed = await acl.persistAllowed(
+          handle,
+          contractAddress,
         );
-      }
-      if (!contractAllowed) {
-        throw new Error(
-          `dapp contract ${contractAddress} is not authorized to user decrypt handle ${handle}!`,
-        );
-      }
-      if (userAddress === contractAddress) {
-        throw new Error(
-          `userAddress ${userAddress} should not be equal to contractAddress when requesting user decryption!`,
-        );
-      }
-    });
+        if (!userAllowed) {
+          throw new Error(
+            `User ${userAddress} is not authorized to user decrypt handle ${handle}!`,
+          );
+        }
+        if (!contractAllowed) {
+          throw new Error(
+            `dapp contract ${contractAddress} is not authorized to user decrypt handle ${handle}!`,
+          );
+        }
+        if (userAddress === contractAddress) {
+          throw new Error(
+            `userAddress ${userAddress} should not be equal to contractAddress when requesting user decryption!`,
+          );
+        }
+      },
+    );
 
     const contractAddressesLength = contractAddresses.length;
     if (contractAddressesLength === 0) {
@@ -176,7 +183,7 @@ export const userDecryptRequest =
     });
 
     const payloadForRequest: RelayerUserDecryptPayload = {
-      handleContractPairs: handles,
+      handleContractPairs,
       requestValidity: {
         startTimestamp: startTimestamp.toString(), // Convert to string
         durationDays: durationDays.toString(), // Convert to string
@@ -224,7 +231,9 @@ export const userDecryptRequest =
         signature: signatureSanitized,
         client_address: userAddress,
         enc_key: publicKeySanitized,
-        ciphertext_handles: handles.map((h) => h.handle.replace(/^0x/, '')),
+        ciphertext_handles: handleContractPairs.map((h) =>
+          h.handle.replace(/^0x/, ''),
+        ),
         eip712_verifying_contract: verifyingContractAddress,
       };
 
@@ -242,7 +251,7 @@ export const userDecryptRequest =
       );
 
       const results: UserDecryptResults = buildUserDecryptResults(
-        handles.map((h) => h.handle),
+        handleContractPairs.map((h) => h.handle),
         listBigIntDecryptions,
       );
 
