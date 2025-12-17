@@ -43,13 +43,20 @@ Doing this will return the ciphertext handle, an identifier for the underlying c
 
 {% hint style="warning" %}
 For the user to be able to user decrypt (also called re-encrypt) the ciphertext value the access control (ACL) needs to be set properly using the `FHE.allow(ciphertext, address)` function in the solidity contract holding the ciphertext.
+
+For more details on the topic please refer to [the ACL documentation](https://docs.zama.org/protocol/solidity-guides/smart-contract/acl).
 For more details on the topic please refer to [the ACL documentation](https://docs.zama.ai/protocol/solidity-guides/smart-contract/acl).
 {% endhint %}
 
 ## Step 2: decrypt the ciphertext
 
-Using that ciphertext handle user decryption is performed client-side using the `@zama-fhe/relayer-sdk` library.
+Using those ciphertext handles, user decryption is performed client-side using the `@zama-fhe/relayer-sdk` library.
+The `userDecrypt` function takes a **list of handles**, allowing you to decrypt multiple ciphertexts in a single request. In this example, provide just one handle.
 The user needs to have created an instance object prior to that (for more context see [the relayer-sdk setup page](./initialization.md)).
+
+{% hint style="info" %}
+The total bit length of all ciphertexts being decrypted in a single request must not exceed 2048 bits. Each encrypted type has a specific bit length, for instance `euint8` uses 8 bits and `euint16` uses 16 bits. For the full list of encrypted types and their corresponding bit lengths, refer to the [encrypted types documentation](https://docs.zama.org/protocol/solidity-guides/smart-contract/types#list-of-encrypted-types).
+{% endhint %}
 
 ```ts
 // instance: [`FhevmInstance`] from `zama-fhe/relayer-sdk`
@@ -58,6 +65,8 @@ The user needs to have created an instance object prior to that (for more contex
 // contractAddress: [`string`]
 
 const keypair = instance.generateKeypair();
+// userDecrypt can take a batch of handles (with their corresponding contract addresses).
+// In this example we only pass one handle.
 const handleContractPairs = [
   {
     handle: ciphertextHandle,
@@ -94,5 +103,6 @@ const result = await instance.userDecrypt(
   durationDays,
 );
 
+// result maps each handle to its decrypted value
 const decryptedValue = result[ciphertextHandle];
 ```
