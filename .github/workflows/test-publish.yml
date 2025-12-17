@@ -11,7 +11,7 @@ jobs:
   publish:
     name: test-npm-publish/publish
     permissions:
-      security-events: 'write'
+      security-events: 'write' # Required for zizmor to upload its results.
       id-token: 'write'
     runs-on: ubuntu-latest
     steps:
