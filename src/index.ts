@@ -1,4 +1,3 @@
-import { isAddress } from 'ethers';
 import {
   type FhevmInstanceConfig,
   getChainId,
@@ -7,14 +6,7 @@ import {
   getCoprocessorSigners,
   getCoprocessorSignersThreshold,
   getProvider,
-  getPublicParams,
-  getTfheCompactPublicKey,
 } from './config';
-import {
-  cleanURL,
-  SERIALIZED_SIZE_LIMIT_CRS,
-  SERIALIZED_SIZE_LIMIT_PK,
-} from './utils';
 
 import type { HandleContractPair } from './relayer/userDecrypt';
 import { userDecryptRequest } from './relayer/userDecrypt';
@@ -28,15 +20,20 @@ import { generateKeypair, createEIP712 } from './sdk/keypair';
 import type { EIP712, EIP712Type } from './sdk/keypair';
 import type { Auth, BearerToken, ApiKeyCookie, ApiKeyHeader } from './auth';
 
-import fetchRetry from 'fetch-retry';
+//import fetchRetry from 'fetch-retry';
 import type {
   PublicDecryptResults,
   UserDecryptResults,
   ClearValueType,
   ClearValues,
 } from './relayer/decryptUtils';
+import { isChecksummedAddress } from './utils/address';
+import { createRelayerFhevm } from './relayer-provider/createRelayerFhevm';
 
-global.fetch = fetchRetry(global.fetch, { retries: 5, retryDelay: 500 });
+// Disable global use of fetch-retry
+// Make sure `workerHelpers.js` behaviour is consistant and tfhe WASM module is
+// still running in MT mode
+//global.fetch = fetchRetry(global.fetch, { retries: 5, retryDelay: 500 });
 
 export { generateKeypair, createEIP712 };
 export type {
@@ -113,7 +110,8 @@ export const SepoliaConfig: FhevmInstanceConfig = {
   network: 'https://ethereum-sepolia-rpc.publicnode.com',
   // Relayer URL
   relayerUrl: 'https://relayer.testnet.zama.org',
-};
+} as const;
+Object.freeze(SepoliaConfig);
 
 export const createInstance = async (
   config: FhevmInstanceConfig,
@@ -122,62 +120,80 @@ export const createInstance = async (
     verifyingContractAddressDecryption,
     verifyingContractAddressInputVerification,
     publicKey,
+    inputVerifierContractAddress,
     kmsContractAddress,
     aclContractAddress,
     gatewayChainId,
     auth,
   } = config;
 
-  if (!kmsContractAddress || !isAddress(kmsContractAddress)) {
+  if (!isChecksummedAddress(aclContractAddress)) {
+    throw new Error('ACL contract address is not valid or empty');
+  }
+  if (!isChecksummedAddress(inputVerifierContractAddress)) {
+    throw new Error('InputVerifier contract address is not valid or empty');
+  }
+  if (!isChecksummedAddress(kmsContractAddress)) {
     throw new Error('KMS contract address is not valid or empty');
   }
-
-  if (
-    !verifyingContractAddressDecryption ||
-    !isAddress(verifyingContractAddressDecryption)
-  ) {
+  if (!isChecksummedAddress(verifyingContractAddressDecryption)) {
     throw new Error(
       'Verifying contract for Decryption address is not valid or empty',
     );
   }
-
-  if (
-    !verifyingContractAddressInputVerification ||
-    !isAddress(verifyingContractAddressInputVerification)
-  ) {
+  if (!isChecksummedAddress(verifyingContractAddressInputVerification)) {
     throw new Error(
       'Verifying contract for InputVerification address is not valid or empty',
     );
   }
 
-  if (!aclContractAddress || !isAddress(aclContractAddress)) {
-    throw new Error('ACL contract address is not valid or empty');
-  }
-
-  if (publicKey && !(publicKey.data instanceof Uint8Array))
+  if (publicKey && !(publicKey.data instanceof Uint8Array)) {
     throw new Error('publicKey must be a Uint8Array');
-
-  const provider = getProvider(config);
-
-  if (!provider) {
-    throw new Error('No network has been provided!');
   }
+
+  // TODO change argument
+  // provider is never undefined | null here!
+  const provider = getProvider(config.network);
+
+  const relayerUrl = config.relayerUrl ?? SepoliaConfig.relayerUrl!;
+  const relayerFhevm = await createRelayerFhevm({
+    relayerUrl,
+    publicKey: config.publicKey,
+    publicParams: config.publicParams,
+    defaultRelayerVersion: 1,
+  });
 
   const chainId = await getChainId(provider, config);
 
-  const publicKeyData = await getTfheCompactPublicKey(config);
+  // const relayerVersionUrl = `${config.relayerUrl!}/v1`;
 
-  const publicParamsData = await getPublicParams(config);
+  // const publicKeyData = await getTfheCompactPublicKey({
+  //   relayerVersionUrl: relayerFhevm.relayerVersionUrl,
+  //   publicKey: config.publicKey,
+  // });
 
-  const kmsSigners = await getKMSSigners(provider, config);
+  //const aaa = relayerFhevm.getPublicKey();
 
-  const thresholdKMSSigners = await getKMSSignersThreshold(provider, config);
+  // const publicParamsData = await getPublicParams({
+  //   relayerVersionUrl,
+  //   publicParams: config.publicParams,
+  // });
 
-  const coprocessorSigners = await getCoprocessorSigners(provider, config);
+  const kmsSigners = await getKMSSigners(provider, kmsContractAddress);
+
+  const thresholdKMSSigners = await getKMSSignersThreshold(
+    provider,
+    kmsContractAddress,
+  );
+
+  const coprocessorSigners = await getCoprocessorSigners(
+    provider,
+    inputVerifierContractAddress,
+  );
 
   const thresholdCoprocessorSigners = await getCoprocessorSignersThreshold(
     provider,
-    config,
+    inputVerifierContractAddress,
   );
 
   return {
@@ -186,9 +202,13 @@ export const createInstance = async (
       verifyingContractAddressInputVerification,
       chainId,
       gatewayChainId,
-      cleanURL(config.relayerUrl),
-      publicKeyData.publicKey,
-      publicParamsData,
+      //cleanURL(config.relayerUrl),
+      //relayerFhevm.relayerVersionUrl,
+      relayerFhevm.relayerProvider,
+      //publicKeyData.publicKey,
+      relayerFhevm.getPublicKeyWasm().publicKey,
+      //publicParamsData,
+      { 2048: relayerFhevm.getPublicParamsWasm(2048) },
       coprocessorSigners,
       thresholdCoprocessorSigners,
     ),
@@ -200,7 +220,8 @@ export const createInstance = async (
       gatewayChainId,
       verifyingContractAddressDecryption,
       aclContractAddress,
-      cleanURL(config.relayerUrl),
+      //cleanURL(config.relayerUrl),
+      relayerFhevm.relayerProvider,
       provider,
       auth && { auth },
     ),
@@ -210,29 +231,33 @@ export const createInstance = async (
       chainId,
       verifyingContractAddressDecryption,
       aclContractAddress,
-      cleanURL(config.relayerUrl),
+      //cleanURL(config.relayerUrl),
+      relayerFhevm.relayerProvider,
       provider,
       auth && { auth },
     ),
-    getPublicKey: () =>
-      publicKeyData.publicKey
-        ? {
-            publicKey: publicKeyData.publicKey.safe_serialize(
-              SERIALIZED_SIZE_LIMIT_PK,
-            ),
-            publicKeyId: publicKeyData.publicKeyId,
-          }
-        : null,
-    getPublicParams: (bits: keyof PublicParams) => {
-      if (publicParamsData[bits]) {
-        return {
-          publicParams: publicParamsData[bits]!.publicParams.safe_serialize(
-            SERIALIZED_SIZE_LIMIT_CRS,
-          ),
-          publicParamsId: publicParamsData[bits]!.publicParamsId,
-        };
-      }
-      return null;
-    },
+    getPublicKey: () => relayerFhevm.getPublicKeyBytes(),
+    getPublicParams: (bits: keyof PublicParams) =>
+      relayerFhevm.getPublicParamsBytes(bits),
+    // getPublicKey: () =>
+    //   publicKeyData.publicKey
+    //     ? {
+    //         publicKey: publicKeyData.publicKey.safe_serialize(
+    //           SERIALIZED_SIZE_LIMIT_PK,
+    //         ),
+    //         publicKeyId: publicKeyData.publicKeyId,
+    //       }
+    //     : null,
+    // getPublicParams: (bits: keyof PublicParams) => {
+    //   if (publicParamsData[bits]) {
+    //     return {
+    //       publicParams: publicParamsData[bits]!.publicParams.safe_serialize(
+    //         SERIALIZED_SIZE_LIMIT_CRS,
+    //       ),
+    //       publicParamsId: publicParamsData[bits]!.publicParamsId,
+    //     };
+    //   }
+    //   return null;
+    // },
   };
 };

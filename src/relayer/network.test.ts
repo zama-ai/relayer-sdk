@@ -1,8 +1,17 @@
 import { getKeysFromRelayer } from './network';
 import { publicKey, publicParams } from '../test';
-import { SERIALIZED_SIZE_LIMIT_CRS, SERIALIZED_SIZE_LIMIT_PK } from '../utils';
-import fetchMock from '@fetch-mock/core';
+import {
+  SERIALIZED_SIZE_LIMIT_CRS,
+  SERIALIZED_SIZE_LIMIT_PK,
+} from '../constants';
+import fetchMock from 'fetch-mock';
 import { RelayerKeyUrlResponse } from './fetchRelayer';
+import { TEST_CONFIG } from '../test/config';
+
+// Jest Command line
+// =================
+// npx jest --colors --passWithNoTests --coverage ./src/relayer/network.test.ts --collectCoverageFrom=./src/relayer/network.ts --testNamePattern=xxx
+// npx jest --colors --passWithNoTests --coverage ./src/relayer/network.test.ts --collectCoverageFrom=./src/relayer/network.ts
 
 // const oldPayload = {
 //   response: {
@@ -112,21 +121,24 @@ const payload: RelayerKeyUrlResponse = {
   },
 };
 
-fetchMock.get('https://test-relayer.net/v1/keyurl', payload);
+const describeIfFetchMock =
+  TEST_CONFIG.type === 'fetch-mock' ? describe : describe.skip;
 
-fetchMock.get(
-  'https://s3.amazonaws.com/bucket-name-1/PUB-p1/PublicKey/408d8cbaa51dece7f782fe04ba0b1c1d017b1088',
-  publicKey.safe_serialize(SERIALIZED_SIZE_LIMIT_PK),
-);
-
-fetchMock.get(
-  'https://s3.amazonaws.com/bucket-name-1/PUB-p1/CRS/d8d94eb3a23d22d3eb6b5e7b694e8afcd571d906',
-  publicParams[2048].publicParams.safe_serialize(SERIALIZED_SIZE_LIMIT_CRS),
-);
-
-describe('network', () => {
+describeIfFetchMock('network', () => {
   it('getInputsFromRelayer', async () => {
-    const material = await getKeysFromRelayer('https://test-relayer.net');
+    fetchMock.get('https://test-relayer.net/v1/keyurl', payload);
+
+    fetchMock.get(
+      'https://s3.amazonaws.com/bucket-name-1/PUB-p1/PublicKey/408d8cbaa51dece7f782fe04ba0b1c1d017b1088',
+      publicKey.safe_serialize(SERIALIZED_SIZE_LIMIT_PK),
+    );
+
+    fetchMock.get(
+      'https://s3.amazonaws.com/bucket-name-1/PUB-p1/CRS/d8d94eb3a23d22d3eb6b5e7b694e8afcd571d906',
+      publicParams[2048].publicParams.safe_serialize(SERIALIZED_SIZE_LIMIT_CRS),
+    );
+
+    const material = await getKeysFromRelayer('https://test-relayer.net/v1');
 
     expect(
       material.publicKey.safe_serialize(SERIALIZED_SIZE_LIMIT_PK),

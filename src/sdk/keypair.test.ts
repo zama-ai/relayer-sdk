@@ -1,4 +1,5 @@
-import { fromHexString } from '../utils';
+import { TEST_CONFIG } from '../test/config';
+import { hexToBytes } from '../utils/bytes';
 import { generateKeypair, createEIP712 } from './keypair';
 import {
   ml_kem_pke_pk_to_u8vec,
@@ -7,7 +8,10 @@ import {
   u8vec_to_ml_kem_pke_sk,
 } from 'node-tkms';
 
-describe('token', () => {
+const describeIfFetchMock =
+  TEST_CONFIG.type === 'fetch-mock' ? describe : describe.skip;
+
+describeIfFetchMock('token', () => {
   it('generate a valid keypair', async () => {
     const keypair = generateKeypair();
 
@@ -26,12 +30,12 @@ describe('token', () => {
     expect(keypair.privateKey.length).toBe((ml_kem_sk_len + 8) * 2);
 
     let pkBuf = ml_kem_pke_pk_to_u8vec(
-      u8vec_to_ml_kem_pke_pk(fromHexString(keypair.publicKey)),
+      u8vec_to_ml_kem_pke_pk(hexToBytes(keypair.publicKey)),
     );
     expect(ml_kem_pk_length + serialize_overhead).toBe(pkBuf.length);
 
     let skBuf = ml_kem_pke_sk_to_u8vec(
-      u8vec_to_ml_kem_pke_sk(fromHexString(keypair.privateKey)),
+      u8vec_to_ml_kem_pke_sk(hexToBytes(keypair.privateKey)),
     );
     expect(ml_kem_sk_len + 8).toBe(skBuf.length);
   });

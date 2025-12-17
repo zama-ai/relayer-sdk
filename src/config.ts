@@ -8,12 +8,13 @@ import {
 import { PublicParams } from './sdk/encrypt';
 import { getKeysFromRelayer } from './relayer/network';
 import {
-  cleanURL,
   SERIALIZED_SIZE_LIMIT_PK,
   SERIALIZED_SIZE_LIMIT_CRS,
-} from './utils';
-import { TFHEType } from './tfheType';
+} from './constants';
+import type { TFHEType } from './tfheType';
 import { Auth } from './auth';
+import { Prettify } from './utils/types';
+import { removeSuffix } from './utils/string';
 
 const abiKmsVerifier = [
   'function getKmsSigners() view returns (address[])',
@@ -25,29 +26,34 @@ const abiInputVerifier = [
   'function getThreshold() view returns (uint256)',
 ];
 
-export type FhevmInstanceConfig = {
-  verifyingContractAddressDecryption: string;
-  verifyingContractAddressInputVerification: string;
-  kmsContractAddress: string;
-  inputVerifierContractAddress: string;
-  aclContractAddress: string;
-  gatewayChainId: number;
-  chainId?: number;
-  relayerUrl?: string;
-  network?: Eip1193Provider | string;
-  publicParams?: PublicParams<Uint8Array> | null;
-  publicKey?: {
-    data: Uint8Array | null;
-    id: string | null;
-  };
+export type FhevmInstanceOptions = {
   auth?: Auth;
 };
 
-export const getProvider = (config: FhevmInstanceConfig) => {
-  if (typeof config.network === 'string') {
-    return new JsonRpcProvider(config.network);
-  } else if (config.network) {
-    return new BrowserProvider(config.network);
+export type FhevmInstanceConfig = Prettify<
+  {
+    verifyingContractAddressDecryption: string;
+    verifyingContractAddressInputVerification: string;
+    kmsContractAddress: string;
+    inputVerifierContractAddress: string;
+    aclContractAddress: string;
+    gatewayChainId: number;
+    chainId?: number;
+    relayerUrl?: string;
+    network?: Eip1193Provider | string;
+    publicParams?: PublicParams<Uint8Array> | null;
+    publicKey?: {
+      data: Uint8Array | null;
+      id: string | null;
+    };
+  } & FhevmInstanceOptions
+>;
+
+export const getProvider = (network: string | Eip1193Provider | undefined) => {
+  if (typeof network === 'string') {
+    return new JsonRpcProvider(network);
+  } else if (network) {
+    return new BrowserProvider(network);
   }
   throw new Error(
     'You must provide a network URL or a EIP1193 object (eg: window.ethereum)',
@@ -68,14 +74,20 @@ export const getChainId = async (
   }
 };
 
-export const getTfheCompactPublicKey = async (
-  config: FhevmInstanceConfig,
-): Promise<{
+export const getTfheCompactPublicKey = async (config: {
+  relayerVersionUrl?: string;
+  publicKey?: {
+    data: Uint8Array | null;
+    id: string | null;
+  };
+}): Promise<{
   publicKey: TFHEType['TfheCompactPublicKey'];
   publicKeyId: string;
 }> => {
-  if (config.relayerUrl && !config.publicKey) {
-    const inputs = await getKeysFromRelayer(cleanURL(config.relayerUrl));
+  if (config.relayerVersionUrl && !config.publicKey) {
+    const inputs = await getKeysFromRelayer(
+      removeSuffix(config.relayerVersionUrl, '/'),
+    );
     return { publicKey: inputs.publicKey, publicKeyId: inputs.publicKeyId };
   } else if (config.publicKey && config.publicKey.data && config.publicKey.id) {
     const buff = config.publicKey.data;
@@ -97,11 +109,14 @@ export const getTfheCompactPublicKey = async (
   }
 };
 
-export const getPublicParams = async (
-  config: FhevmInstanceConfig,
-): Promise<PublicParams> => {
-  if (config.relayerUrl && !config.publicParams) {
-    const inputs = await getKeysFromRelayer(cleanURL(config.relayerUrl));
+export const getPublicParams = async (config: {
+  relayerVersionUrl?: string;
+  publicParams?: PublicParams<Uint8Array> | null;
+}): Promise<PublicParams> => {
+  if (config.relayerVersionUrl && !config.publicParams) {
+    const inputs = await getKeysFromRelayer(
+      removeSuffix(config.relayerVersionUrl, '/'),
+    );
     return inputs.publicParams;
   } else if (config.publicParams && config.publicParams['2048']) {
     const buff = config.publicParams['2048'].publicParams;
@@ -127,10 +142,10 @@ export const getPublicParams = async (
 
 export const getKMSSigners = async (
   provider: Provider,
-  config: FhevmInstanceConfig,
+  kmsContractAddress: `0x${string}`,
 ): Promise<string[]> => {
   const kmsContract = new Contract(
-    config.kmsContractAddress,
+    kmsContractAddress,
     abiKmsVerifier,
     provider,
   );
@@ -140,10 +155,10 @@ export const getKMSSigners = async (
 
 export const getKMSSignersThreshold = async (
   provider: Provider,
-  config: FhevmInstanceConfig,
+  kmsContractAddress: `0x${string}`,
 ): Promise<number> => {
   const kmsContract = new Contract(
-    config.kmsContractAddress,
+    kmsContractAddress,
     abiKmsVerifier,
     provider,
   );
@@ -153,10 +168,10 @@ export const getKMSSignersThreshold = async (
 
 export const getCoprocessorSigners = async (
   provider: Provider,
-  config: FhevmInstanceConfig,
+  inputVerifierContractAddress: `0x${string}`,
 ): Promise<string[]> => {
   const inputContract = new Contract(
-    config.inputVerifierContractAddress,
+    inputVerifierContractAddress,
     abiInputVerifier,
     provider,
   );
@@ -166,10 +181,10 @@ export const getCoprocessorSigners = async (
 
 export const getCoprocessorSignersThreshold = async (
   provider: Provider,
-  config: FhevmInstanceConfig,
+  inputVerifierContractAddress: `0x${string}`,
 ): Promise<number> => {
   const inputContract = new Contract(
-    config.inputVerifierContractAddress,
+    inputVerifierContractAddress,
     abiInputVerifier,
     provider,
   );

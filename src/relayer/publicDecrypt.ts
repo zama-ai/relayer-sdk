@@ -1,17 +1,16 @@
-import { ensure0x, fromHexString, toHexString } from '../utils';
+import { hexToBytes, toHexString } from '../utils/bytes';
 import { ethers, AbiCoder } from 'ethers';
 import {
-  ClearValueType,
-  ClearValues,
-  PublicDecryptResults,
+  type ClearValueType,
+  type ClearValues,
+  type PublicDecryptResults,
   checkEncryptedBits,
   getHandleType,
 } from './decryptUtils';
-import {
-  fetchRelayerJsonRpcPost,
-  RelayerPublicDecryptPayload,
-} from './fetchRelayer';
-import { Auth } from '../auth';
+import type { RelayerPublicDecryptPayload } from './fetchRelayer';
+import { ensure0x } from '../utils/string';
+import { AbstractRelayerProvider } from '../relayer-provider/AbstractRelayerProvider';
+import type { FhevmInstanceOptions } from '../config';
 
 const aclABI = [
   'function isAllowedForDecryption(bytes32 handle) view returns (bool)',
@@ -198,15 +197,14 @@ export const publicDecryptRequest =
     gatewayChainId: number,
     verifyingContractAddress: string,
     aclContractAddress: string,
-    relayerUrl: string,
+    //relayerUrl: string,
+    relayerProvider: AbstractRelayerProvider,
     provider: ethers.JsonRpcProvider | ethers.BrowserProvider,
-    instanceOptions?: {
-      auth?: Auth;
-    },
+    instanceOptions?: FhevmInstanceOptions,
   ) =>
   async (
     _handles: (Uint8Array | string)[],
-    options?: { auth?: Auth },
+    options?: FhevmInstanceOptions,
   ): Promise<PublicDecryptResults> => {
     const extraData: `0x${string}` = '0x00';
     const acl = new ethers.Contract(aclContractAddress, aclABI, provider);
@@ -217,7 +215,7 @@ export const publicDecryptRequest =
         _handles.map(async (_handle) => {
           const handle =
             typeof _handle === 'string'
-              ? toHexString(fromHexString(_handle), true)
+              ? toHexString(hexToBytes(_handle), true)
               : toHexString(_handle, true);
 
           const isAllowedForDecryption =
@@ -242,12 +240,16 @@ export const publicDecryptRequest =
       extraData,
     };
 
-    const json = await fetchRelayerJsonRpcPost(
-      'PUBLIC_DECRYPT',
-      `${relayerUrl}/v1/public-decrypt`,
+    const json = await relayerProvider.fetchPostPublicDecrypt(
       payloadForRequest,
       options ?? instanceOptions,
     );
+    // const json = await fetchRelayerJsonRpcPost(
+    //   'PUBLIC_DECRYPT',
+    //   `${relayerUrl}/v1/public-decrypt`,
+    //   payloadForRequest,
+    //   options ?? instanceOptions,
+    // );
 
     // verify signatures on decryption:
     const domain = {
@@ -263,11 +265,12 @@ export const publicDecryptRequest =
         { name: 'extraData', type: 'bytes' },
       ],
     };
-    const result = json.response[0];
-    const decryptedResult: `0x${string}` = ensure0x(result.decrypted_value);
+    //const result = json.response[0];
+    const result = json;
+    const decryptedResult: `0x${string}` = ensure0x(result.decryptedValue);
     const kmsSignatures: `0x${string}`[] = result.signatures.map(ensure0x);
 
-    // TODO result.extra_data (RelayerPublicDecryptJsonResponse)
+    // TODO result.extraData (RelayerPublicDecryptJsonResponse)
     const signedExtraData = '0x';
 
     const recoveredAddresses: `0x${string}`[] = kmsSignatures.map(

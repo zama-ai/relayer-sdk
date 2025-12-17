@@ -4,20 +4,37 @@ import {
   RelayerEncryptedInput,
 } from './sendEncryption';
 import { publicKey, publicParams } from '../test';
-import fetchMock from '@fetch-mock/core';
+import fetchMock from 'fetch-mock';
 import { computeHandles } from './handles';
-import { fromHexString, toHexString } from '../utils';
+import { hexToBytes, toHexString } from '../utils/bytes';
 import type { Auth } from '../auth';
+import { createRelayerProvider } from '../relayer-provider/createRelayerFhevm';
+import { InvalidPropertyError } from '../errors/InvalidPropertyError';
+import { TEST_CONFIG } from '../test/config';
+import { assertRelayer } from '../errors/InternalError';
+import { FhevmHandle } from '../sdk/FhevmHandle';
 
-const relayerUrl = 'https://test-fhevm-relayer';
-const aclContractAddress = '0x325ea1b59F28e9e1C51d3B5b47b7D3965CC5D8C8';
+// Jest Command line
+// =================
+// npx jest --colors --passWithNoTests ./src/relayer/sendEncryption.test.ts --testNamePattern=xxx
+// npx jest --colors --passWithNoTests ./src/relayer/sendEncryption.test.ts
+// npx jest --colors --passWithNoTests --coverage ./src/relayer/sendEncryption.test.ts --collectCoverageFrom=./src/relayer/sendEncryption.ts --testNamePattern=xxx
+// npx jest --colors --passWithNoTests --coverage ./src/relayer/sendEncryption.test.ts --collectCoverageFrom=./src/relayer/sendEncryption.ts
+//
+// Devnet:
+// =======
+// npx jest --config jest.devnet.config.cjs --colors --passWithNoTests ./src/relayer/sendEncryption.test.ts
+//
+
+const aclContractAddress = TEST_CONFIG.fhevmInstanceConfig.aclContractAddress;
 const verifyingContractAddressInputVerification =
-  '0x0C475a195D5C16bb730Ae2d5B1196844A83899A5';
-const chainId = 1234;
-const gatewayChainId = 4321;
+  TEST_CONFIG.fhevmInstanceConfig.verifyingContractAddressInputVerification;
+const chainId = TEST_CONFIG.fhevmInstanceConfig.chainId!;
+const gatewayChainId = TEST_CONFIG.fhevmInstanceConfig.gatewayChainId;
+const relayerProvider = createRelayerProvider(TEST_CONFIG.v1.urls.base);
 
 const autoMock = (input: RelayerEncryptedInput, opts?: { auth?: Auth }) => {
-  fetchMock.postOnce(`${relayerUrl}/v1/input-proof`, function (params: any) {
+  fetchMock.postOnce(relayerProvider.inputProof, function (params: any) {
     if (opts?.auth) {
       switch (opts.auth.__type) {
         case 'BearerToken':
@@ -54,13 +71,28 @@ const autoMock = (input: RelayerEncryptedInput, opts?: { auth?: Auth }) => {
     const options = {
       params: { ciphertextWithInputVerification },
     };
-    const handles = computeHandles(
-      fromHexString(ciphertextWithInputVerification),
+
+    const handles = FhevmHandle.fromZKProof({
+      ciphertextWithZKProof: ciphertextWithInputVerification as `0x${string}`,
+      aclAddress: aclContractAddress as `0x{string}`,
+      chainId,
+      fheTypeEncryptionBitwidths: input.getBits(),
+      ciphertextVersion: currentCiphertextVersion(),
+    }).map((handle: FhevmHandle) => handle.toBytes32Hex());
+
+    //////// TO BE REMOVED
+    const _handles = computeHandles(
+      hexToBytes(ciphertextWithInputVerification),
       input.getBits(),
       aclContractAddress,
       chainId,
       currentCiphertextVersion(),
-    ).map((handle: Uint8Array) => toHexString(handle));
+    ).map((handle: Uint8Array) => toHexString(handle, true));
+    for (let i = 0; i < handles.length; ++i) {
+      assertRelayer(handles[i] === _handles[i]);
+    }
+    //////// TO BE REMOVED
+
     return {
       options: options,
       response: {
@@ -71,14 +103,31 @@ const autoMock = (input: RelayerEncryptedInput, opts?: { auth?: Auth }) => {
   });
 };
 
-describe('encrypt', () => {
+const describeIfFetchMock =
+  TEST_CONFIG.type === 'fetch-mock' ? describe : describe.skip;
+
+const consoleLogSpy = jest
+  .spyOn(console, 'log')
+  .mockImplementation((message) => {
+    process.stdout.write(`${message}\n`);
+  });
+
+describeIfFetchMock('encrypt', () => {
+  beforeEach(() => {
+    fetchMock.removeRoutes();
+  });
+
+  afterAll(() => {
+    consoleLogSpy.mockRestore();
+  });
+
   it('encrypt', async () => {
     const input = createRelayerEncryptedInput(
       aclContractAddress,
       verifyingContractAddressInputVerification,
       chainId,
       gatewayChainId,
-      relayerUrl,
+      relayerProvider,
       publicKey,
       publicParams,
       [],
@@ -107,7 +156,7 @@ describe('encrypt', () => {
       verifyingContractAddressInputVerification,
       chainId,
       gatewayChainId,
-      relayerUrl,
+      relayerProvider,
       publicKey,
       publicParams,
       [],
@@ -130,7 +179,7 @@ describe('encrypt', () => {
         verifyingContractAddressInputVerification,
         chainId,
         gatewayChainId,
-        relayerUrl,
+        relayerProvider,
         publicKey,
         publicParams,
         [],
@@ -143,7 +192,7 @@ describe('encrypt', () => {
         verifyingContractAddressInputVerification,
         chainId,
         gatewayChainId,
-        relayerUrl,
+        relayerProvider,
         publicKey,
         publicParams,
         [],
@@ -157,7 +206,7 @@ describe('encrypt', () => {
         verifyingContractAddressInputVerification,
         chainId,
         gatewayChainId,
-        relayerUrl,
+        relayerProvider,
         publicKey,
         publicParams,
         [],
@@ -173,7 +222,7 @@ describe('encrypt', () => {
       verifyingContractAddressInputVerification,
       chainId,
       gatewayChainId,
-      relayerUrl,
+      relayerProvider,
       publicKey,
       publicParams,
       [],
@@ -220,7 +269,7 @@ describe('encrypt', () => {
       verifyingContractAddressInputVerification,
       chainId,
       gatewayChainId,
-      relayerUrl,
+      relayerProvider,
       publicKey,
       publicParams,
       [],
@@ -248,7 +297,7 @@ describe('encrypt', () => {
       verifyingContractAddressInputVerification,
       chainId,
       gatewayChainId,
-      relayerUrl,
+      relayerProvider,
       publicKey,
       publicParams,
       [],
@@ -264,7 +313,7 @@ describe('encrypt', () => {
       verifyingContractAddressInputVerification,
       chainId,
       gatewayChainId,
-      relayerUrl,
+      relayerProvider,
       publicKey,
       publicParams,
       [],
@@ -286,7 +335,7 @@ describe('encrypt', () => {
       verifyingContractAddressInputVerification,
       chainId,
       gatewayChainId,
-      relayerUrl,
+      relayerProvider,
       publicKey,
       publicParams,
       [],
@@ -296,7 +345,7 @@ describe('encrypt', () => {
       '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
     );
     input.add128(BigInt(1));
-    fetchMock.postOnce(`${relayerUrl}/v1/input-proof`, (params: any) => {
+    fetchMock.postOnce(relayerProvider.inputProof, (params: any) => {
       const body = JSON.parse(params.options.body);
       const ciphertextWithInputVerification: string =
         body.ciphertextWithInputVerification;
@@ -314,7 +363,13 @@ describe('encrypt', () => {
       };
     });
     await expect(input.encrypt()).rejects.toThrow(
-      /Incorrect Handle 0: \(expected\) [0-9a-z]{64} != [0-9a-z]{64} \(received\)/,
+      new InvalidPropertyError({
+        objName: 'fetchPostInputProof()',
+        property: 'signatures',
+        index: 0,
+        expectedType: 'Bytes65Hex',
+        type: 'string',
+      }),
     );
   });
 
@@ -325,7 +380,7 @@ describe('encrypt', () => {
         verifyingContractAddressInputVerification,
         chainId,
         gatewayChainId,
-        relayerUrl,
+        relayerProvider,
         publicKey,
         publicParams,
         [],
@@ -350,7 +405,7 @@ describe('encrypt', () => {
         verifyingContractAddressInputVerification,
         chainId,
         gatewayChainId,
-        relayerUrl,
+        relayerProvider,
         publicKey,
         publicParams,
         [],
@@ -371,7 +426,7 @@ describe('encrypt', () => {
         verifyingContractAddressInputVerification,
         chainId,
         gatewayChainId,
-        relayerUrl,
+        relayerProvider,
         publicKey,
         publicParams,
         [],

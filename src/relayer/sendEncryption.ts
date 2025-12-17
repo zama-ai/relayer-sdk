@@ -1,22 +1,21 @@
 import { isAddress, getAddress as ethersGetAddress } from 'ethers';
 
-import { fromHexString, numberToHex, toHexString } from '../utils';
 import {
   createEncryptedInput as createEncryptedInput,
   EncryptedInput,
   PublicParams,
 } from '../sdk/encrypt';
 import { EncryptionBits } from '../sdk/encryptionTypes';
-import { computeHandles } from './handles';
 import { ethers } from 'ethers';
 import { TFHEType } from '../tfheType';
 import { throwRelayerInternalError } from './error';
-import {
-  fetchRelayerJsonRpcPost,
-  RelayerFetchResponseJson,
-  RelayerInputProofPayload,
-} from './fetchRelayer';
+import { RelayerInputProofPayload } from './fetchRelayer';
 import { Auth } from '../auth';
+import { AbstractRelayerProvider } from '../relayer-provider/AbstractRelayerProvider';
+import { hexToBytes, toHexString } from '../utils/bytes';
+import { numberToHex } from '../utils/uint';
+import { FhevmHandle } from '../sdk/FhevmHandle';
+import { ChecksummedAddress } from '../types/primitives';
 
 // Add type checking
 const getAddress = (value: string): `0x${string}` =>
@@ -62,9 +61,10 @@ export type FhevmRelayerInputProofResponse = {
 };
 
 function isFhevmRelayerInputProofResponse(
-  json: RelayerFetchResponseJson,
+  json: unknown,
 ): json is FhevmRelayerInputProofResponse {
-  const response = json.response as unknown;
+  const response = json as unknown;
+  // const response = json.response as unknown;
   if (typeof response !== 'object' || response === null) {
     return false;
   }
@@ -106,7 +106,8 @@ export const createRelayerEncryptedInput =
     verifyingContractAddressInputVerification: string,
     chainId: number,
     gatewayChainId: number,
-    relayerUrl: string,
+    //relayerUrl: string,
+    relayerProvider: AbstractRelayerProvider,
     tfheCompactPublicKey: TFHEType['TfheCompactPublicKey'],
     publicParams: PublicParams,
     coprocessorSigners: string[],
@@ -176,6 +177,7 @@ export const createRelayerEncryptedInput =
         const bits = input.getBits();
         const ciphertext = input.encrypt();
 
+        //console.log(`ciphertext=${toHexString(ciphertext)}`);
         const payload: RelayerInputProofPayload = {
           contractAddress: getAddress(contractAddress),
           userAddress: getAddress(userAddress),
@@ -184,28 +186,37 @@ export const createRelayerEncryptedInput =
           extraData,
         };
 
-        const json = await fetchRelayerJsonRpcPost(
-          'INPUT_PROOF',
-          `${relayerUrl}/v1/input-proof`,
+        const json = await relayerProvider.fetchPostInputProof(
           payload,
           options ?? instanceOptions,
         );
+        // const json = await fetchRelayerJsonRpcPost(
+        //   'INPUT_PROOF',
+        //   `${relayerUrl}/v1/input-proof`,
+        //   payload,
+        //   options ?? instanceOptions,
+        // );
 
         if (!isFhevmRelayerInputProofResponse(json)) {
           throwRelayerInternalError('INPUT_PROOF', json);
         }
 
-        const handles: Uint8Array[] = computeHandles(
-          ciphertext,
-          bits,
-          aclContractAddress,
+        const fhevmHandles: FhevmHandle[] = FhevmHandle.fromZKProof({
+          ciphertextWithZKProof: ciphertext,
           chainId,
-          currentCiphertextVersion(),
-        );
+          aclAddress: aclContractAddress as ChecksummedAddress,
+          ciphertextVersion: currentCiphertextVersion(),
+          fheTypeEncryptionBitwidths: bits,
+        });
+
+        const handles: Uint8Array[] = fhevmHandles.map((h) => h.toBytes32());
+
+        //const result = json.response;
+        const result = json;
 
         // Note that the hex strings returned by the relayer do have have the 0x prefix
-        if (json.response.handles && json.response.handles.length > 0) {
-          const responseHandles = json.response.handles.map(fromHexString);
+        if (result.handles && result.handles.length > 0) {
+          const responseHandles = result.handles.map(hexToBytes);
           if (handles.length != responseHandles.length) {
             throw new Error(
               `Incorrect Handles list sizes: (expected) ${handles.length} != ${responseHandles.length} (received)`,
@@ -224,7 +235,7 @@ export const createRelayerEncryptedInput =
           }
         }
 
-        const signatures: string[] = json.response.signatures;
+        const signatures: string[] = result.signatures;
 
         // verify signatures for inputs:
         const domain = {
@@ -283,7 +294,7 @@ export const createRelayerEncryptedInput =
         inputProof += extraData.slice(2);
         return {
           handles,
-          inputProof: fromHexString(inputProof),
+          inputProof: hexToBytes(inputProof),
         };
       },
     };

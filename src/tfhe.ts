@@ -8,7 +8,7 @@ import {
   ShortintCompactPublicKeyEncryptionParameters,
   ShortintCompactPublicKeyEncryptionParametersName,
 } from 'node-tfhe';
-import { toHexString } from './utils';
+import { toHexString } from './utils/bytes';
 
 export const createTfheKeypair = () => {
   const block_params = new ShortintParameters(

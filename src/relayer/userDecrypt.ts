@@ -1,4 +1,3 @@
-import { bytesToBigInt, fromHexString, toHexString } from '../utils';
 import { ethers, getAddress as ethersGetAddress } from 'ethers';
 import {
   ClearValueType,
@@ -6,11 +5,12 @@ import {
   checkEncryptedBits,
 } from './decryptUtils';
 import {
-  fetchRelayerJsonRpcPost,
   HandleContractPairRelayer,
   RelayerUserDecryptPayload,
 } from './fetchRelayer';
-import { Auth } from '../auth';
+import { AbstractRelayerProvider } from '../relayer-provider/AbstractRelayerProvider';
+import type { FhevmInstanceOptions } from '../config';
+import { bytesToBigInt, hexToBytes, toHexString } from '../utils/bytes';
 
 // Add type checking
 const getAddress = (value: string): `0x${string}` =>
@@ -98,9 +98,10 @@ export const userDecryptRequest =
     chainId: number,
     verifyingContractAddress: string,
     aclContractAddress: string,
-    relayerUrl: string,
+    //relayerUrl: string,
+    relayerProvider: AbstractRelayerProvider,
     provider: ethers.JsonRpcProvider | ethers.BrowserProvider,
-    instanceOptions?: { auth?: Auth },
+    instanceOptions?: FhevmInstanceOptions,
   ) =>
   async (
     _handles: HandleContractPair[],
@@ -111,14 +112,14 @@ export const userDecryptRequest =
     userAddress: string,
     startTimestamp: string | number,
     durationDays: string | number,
-    options?: { auth?: Auth },
+    options?: FhevmInstanceOptions,
   ): Promise<UserDecryptResults> => {
     const extraData: `0x${string}` = '0x00';
     let pubKey;
     let privKey;
     try {
-      pubKey = TKMS.u8vec_to_ml_kem_pke_pk(fromHexString(publicKey));
-      privKey = TKMS.u8vec_to_ml_kem_pke_sk(fromHexString(privateKey));
+      pubKey = TKMS.u8vec_to_ml_kem_pke_pk(hexToBytes(publicKey));
+      privKey = TKMS.u8vec_to_ml_kem_pke_sk(hexToBytes(privateKey));
     } catch (e) {
       throw new Error('Invalid public or private key', { cause: e });
     }
@@ -130,7 +131,7 @@ export const userDecryptRequest =
     const handles: HandleContractPairRelayer[] = _handles.map((h) => ({
       handle:
         typeof h.handle === 'string'
-          ? toHexString(fromHexString(h.handle), true)
+          ? toHexString(hexToBytes(h.handle), true)
           : toHexString(h.handle, true),
       contractAddress: getAddress(h.contractAddress),
     }));
@@ -188,12 +189,16 @@ export const userDecryptRequest =
       extraData,
     };
 
-    const json = await fetchRelayerJsonRpcPost(
-      'USER_DECRYPT',
-      `${relayerUrl}/v1/user-decrypt`,
+    const json = await relayerProvider.fetchPostUserDecrypt(
       payloadForRequest,
-      instanceOptions ?? options,
+      options ?? instanceOptions,
     );
+    // const json = await fetchRelayerJsonRpcPost(
+    //   'USER_DECRYPT',
+    //   `${relayerUrl}/v1/user-decrypt`,
+    //   payloadForRequest,
+    //   instanceOptions ?? options,
+    // );
 
     // assume the KMS Signers have the correct order
     let indexedKmsSigners = kmsSigners.map((signer, index) => {
@@ -227,7 +232,7 @@ export const userDecryptRequest =
         client,
         payloadForVerification,
         eip712Domain,
-        json.response,
+        json, //json.response,
         pubKey,
         privKey,
         true,

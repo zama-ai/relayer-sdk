@@ -64,9 +64,9 @@ export type RelayerPublicDecryptPayload = {
   extraData: `0x${string}`;
 };
 
-// https://github.com/zama-ai/fhevm-relayer/blob/96151ef300f787658c5fbaf1b4471263160032d5/src/http/keyurl_http_listener.rs#L6
-type RelayerKeyData = { data_id: string; urls: Array<string> };
-type RelayerKeyInfo = { fhe_public_key: RelayerKeyData };
+// https://github.com/zama-ai/console/blob/1d74c413760690d9ad4350e283f609242159331e/apps/relayer/src/http/keyurl_http_listener.rs#L6
+export type RelayerKeyData = { data_id: string; urls: Array<string> };
+export type RelayerKeyInfo = { fhe_public_key: RelayerKeyData };
 export type RelayerKeyUrlResponse = {
   response: {
     fhe_key_info: Array<RelayerKeyInfo>;
@@ -108,11 +108,13 @@ export type RelayerInputProofJsonResponse = {
   };
 };
 
-export type RelayerFetchResponseJson = { response: any };
+export type RelayerV1FetchResponseJson = { response: any };
 
-function assertIsRelayerFetchResponseJson(
+////////////////////////////////////////////////////////////////////////////////
+
+function assertIsRelayerV1FetchResponseJson(
   json: any,
-): asserts json is RelayerFetchResponseJson {
+): asserts json is RelayerV1FetchResponseJson {
   if (!json || typeof json !== 'object') {
     throw new Error('Unexpected response JSON.');
   }
@@ -134,7 +136,7 @@ export async function fetchRelayerJsonRpcPost(
   url: string,
   payload: any,
   options?: { auth?: Auth },
-): Promise<RelayerFetchResponseJson> {
+): Promise<RelayerV1FetchResponseJson> {
   const init = setAuth(
     {
       method: 'POST',
@@ -147,7 +149,7 @@ export async function fetchRelayerJsonRpcPost(
   );
 
   let response: Response;
-  let json: RelayerFetchResponseJson;
+  let json: RelayerV1FetchResponseJson;
   try {
     response = await fetch(url, init);
   } catch (e) {
@@ -161,11 +163,11 @@ export async function fetchRelayerJsonRpcPost(
   try {
     parsed = await response.json();
   } catch (e) {
-    throwRelayerJSONError(relayerOperation, e);
+    throwRelayerJSONError(relayerOperation, e, response);
   }
 
   try {
-    assertIsRelayerFetchResponseJson(parsed);
+    assertIsRelayerV1FetchResponseJson(parsed);
     json = parsed;
   } catch (e) {
     throwRelayerUnexpectedJSONError(relayerOperation, e);
@@ -177,14 +179,16 @@ export async function fetchRelayerJsonRpcPost(
 export async function fetchRelayerGet(
   relayerOperation: RelayerOperation,
   url: string,
-): Promise<RelayerFetchResponseJson> {
+): Promise<RelayerV1FetchResponseJson> {
   let response: Response;
-  let json: RelayerFetchResponseJson;
+  let json: RelayerV1FetchResponseJson;
   try {
     response = await fetch(url);
   } catch (e) {
+    console.log(e);
     throwRelayerUnknownError(relayerOperation, e);
   }
+
   if (!response.ok) {
     await throwRelayerResponseError(relayerOperation, response);
   }
@@ -193,11 +197,11 @@ export async function fetchRelayerGet(
   try {
     parsed = await response.json();
   } catch (e) {
-    throwRelayerJSONError(relayerOperation, e);
+    throwRelayerJSONError(relayerOperation, e, response);
   }
 
   try {
-    assertIsRelayerFetchResponseJson(parsed);
+    assertIsRelayerV1FetchResponseJson(parsed);
     json = parsed;
   } catch (e) {
     throwRelayerUnexpectedJSONError(relayerOperation, e);

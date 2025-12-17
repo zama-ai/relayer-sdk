@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "rootDir": "../dist.tmp",
+    "target": "ES2022",
+    "lib": ["es2022", "DOM", "WebWorker"],
+    "module": "esnext",
+    "moduleResolution": "node",
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "strict": true,
+    "baseUrl": "../dist.tmp"
+  },
+  "include": ["../dist.tmp/**/*.d.ts"],
+  "exclude": ["../node_modules"]
+}
