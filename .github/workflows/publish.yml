@@ -7,8 +7,9 @@ on:
 
 jobs:
   publish:
-    name: test-npm-publish/publish
+    name: npm-publish/publish
     permissions:
+      security-events: 'write' # Required for zizmor to upload its results.
       id-token: 'write'
     runs-on: ubuntu-latest
     steps:
@@ -59,6 +60,7 @@ jobs:
         with:
           provenance: true
           package: ./package.json
-          dry-run: false
+          # Run in dry-run mode for testing purpose
+          dry-run: true
           tag: ${{ env.NPM_TAG }}
           access: public
