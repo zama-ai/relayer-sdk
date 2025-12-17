@@ -43,7 +43,9 @@ Doing this will return the ciphertext handle, an identifier for the underlying c
 
 {% hint style="warning" %}
 For the user to be able to user decrypt (also called re-encrypt) the ciphertext value the access control (ACL) needs to be set properly using the `FHE.allow(ciphertext, address)` function in the solidity contract holding the ciphertext.
+
 For more details on the topic please refer to [the ACL documentation](https://docs.zama.org/protocol/solidity-guides/smart-contract/acl).
+For more details on the topic please refer to [the ACL documentation](https://docs.zama.ai/protocol/solidity-guides/smart-contract/acl).
 {% endhint %}
 
 ## Step 2: decrypt the ciphertext
