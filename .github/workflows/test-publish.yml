@@ -1,0 +1,67 @@
+name: test-npm-publish
+
+on:
+  release:
+    # 'published' fires for both stable releases and prereleases
+    types: [published]
+  # allow trigger action manually
+  workflow_dispatch:
+
+jobs:
+  publish:
+    name: test-npm-publish/publish
+    permissions:
+      id-token: 'write'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 22.x
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run prettier
+        run: npm run prettier:check
+
+      - name: Build package
+        run: npm run build
+
+      - name: Run tests
+        run: npm test
+
+      - name: Run zizmor 🌈
+        uses: zizmorcore/zizmor-action@e673c3917a1aef3c65c972347ed84ccd013ecda4 # v0.2.0
+        with:
+          persona: pedantic
+          version: 1.14.2
+
+      - name: Set NPM version tag to latest
+        if: ${{ github.event_name == 'release' && !github.event.release.prerelease }}
+        run: |
+          echo "NPM_TAG=latest" >> "${GITHUB_ENV}"
+
+      - name: Set NPM version tag to prerelease
+        if: ${{ github.event_name == 'release' && github.event.release.prerelease }}
+        run: |
+          echo "NPM_TAG=prerelease" >> "${GITHUB_ENV}"
+
+      - name: Set NPM version tag for manual trigger
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        run: |
+          echo "NPM_TAG=test" >> "${GITHUB_ENV}"
+
+      - name: Publish relayer-sdk to npm
+        uses: JS-DevTools/npm-publish@7f8fe47b3bea1be0c3aec2b717c5ec1f3e03410b # v4.1.1
+        with:
+          provenance: true
+          package: ./package.json
+          # Run in dry-run mode for testing purpose
+          dry-run: true
+          tag: ${{ env.NPM_TAG }}
+          access: public
