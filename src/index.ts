@@ -191,6 +191,7 @@ export const createInstance = async (
       publicParamsData,
       coprocessorSigners,
       thresholdCoprocessorSigners,
+      auth && { auth },
     ),
     generateKeypair,
     createEIP712: createEIP712(verifyingContractAddressDecryption, chainId),
