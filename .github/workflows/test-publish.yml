@@ -1,9 +1,6 @@
 name: test-npm-publish
 
 on:
-  release:
-    # 'published' fires for both stable releases and prereleases
-    types: [published]
   # allow trigger action manually
   workflow_dispatch:
 
