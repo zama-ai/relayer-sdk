@@ -4,16 +4,24 @@ on:
   # allow trigger action manually
   workflow_dispatch:
 
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   publish:
     name: test-npm-publish/publish
     permissions:
       security-events: 'write' # Required for zizmor to upload its results.
-      id-token: 'write'
+      id-token: 'write' # Required by npm publish
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          persist-credentials: 'false'
 
       - name: Set up Node.js
         uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
@@ -21,10 +29,6 @@ jobs:
           node-version: 22.x
           cache: 'npm'
 
-      # use npm trusted publish
-      - name: Update npm
-        run: npm install -g npm@11.7.0
-      
       - name: Install dependencies
         run: npm ci
 
