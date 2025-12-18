@@ -29,7 +29,7 @@ jobs:
         with:
           persist-credentials: 'false'
 
-      - name: Check bronken links
+      - name: Check broken links
         uses: umbrelladocs/action-linkspector@652f85bc57bb1e7d4327260decc10aa68f7694c3 # v1.4.0
         with:
           filter_mode: nofilter
