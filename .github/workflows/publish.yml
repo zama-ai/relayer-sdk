@@ -64,6 +64,6 @@ jobs:
           provenance: true
           package: ./package.json
           # Run in dry-run mode for testing purpose
-          dry-run: true
+          dry-run: false
           tag: ${{ env.NPM_TAG }}
           access: public
