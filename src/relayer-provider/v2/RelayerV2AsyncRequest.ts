@@ -24,7 +24,6 @@ import { assertIsRelayerV2GetResponseInputProofSucceeded } from './types/Relayer
 import { assertIsRelayerV2GetResponsePublicDecryptSucceeded } from './types/RelayerV2GetResponsePublicDecryptSucceeded';
 import { assertIsRelayerV2GetResponseUserDecryptSucceeded } from './types/RelayerV2GetResponseUserDecryptSucceeded';
 import { RelayerV2RequestInternalError } from './errors/RelayerV2RequestInternalError';
-import { assertIsRelayerV2ResponseQueued } from './types/RelayerV2ResponseQueued';
 import type { FhevmInstanceOptions } from '../../config';
 import { RelayerProviderFetchOptions } from '../AbstractRelayerProvider';
 import { InvalidPropertyError } from '../../errors/InvalidPropertyError';
@@ -33,6 +32,12 @@ import { RelayerV2FetchError } from './errors/RelayerV2FetchError';
 import { RelayerV2ResponseInputProofRejectedError } from './errors/RelayerV2ResponseInputProofRejectedError';
 import { RelayerV2StateError } from './errors/RelayerV2StateError';
 import { RelayerV2MaxRetryError } from './errors/RelayerV2MaxRetryError';
+import {
+  assertIsRelayerV2GetResponseQueued,
+  assertIsRelayerV2PostResponseQueued,
+} from './types/RelayerV2ResponseQueued';
+import { safeJSONstringify } from '../../utils/string';
+import { sdkName, version } from '../../_version';
 
 /*
     Actions:
@@ -473,13 +478,14 @@ export class RelayerV2AsyncRequest {
           const bodyJson = await this._getResponseJson(response);
 
           try {
-            assertIsRelayerV2ResponseQueued(bodyJson, 'body');
+            assertIsRelayerV2PostResponseQueued(bodyJson, 'body');
           } catch (cause) {
-            this._throwInvalidResponseError({
+            this._throwResponseInvalidBodyError({
               fetchMethod: 'POST',
               status: responseStatus,
               cause: cause as InvalidPropertyError,
               elapsed,
+              bodyJson: safeJSONstringify(bodyJson),
             });
           }
 
@@ -518,11 +524,12 @@ export class RelayerV2AsyncRequest {
           try {
             assertIsRelayerV2ResponseFailedWithError400(bodyJson, 'body');
           } catch (cause) {
-            this._throwInvalidResponseError({
+            this._throwResponseInvalidBodyError({
               fetchMethod: 'POST',
               status: responseStatus,
               cause: cause as InvalidPropertyError,
               elapsed,
+              bodyJson: safeJSONstringify(bodyJson),
             });
           }
 
@@ -543,11 +550,12 @@ export class RelayerV2AsyncRequest {
           try {
             assertIsRelayerV2ResponseFailedWithError429(bodyJson, 'body');
           } catch (cause) {
-            this._throwInvalidResponseError({
+            this._throwResponseInvalidBodyError({
               fetchMethod: 'POST',
               status: responseStatus,
               cause: cause as InvalidPropertyError,
               elapsed,
+              bodyJson: safeJSONstringify(bodyJson),
             });
           }
 
@@ -581,11 +589,12 @@ export class RelayerV2AsyncRequest {
           try {
             assertIsRelayerV2ResponseFailedWithError500(bodyJson, 'body');
           } catch (cause) {
-            this._throwInvalidResponseError({
+            this._throwResponseInvalidBodyError({
               fetchMethod: 'POST',
               status: responseStatus,
               cause: cause as InvalidPropertyError,
               elapsed,
+              bodyJson: safeJSONstringify(bodyJson),
             });
           }
 
@@ -606,11 +615,12 @@ export class RelayerV2AsyncRequest {
           try {
             assertIsRelayerV2ResponseFailedWithError503(bodyJson, 'body');
           } catch (cause) {
-            this._throwInvalidResponseError({
+            this._throwResponseInvalidBodyError({
               fetchMethod: 'POST',
               status: responseStatus,
               cause: cause as InvalidPropertyError,
               elapsed,
+              bodyJson: safeJSONstringify(bodyJson),
             });
           }
 
@@ -760,6 +770,7 @@ export class RelayerV2AsyncRequest {
               status: responseStatus,
               elapsed,
               cause: cause as InvalidPropertyError,
+              bodyJson: safeJSONstringify(bodyJson),
             });
           }
 
@@ -773,13 +784,14 @@ export class RelayerV2AsyncRequest {
           const bodyJson = await this._getResponseJson(response);
 
           try {
-            assertIsRelayerV2ResponseQueued(bodyJson, 'body');
+            assertIsRelayerV2GetResponseQueued(bodyJson, 'body');
           } catch (cause) {
             this._throwResponseInvalidBodyError({
               fetchMethod: 'GET',
               status: responseStatus,
               elapsed,
               cause: cause as InvalidPropertyError,
+              bodyJson: safeJSONstringify(bodyJson),
             });
           }
 
@@ -817,6 +829,7 @@ export class RelayerV2AsyncRequest {
               status: responseStatus,
               elapsed,
               cause: cause as InvalidPropertyError,
+              bodyJson: safeJSONstringify(bodyJson),
             });
           }
 
@@ -840,6 +853,7 @@ export class RelayerV2AsyncRequest {
               status: responseStatus,
               elapsed,
               cause: cause as InvalidPropertyError,
+              bodyJson: safeJSONstringify(bodyJson),
             });
           }
 
@@ -865,6 +879,7 @@ export class RelayerV2AsyncRequest {
               status: responseStatus,
               elapsed,
               cause: cause as InvalidPropertyError,
+              bodyJson: safeJSONstringify(bodyJson),
             });
           }
 
@@ -890,6 +905,7 @@ export class RelayerV2AsyncRequest {
               status: responseStatus,
               elapsed,
               cause: cause as InvalidPropertyError,
+              bodyJson: safeJSONstringify(bodyJson),
             });
           }
 
@@ -915,6 +931,7 @@ export class RelayerV2AsyncRequest {
               status: responseStatus,
               elapsed,
               cause: cause as InvalidPropertyError,
+              bodyJson: safeJSONstringify(bodyJson),
             });
           }
 
@@ -1033,6 +1050,8 @@ export class RelayerV2AsyncRequest {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'ZAMA-SDK-VERSION': `${version}`,
+          'ZAMA-SDK-NAME': `${sdkName}`,
         },
         body: JSON.stringify(this._payload),
         ...(this._internalAbortSignal
@@ -1096,9 +1115,16 @@ export class RelayerV2AsyncRequest {
 
     this._trace('_fetchGet', `jobId=${this.jobId}`);
 
-    const init: RequestInit | undefined = this._internalAbortSignal
-      ? { signal: this._internalAbortSignal }
-      : undefined;
+    const init: RequestInit = {
+      method: 'GET',
+      headers: {
+        'ZAMA-SDK-VERSION': `${version}`,
+        'ZAMA-SDK-NAME': `${sdkName}`,
+      },
+      ...(this._internalAbortSignal
+        ? { signal: this._internalAbortSignal }
+        : {}),
+    };
 
     this._state.fetching = true;
 
@@ -1469,31 +1495,17 @@ export class RelayerV2AsyncRequest {
     });
   }
 
-  private _throwInvalidResponseError(params: {
-    fetchMethod: 'GET' | 'POST';
-    status: number;
-    cause: InvalidPropertyError;
-    elapsed: number;
-  }): never {
-    throw new RelayerV2ResponseInvalidBodyError({
-      ...params,
-      url: this._url,
-      operation: this._relayerOperation,
-      state: { ...this._state },
-      retryCount: this._retryCount,
-    });
-  }
-
   private _throwResponseInvalidBodyError(params: {
     fetchMethod: 'GET' | 'POST';
     status: number;
     cause: InvalidPropertyError;
     elapsed: number;
+    bodyJson: string;
   }): never {
     throw new RelayerV2ResponseInvalidBodyError({
       ...params,
       url: this._url,
-      jobId: this.jobId,
+      jobId: this._jobId,
       operation: this._relayerOperation,
       state: { ...this._state },
       retryCount: this._retryCount,

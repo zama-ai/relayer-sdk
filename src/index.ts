@@ -211,6 +211,7 @@ export const createInstance = async (
       { 2048: relayerFhevm.getPublicParamsWasm(2048) },
       coprocessorSigners,
       thresholdCoprocessorSigners,
+      auth && { auth },
     ),
     generateKeypair,
     createEIP712: createEIP712(verifyingContractAddressDecryption, chainId),

@@ -1,3 +1,4 @@
+import { sdkName, version } from '../_version';
 import { Auth, setAuth } from '../auth';
 import {
   throwRelayerUnexpectedJSONError,
@@ -142,6 +143,8 @@ export async function fetchRelayerJsonRpcPost(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'ZAMA-SDK-VERSION': `${version}`,
+        'ZAMA-SDK-NAME': `${sdkName}`,
       },
       body: JSON.stringify(payload),
     } satisfies RequestInit,
@@ -180,12 +183,19 @@ export async function fetchRelayerGet(
   relayerOperation: RelayerOperation,
   url: string,
 ): Promise<RelayerV1FetchResponseJson> {
+  const init = {
+    method: 'GET',
+    headers: {
+      'ZAMA-SDK-VERSION': `${version}`,
+      'ZAMA-SDK-NAME': `${sdkName}`,
+    },
+  } satisfies RequestInit;
+
   let response: Response;
   let json: RelayerV1FetchResponseJson;
   try {
-    response = await fetch(url);
+    response = await fetch(url, init);
   } catch (e) {
-    console.log(e);
     throwRelayerUnknownError(relayerOperation, e);
   }
 
