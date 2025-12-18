@@ -1,12 +1,12 @@
-name: cdn
+name: test-cdn
 
 on:
-  release:
-    types: [published]
+  # allow trigger action manually
+  workflow_dispatch:
 
 jobs:
   publish:
-    name: cdn/publish
+    name: test-cdn/publish
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -46,12 +46,3 @@ jobs:
         with:
           name: relayer-sdk-js-bundle-${{ steps.package-version.outputs.version }}
           path: ./bundle
-
-      - name: Upload bundle
-        uses: shallwefootball/s3-upload-action@4350529f410221787ccf424e50133cbc1b52704e # v1.3.3
-        with:
-          aws_key_id: ${{ secrets.AWS_ACCESS_KEY_S3_USER }}
-          aws_secret_access_key: ${{ secrets.AWS_SECRET_KEY_S3_USER}}
-          aws_bucket: ${{ secrets.AWS_BUCKET_NAME }}
-          destination_dir: relayer-sdk-js/${{ steps.package-version.outputs.version }}
-          source_dir: './bundle'
