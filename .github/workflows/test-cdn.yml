@@ -4,6 +4,12 @@ on:
   # allow trigger action manually
   workflow_dispatch:
 
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   publish:
     name: test-cdn/publish
