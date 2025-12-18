@@ -5,6 +5,12 @@ on:
     # 'published' fires for both stable releases and prereleases
     types: [published]
 
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   publish:
     name: npm-publish/publish

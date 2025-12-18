@@ -4,6 +4,12 @@ on:
   release:
     types: [published]
 
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   publish:
     name: cdn/publish
