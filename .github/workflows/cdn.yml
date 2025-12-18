@@ -1,16 +1,24 @@
+name: cdn
+
 on:
   release:
-    # 'published' fires for both stable releases and prereleases
     types: [published]
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   publish:
-    permissions:
-      id-token: 'write'
+    name: cdn/publish
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          persist-credentials: 'false'
 
       - name: Set up Node.js
         uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
@@ -18,7 +26,6 @@ jobs:
           node-version: 22.x
           cache: 'npm'
 
-      # use npm trusted publish
       - name: Update npm
         run: npm install -g npm@11.7.0
 
@@ -34,17 +41,19 @@ jobs:
       - name: Get package version
         id: package-version
         run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
-      
+
       - name: Build package
-        run: BASE_PATH=https://cdn.zama.org/relayer-sdk-js/${{ steps.package-version.outputs.version }}/ npm run build
-      
+        env:
+          PACKAGE_VERSION: ${{ steps.package-version.outputs.version }}
+        run: BASE_PATH=https://cdn.zama.org/relayer-sdk-js/${PACKAGE_VERSION}/ npm run build
+
       - name: Archive bundle
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: relayer-sdk-js-bundle-${{ steps.package-version.outputs.version }}
           path: ./bundle
 
-      - name: Upload S3
+      - name: Upload bundle
         uses: shallwefootball/s3-upload-action@4350529f410221787ccf424e50133cbc1b52704e # v1.3.3
         with:
           aws_key_id: ${{ secrets.AWS_ACCESS_KEY_S3_USER }}
