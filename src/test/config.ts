@@ -164,19 +164,18 @@ export async function fetchMockInputProof(
   return await TEST_COPROCESSORS.computeSignatures(params);
 }
 
-export function setupAllFetchMockRoutes({
-  bitWidths,
-}: {
+export function setupAllFetchMockRoutes(params: {
   bitWidths?: (keyof typeof ENCRYPTION_TYPES)[];
+  retry?: number;
 }) {
   if (TEST_CONFIG.type !== 'fetch-mock') {
     return;
   }
   setupV1RoutesKeyUrl();
   setupV2RoutesKeyUrl();
-  if (bitWidths) {
-    setupV1RoutesInputProof(bitWidths);
-    setupV2RoutesInputProof(bitWidths);
+  if (params.bitWidths) {
+    setupV1RoutesInputProof(params.bitWidths);
+    setupV2RoutesInputProof(params.bitWidths, params.retry);
   }
 }
 

@@ -51,7 +51,9 @@ export type RelayerV2Operation = keyof RelayerV2OperationResultMap;
 export type Timestamp = string;
 
 export type RelayerV2PostResponseStatus = 202 | 400 | 429 | 500 | 503;
-export type RelayerV2PostResponse = RelayerV2ResponseQueuedOrFailed;
+export type RelayerV2PostResponse =
+  | RelayerV2ResponseFailed
+  | RelayerV2PostResponseQueued;
 
 // GET:  200 | 202 | 400 | 404 | 500 | 503 | 504
 export type RelayerV2GetResponseStatus =
@@ -63,12 +65,9 @@ export type RelayerV2GetResponseStatus =
   | 503
   | 504;
 export type RelayerV2GetResponse =
-  | RelayerV2ResponseQueuedOrFailed
-  | RelayerV2GetResponseSucceeded;
-
-export type RelayerV2ResponseQueuedOrFailed =
   | RelayerV2ResponseFailed
-  | RelayerV2ResponseQueued;
+  | RelayerV2GetResponseQueued
+  | RelayerV2GetResponseSucceeded;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Failed & Errors
@@ -144,13 +143,18 @@ export type RelayerV2ResponseApiError404 = {
 // Queued: 202
 ////////////////////////////////////////////////////////////////////////////////
 
-export type RelayerV2ResponseQueued = {
+export type RelayerV2GetResponseQueued = {
   status: 'queued';
   requestId: string; // request id field. use it for identifying the request and asking support
-  result: RelayerV2ResultQueued;
 };
 
-export type RelayerV2ResultQueued = {
+export type RelayerV2PostResponseQueued = {
+  status: 'queued';
+  requestId: string; // request id field. use it for identifying the request and asking support
+  result: RelayerV2PostResultQueued;
+};
+
+export type RelayerV2PostResultQueued = {
   jobId: string;
 };
 

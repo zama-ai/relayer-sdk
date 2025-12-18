@@ -197,3 +197,13 @@ export function assertRecordTimestampProperty<K extends string>(
     });
   }
 }
+
+export function safeJSONstringify(o: unknown): string {
+  try {
+    return JSON.stringify(o, (_, v) =>
+      typeof v === 'bigint' ? v.toString() : v,
+    );
+  } catch {
+    return '';
+  }
+}

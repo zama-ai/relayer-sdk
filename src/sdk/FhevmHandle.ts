@@ -27,7 +27,7 @@ import {
   FheTypeIdToEncryptionBitwidthMap,
 } from '../types/primitives';
 import { assertRelayer, InternalError } from '../errors/InternalError';
-import { FhevmHandleError } from 'src/errors/FhevmHandleError';
+import { FhevmHandleError } from '../errors/FhevmHandleError';
 
 type CreateInputHandlesBaseParams = {
   ciphertextWithZKProof: Uint8Array | BytesHex;

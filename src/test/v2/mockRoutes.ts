@@ -63,9 +63,10 @@ export function mockV2Post202(
   });
 }
 
-export function post202InvalidBodyError(
-  cause: InvalidPropertyError,
-): RelayerV2ResponseInvalidBodyError {
+export function post202InvalidBodyError(params: {
+  cause: InvalidPropertyError;
+  bodyJson: string;
+}): RelayerV2ResponseInvalidBodyError {
   return new RelayerV2ResponseInvalidBodyError({
     fetchMethod: 'POST',
     status: 202,
@@ -74,7 +75,7 @@ export function post202InvalidBodyError(
     elapsed: 0,
     retryCount: 0,
     state: RUNNING_REQ_STATE,
-    cause,
+    ...params,
   });
 }
 
@@ -105,6 +106,7 @@ export function setupV2RoutesKeyUrl() {
 
 export function setupV2RoutesInputProof(
   bitwidths: (keyof typeof ENCRYPTION_TYPES)[],
+  retry: number = 0,
 ) {
   if (TEST_CONFIG.type !== 'fetch-mock') {
     throw new Error('Test is not running using fetch-mock');
@@ -132,25 +134,43 @@ export function setupV2RoutesInputProof(
       status: 202,
       body: {
         status: 'queued',
-        result: { jobId, retryAfterSeconds: 3 },
+        requestId: 'hello',
+        result: { jobId },
       },
       headers: { 'Content-Type': 'application/json' },
     };
   });
 
+  const retryCounter = { count: 0 };
+
   fetchMock.get(
     `${TEST_CONFIG.v2.urls.inputProof}/${jobId}`,
     async (args: CallLog) => {
-      const res = await fetchMockInputProof(receivedArgs, bitwidths);
-      return {
-        status: 200,
-        body: {
-          status: 'succeeded',
-          requestId: 'hello',
-          result: { accepted: true, extraData: `0x00`, ...res },
-        },
-        headers: { 'Content-Type': 'application/json' },
-      };
+      if (retryCounter.count === 0) {
+        retryCounter.count = 1;
+        return {
+          status: 202,
+          body: {
+            status: 'queued',
+            requestId: 'hello',
+          },
+          headers: { 'Content-Type': 'application/json' },
+        };
+      } else if (retryCounter.count === 1) {
+        retryCounter.count = 2;
+        const res = await fetchMockInputProof(receivedArgs, bitwidths);
+        return {
+          status: 200,
+          body: {
+            status: 'succeeded',
+            requestId: 'hello',
+            result: { accepted: true, extraData: `0x00`, ...res },
+          },
+          headers: { 'Content-Type': 'application/json' },
+        };
+      } else {
+        throw new Error(`retryCounter.count = ${retryCounter.count}`);
+      }
     },
   );
 }
