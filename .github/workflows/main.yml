@@ -1,4 +1,4 @@
-name: Main
+name: main
 
 on:
   push:
@@ -8,20 +8,46 @@ on:
 
 jobs:
   build:
+    name: main/build
+    permissions:
+      security-events: 'write' # Required for zizmor to upload its results.
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
         node-version: [22.x]
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+      - name: Check out repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          persist-credentials: 'false'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
-      - run: npm ci
-      - run: npm run prettier:check
-      - run: cp .env.example .env
-      - run: npm test
-      - run: npm run build
+
+      - name: Update npm
+        run: npm install -g npm@11.7.0
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run prettier
+        run: npm run prettier:check
+
+      - name: Build package
+        run: npm run build
+
+      - name: Setup test .env file
+        run: cp .env.example .env
+
+      - name: Run tests
+        run: npm test
+
+      - name: Run zizmor 🌈
+        uses: zizmorcore/zizmor-action@e639db99335bc9038abc0e066dfcd72e23d26fb4 # v0.3.0
+        with:
+          persona: pedantic
+          version: 1.18.0
