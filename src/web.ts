@@ -71,6 +71,7 @@ export {
   createInstance,
   generateKeypair,
   createEIP712,
+  MainnetConfig,
   SepoliaConfig,
   getErrorCauseCode,
   getErrorCauseStatus,

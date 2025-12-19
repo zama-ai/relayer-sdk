@@ -29,6 +29,7 @@ export type {
 
 export {
   SepoliaConfig,
+  MainnetConfig,
   createInstance,
   generateKeypair,
   createEIP712,

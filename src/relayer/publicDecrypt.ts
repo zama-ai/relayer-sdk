@@ -11,9 +11,10 @@ import type {
 import { ensure0x } from '../utils/string';
 import { AbstractRelayerProvider } from '../relayer-provider/AbstractRelayerProvider';
 import type { RelayerV2PublicDecryptOptions } from '../relayer-provider/v2/types/types';
-import { FhevmHandle } from 'src/sdk/FhevmHandle';
-import { Bytes32Hex, FheTypeId } from 'src/types/primitives';
-import { assertRelayer } from 'src/errors/InternalError';
+import { FhevmHandle } from '../sdk/FhevmHandle';
+import { Bytes32Hex, FheTypeId } from '../types/primitives';
+import { assertRelayer } from '../errors/InternalError';
+import { assertNever } from '../errors/utils';
 
 const aclABI = [
   'function isAllowedForDecryption(bytes32 handle) view returns (bool)',
@@ -102,7 +103,10 @@ function abiEncodeClearValues(clearValues: ClearValues) {
         break;
       }
       default: {
-        throw new Error(`Unsupported Fhevm primitive type id: ${handleType}`);
+        assertNever(
+          handleType,
+          `Unsupported Fhevm primitive type id: ${handleType}`,
+        );
       }
     }
   }

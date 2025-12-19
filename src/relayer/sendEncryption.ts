@@ -93,6 +93,7 @@ export type RelayerEncryptedInput = {
   add256: (value: number | bigint) => RelayerEncryptedInput;
   addAddress: (value: string) => RelayerEncryptedInput;
   getBits: () => EncryptionBits[];
+  getCiphertextWithInputVerification(): Uint8Array;
   encrypt: (options?: RelayerV2InputProofOptions) => Promise<{
     handles: Uint8Array[];
     inputProof: Uint8Array;
@@ -105,7 +106,6 @@ export const createRelayerEncryptedInput =
     verifyingContractAddressInputVerification: string,
     chainId: number,
     gatewayChainId: number,
-    //relayerUrl: string,
     relayerProvider: AbstractRelayerProvider,
     tfheCompactPublicKey: TFHEType['TfheCompactPublicKey'],
     publicParams: PublicParams,
@@ -171,12 +171,14 @@ export const createRelayerEncryptedInput =
       getBits(): EncryptionBits[] {
         return input.getBits();
       },
+      getCiphertextWithInputVerification(): Uint8Array {
+        return input.encrypt();
+      },
       encrypt: async (options?: RelayerV2InputProofOptions) => {
         const extraData: `0x${string}` = '0x00';
         const bits = input.getBits();
         const ciphertext = input.encrypt();
 
-        //console.log(`ciphertext=${toHexString(ciphertext)}`);
         const payload: RelayerInputProofPayload = {
           contractAddress: getAddress(contractAddress),
           userAddress: getAddress(userAddress),
@@ -203,8 +205,6 @@ export const createRelayerEncryptedInput =
         });
 
         const handles: Uint8Array[] = fhevmHandles.map((h) => h.toBytes32());
-
-        //const result = json.response;
         const result = json;
 
         // Note that the hex strings returned by the relayer do have have the 0x prefix
