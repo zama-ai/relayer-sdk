@@ -197,20 +197,6 @@ export const createInstance = async (
 
   const chainId = await getChainId(provider, config);
 
-  // const relayerVersionUrl = `${config.relayerUrl!}/v1`;
-
-  // const publicKeyData = await getTfheCompactPublicKey({
-  //   relayerVersionUrl: relayerFhevm.relayerVersionUrl,
-  //   publicKey: config.publicKey,
-  // });
-
-  //const aaa = relayerFhevm.getPublicKey();
-
-  // const publicParamsData = await getPublicParams({
-  //   relayerVersionUrl,
-  //   publicParams: config.publicParams,
-  // });
-
   const kmsSigners = await getKMSSigners(provider, kmsContractAddress);
 
   const thresholdKMSSigners = await getKMSSignersThreshold(

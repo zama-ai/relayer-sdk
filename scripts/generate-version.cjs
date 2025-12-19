@@ -7,7 +7,8 @@ const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
 const version = pkg.version;
 
 const out = `// This file is auto-generated
-export const version: string = "${version}";\n`;
+export const version: string = "${version}";
+export const sdkName: string = "${pkg.name}";\n`;
 
 const outputPath = path.resolve(__dirname, '../src/_version.ts');
 
