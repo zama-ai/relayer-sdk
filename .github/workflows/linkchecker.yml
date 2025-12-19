@@ -33,7 +33,7 @@ jobs:
         uses: umbrelladocs/action-linkspector@652f85bc57bb1e7d4327260decc10aa68f7694c3 # v1.4.0
         with:
           filter_mode: nofilter
-          config_file: .linkspector.yml
+          config_file: .github/config/.linkspector.yml
           github_token: ${{ secrets.github_token }}
           reporter: github-pr-review
           fail_level: any
