@@ -1,5 +1,6 @@
 import fetchMock from 'fetch-mock';
 import { createInstance, SepoliaConfig } from './index';
+import type { FhevmInstanceConfig } from './index';
 import {
   publicKey as assetPublicKey,
   publicParams as assetPublicParams,
@@ -9,7 +10,6 @@ import {
   SERIALIZED_SIZE_LIMIT_CRS,
   SERIALIZED_SIZE_LIMIT_PK,
 } from './constants';
-import type { FhevmInstanceConfig } from './config';
 
 // Jest Command line
 // =================

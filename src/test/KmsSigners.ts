@@ -7,9 +7,10 @@ import {
 } from '../utils/bytes';
 import { remove0x } from '../utils/string';
 import { assertRelayer } from '../errors/InternalError';
-import { ethers, Wallet } from 'ethers';
+import { Wallet, concat } from 'ethers';
 import { multiSignEIP712 } from './eip712';
-import {
+import { Signer } from 'ethers';
+import type {
   Bytes32Hex,
   Bytes32HexNo0x,
   Bytes65Hex,
@@ -23,7 +24,7 @@ import {
 export class KmsSigners {
   private _gatewayChainId: number;
   private _verifyingContractAddressInputVerification: ChecksummedAddress;
-  private _coprocessorSigners: ethers.Signer[];
+  private _coprocessorSigners: Signer[];
   private _coprocessorSignersAddresses: ChecksummedAddress[];
 
   constructor({
@@ -34,7 +35,7 @@ export class KmsSigners {
   }: {
     gatewayChainId: number;
     verifyingContractAddressInputVerification: ChecksummedAddress;
-    coprocessorSigners?: ethers.Signer[];
+    coprocessorSigners?: Signer[];
     coprocessorSignersAddresses?: ChecksummedAddress[];
   }) {
     assertIsUint(gatewayChainId);
@@ -195,7 +196,7 @@ export class KmsSigners {
     });
 
     // Append the extra data to the input proof
-    inputProofHex = ethers.concat([inputProofHex, extraData]) as BytesHex;
+    inputProofHex = concat([inputProofHex, extraData]) as BytesHex;
     assertRelayer(inputProofHex === inputProofHex + remove0x(extraData));
 
     return inputProofHex;

@@ -1,6 +1,9 @@
 import { Prettify } from '../utils/types';
 import { Bytes32Hex, ChecksummedAddress } from '../types/primitives';
-import { RelayerErrorBase, RelayerErrorBaseParams } from './RelayerErrorBase';
+import {
+  ContractErrorBase,
+  ContractErrorBaseParams,
+} from './ContractErrorBase';
 
 ////////////////////////////////////////////////////////////////////////////////
 // ACLErrorBase
@@ -11,14 +14,12 @@ export type ACLErrorBaseType = ACLErrorBase & {
 };
 
 export type ACLErrorBaseParams = Prettify<
-  RelayerErrorBaseParams & {
-    aclAddress: ChecksummedAddress;
+  ContractErrorBaseParams & {
     handle: Bytes32Hex;
   }
 >;
 
-export abstract class ACLErrorBase extends RelayerErrorBase {
-  private readonly _aclAddress: ChecksummedAddress;
+export abstract class ACLErrorBase extends ContractErrorBase {
   private readonly _handle: Bytes32Hex;
 
   constructor(params: ACLErrorBaseParams) {
@@ -26,13 +27,9 @@ export abstract class ACLErrorBase extends RelayerErrorBase {
       ...params,
       name: params.name ?? 'ACLErrorBase',
     });
-    this._aclAddress = params.aclAddress;
     this._handle = params.handle;
   }
 
-  public get aclAddress() {
-    return this._aclAddress;
-  }
   public get handle() {
     return this._handle;
   }
@@ -46,19 +43,55 @@ export type ACLPublicDecryptionErrorType = ACLPublicDecryptionError & {
   name: 'ACLPublicDecryptionError';
 };
 
-export class ACLPublicDecryptionError extends ACLErrorBase {
+export class ACLPublicDecryptionError extends ContractErrorBase {
+  private readonly _handles: Bytes32Hex[];
+
   constructor({
-    aclAddress,
-    handle,
+    contractAddress,
+    handles,
   }: {
-    aclAddress: ChecksummedAddress;
-    handle: Bytes32Hex;
+    contractAddress: ChecksummedAddress;
+    handles: Bytes32Hex[];
+  }) {
+    const handleList = handles.join(', ');
+    super({
+      message:
+        handles.length === 1
+          ? `Handle ${handles[0]} is not allowed for public decryption`
+          : `${handles.length} handles are not allowed for public decryption: ${handleList}`,
+      name: 'ACLPublicDecryptionError',
+      contractAddress,
+      contractName: 'ACL',
+    });
+    this._handles = handles;
+  }
+
+  public get handles(): Bytes32Hex[] {
+    return this._handles;
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// ACLUserDecryptionError
+////////////////////////////////////////////////////////////////////////////////
+
+export type ACLUserDecryptionErrorType = ACLUserDecryptionError & {
+  name: 'ACLUserDecryptionError';
+};
+
+export class ACLUserDecryptionError extends ContractErrorBase {
+  constructor({
+    contractAddress,
+    message,
+  }: {
+    contractAddress: ChecksummedAddress;
+    message: string;
   }) {
     super({
-      message: `Handle ${handle} is not allowed for public decryption!`,
-      name: 'ACLPublicDecryptionError',
-      aclAddress,
-      handle,
+      message,
+      name: 'ACLUserDecryptionError',
+      contractAddress,
+      contractName: 'ACL',
     });
   }
 }

@@ -5,8 +5,8 @@ import {
   SERIALIZED_SIZE_LIMIT_PK,
 } from '../constants';
 import fetchMock from 'fetch-mock';
-import { RelayerKeyUrlResponse } from './fetchRelayer';
 import { TEST_CONFIG } from '../test/config';
+import { RelayerV1KeyUrlResponse } from '../relayer-provider/v1/types';
 
 // Jest Command line
 // =================
@@ -92,7 +92,7 @@ import { TEST_CONFIG } from '../test/config';
 //   status: 'success',
 // };
 
-const payload: RelayerKeyUrlResponse = {
+const payload: RelayerV1KeyUrlResponse = {
   response: {
     crs: {
       '2048': {

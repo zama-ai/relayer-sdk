@@ -14,6 +14,28 @@ export type Bytes65HexNo0x = string;
 
 export type ChecksummedAddress = `0x${string}`;
 
+/**
+ * **FHE Type Mapping for Input Builders**
+ * * Maps the **number of encrypted bits** used by a FHEVM primary type
+ * to its corresponding **FheTypeId**. This constant is primarily used by
+ * `EncryptedInput` and `RelayerEncryptedInput` builders to determine the correct
+ * input type and calculate the total required bit-length.
+ *
+ * **Structure: \{ Encrypted Bit Length: FheTypeId \}**
+ *
+ * | Bits | FheTypeId | FHE Type Name | Note |
+ * | :--- | :-------- | :------------ | :--- |
+ * | 2    | 0         | `ebool`         | The boolean type. |
+ * | (N/A)| 1         | `euint4`        | **Deprecated** and omitted from this map. |
+ * | 8    | 2         | `euint8`        | |
+ * | 16   | 3         | `euint16`       | |
+ * | 32   | 4         | `euint32`       | |
+ * | 64   | 5         | `euint64`       | |
+ * | 128  | 6         | `euint128`      | |
+ * | 160  | 7         | `eaddress`      | Used for encrypted Ethereum addresses. |
+ * | 256  | 8         | `euint256`      | The maximum supported integer size. |
+ */
+
 export type FheTypeName = Prettify<keyof FheTypeNameToIdMap>;
 export type FheTypeId = Prettify<keyof FheTypeIdToNameMap>;
 export type FheTypeEncryptionBitwidth = Prettify<
@@ -44,6 +66,8 @@ export interface FheTypeIdToNameMap {
   8: 'euint256';
 }
 
+export type SolidityPrimitiveTypeName = 'bool' | 'uint256' | 'address';
+
 export interface FheTypeEncryptionBitwidthToIdMap {
   2: FheTypeNameToIdMap['ebool'];
   // ??: FheTypeNameToIdMap['euint4'];
@@ -60,3 +84,5 @@ export interface FheTypeEncryptionBitwidthToIdMap {
 export type FheTypeIdToEncryptionBitwidthMap = {
   [K in keyof FheTypeEncryptionBitwidthToIdMap as FheTypeEncryptionBitwidthToIdMap[K]]: K;
 };
+
+export type EncryptionBits = Prettify<keyof FheTypeEncryptionBitwidthToIdMap>;

@@ -1,21 +1,20 @@
-import { BytesHex, BytesHexNo0x } from '../../types/primitives';
-import type { FhevmInstanceOptions } from '../../config';
-import {
-  fetchRelayerGet,
-  fetchRelayerJsonRpcPost,
-  type RelayerPublicDecryptPayload,
-  type RelayerUserDecryptPayload,
-  type RelayerInputProofPayload,
-  type RelayerKeyUrlResponse,
-} from '../../relayer/fetchRelayer';
+import type { BytesHex, BytesHexNo0x } from '../../types/primitives';
+import type { RelayerV1KeyUrlResponse } from './types';
+import type {
+  FhevmInstanceOptions,
+  RelayerInputProofPayload,
+  RelayerInputProofResult,
+  RelayerPublicDecryptPayload,
+  RelayerPublicDecryptResult,
+  RelayerUserDecryptPayload,
+  RelayerUserDecryptResult,
+} from '../../types/relayer';
+import { fetchRelayerV1Get, fetchRelayerV1Post } from './fetchRelayerV1';
 import {
   AbstractRelayerProvider,
   assertIsRelayerInputProofResult,
   assertIsRelayerPublicDecryptResult,
   assertIsRelayerUserDecryptResult,
-  RelayerInputProofResult,
-  RelayerPublicDecryptResult,
-  RelayerUserDecryptResult,
 } from '../AbstractRelayerProvider';
 
 export class RelayerV1Provider extends AbstractRelayerProvider {
@@ -27,8 +26,8 @@ export class RelayerV1Provider extends AbstractRelayerProvider {
     return 1;
   }
 
-  public async fetchGetKeyUrl(): Promise<RelayerKeyUrlResponse> {
-    const response = await fetchRelayerGet('KEY_URL', this.keyUrl);
+  public async fetchGetKeyUrl(): Promise<RelayerV1KeyUrlResponse> {
+    const response = await fetchRelayerV1Get('KEY_URL', this.keyUrl);
     return response;
   }
 
@@ -50,7 +49,7 @@ export class RelayerV1Provider extends AbstractRelayerProvider {
       }
     }
     */
-    const json = await fetchRelayerJsonRpcPost(
+    const json = await fetchRelayerV1Post(
       'INPUT_PROOF',
       this.inputProof,
       payload,
@@ -65,7 +64,7 @@ export class RelayerV1Provider extends AbstractRelayerProvider {
     payload: RelayerPublicDecryptPayload,
     options?: FhevmInstanceOptions,
   ): Promise<RelayerPublicDecryptResult> {
-    const json = await fetchRelayerJsonRpcPost(
+    const json = await fetchRelayerV1Post(
       'PUBLIC_DECRYPT',
       this.publicDecrypt,
       payload,
@@ -85,7 +84,7 @@ export class RelayerV1Provider extends AbstractRelayerProvider {
     payload: RelayerUserDecryptPayload,
     options?: FhevmInstanceOptions,
   ): Promise<RelayerUserDecryptResult> {
-    const json = await fetchRelayerJsonRpcPost(
+    const json = await fetchRelayerV1Post(
       'USER_DECRYPT',
       this.userDecrypt,
       payload,

@@ -1,8 +1,9 @@
+import type { TFHEType } from '../tfheType';
+import type { EncryptionBits } from '../types/primitives';
+
 import { isAddress } from 'ethers';
 
 import { SERIALIZED_SIZE_LIMIT_CIPHERTEXT } from '../constants';
-import { EncryptionBits } from './encryptionTypes';
-import { TFHEType } from '../tfheType';
 import { hexToBytes } from '../utils/bytes';
 
 export type EncryptedInput = {

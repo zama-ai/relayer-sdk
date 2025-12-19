@@ -1,16 +1,14 @@
 import createHash from 'keccak';
 
-import { ENCRYPTION_TYPES } from '../sdk/encryptionTypes';
 import { hexToBytes } from '../utils/bytes';
 import { MAX_UINT64 } from '../utils/uint';
 import { FhevmHandle } from '../sdk/FhevmHandle';
-
-type EncryptionBitwidths = keyof typeof ENCRYPTION_TYPES;
+import type { EncryptionBits } from '../types/primitives';
 
 // To Be Removed (only used in tests, replaced by FhevmHandle class)
 export const computeHandles = (
   ciphertextWithZKProof: Uint8Array,
-  bitwidths: EncryptionBitwidths[],
+  bitwidths: EncryptionBits[],
   aclContractAddress: string,
   chainId: number,
   ciphertextVersion: number,
@@ -25,7 +23,7 @@ export const computeHandles = (
   const hex = chainId.toString(16).padStart(64, '0'); // 64 hex chars = 32 bytes
   const chainId32Bytes = Buffer.from(hex, 'hex');
   const handles = bitwidths.map((bitwidth, encryptionIndex) => {
-    const encryptionType = ENCRYPTION_TYPES[bitwidth];
+    const encryptionType = FhevmHandle.FheTypeEncryptionBitwidthsToId[bitwidth];
     const encryptionIndex1Byte = Buffer.from([encryptionIndex]);
     const handleHash = createHash('keccak256')
       .update(Buffer.from(FhevmHandle.HANDLE_HASH_DOMAIN_SEPARATOR))

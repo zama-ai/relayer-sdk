@@ -1,21 +1,20 @@
 import { isAddress, getAddress as ethersGetAddress } from 'ethers';
 
-import {
-  createEncryptedInput as createEncryptedInput,
-  EncryptedInput,
-  PublicParams,
-} from '../sdk/encrypt';
-import { EncryptionBits } from '../sdk/encryptionTypes';
+import { createEncryptedInput as createEncryptedInput } from '../sdk/encrypt';
 import { ethers } from 'ethers';
-import { TFHEType } from '../tfheType';
 import { throwRelayerInternalError } from './error';
-import { RelayerInputProofPayload } from './fetchRelayer';
-import { Auth } from '../auth';
 import { AbstractRelayerProvider } from '../relayer-provider/AbstractRelayerProvider';
 import { hexToBytes, toHexString } from '../utils/bytes';
 import { numberToHex } from '../utils/uint';
 import { FhevmHandle } from '../sdk/FhevmHandle';
-import { ChecksummedAddress } from '../types/primitives';
+import type { EncryptedInput, PublicParams } from '../sdk/encrypt';
+import type { TFHEType } from '../tfheType';
+import type {
+  FhevmInstanceOptions,
+  RelayerInputProofPayload,
+} from '../types/relayer';
+import type { ChecksummedAddress, EncryptionBits } from '../types/primitives';
+import type { RelayerV2InputProofOptions } from '../relayer-provider/v2/types/types';
 
 // Add type checking
 const getAddress = (value: string): `0x${string}` =>
@@ -94,7 +93,8 @@ export type RelayerEncryptedInput = {
   add256: (value: number | bigint) => RelayerEncryptedInput;
   addAddress: (value: string) => RelayerEncryptedInput;
   getBits: () => EncryptionBits[];
-  encrypt: (options?: { auth?: Auth }) => Promise<{
+  getCiphertextWithInputVerification(): Uint8Array;
+  encrypt: (options?: RelayerV2InputProofOptions) => Promise<{
     handles: Uint8Array[];
     inputProof: Uint8Array;
   }>;
@@ -106,13 +106,12 @@ export const createRelayerEncryptedInput =
     verifyingContractAddressInputVerification: string,
     chainId: number,
     gatewayChainId: number,
-    //relayerUrl: string,
     relayerProvider: AbstractRelayerProvider,
     tfheCompactPublicKey: TFHEType['TfheCompactPublicKey'],
     publicParams: PublicParams,
     coprocessorSigners: string[],
     thresholdCoprocessorSigners: number,
-    instanceOptions?: { auth?: Auth },
+    defaultOptions?: FhevmInstanceOptions,
   ) =>
   (
     contractAddress: string,
@@ -172,12 +171,14 @@ export const createRelayerEncryptedInput =
       getBits(): EncryptionBits[] {
         return input.getBits();
       },
-      encrypt: async (options?: { auth?: Auth }) => {
+      getCiphertextWithInputVerification(): Uint8Array {
+        return input.encrypt();
+      },
+      encrypt: async (options?: RelayerV2InputProofOptions) => {
         const extraData: `0x${string}` = '0x00';
         const bits = input.getBits();
         const ciphertext = input.encrypt();
 
-        //console.log(`ciphertext=${toHexString(ciphertext)}`);
         const payload: RelayerInputProofPayload = {
           contractAddress: getAddress(contractAddress),
           userAddress: getAddress(userAddress),
@@ -186,16 +187,10 @@ export const createRelayerEncryptedInput =
           extraData,
         };
 
-        const json = await relayerProvider.fetchPostInputProof(
-          payload,
-          options ?? instanceOptions,
-        );
-        // const json = await fetchRelayerJsonRpcPost(
-        //   'INPUT_PROOF',
-        //   `${relayerUrl}/v1/input-proof`,
-        //   payload,
-        //   options ?? instanceOptions,
-        // );
+        const json = await relayerProvider.fetchPostInputProof(payload, {
+          ...defaultOptions,
+          ...options,
+        });
 
         if (!isFhevmRelayerInputProofResponse(json)) {
           throwRelayerInternalError('INPUT_PROOF', json);
@@ -210,8 +205,6 @@ export const createRelayerEncryptedInput =
         });
 
         const handles: Uint8Array[] = fhevmHandles.map((h) => h.toBytes32());
-
-        //const result = json.response;
         const result = json;
 
         // Note that the hex strings returned by the relayer do have have the 0x prefix

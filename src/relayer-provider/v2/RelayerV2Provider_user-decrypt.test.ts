@@ -1,5 +1,3 @@
-import type { ethers as EthersT } from 'ethers';
-import type { RelayerUserDecryptPayload } from '../../relayer/fetchRelayer';
 import { AbstractRelayerProvider } from '../AbstractRelayerProvider';
 import { createRelayerProvider } from '../createRelayerFhevm';
 import fetchMock from 'fetch-mock';
@@ -18,9 +16,11 @@ import { createEIP712, createInstance, UserDecryptResults } from '../..';
 import { KmsSigner } from '../../test/fhevm-mock/KmsSigner';
 import { KmsEIP712 } from '../../sdk/kms/KmsEIP712';
 import { assertIsBytes65Hex, assertIsBytesHexNo0x } from '../../utils/bytes';
-import { ensure0x } from '../../utils/string';
-import { FhevmInstanceConfig } from '../../config';
-import { Bytes65Hex, BytesHex } from '../../types/primitives';
+import { ensure0x, safeJSONstringify } from '../../utils/string';
+import type { ethers as EthersT } from 'ethers';
+import type { Bytes65Hex, BytesHex } from '../../types/primitives';
+import type { RelayerUserDecryptPayload } from '../../types/relayer';
+import type { FhevmInstanceConfig } from '../../types/relayer';
 
 // Jest Command line
 // =================
@@ -53,7 +53,10 @@ const payload: RelayerUserDecryptPayload = {
   extraData: '0x00',
 };
 
-function invalidBodyError(cause: InvalidPropertyError) {
+function invalidBodyError(params: {
+  cause: InvalidPropertyError;
+  bodyJson: string;
+}) {
   return new RelayerV2ResponseInvalidBodyError({
     fetchMethod: 'POST',
     status: 202,
@@ -62,7 +65,7 @@ function invalidBodyError(cause: InvalidPropertyError) {
     retryCount: 0,
     operation: 'USER_DECRYPT',
     state: RUNNING_REQ_STATE,
-    cause,
+    ...params,
   });
 }
 
@@ -117,28 +120,31 @@ describeIfFetchMock('RelayerV2Provider', () => {
   });
 
   it('v2:user-decrypt: 202 - empty json', async () => {
-    post202({});
+    const bodyJson = {};
+    post202(bodyJson);
     await expect(() =>
       relayerProvider.fetchPostUserDecrypt(payload),
     ).rejects.toThrow(
-      invalidBodyError(
-        InvalidPropertyError.missingProperty({
+      invalidBodyError({
+        cause: InvalidPropertyError.missingProperty({
           objName: 'body',
           property: 'status',
           expectedType: 'string',
           expectedValue: 'queued',
         }),
-      ),
+        bodyJson: safeJSONstringify(bodyJson),
+      }),
     );
   });
 
   it('v2:user-decrypt: 202 - status:failed', async () => {
-    post202({ status: 'failed' });
+    const bodyJson = { status: 'failed' };
+    post202(bodyJson);
     await expect(() =>
       relayerProvider.fetchPostUserDecrypt(payload),
     ).rejects.toThrow(
-      invalidBodyError(
-        new InvalidPropertyError({
+      invalidBodyError({
+        cause: new InvalidPropertyError({
           objName: 'body',
           property: 'status',
           expectedType: 'string',
@@ -146,17 +152,19 @@ describeIfFetchMock('RelayerV2Provider', () => {
           type: 'string',
           value: 'failed',
         }),
-      ),
+        bodyJson: safeJSONstringify(bodyJson),
+      }),
     );
   });
 
   it('v2:user-decrypt: 202 - status:succeeded', async () => {
-    post202({ status: 'succeeded' });
+    const bodyJson = { status: 'succeeded' };
+    post202(bodyJson);
     await expect(() =>
       relayerProvider.fetchPostUserDecrypt(payload),
     ).rejects.toThrow(
-      invalidBodyError(
-        new InvalidPropertyError({
+      invalidBodyError({
+        cause: new InvalidPropertyError({
           objName: 'body',
           property: 'status',
           expectedType: 'string',
@@ -164,45 +172,52 @@ describeIfFetchMock('RelayerV2Provider', () => {
           type: 'string',
           value: 'succeeded',
         }),
-      ),
+        bodyJson: safeJSONstringify(bodyJson),
+      }),
     );
   });
 
   it('v2:user-decrypt: 202 - status:queued', async () => {
-    post202({ status: 'queued' });
+    const bodyJson = { status: 'queued' };
+    post202(bodyJson);
     await expect(() =>
       relayerProvider.fetchPostUserDecrypt(payload),
     ).rejects.toThrow(
-      invalidBodyError(
-        InvalidPropertyError.missingProperty({
+      invalidBodyError({
+        cause: InvalidPropertyError.missingProperty({
           objName: 'body',
-          property: 'result',
-          expectedType: 'non-nullable',
+          property: 'requestId',
+          expectedType: 'string',
         }),
-      ),
+        bodyJson: safeJSONstringify(bodyJson),
+      }),
     );
   });
 
   it('v2:user-decrypt: 202 - status:queued, result empty', async () => {
-    post202({ status: 'queued', result: {} });
+    const bodyJson = { status: 'queued', result: {} };
+    post202(bodyJson);
     await expect(() =>
       relayerProvider.fetchPostUserDecrypt(payload),
     ).rejects.toThrow(
-      invalidBodyError(
-        InvalidPropertyError.missingProperty({
-          objName: 'body.result',
-          property: 'jobId',
+      invalidBodyError({
+        cause: InvalidPropertyError.missingProperty({
+          objName: 'body',
+          property: 'requestId',
           expectedType: 'string',
         }),
-      ),
+        bodyJson: safeJSONstringify(bodyJson),
+      }),
     );
   });
 
   it('v2:user-decrypt: 202 - status:queued, result ok', async () => {
-    post202({
+    const bodyJson = {
       status: 'queued',
+      requestId: 'hello',
       result: { jobId: '123' },
-    });
+    };
+    post202(bodyJson);
 
     fetchMock.get(`${TEST_CONFIG.v2.urls.userDecrypt}/123`, {
       status: 200,
@@ -327,10 +342,6 @@ describeIfFetch('FhevmInstance.userDecrypot:sepolia:', () => {
     expect(t === 'bigint' || t === 'number' || t === 'string').toBe(true);
 
     expect(res[eCount]).toBeGreaterThan(0);
-
-    // console.log(
-    //   JSON.stringify(res, (_, v) => (typeof v === 'bigint' ? v.toString() : v)),
-    // );
   }
 
   it('v2: FhevmInstance.userDecrypt succeeded', async () => {

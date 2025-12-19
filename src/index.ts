@@ -1,5 +1,4 @@
 import {
-  type FhevmInstanceConfig,
   getChainId,
   getKMSSigners,
   getKMSSignersThreshold,
@@ -9,24 +8,32 @@ import {
 } from './config';
 
 import type { HandleContractPair } from './relayer/userDecrypt';
-import { userDecryptRequest } from './relayer/userDecrypt';
-import { createRelayerEncryptedInput } from './relayer/sendEncryption';
 import type { RelayerEncryptedInput } from './relayer/sendEncryption';
-import { publicDecryptRequest } from './relayer/publicDecrypt';
-
 import type { PublicParams } from './sdk/encrypt';
-
-import { generateKeypair, createEIP712 } from './sdk/keypair';
 import type { EIP712, EIP712Type } from './sdk/keypair';
-import type { Auth, BearerToken, ApiKeyCookie, ApiKeyHeader } from './auth';
-
-//import fetchRetry from 'fetch-retry';
 import type {
+  FhevmInstanceConfig,
+  Auth,
+  BearerToken,
+  ApiKeyCookie,
+  ApiKeyHeader,
   PublicDecryptResults,
   UserDecryptResults,
   ClearValueType,
   ClearValues,
-} from './relayer/decryptUtils';
+  FhevmInstanceOptions,
+} from './types/relayer';
+import type {
+  RelayerV2PublicDecryptOptions,
+  RelayerV2UserDecryptOptions,
+} from './relayer-provider/v2/types/types';
+
+import { userDecryptRequest } from './relayer/userDecrypt';
+import { createRelayerEncryptedInput } from './relayer/sendEncryption';
+import { publicDecryptRequest } from './relayer/publicDecrypt';
+
+import { generateKeypair, createEIP712 } from './sdk/keypair';
+
 import { isChecksummedAddress } from './utils/address';
 import { createRelayerFhevm } from './relayer-provider/createRelayerFhevm';
 
@@ -36,6 +43,8 @@ import { createRelayerFhevm } from './relayer-provider/createRelayerFhevm';
 //global.fetch = fetchRetry(global.fetch, { retries: 5, retryDelay: 500 });
 
 export { generateKeypair, createEIP712 };
+export { getErrorCauseStatus, getErrorCauseCode } from './relayer/error';
+export type { EncryptionBits } from './types/primitives';
 export type {
   EIP712,
   EIP712Type,
@@ -47,15 +56,18 @@ export type {
   HandleContractPair,
   PublicParams,
 };
-export { ENCRYPTION_TYPES } from './sdk/encryptionTypes';
-export type { EncryptionBits } from './sdk/encryptionTypes';
-export { getErrorCauseStatus, getErrorCauseCode } from './relayer/error';
 export type {
   PublicDecryptResults,
   UserDecryptResults,
   ClearValueType,
   ClearValues,
+  FhevmInstanceConfig,
+  FhevmInstanceOptions,
 };
+
+////////////////////////////////////////////////////////////////////////////////
+// FhevmInstance
+////////////////////////////////////////////////////////////////////////////////
 
 export type FhevmInstance = {
   createEncryptedInput: (
@@ -71,6 +83,7 @@ export type FhevmInstance = {
   ) => EIP712;
   publicDecrypt: (
     handles: (string | Uint8Array)[],
+    options?: RelayerV2PublicDecryptOptions,
   ) => Promise<PublicDecryptResults>;
   userDecrypt: (
     handles: HandleContractPair[],
@@ -81,6 +94,7 @@ export type FhevmInstance = {
     userAddress: string,
     startTimestamp: string | number,
     durationDays: string | number,
+    options?: RelayerV2UserDecryptOptions,
   ) => Promise<UserDecryptResults>;
   getPublicKey: () => { publicKeyId: string; publicKey: Uint8Array } | null;
   getPublicParams: (bits: keyof PublicParams) => {
@@ -89,29 +103,47 @@ export type FhevmInstance = {
   } | null;
 };
 
+////////////////////////////////////////////////////////////////////////////////
+// MainnetConfig
+////////////////////////////////////////////////////////////////////////////////
+
+export const MainnetConfig: FhevmInstanceConfig = {
+  aclContractAddress: '0xcA2E8f1F656CD25C01F05d0b243Ab1ecd4a8ffb6',
+  kmsContractAddress: '0x77627828a55156b04Ac0DC0eb30467f1a552BB03',
+  inputVerifierContractAddress: '0xCe0FC2e05CFff1B719EFF7169f7D80Af770c8EA2',
+  verifyingContractAddressDecryption:
+    '0x0f6024a97684f7d90ddb0fAAD79cB15F2C888D24',
+  verifyingContractAddressInputVerification:
+    '0xcB1bB072f38bdAF0F328CdEf1Fc6eDa1DF029287',
+  chainId: 1,
+  gatewayChainId: 261131,
+  network: 'https://ethereum-rpc.publicnode.com',
+  relayerUrl: 'https://relayer.mainnet.zama.org',
+} as const;
+Object.freeze(MainnetConfig);
+
+////////////////////////////////////////////////////////////////////////////////
+// SepoliaConfig
+////////////////////////////////////////////////////////////////////////////////
+
 export const SepoliaConfig: FhevmInstanceConfig = {
-  // ACL_CONTRACT_ADDRESS (FHEVM Host chain)
   aclContractAddress: '0xf0Ffdc93b7E186bC2f8CB3dAA75D86d1930A433D',
-  // KMS_VERIFIER_CONTRACT_ADDRESS (FHEVM Host chain)
   kmsContractAddress: '0xbE0E383937d564D7FF0BC3b46c51f0bF8d5C311A',
-  // INPUT_VERIFIER_CONTRACT_ADDRESS (FHEVM Host chain)
   inputVerifierContractAddress: '0xBBC1fFCdc7C316aAAd72E807D9b0272BE8F84DA0',
-  // DECRYPTION_ADDRESS (Gateway chain)
   verifyingContractAddressDecryption:
     '0x5D8BD78e2ea6bbE41f26dFe9fdaEAa349e077478',
-  // INPUT_VERIFICATION_ADDRESS (Gateway chain)
   verifyingContractAddressInputVerification:
     '0x483b9dE06E4E4C7D35CCf5837A1668487406D955',
-  // FHEVM Host chain id
   chainId: 11155111,
-  // Gateway chain id
   gatewayChainId: 10901,
-  // Optional RPC provider to host chain
   network: 'https://ethereum-sepolia-rpc.publicnode.com',
-  // Relayer URL
   relayerUrl: 'https://relayer.testnet.zama.org',
 } as const;
 Object.freeze(SepoliaConfig);
+
+////////////////////////////////////////////////////////////////////////////////
+// createInstance
+////////////////////////////////////////////////////////////////////////////////
 
 export const createInstance = async (
   config: FhevmInstanceConfig,
@@ -165,20 +197,6 @@ export const createInstance = async (
 
   const chainId = await getChainId(provider, config);
 
-  // const relayerVersionUrl = `${config.relayerUrl!}/v1`;
-
-  // const publicKeyData = await getTfheCompactPublicKey({
-  //   relayerVersionUrl: relayerFhevm.relayerVersionUrl,
-  //   publicKey: config.publicKey,
-  // });
-
-  //const aaa = relayerFhevm.getPublicKey();
-
-  // const publicParamsData = await getPublicParams({
-  //   relayerVersionUrl,
-  //   publicParams: config.publicParams,
-  // });
-
   const kmsSigners = await getKMSSigners(provider, kmsContractAddress);
 
   const thresholdKMSSigners = await getKMSSignersThreshold(
@@ -202,15 +220,12 @@ export const createInstance = async (
       verifyingContractAddressInputVerification,
       chainId,
       gatewayChainId,
-      //cleanURL(config.relayerUrl),
-      //relayerFhevm.relayerVersionUrl,
       relayerFhevm.relayerProvider,
-      //publicKeyData.publicKey,
       relayerFhevm.getPublicKeyWasm().publicKey,
-      //publicParamsData,
       { 2048: relayerFhevm.getPublicParamsWasm(2048) },
       coprocessorSigners,
       thresholdCoprocessorSigners,
+      auth && { auth },
     ),
     generateKeypair,
     createEIP712: createEIP712(verifyingContractAddressDecryption, chainId),

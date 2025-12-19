@@ -1,16 +1,20 @@
 import { hexToBytes, toHexString } from '../utils/bytes';
 import { ethers, AbiCoder } from 'ethers';
-import {
-  type ClearValueType,
-  type ClearValues,
-  type PublicDecryptResults,
-  checkEncryptedBits,
-  getHandleType,
-} from './decryptUtils';
-import type { RelayerPublicDecryptPayload } from './fetchRelayer';
+import { checkEncryptedBits } from './decryptUtils';
+import type {
+  ClearValues,
+  ClearValueType,
+  FhevmInstanceOptions,
+  PublicDecryptResults,
+  RelayerPublicDecryptPayload,
+} from '../types/relayer';
 import { ensure0x } from '../utils/string';
 import { AbstractRelayerProvider } from '../relayer-provider/AbstractRelayerProvider';
-import type { FhevmInstanceOptions } from '../config';
+import type { RelayerV2PublicDecryptOptions } from '../relayer-provider/v2/types/types';
+import { FhevmHandle } from '../sdk/FhevmHandle';
+import { Bytes32Hex, FheTypeId } from '../types/primitives';
+import { assertRelayer } from '../errors/InternalError';
+import { assertNever } from '../errors/utils';
 
 const aclABI = [
   'function isAllowedForDecryption(bytes32 handle) view returns (bool)',
@@ -51,7 +55,7 @@ function abiEncodeClearValues(clearValues: ClearValues) {
 
   for (let i = 0; i < handlesBytes32Hex.length; ++i) {
     const handle = handlesBytes32Hex[i];
-    const handleType = getHandleType(handle);
+    const handleType = FhevmHandle.getFheTypeId(handle);
 
     let clearTextValue: ClearValueType =
       clearValues[handle as keyof typeof clearValues];
@@ -99,7 +103,10 @@ function abiEncodeClearValues(clearValues: ClearValues) {
         break;
       }
       default: {
-        throw new Error(`Unsupported Fhevm primitive type id: ${handleType}`);
+        assertNever(
+          handleType,
+          `Unsupported Fhevm primitive type id: ${handleType}`,
+        );
       }
     }
   }
@@ -141,27 +148,15 @@ function buildDecryptionProof(
   return decryptionProof;
 }
 
-const CiphertextType: Record<number, 'bool' | 'uint256' | 'address' | 'bytes'> =
-  {
-    0: 'bool',
-    2: 'uint256',
-    3: 'uint256',
-    4: 'uint256',
-    5: 'uint256',
-    6: 'uint256',
-    7: 'address',
-    8: 'uint256',
-  };
-
 function deserializeClearValues(
-  handles: `0x${string}`[],
+  handles: Bytes32Hex[],
   decryptedResult: `0x${string}`,
 ): ClearValues {
-  let typesList: number[] = [];
+  let typesList: FheTypeId[] = [];
   for (const handle of handles) {
-    const hexPair = handle.slice(-4, -2).toLowerCase();
-    const typeDiscriminant = parseInt(hexPair, 16);
-    typesList.push(typeDiscriminant);
+    const typeDiscriminant = FhevmHandle.getFheTypeId(handle);
+    assertRelayer(FhevmHandle.isFheTypeId(typeDiscriminant));
+    typesList.push(typeDiscriminant as FheTypeId);
   }
 
   const restoredEncoded =
@@ -171,7 +166,7 @@ function deserializeClearValues(
     '00'.repeat(32); // dummy empty bytes[] length (ignored)
 
   const abiTypes = typesList.map((t) => {
-    const abiType = CiphertextType[t]; // all types are valid because this was supposedly checked already inside the `checkEncryptedBits` function
+    const abiType = FhevmHandle.FheTypeIdToSolidityPrimitiveType[t]; // all types are valid because this was supposedly checked already inside the `checkEncryptedBits` function
     return abiType;
   });
 
@@ -197,14 +192,13 @@ export const publicDecryptRequest =
     gatewayChainId: number,
     verifyingContractAddress: string,
     aclContractAddress: string,
-    //relayerUrl: string,
     relayerProvider: AbstractRelayerProvider,
     provider: ethers.JsonRpcProvider | ethers.BrowserProvider,
-    instanceOptions?: FhevmInstanceOptions,
+    defaultOptions?: FhevmInstanceOptions,
   ) =>
   async (
     _handles: (Uint8Array | string)[],
-    options?: FhevmInstanceOptions,
+    options?: RelayerV2PublicDecryptOptions,
   ): Promise<PublicDecryptResults> => {
     const extraData: `0x${string}` = '0x00';
     const acl = new ethers.Contract(aclContractAddress, aclABI, provider);
@@ -242,14 +236,11 @@ export const publicDecryptRequest =
 
     const json = await relayerProvider.fetchPostPublicDecrypt(
       payloadForRequest,
-      options ?? instanceOptions,
+      {
+        ...defaultOptions,
+        ...options,
+      },
     );
-    // const json = await fetchRelayerJsonRpcPost(
-    //   'PUBLIC_DECRYPT',
-    //   `${relayerUrl}/v1/public-decrypt`,
-    //   payloadForRequest,
-    //   options ?? instanceOptions,
-    // );
 
     // verify signatures on decryption:
     const domain = {

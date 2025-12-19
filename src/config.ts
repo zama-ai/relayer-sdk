@@ -5,16 +5,15 @@ import {
   JsonRpcProvider,
   Provider,
 } from 'ethers';
-import { PublicParams } from './sdk/encrypt';
+import type { PublicParams } from './sdk/encrypt';
 import { getKeysFromRelayer } from './relayer/network';
 import {
   SERIALIZED_SIZE_LIMIT_PK,
   SERIALIZED_SIZE_LIMIT_CRS,
 } from './constants';
 import type { TFHEType } from './tfheType';
-import { Auth } from './auth';
-import { Prettify } from './utils/types';
 import { removeSuffix } from './utils/string';
+import type { FhevmInstanceConfig } from './types/relayer';
 
 const abiKmsVerifier = [
   'function getKmsSigners() view returns (address[])',
@@ -25,29 +24,6 @@ const abiInputVerifier = [
   'function getCoprocessorSigners() view returns (address[])',
   'function getThreshold() view returns (uint256)',
 ];
-
-export type FhevmInstanceOptions = {
-  auth?: Auth;
-};
-
-export type FhevmInstanceConfig = Prettify<
-  {
-    verifyingContractAddressDecryption: string;
-    verifyingContractAddressInputVerification: string;
-    kmsContractAddress: string;
-    inputVerifierContractAddress: string;
-    aclContractAddress: string;
-    gatewayChainId: number;
-    chainId?: number;
-    relayerUrl?: string;
-    network?: Eip1193Provider | string;
-    publicParams?: PublicParams<Uint8Array> | null;
-    publicKey?: {
-      data: Uint8Array | null;
-      id: string | null;
-    };
-  } & FhevmInstanceOptions
->;
 
 export const getProvider = (network: string | Eip1193Provider | undefined) => {
   if (typeof network === 'string') {

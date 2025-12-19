@@ -1,13 +1,11 @@
 import { userDecryptRequest } from './userDecrypt';
 import fetchMock from 'fetch-mock';
 import { ethers } from 'ethers';
-import {
-  fetchRelayerJsonRpcPost,
-  RelayerUserDecryptPayload,
-} from './fetchRelayer';
 import { getErrorCause, getErrorCauseErrorMessage } from './error';
 import { createRelayerProvider } from '../relayer-provider/createRelayerFhevm';
 import { TEST_CONFIG } from '../test/config';
+import { RelayerUserDecryptPayload } from '../types/relayer';
+import { fetchRelayerV1Post } from '../relayer-provider/v1/fetchRelayerV1';
 
 // Jest Command line
 // =================
@@ -83,7 +81,7 @@ describeIfFetchMock('fetchRelayerUserDecrypt', () => {
     fetchMock.postOnce(RELAYER_USER_DECRYPT_URL, response);
 
     try {
-      await fetchRelayerJsonRpcPost(
+      await fetchRelayerV1Post(
         'USER_DECRYPT',
         RELAYER_USER_DECRYPT_URL,
         dummyRelayerUserDecryptPayload,
@@ -133,7 +131,7 @@ describeIfFetchMock('fetchRelayerUserDecrypt', () => {
     fetchMock.postOnce(RELAYER_USER_DECRYPT_URL, response);
 
     try {
-      await fetchRelayerJsonRpcPost(
+      await fetchRelayerV1Post(
         'USER_DECRYPT',
         RELAYER_USER_DECRYPT_URL,
         dummyRelayerUserDecryptPayload,
@@ -174,7 +172,7 @@ describeIfFetchMock('fetchRelayerUserDecrypt', () => {
     });
 
     try {
-      await fetchRelayerJsonRpcPost(
+      await fetchRelayerV1Post(
         'USER_DECRYPT',
         RELAYER_USER_DECRYPT_URL,
         dummyRelayerUserDecryptPayload,
@@ -202,7 +200,7 @@ describeIfFetchMock('fetchRelayerUserDecrypt', () => {
     });
 
     try {
-      await fetchRelayerJsonRpcPost(
+      await fetchRelayerV1Post(
         'USER_DECRYPT',
         RELAYER_USER_DECRYPT_URL,
         dummyRelayerUserDecryptPayload,
@@ -236,7 +234,7 @@ describeIfFetchMock('fetchRelayerUserDecrypt', () => {
     });
 
     try {
-      await fetchRelayerJsonRpcPost(
+      await fetchRelayerV1Post(
         'USER_DECRYPT',
         RELAYER_USER_DECRYPT_URL,
         dummyRelayerUserDecryptPayload,
@@ -263,7 +261,7 @@ describeIfFetchMock('fetchRelayerUserDecrypt', () => {
     fetchMock.postOnce(RELAYER_USER_DECRYPT_URL, {
       response: {},
     });
-    await fetchRelayerJsonRpcPost(
+    await fetchRelayerV1Post(
       'USER_DECRYPT',
       RELAYER_USER_DECRYPT_URL,
       dummyRelayerUserDecryptPayload,

@@ -1,4 +1,4 @@
-import { RelayerOperation } from '../../../relayer/fetchRelayer';
+import type { RelayerOperation } from '../../../types/relayer';
 import {
   RelayerErrorBase,
   RelayerErrorBaseParams,

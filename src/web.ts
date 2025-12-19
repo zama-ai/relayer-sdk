@@ -19,6 +19,7 @@ import {
   ml_kem_pke_sk_to_u8vec,
   ml_kem_pke_get_pk,
 } from 'tkms';
+
 window.TFHE = {
   default: initTFHE,
   initThreadPool,
@@ -46,16 +47,6 @@ export { InitInput as KMSInput } from 'tkms';
 
 export type { TFHEType } from './tfheType';
 
-export {
-  createInstance,
-  ENCRYPTION_TYPES,
-  generateKeypair,
-  createEIP712,
-  SepoliaConfig,
-  getErrorCauseCode,
-  getErrorCauseStatus,
-} from './index';
-
 export type {
   RelayerEncryptedInput,
   PublicParams,
@@ -72,7 +63,18 @@ export type {
   BearerToken,
   ApiKeyCookie,
   ApiKeyHeader,
+  FhevmInstanceConfig,
+  FhevmInstanceOptions,
 } from './index';
 
-export type { FhevmInstanceConfig, FhevmInstanceOptions } from './config';
+export {
+  createInstance,
+  generateKeypair,
+  createEIP712,
+  MainnetConfig,
+  SepoliaConfig,
+  getErrorCauseCode,
+  getErrorCauseStatus,
+} from './index';
+
 export { initSDK } from './init';
