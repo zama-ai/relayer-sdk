@@ -27,6 +27,7 @@ import type {
   FheTypeEncryptionBitwidthToIdMap,
   FheTypeId,
   FheTypeIdToEncryptionBitwidthMap,
+  SolidityPrimitiveTypeName,
 } from '../types/primitives';
 
 type CreateInputHandlesBaseParams = {
@@ -83,6 +84,20 @@ export class FhevmHandle {
       160: 7,
       256: 8,
     } as const;
+
+  static readonly FheTypeIdToSolidityPrimitiveType: Record<
+    FheTypeId,
+    SolidityPrimitiveTypeName
+  > = {
+    0: 'bool',
+    2: 'uint256',
+    3: 'uint256',
+    4: 'uint256',
+    5: 'uint256',
+    6: 'uint256',
+    7: 'address',
+    8: 'uint256',
+  } as const;
 
   static {
     Object.freeze(FhevmHandle.FheTypeIdToEncryptionBitwidths);
@@ -286,5 +301,37 @@ export class FhevmHandle {
     if (!isBytes32Hex(handle)) {
       throw new FhevmHandleError({ handle });
     }
+  }
+
+  public static isFheTypeId(value: unknown): value is FheTypeId {
+    switch (value as FheTypeId) {
+      case 0:
+      // 1: euint4 is deprecated
+      case 2:
+      case 3:
+      case 4:
+      case 5:
+      case 6:
+      case 7:
+      case 8:
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  public static getFheTypeId(handle: unknown): FheTypeId {
+    if (!isBytes32Hex(handle)) {
+      throw new FhevmHandleError({ handle });
+    }
+    const hexPair = handle.slice(-4, -2).toLowerCase();
+    const typeDiscriminant = parseInt(hexPair, 16);
+    if (!FhevmHandle.isFheTypeId(typeDiscriminant)) {
+      throw new FhevmHandleError({
+        handle,
+        message: `FHEVM Handle "${handle}" is invalid. Unknown FheType: ${typeDiscriminant}`,
+      });
+    }
+    return typeDiscriminant;
   }
 }

@@ -5,9 +5,9 @@ export type FhevmHandleErrorType = FhevmHandleError & {
 };
 
 export class FhevmHandleError extends RelayerErrorBase {
-  constructor({ handle }: { handle: unknown }) {
+  constructor({ handle, message }: { handle: unknown; message?: string }) {
     super({
-      message: `FHEVM Handle "${handle}" is invalid.`,
+      message: message ?? `FHEVM Handle "${handle}" is invalid.`,
       name: 'FhevmHandleError',
     });
   }

@@ -66,6 +66,8 @@ export interface FheTypeIdToNameMap {
   8: 'euint256';
 }
 
+export type SolidityPrimitiveTypeName = 'bool' | 'uint256' | 'address';
+
 export interface FheTypeEncryptionBitwidthToIdMap {
   2: FheTypeNameToIdMap['ebool'];
   // ??: FheTypeNameToIdMap['euint4'];
