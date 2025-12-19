@@ -17,6 +17,7 @@ export {
   ClearValueType,
   ClearValues,
   initSDK,
+  MainnetConfig,
   SepoliaConfig,
   Auth,
   BearerToken,

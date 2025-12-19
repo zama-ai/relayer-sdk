@@ -1,0 +1,10 @@
+ignorePatterns:
+  - pattern: '^https://x.com/'
+aliveStatusCodes:
+  - 200
+  - 206
+  - 403
+  - 501
+dirs:
+  - .
+useGitIgnore: true
