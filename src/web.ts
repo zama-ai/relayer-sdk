@@ -51,6 +51,7 @@ export {
   ENCRYPTION_TYPES,
   generateKeypair,
   createEIP712,
+  MainnetConfig,
   SepoliaConfig,
   getErrorCauseCode,
   getErrorCauseStatus,

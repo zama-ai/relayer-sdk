@@ -10,6 +10,7 @@ export type { TFHEType } from './tfheType';
 export {
   ENCRYPTION_TYPES,
   SepoliaConfig,
+  MainnetConfig,
   createInstance,
   generateKeypair,
   createEIP712,
