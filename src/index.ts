@@ -64,6 +64,11 @@ export type {
   FhevmInstanceConfig,
   FhevmInstanceOptions,
 };
+
+////////////////////////////////////////////////////////////////////////////////
+// FhevmInstance
+////////////////////////////////////////////////////////////////////////////////
+
 export type FhevmInstance = {
   createEncryptedInput: (
     contractAddress: string,
@@ -98,6 +103,10 @@ export type FhevmInstance = {
   } | null;
 };
 
+////////////////////////////////////////////////////////////////////////////////
+// MainnetConfig
+////////////////////////////////////////////////////////////////////////////////
+
 export const MainnetConfig: FhevmInstanceConfig = {
   aclContractAddress: '0xcA2E8f1F656CD25C01F05d0b243Ab1ecd4a8ffb6',
   kmsContractAddress: '0x77627828a55156b04Ac0DC0eb30467f1a552BB03',
@@ -113,6 +122,10 @@ export const MainnetConfig: FhevmInstanceConfig = {
 } as const;
 Object.freeze(MainnetConfig);
 
+////////////////////////////////////////////////////////////////////////////////
+// SepoliaConfig
+////////////////////////////////////////////////////////////////////////////////
+
 export const SepoliaConfig: FhevmInstanceConfig = {
   aclContractAddress: '0xf0Ffdc93b7E186bC2f8CB3dAA75D86d1930A433D',
   kmsContractAddress: '0xbE0E383937d564D7FF0BC3b46c51f0bF8d5C311A',
@@ -127,6 +140,10 @@ export const SepoliaConfig: FhevmInstanceConfig = {
   relayerUrl: 'https://relayer.testnet.zama.org',
 } as const;
 Object.freeze(SepoliaConfig);
+
+////////////////////////////////////////////////////////////////////////////////
+// createInstance
+////////////////////////////////////////////////////////////////////////////////
 
 export const createInstance = async (
   config: FhevmInstanceConfig,
