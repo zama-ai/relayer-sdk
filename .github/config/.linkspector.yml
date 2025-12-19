@@ -1,6 +1,5 @@
 ignorePatterns:
   - pattern: '^https://x.com/'
-  - pattern: '^https://www\.npmjs\.com/'
 aliveStatusCodes:
   - 200
   - 206
