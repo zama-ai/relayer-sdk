@@ -1,16 +1,16 @@
 import { hexToBytes, toHexString } from '../utils/bytes';
 import { ethers, AbiCoder } from 'ethers';
-import {
-  type ClearValueType,
-  type ClearValues,
-  type PublicDecryptResults,
-  checkEncryptedBits,
-  getHandleType,
-} from './decryptUtils';
-import type { RelayerPublicDecryptPayload } from './fetchRelayer';
+import { checkEncryptedBits, getHandleType } from './decryptUtils';
+import type {
+  ClearValues,
+  ClearValueType,
+  FhevmInstanceOptions,
+  PublicDecryptResults,
+  RelayerPublicDecryptPayload,
+} from '../types/relayer';
 import { ensure0x } from '../utils/string';
 import { AbstractRelayerProvider } from '../relayer-provider/AbstractRelayerProvider';
-import type { FhevmInstanceOptions } from '../config';
+import type { RelayerV2PublicDecryptOptions } from '../relayer-provider/v2/types/types';
 
 const aclABI = [
   'function isAllowedForDecryption(bytes32 handle) view returns (bool)',
@@ -92,7 +92,7 @@ function abiEncodeClearValues(clearValues: ClearValues) {
       case 4: //euint32
       case 5: //euint64
       case 6: //euint128
-      case 8: {
+      case 7: {
         //euint256
         // bigint
         abiValues.push(clearTextValueBigInt);
@@ -197,14 +197,13 @@ export const publicDecryptRequest =
     gatewayChainId: number,
     verifyingContractAddress: string,
     aclContractAddress: string,
-    //relayerUrl: string,
     relayerProvider: AbstractRelayerProvider,
     provider: ethers.JsonRpcProvider | ethers.BrowserProvider,
-    instanceOptions?: FhevmInstanceOptions,
+    defaultOptions?: FhevmInstanceOptions,
   ) =>
   async (
     _handles: (Uint8Array | string)[],
-    options?: FhevmInstanceOptions,
+    options?: RelayerV2PublicDecryptOptions,
   ): Promise<PublicDecryptResults> => {
     const extraData: `0x${string}` = '0x00';
     const acl = new ethers.Contract(aclContractAddress, aclABI, provider);
@@ -242,14 +241,11 @@ export const publicDecryptRequest =
 
     const json = await relayerProvider.fetchPostPublicDecrypt(
       payloadForRequest,
-      options ?? instanceOptions,
+      {
+        ...defaultOptions,
+        ...options,
+      },
     );
-    // const json = await fetchRelayerJsonRpcPost(
-    //   'PUBLIC_DECRYPT',
-    //   `${relayerUrl}/v1/public-decrypt`,
-    //   payloadForRequest,
-    //   options ?? instanceOptions,
-    // );
 
     // verify signatures on decryption:
     const domain = {

@@ -1,19 +1,40 @@
 import { assertRecordStringProperty } from '../../../utils/string';
 import { assertNonNullableRecordProperty } from '../../../utils/record';
-import { RelayerV2ResponseQueued } from './types';
-import { assertIsRelayerV2ResultQueued } from './RelayerV2ResultQueued';
+import {
+  RelayerV2GetResponseQueued,
+  RelayerV2PostResponseQueued,
+} from './types';
+import { assertIsRelayerV2PostResultQueued } from './RelayerV2PostResultQueued';
 
 /*
-  type RelayerV2ResponseQueued = {
-    status: "queued";
-    result: RelayerV2ResultQueued;
+  {
+    status: 'queued';
+    requestId: string;
+    result: { 
+      jobId: string;
+    };
   }
 */
-export function assertIsRelayerV2ResponseQueued(
+export function assertIsRelayerV2PostResponseQueued(
   value: unknown,
   name: string,
-): asserts value is RelayerV2ResponseQueued {
+): asserts value is RelayerV2PostResponseQueued {
   assertRecordStringProperty(value, 'status', name, 'queued');
+  assertRecordStringProperty(value, 'requestId', name);
   assertNonNullableRecordProperty(value, 'result', name);
-  assertIsRelayerV2ResultQueued(value.result, `${name}.result`);
+  assertIsRelayerV2PostResultQueued(value.result, `${name}.result`);
+}
+
+/*
+  {
+    status: 'queued';
+    requestId: string;
+  }
+*/
+export function assertIsRelayerV2GetResponseQueued(
+  value: unknown,
+  name: string,
+): asserts value is RelayerV2GetResponseQueued {
+  assertRecordStringProperty(value, 'status', name, 'queued');
+  assertRecordStringProperty(value, 'requestId', name);
 }

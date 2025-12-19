@@ -1,8 +1,9 @@
+import type { RelayerV1KeyUrlResponse } from '../relayer-provider/v1/types';
 import {
   SERIALIZED_SIZE_LIMIT_PK,
   SERIALIZED_SIZE_LIMIT_CRS,
 } from '../constants';
-import { fetchRelayerGet, RelayerKeyUrlResponse } from './fetchRelayer';
+import { fetchRelayerV1Get } from '../relayer-provider/v1/fetchRelayerV1';
 
 const keyurlCache: { [key: string]: any } = {};
 export const getKeysFromRelayer = async (
@@ -13,7 +14,7 @@ export const getKeysFromRelayer = async (
     return keyurlCache[versionUrl];
   }
 
-  const data: RelayerKeyUrlResponse = await fetchRelayerGet(
+  const data: RelayerV1KeyUrlResponse = await fetchRelayerV1Get(
     'KEY_URL',
     `${versionUrl}/keyurl`,
   );

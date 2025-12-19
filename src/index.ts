@@ -1,5 +1,4 @@
 import {
-  type FhevmInstanceConfig,
   getChainId,
   getKMSSigners,
   getKMSSignersThreshold,
@@ -9,24 +8,32 @@ import {
 } from './config';
 
 import type { HandleContractPair } from './relayer/userDecrypt';
-import { userDecryptRequest } from './relayer/userDecrypt';
-import { createRelayerEncryptedInput } from './relayer/sendEncryption';
 import type { RelayerEncryptedInput } from './relayer/sendEncryption';
-import { publicDecryptRequest } from './relayer/publicDecrypt';
-
 import type { PublicParams } from './sdk/encrypt';
-
-import { generateKeypair, createEIP712 } from './sdk/keypair';
 import type { EIP712, EIP712Type } from './sdk/keypair';
-import type { Auth, BearerToken, ApiKeyCookie, ApiKeyHeader } from './auth';
-
-//import fetchRetry from 'fetch-retry';
 import type {
+  FhevmInstanceConfig,
+  Auth,
+  BearerToken,
+  ApiKeyCookie,
+  ApiKeyHeader,
   PublicDecryptResults,
   UserDecryptResults,
   ClearValueType,
   ClearValues,
-} from './relayer/decryptUtils';
+  FhevmInstanceOptions,
+} from './types/relayer';
+import type {
+  RelayerV2PublicDecryptOptions,
+  RelayerV2UserDecryptOptions,
+} from './relayer-provider/v2/types/types';
+
+import { userDecryptRequest } from './relayer/userDecrypt';
+import { createRelayerEncryptedInput } from './relayer/sendEncryption';
+import { publicDecryptRequest } from './relayer/publicDecrypt';
+
+import { generateKeypair, createEIP712 } from './sdk/keypair';
+
 import { isChecksummedAddress } from './utils/address';
 import { createRelayerFhevm } from './relayer-provider/createRelayerFhevm';
 
@@ -36,6 +43,8 @@ import { createRelayerFhevm } from './relayer-provider/createRelayerFhevm';
 //global.fetch = fetchRetry(global.fetch, { retries: 5, retryDelay: 500 });
 
 export { generateKeypair, createEIP712 };
+export { getErrorCauseStatus, getErrorCauseCode } from './relayer/error';
+export type { EncryptionBits } from './types/primitives';
 export type {
   EIP712,
   EIP712Type,
@@ -47,16 +56,14 @@ export type {
   HandleContractPair,
   PublicParams,
 };
-export { ENCRYPTION_TYPES } from './sdk/encryptionTypes';
-export type { EncryptionBits } from './sdk/encryptionTypes';
-export { getErrorCauseStatus, getErrorCauseCode } from './relayer/error';
 export type {
   PublicDecryptResults,
   UserDecryptResults,
   ClearValueType,
   ClearValues,
+  FhevmInstanceConfig,
+  FhevmInstanceOptions,
 };
-
 export type FhevmInstance = {
   createEncryptedInput: (
     contractAddress: string,
@@ -71,6 +78,7 @@ export type FhevmInstance = {
   ) => EIP712;
   publicDecrypt: (
     handles: (string | Uint8Array)[],
+    options?: RelayerV2PublicDecryptOptions,
   ) => Promise<PublicDecryptResults>;
   userDecrypt: (
     handles: HandleContractPair[],
@@ -81,6 +89,7 @@ export type FhevmInstance = {
     userAddress: string,
     startTimestamp: string | number,
     durationDays: string | number,
+    options?: RelayerV2UserDecryptOptions,
   ) => Promise<UserDecryptResults>;
   getPublicKey: () => { publicKeyId: string; publicKey: Uint8Array } | null;
   getPublicParams: (bits: keyof PublicParams) => {
@@ -211,6 +220,7 @@ export const createInstance = async (
       { 2048: relayerFhevm.getPublicParamsWasm(2048) },
       coprocessorSigners,
       thresholdCoprocessorSigners,
+      auth && { auth },
     ),
     generateKeypair,
     createEIP712: createEIP712(verifyingContractAddressDecryption, chainId),

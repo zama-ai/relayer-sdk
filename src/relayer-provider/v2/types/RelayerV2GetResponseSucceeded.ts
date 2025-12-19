@@ -5,14 +5,14 @@ import { assertIsRelayerV2ResultInputProof } from './RelayerV2ResultInputProof';
 
 import {
   RelayerV2GetResponseSucceededMap,
-  RelayerV2Operation,
-  RelayerV2OperationResultMap,
+  RelayerV2PostOperationResultMap,
 } from './types';
 import { assertIsRelayerV2ResultPublicDecrypt } from './RelayerV2ResultPublicDecrypt';
 import { assertNever } from '../../../errors/utils';
+import { RelayerPostOperation } from '../../../types/relayer';
 
 export function assertIsRelayerV2GetResponseSucceeded<
-  T extends RelayerV2Operation,
+  T extends RelayerPostOperation,
 >(
   operation: T,
   value: unknown,
@@ -23,11 +23,11 @@ export function assertIsRelayerV2GetResponseSucceeded<
   assertIsRelayerV2Result(operation, value.result, `${name}.result`);
 }
 
-export function assertIsRelayerV2Result<T extends RelayerV2Operation>(
+export function assertIsRelayerV2Result<T extends RelayerPostOperation>(
   operation: T,
   value: unknown,
   name: string,
-): asserts value is RelayerV2OperationResultMap[T] {
+): asserts value is RelayerV2PostOperationResultMap[T] {
   if (operation === 'INPUT_PROOF') {
     assertIsRelayerV2ResultInputProof(value, name);
   } else if (operation === 'PUBLIC_DECRYPT') {

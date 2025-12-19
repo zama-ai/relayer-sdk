@@ -1,16 +1,21 @@
-import { ethers, getAddress as ethersGetAddress } from 'ethers';
 import {
+  BrowserProvider,
+  JsonRpcProvider,
+  Contract,
+  getAddress as ethersGetAddress,
+} from 'ethers';
+import { checkEncryptedBits } from './decryptUtils';
+import { AbstractRelayerProvider } from '../relayer-provider/AbstractRelayerProvider';
+import { bytesToBigInt, hexToBytes, toHexString } from '../utils/bytes';
+import type {
   ClearValueType,
-  UserDecryptResults,
-  checkEncryptedBits,
-} from './decryptUtils';
-import {
+  FhevmInstanceOptions,
   HandleContractPairRelayer,
   RelayerUserDecryptPayload,
-} from './fetchRelayer';
-import { AbstractRelayerProvider } from '../relayer-provider/AbstractRelayerProvider';
-import type { FhevmInstanceOptions } from '../config';
-import { bytesToBigInt, hexToBytes, toHexString } from '../utils/bytes';
+  UserDecryptResults,
+} from '../types/relayer';
+import type { BytesHex } from '../types/primitives';
+import type { RelayerV2InputProofOptions } from '../relayer-provider/v2/types/types';
 
 // Add type checking
 const getAddress = (value: string): `0x${string}` =>
@@ -98,10 +103,9 @@ export const userDecryptRequest =
     chainId: number,
     verifyingContractAddress: string,
     aclContractAddress: string,
-    //relayerUrl: string,
     relayerProvider: AbstractRelayerProvider,
-    provider: ethers.JsonRpcProvider | ethers.BrowserProvider,
-    instanceOptions?: FhevmInstanceOptions,
+    provider: JsonRpcProvider | BrowserProvider,
+    defaultOptions?: FhevmInstanceOptions,
   ) =>
   async (
     _handles: HandleContractPair[],
@@ -112,9 +116,9 @@ export const userDecryptRequest =
     userAddress: string,
     startTimestamp: string | number,
     durationDays: string | number,
-    options?: FhevmInstanceOptions,
+    options?: RelayerV2InputProofOptions,
   ): Promise<UserDecryptResults> => {
-    const extraData: `0x${string}` = '0x00';
+    const extraData: BytesHex = '0x00';
     let pubKey;
     let privKey;
     try {
@@ -128,38 +132,45 @@ export const userDecryptRequest =
     const signatureSanitized = signature.replace(/^(0x)/, '');
     const publicKeySanitized = publicKey.replace(/^(0x)/, '');
 
-    const handles: HandleContractPairRelayer[] = _handles.map((h) => ({
-      handle:
-        typeof h.handle === 'string'
-          ? toHexString(hexToBytes(h.handle), true)
-          : toHexString(h.handle, true),
-      contractAddress: getAddress(h.contractAddress),
-    }));
+    const handleContractPairs: HandleContractPairRelayer[] = _handles.map(
+      (h) => ({
+        handle:
+          typeof h.handle === 'string'
+            ? toHexString(hexToBytes(h.handle), true)
+            : toHexString(h.handle, true),
+        contractAddress: getAddress(h.contractAddress),
+      }),
+    );
 
-    checkEncryptedBits(handles.map((h) => h.handle));
+    checkEncryptedBits(handleContractPairs.map((h) => h.handle));
 
     checkDeadlineValidity(BigInt(startTimestamp), BigInt(durationDays));
 
-    const acl = new ethers.Contract(aclContractAddress, aclABI, provider);
-    const verifications = handles.map(async ({ handle, contractAddress }) => {
-      const userAllowed = await acl.persistAllowed(handle, userAddress);
-      const contractAllowed = await acl.persistAllowed(handle, contractAddress);
-      if (!userAllowed) {
-        throw new Error(
-          `User ${userAddress} is not authorized to user decrypt handle ${handle}!`,
+    const acl = new Contract(aclContractAddress, aclABI, provider);
+    const verifications = handleContractPairs.map(
+      async ({ handle, contractAddress }) => {
+        const userAllowed = await acl.persistAllowed(handle, userAddress);
+        const contractAllowed = await acl.persistAllowed(
+          handle,
+          contractAddress,
         );
-      }
-      if (!contractAllowed) {
-        throw new Error(
-          `dapp contract ${contractAddress} is not authorized to user decrypt handle ${handle}!`,
-        );
-      }
-      if (userAddress === contractAddress) {
-        throw new Error(
-          `userAddress ${userAddress} should not be equal to contractAddress when requesting user decryption!`,
-        );
-      }
-    });
+        if (!userAllowed) {
+          throw new Error(
+            `User ${userAddress} is not authorized to user decrypt handle ${handle}!`,
+          );
+        }
+        if (!contractAllowed) {
+          throw new Error(
+            `dapp contract ${contractAddress} is not authorized to user decrypt handle ${handle}!`,
+          );
+        }
+        if (userAddress === contractAddress) {
+          throw new Error(
+            `userAddress ${userAddress} should not be equal to contractAddress when requesting user decryption!`,
+          );
+        }
+      },
+    );
 
     const contractAddressesLength = contractAddresses.length;
     if (contractAddressesLength === 0) {
@@ -176,7 +187,7 @@ export const userDecryptRequest =
     });
 
     const payloadForRequest: RelayerUserDecryptPayload = {
-      handleContractPairs: handles,
+      handleContractPairs,
       requestValidity: {
         startTimestamp: startTimestamp.toString(), // Convert to string
         durationDays: durationDays.toString(), // Convert to string
@@ -189,16 +200,10 @@ export const userDecryptRequest =
       extraData,
     };
 
-    const json = await relayerProvider.fetchPostUserDecrypt(
-      payloadForRequest,
-      options ?? instanceOptions,
-    );
-    // const json = await fetchRelayerJsonRpcPost(
-    //   'USER_DECRYPT',
-    //   `${relayerUrl}/v1/user-decrypt`,
-    //   payloadForRequest,
-    //   instanceOptions ?? options,
-    // );
+    const json = await relayerProvider.fetchPostUserDecrypt(payloadForRequest, {
+      ...defaultOptions,
+      ...options,
+    });
 
     // assume the KMS Signers have the correct order
     let indexedKmsSigners = kmsSigners.map((signer, index) => {
@@ -224,7 +229,9 @@ export const userDecryptRequest =
         signature: signatureSanitized,
         client_address: userAddress,
         enc_key: publicKeySanitized,
-        ciphertext_handles: handles.map((h) => h.handle.replace(/^0x/, '')),
+        ciphertext_handles: handleContractPairs.map((h) =>
+          h.handle.replace(/^0x/, ''),
+        ),
         eip712_verifying_contract: verifyingContractAddress,
       };
 
@@ -242,7 +249,7 @@ export const userDecryptRequest =
       );
 
       const results: UserDecryptResults = buildUserDecryptResults(
-        handles.map((h) => h.handle),
+        handleContractPairs.map((h) => h.handle),
         listBigIntDecryptions,
       );
 

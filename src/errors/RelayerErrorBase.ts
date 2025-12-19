@@ -1,3 +1,5 @@
+import { version } from '../_version';
+
 export type RelayerBaseErrorType = RelayerErrorBase & {
   name: 'RelayerErrorBase';
 };
@@ -21,7 +23,7 @@ export abstract class RelayerErrorBase extends Error {
   private _docsUrl: string | undefined;
   private _version: string;
 
-  private static readonly VERSION = '0.3.0-6' as const;
+  private static readonly VERSION = version;
   private static readonly DEFAULT_DOCS_BASE_URL =
     'https//docs.zama.org' as const;
   private static readonly FULL_VERSION =

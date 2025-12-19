@@ -1,23 +1,25 @@
 import fetchMock from 'fetch-mock';
-import type { FhevmInstanceConfig } from '../config';
-import type { RelayerInputProofPayload } from '../relayer/fetchRelayer';
-import { Prettify } from '../utils/types';
 import { hexToBytes } from '../utils/bytes';
 import { currentCiphertextVersion } from '../relayer/sendEncryption';
-import type {
-  Bytes32Hex,
-  Bytes65Hex,
-  ChecksummedAddress,
-} from '../types/primitives';
 import { CoprocessorSigners } from './fhevm-mock/CoprocessorSigners';
-import { ENCRYPTION_TYPES } from '../sdk/encryptionTypes';
 import { getProvider as config_getProvider } from '../config';
 import { KmsSigners } from './fhevm-mock/KmsSigners';
 import { setupV1RoutesInputProof, setupV1RoutesKeyUrl } from './v1/mockRoutes';
 import { setupV2RoutesInputProof, setupV2RoutesKeyUrl } from './v2/mockRoutes';
-import type { ethers as EthersT } from 'ethers';
 import { Contract } from 'ethers';
 import { FhevmHandle } from '../sdk/FhevmHandle';
+import type {
+  FhevmInstanceConfig,
+  RelayerInputProofPayload,
+} from '../types/relayer';
+import type { Prettify } from '../utils/types';
+import type {
+  Bytes32Hex,
+  Bytes65Hex,
+  ChecksummedAddress,
+  EncryptionBits,
+} from '../types/primitives';
+import type { ethers as EthersT } from 'ethers';
 
 export function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -130,7 +132,7 @@ export async function fetchMockInputProof(
     userAddress: string;
     ciphertextWithInputVerification: string;
   },
-  bitwidths: (keyof typeof ENCRYPTION_TYPES)[],
+  bitwidths: EncryptionBits[],
 ): Promise<{
   handles: Bytes32Hex[];
   signatures: Bytes65Hex[];
@@ -164,19 +166,18 @@ export async function fetchMockInputProof(
   return await TEST_COPROCESSORS.computeSignatures(params);
 }
 
-export function setupAllFetchMockRoutes({
-  bitWidths,
-}: {
-  bitWidths?: (keyof typeof ENCRYPTION_TYPES)[];
+export function setupAllFetchMockRoutes(params: {
+  bitWidths?: EncryptionBits[];
+  retry?: number;
 }) {
   if (TEST_CONFIG.type !== 'fetch-mock') {
     return;
   }
   setupV1RoutesKeyUrl();
   setupV2RoutesKeyUrl();
-  if (bitWidths) {
-    setupV1RoutesInputProof(bitWidths);
-    setupV2RoutesInputProof(bitWidths);
+  if (params.bitWidths) {
+    setupV1RoutesInputProof(params.bitWidths);
+    setupV2RoutesInputProof(params.bitWidths, params.retry);
   }
 }
 

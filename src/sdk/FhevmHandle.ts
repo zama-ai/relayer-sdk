@@ -3,6 +3,7 @@ import {
   bytesToHex,
   concatBytes,
   hexToBytes,
+  isBytes32Hex,
 } from '../utils/bytes';
 import {
   assertIsChecksummedAddress,
@@ -15,7 +16,9 @@ import {
   uint32ToBytes32,
 } from '../utils/uint';
 import { keccak256 } from 'ethers';
-import {
+import { assertRelayer, InternalError } from '../errors/InternalError';
+import { FhevmHandleError } from '../errors/FhevmHandleError';
+import type {
   Bytes32,
   Bytes32Hex,
   BytesHex,
@@ -25,7 +28,6 @@ import {
   FheTypeId,
   FheTypeIdToEncryptionBitwidthMap,
 } from '../types/primitives';
-import { assertRelayer, InternalError } from '../errors/InternalError';
 
 type CreateInputHandlesBaseParams = {
   ciphertextWithZKProof: Uint8Array | BytesHex;
@@ -278,5 +280,11 @@ export class FhevmHandle {
 
   public toBytes32Hex(): Bytes32Hex {
     return bytesToHex(this.toBytes32()) as Bytes32Hex;
+  }
+
+  public static checkHandleHex(handle: unknown): asserts handle is Bytes32Hex {
+    if (!isBytes32Hex(handle)) {
+      throw new FhevmHandleError({ handle });
+    }
   }
 }

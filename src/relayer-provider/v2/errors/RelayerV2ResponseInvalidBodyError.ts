@@ -19,6 +19,7 @@ export type RelayerV2ResponseInvalidBodyErrorType =
 export type RelayerV2ResponseInvalidBodyErrorParams = Prettify<
   Omit<RelayerV2ResponseErrorBaseParams, keyof RelayerErrorBaseParams> & {
     cause: InvalidPropertyError;
+    bodyJson: string;
   }
 >;
 

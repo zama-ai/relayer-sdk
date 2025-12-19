@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "noEmit": false,
+    "rootDir": "src",
+    "outDir": "bundle",
+    "declaration": false,
+    "target": "es5",
+    "lib": ["es2022", "DOM", "WebWorker"],
+    "module": "commonjs",
+    // skipLibCheck is set to 'true' to skip typing errors due to DOM + WebWroker.
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowJs": true,
+    "strict": true,
+    "baseUrl": ".",
+    "resolveJsonModule": true,
+    "paths": {
+      "*": ["*"]
+    },
+    // Add a bit of extra testing
+    "noEmitOnError": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noUnusedLocals": true
+  },
+  "include": ["src", "types"],
+  "exclude": ["node_modules"]
+}

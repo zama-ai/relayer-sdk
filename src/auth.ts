@@ -1,43 +1,4 @@
-/**
- * Bearer Token Authentication
- */
-export type BearerToken = {
-  __type: 'BearerToken';
-  /**
-   * The Bearer token.
-   */
-  token: string;
-};
-
-/**
- * Custom header authentication
- */
-export type ApiKeyHeader = {
-  __type: 'ApiKeyHeader';
-  /**
-   * The header name. The default value is `x-api-key`.
-   */
-  header?: string;
-  /**
-   * The API key.
-   */
-  value: string;
-};
-
-/**
- * Custom cookie authentication
- */
-export type ApiKeyCookie = {
-  __type: 'ApiKeyCookie';
-  /**
-   * The cookie name. The default value is `x-api-key`.
-   */
-  cookie?: string;
-  /**
-   * The API key.
-   */
-  value: string;
-};
+import type { Auth } from './types/relayer';
 
 /**
  * Set the authentication method for the request. The default is no authentication.
@@ -46,7 +7,6 @@ export type ApiKeyCookie = {
  * - Custom header
  * - Custom cookie
  */
-export type Auth = BearerToken | ApiKeyHeader | ApiKeyCookie;
 export function setAuth(init: RequestInit, auth?: Auth): RequestInit {
   if (auth) {
     switch (auth.__type) {

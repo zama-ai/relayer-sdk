@@ -11,15 +11,7 @@ describe('string', () => {
   it('removeSuffix', () => {
     expect(removeSuffix('hello/', '/')).toEqual('hello');
     expect(removeSuffix('hello/', 'o/')).toEqual('hell');
-
-    const s = 'hello/';
-    const suffix = '';
-    console.log(s.slice(0, -1));
-    console.log(s.slice(0, -0));
-    console.log(s.slice(0, -suffix.length));
-    // s.endsWith('') ? s.slice(0, -suffix.length) : s;
-    // if ()
-    //expect(removeSuffix('hello/', '')).toEqual('hello/');
+    expect(removeSuffix('hello/', '')).toEqual('hello/');
     expect(removeSuffix('hello/', 'o')).toEqual('hello/');
   });
 });

@@ -1,6 +1,6 @@
 import type { ethers as EthersT } from 'ethers';
 import { createInstance } from '../..';
-import type { RelayerPublicDecryptPayload } from '../../relayer/fetchRelayer';
+import type { RelayerPublicDecryptPayload } from '../../types/relayer';
 import { AbstractRelayerProvider } from '../AbstractRelayerProvider';
 import { createRelayerProvider } from '../createRelayerFhevm';
 import fetchMock from 'fetch-mock';
@@ -14,6 +14,7 @@ import {
   TEST_CONFIG,
 } from '../../test/config';
 import { RUNNING_REQ_STATE } from '../../test/v2/mockRoutes';
+import { safeJSONstringify } from '../../utils/string';
 
 // Jest Command line
 // =================
@@ -43,7 +44,10 @@ function post202(body: any) {
   });
 }
 
-function invalidBodyError(cause: InvalidPropertyError) {
+function invalidBodyError(params: {
+  cause: InvalidPropertyError;
+  bodyJson: string;
+}) {
   return new RelayerV2ResponseInvalidBodyError({
     fetchMethod: 'POST',
     status: 202,
@@ -52,7 +56,7 @@ function invalidBodyError(cause: InvalidPropertyError) {
     retryCount: 0,
     operation: 'PUBLIC_DECRYPT',
     state: RUNNING_REQ_STATE,
-    cause,
+    ...params,
   });
 }
 
@@ -101,28 +105,31 @@ describeIfFetchMock('RelayerV2Provider:public-decrypt:mock:', () => {
   });
 
   it('v2:public-decrypt: 202 - empty json', async () => {
-    post202({});
+    const bodyJson = {};
+    post202(bodyJson);
     await expect(() =>
       relayerProvider.fetchPostPublicDecrypt(payload),
     ).rejects.toThrow(
-      invalidBodyError(
-        InvalidPropertyError.missingProperty({
+      invalidBodyError({
+        cause: InvalidPropertyError.missingProperty({
           objName: 'body',
           property: 'status',
           expectedType: 'string',
           expectedValue: 'queued',
         }),
-      ),
+        bodyJson: safeJSONstringify(bodyJson),
+      }),
     );
   });
 
   it('v2:public-decrypt: 202 - status:failed', async () => {
-    post202({ status: 'failed' });
+    const bodyJson = { status: 'failed' };
+    post202(bodyJson);
     await expect(() =>
       relayerProvider.fetchPostPublicDecrypt(payload),
     ).rejects.toThrow(
-      invalidBodyError(
-        new InvalidPropertyError({
+      invalidBodyError({
+        cause: new InvalidPropertyError({
           objName: 'body',
           property: 'status',
           expectedType: 'string',
@@ -130,17 +137,19 @@ describeIfFetchMock('RelayerV2Provider:public-decrypt:mock:', () => {
           type: 'string',
           value: 'failed',
         }),
-      ),
+        bodyJson: safeJSONstringify(bodyJson),
+      }),
     );
   });
 
   it('v2:public-decrypt: 202 - status:succeeded', async () => {
-    post202({ status: 'succeeded' });
+    const bodyJson = { status: 'succeeded' };
+    post202(bodyJson);
     await expect(() =>
       relayerProvider.fetchPostPublicDecrypt(payload),
     ).rejects.toThrow(
-      invalidBodyError(
-        new InvalidPropertyError({
+      invalidBodyError({
+        cause: new InvalidPropertyError({
           objName: 'body',
           property: 'status',
           expectedType: 'string',
@@ -148,43 +157,49 @@ describeIfFetchMock('RelayerV2Provider:public-decrypt:mock:', () => {
           type: 'string',
           value: 'succeeded',
         }),
-      ),
+        bodyJson: safeJSONstringify(bodyJson),
+      }),
     );
   });
 
   it('v2:public-decrypt: 202 - status:queued', async () => {
-    post202({ status: 'queued' });
+    const bodyJson = { status: 'queued' };
+    post202(bodyJson);
     await expect(() =>
       relayerProvider.fetchPostPublicDecrypt(payload),
     ).rejects.toThrow(
-      invalidBodyError(
-        InvalidPropertyError.missingProperty({
+      invalidBodyError({
+        cause: InvalidPropertyError.missingProperty({
           objName: 'body',
-          property: 'result',
-          expectedType: 'non-nullable',
+          property: 'requestId',
+          expectedType: 'string',
         }),
-      ),
+        bodyJson: safeJSONstringify(bodyJson),
+      }),
     );
   });
 
   it('v2:public-decrypt: 202 - status:queued, result empty', async () => {
-    post202({ status: 'queued', result: {} });
+    const bodyJson = { status: 'queued', requestId: 'foo', result: {} };
+    post202(bodyJson);
     await expect(() =>
       relayerProvider.fetchPostPublicDecrypt(payload),
     ).rejects.toThrow(
-      invalidBodyError(
-        InvalidPropertyError.missingProperty({
+      invalidBodyError({
+        cause: InvalidPropertyError.missingProperty({
           objName: 'body.result',
           property: 'jobId',
           expectedType: 'string',
         }),
-      ),
+        bodyJson: safeJSONstringify(bodyJson),
+      }),
     );
   });
 
   it('v2:public-decrypt: 202 - status:queued, result ok', async () => {
     post202({
       status: 'queued',
+      requestId: 'hello',
       result: { jobId: '123' },
     });
 

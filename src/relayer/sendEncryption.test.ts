@@ -7,12 +7,12 @@ import { publicKey, publicParams } from '../test';
 import fetchMock from 'fetch-mock';
 import { computeHandles } from './handles';
 import { hexToBytes, toHexString } from '../utils/bytes';
-import type { Auth } from '../auth';
 import { createRelayerProvider } from '../relayer-provider/createRelayerFhevm';
 import { InvalidPropertyError } from '../errors/InvalidPropertyError';
 import { TEST_CONFIG } from '../test/config';
 import { assertRelayer } from '../errors/InternalError';
 import { FhevmHandle } from '../sdk/FhevmHandle';
+import { FhevmInstanceOptions } from '../types/relayer';
 
 // Jest Command line
 // =================
@@ -33,7 +33,10 @@ const chainId = TEST_CONFIG.fhevmInstanceConfig.chainId!;
 const gatewayChainId = TEST_CONFIG.fhevmInstanceConfig.gatewayChainId;
 const relayerProvider = createRelayerProvider(TEST_CONFIG.v1.urls.base);
 
-const autoMock = (input: RelayerEncryptedInput, opts?: { auth?: Auth }) => {
+const autoMock = (
+  input: RelayerEncryptedInput,
+  opts?: FhevmInstanceOptions,
+) => {
   fetchMock.postOnce(relayerProvider.inputProof, function (params: any) {
     if (opts?.auth) {
       switch (opts.auth.__type) {
