@@ -1,5 +1,4 @@
 import fetchMock, { CallLog } from 'fetch-mock';
-import type { RelayerV2AsyncRequestState } from '../../relayer-provider/v2/RelayerV2AsyncRequest';
 import { fetchMockInputProof, TEST_CONFIG } from '../config';
 import {
   publicKey as assetPublicKey,
@@ -11,7 +10,8 @@ import {
 } from '../../constants';
 import { RelayerV2ResponseInvalidBodyError } from '../../relayer-provider/v2/errors/RelayerV2ResponseInvalidBodyError';
 import { InvalidPropertyError } from '../../errors/InvalidPropertyError';
-import { ENCRYPTION_TYPES } from '../../sdk/encryptionTypes';
+import type { RelayerV2AsyncRequestState } from '../../relayer-provider/v2/RelayerV2AsyncRequest';
+import type { EncryptionBits } from '../../types/primitives';
 
 export const RUNNING_REQ_STATE: RelayerV2AsyncRequestState = {
   aborted: false,
@@ -105,7 +105,7 @@ export function setupV2RoutesKeyUrl() {
 }
 
 export function setupV2RoutesInputProof(
-  bitwidths: (keyof typeof ENCRYPTION_TYPES)[],
+  bitwidths: EncryptionBits[],
   retry: number = 0,
 ) {
   if (TEST_CONFIG.type !== 'fetch-mock') {

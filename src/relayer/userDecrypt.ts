@@ -1,16 +1,21 @@
-import { ethers, getAddress as ethersGetAddress } from 'ethers';
 import {
+  BrowserProvider,
+  JsonRpcProvider,
+  Contract,
+  getAddress as ethersGetAddress,
+} from 'ethers';
+import { checkEncryptedBits } from './decryptUtils';
+import { AbstractRelayerProvider } from '../relayer-provider/AbstractRelayerProvider';
+import { bytesToBigInt, hexToBytes, toHexString } from '../utils/bytes';
+import type {
   ClearValueType,
-  UserDecryptResults,
-  checkEncryptedBits,
-} from './decryptUtils';
-import {
+  FhevmInstanceOptions,
   HandleContractPairRelayer,
   RelayerUserDecryptPayload,
-} from './fetchRelayer';
-import { AbstractRelayerProvider } from '../relayer-provider/AbstractRelayerProvider';
-import type { FhevmInstanceOptions } from '../config';
-import { bytesToBigInt, hexToBytes, toHexString } from '../utils/bytes';
+  UserDecryptResults,
+} from '../types/relayer';
+import type { BytesHex } from '../types/primitives';
+import type { RelayerV2InputProofOptions } from '../relayer-provider/v2/types/types';
 
 // Add type checking
 const getAddress = (value: string): `0x${string}` =>
@@ -98,10 +103,9 @@ export const userDecryptRequest =
     chainId: number,
     verifyingContractAddress: string,
     aclContractAddress: string,
-    //relayerUrl: string,
     relayerProvider: AbstractRelayerProvider,
-    provider: ethers.JsonRpcProvider | ethers.BrowserProvider,
-    instanceOptions?: FhevmInstanceOptions,
+    provider: JsonRpcProvider | BrowserProvider,
+    defaultOptions?: FhevmInstanceOptions,
   ) =>
   async (
     _handles: HandleContractPair[],
@@ -112,9 +116,9 @@ export const userDecryptRequest =
     userAddress: string,
     startTimestamp: string | number,
     durationDays: string | number,
-    options?: FhevmInstanceOptions,
+    options?: RelayerV2InputProofOptions,
   ): Promise<UserDecryptResults> => {
-    const extraData: `0x${string}` = '0x00';
+    const extraData: BytesHex = '0x00';
     let pubKey;
     let privKey;
     try {
@@ -142,7 +146,7 @@ export const userDecryptRequest =
 
     checkDeadlineValidity(BigInt(startTimestamp), BigInt(durationDays));
 
-    const acl = new ethers.Contract(aclContractAddress, aclABI, provider);
+    const acl = new Contract(aclContractAddress, aclABI, provider);
     const verifications = handleContractPairs.map(
       async ({ handle, contractAddress }) => {
         const userAllowed = await acl.persistAllowed(handle, userAddress);
@@ -196,16 +200,10 @@ export const userDecryptRequest =
       extraData,
     };
 
-    const json = await relayerProvider.fetchPostUserDecrypt(
-      payloadForRequest,
-      options ?? instanceOptions,
-    );
-    // const json = await fetchRelayerJsonRpcPost(
-    //   'USER_DECRYPT',
-    //   `${relayerUrl}/v1/user-decrypt`,
-    //   payloadForRequest,
-    //   instanceOptions ?? options,
-    // );
+    const json = await relayerProvider.fetchPostUserDecrypt(payloadForRequest, {
+      ...defaultOptions,
+      ...options,
+    });
 
     // assume the KMS Signers have the correct order
     let indexedKmsSigners = kmsSigners.map((signer, index) => {

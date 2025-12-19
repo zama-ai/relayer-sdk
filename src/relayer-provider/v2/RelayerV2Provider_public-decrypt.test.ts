@@ -1,6 +1,6 @@
 import type { ethers as EthersT } from 'ethers';
 import { createInstance } from '../..';
-import type { RelayerPublicDecryptPayload } from '../../relayer/fetchRelayer';
+import type { RelayerPublicDecryptPayload } from '../../types/relayer';
 import { AbstractRelayerProvider } from '../AbstractRelayerProvider';
 import { createRelayerProvider } from '../createRelayerFhevm';
 import fetchMock from 'fetch-mock';

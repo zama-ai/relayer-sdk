@@ -1,14 +1,15 @@
-import { ethers } from 'ethers';
+import type { Prettify } from '../../utils/types';
+import type { BytesHex } from '../../types/primitives';
+
+import { Wordlist } from 'ethers';
 import { KmsSigner } from './KmsSigner';
 import { EIP712Signers } from './EIP712Signers';
 import {
   KmsEIP712,
-  KmsEIP712Params,
+  type KmsEIP712Params,
   type KmsDelegateEIP712Type,
   type KmsEIP712Type,
 } from '../../sdk/kms/KmsEIP712';
-import { Prettify } from '../../utils/types';
-import { BytesHex } from '../../types/primitives';
 
 ////////////////////////////////////////////////////////////////////////////////
 // KmsSigners (Multi-sig for KMS)
@@ -69,7 +70,7 @@ export class KmsSigners extends EIP712Signers<
         startIndex?: number;
         count: number;
         basePath?: string;
-        wordlist?: ethers.Wordlist;
+        wordlist?: Wordlist;
       } & KmsSignersBaseParams
     >,
   ): KmsSigners {

@@ -8,7 +8,7 @@ import {
   SERIALIZED_SIZE_LIMIT_CRS,
   SERIALIZED_SIZE_LIMIT_PK,
 } from '../../constants';
-import { ENCRYPTION_TYPES } from '../../sdk/encryptionTypes';
+import { EncryptionBits } from '../../types/primitives';
 
 // curl https://relayer.dev.zama.cloud/v1/keyurl
 export const relayerV1ResponseGetKeyUrl = {
@@ -59,9 +59,7 @@ export function setupV1RoutesKeyUrl() {
   );
 }
 
-export function setupV1RoutesInputProof(
-  bitwidths: (keyof typeof ENCRYPTION_TYPES)[],
-) {
+export function setupV1RoutesInputProof(bitwidths: EncryptionBits[]) {
   if (TEST_CONFIG.type !== 'fetch-mock') {
     throw new Error('Test is not running using fetch-mock');
   }

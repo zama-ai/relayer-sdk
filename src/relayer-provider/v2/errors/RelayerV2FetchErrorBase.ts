@@ -1,9 +1,9 @@
-import { RelayerOperation } from '../../../relayer/fetchRelayer';
+import type { RelayerOperation } from '../../../types/relayer';
 import {
   RelayerErrorBase,
   RelayerErrorBaseParams,
 } from '../../../errors/RelayerErrorBase';
-import { Prettify } from '../../../utils/types';
+import type { Prettify } from '../../../utils/types';
 import type { RelayerV2AsyncRequestState } from '../RelayerV2AsyncRequest';
 
 ////////////////////////////////////////////////////////////////////////////////

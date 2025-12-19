@@ -1,3 +1,15 @@
+import type {
+  FhevmInstanceOptions,
+  RelayerInputProofResult,
+  RelayerPublicDecryptResult,
+  RelayerUserDecryptPayload,
+  RelayerUserDecryptResult,
+} from '../types/relayer';
+import type {
+  RelayerInputProofPayload,
+  RelayerPublicDecryptPayload,
+} from '../types/relayer';
+import type { RelayerV1KeyUrlResponse } from './v1/types';
 import {
   assertRecordBytes32HexArrayProperty,
   assertRecordBytes65HexArrayProperty,
@@ -5,48 +17,12 @@ import {
   assertRecordBytesHexNo0xProperty,
   assertRecordBytesHexProperty,
 } from '../utils/bytes';
-import type { FhevmInstanceOptions } from '../config';
-import type {
-  RelayerInputProofPayload,
-  RelayerKeyUrlResponse,
-  RelayerPublicDecryptPayload,
-  RelayerUserDecryptPayload,
-} from '../relayer/fetchRelayer';
 import { assertRecordStringProperty } from '../utils/string';
 import { InvalidPropertyError } from '../errors/InvalidPropertyError';
-import { Bytes32Hex, BytesHex, BytesHexNo0x } from '../types/primitives';
 
 export type RelayerProviderFetchOptions<T> = {
   signal?: AbortSignal;
   onProgress?: (args: T) => void;
-};
-
-export type RelayerPublicDecryptResult = {
-  signatures: BytesHexNo0x[];
-  decryptedValue: BytesHexNo0x;
-  extraData: BytesHex;
-};
-
-/*
- * [
- *   {
- *     signature: '69e7e040cab157aa819015b321c012dccb1545ffefd325b359b492653f0347517e28e66c572cdc299e259024329859ff9fcb0096e1ce072af0b6e1ca1fe25ec6',
- *     payload: '0100000029...',
- *     extra_data: '01234...',
- *   }
- * ]
- */
-export type RelayerUserDecryptResult = {
-  payload: BytesHexNo0x;
-  signature: BytesHexNo0x;
-  //extraData: BytesHex;
-}[];
-
-export type RelayerInputProofResult = {
-  // Ordered List of hex encoded handles with 0x prefix.
-  handles: Bytes32Hex[];
-  // Attestation signatures for Input verification for the ordered list of handles with 0x prefix.
-  signatures: `0x${string}`[];
 };
 
 export abstract class AbstractRelayerProvider {
@@ -73,7 +49,7 @@ export abstract class AbstractRelayerProvider {
   }
 
   public abstract get version(): number;
-  public abstract fetchGetKeyUrl(): Promise<RelayerKeyUrlResponse>;
+  public abstract fetchGetKeyUrl(): Promise<RelayerV1KeyUrlResponse>;
   public abstract fetchPostInputProof(
     payload: RelayerInputProofPayload,
     instanceOptions?: FhevmInstanceOptions,

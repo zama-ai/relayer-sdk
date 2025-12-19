@@ -3,24 +3,14 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 import type {
+  RelayerPostOperation,
+  FhevmInstanceOptions,
+} from '../../../types/relayer';
+import type {
   BytesHex,
   BytesHexNo0x,
   Bytes32Hex,
 } from '../../../types/primitives';
-
-// Do not add KEYURL here!
-export type RelayerV2OperationResult =
-  | RelayerV2OperationResultMap['INPUT_PROOF']
-  | RelayerV2OperationResultMap['PUBLIC_DECRYPT']
-  | RelayerV2OperationResultMap['USER_DECRYPT'];
-
-export interface RelayerV2OperationResultMap {
-  INPUT_PROOF: RelayerV2ResultInputProof;
-  PUBLIC_DECRYPT: RelayerV2ResultPublicDecrypt;
-  USER_DECRYPT: RelayerV2ResultUserDecrypt;
-}
-
-export type RelayerV2Operation = keyof RelayerV2OperationResultMap;
 
 // RelayerV2<Response|GetResponse|PostResponse><QueuedOrFailed|Succeeded>
 
@@ -162,16 +152,17 @@ export type RelayerV2PostResultQueued = {
 // Succeeded: 200
 ////////////////////////////////////////////////////////////////////////////////
 
-export type RelayerV2GetResponseSucceeded<R extends RelayerV2OperationResult> =
-  {
-    status: 'succeeded';
-    requestId: string; // request id field. use it for identifying the request and asking support
-    result: R;
-  };
+export type RelayerV2GetResponseSucceeded<
+  R extends RelayerV2PostOperationResult,
+> = {
+  status: 'succeeded';
+  requestId: string; // request id field. use it for identifying the request and asking support
+  result: R;
+};
 
 export type RelayerV2GetResponseSucceededMap = {
-  [K in RelayerV2Operation]: RelayerV2GetResponseSucceeded<
-    RelayerV2OperationResultMap[K]
+  [K in RelayerPostOperation]: RelayerV2GetResponseSucceeded<
+    RelayerV2PostOperationResultMap[K]
   >;
 };
 
@@ -229,4 +220,115 @@ export type RelayerV2GetResponseKeyUrl = {
     fheKeyInfo: Array<RelayerV2KeyInfo>;
     crs: Record<string, RelayerV2KeyData>;
   };
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+export type RelayerV2PostOperationResult =
+  | RelayerV2PostOperationResultMap['INPUT_PROOF']
+  | RelayerV2PostOperationResultMap['PUBLIC_DECRYPT']
+  | RelayerV2PostOperationResultMap['USER_DECRYPT'];
+
+export interface RelayerV2PostOperationResultMap {
+  INPUT_PROOF: RelayerV2ResultInputProof;
+  PUBLIC_DECRYPT: RelayerV2ResultPublicDecrypt;
+  USER_DECRYPT: RelayerV2ResultUserDecrypt;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Progress
+////////////////////////////////////////////////////////////////////////////////
+
+export type RelayerV2ProgressQueued = {
+  type: 'queued';
+  url: string;
+  method: 'POST' | 'GET';
+  status: 202;
+  jobId: string;
+  operation: RelayerPostOperation;
+  requestId: string;
+  retryAfter: number;
+  retryCount: number;
+  elapsed: number;
+};
+
+export type RelayerV2ProgressRateLimited = {
+  type: 'ratelimited';
+  url: string;
+  method: 'POST';
+  status: 429;
+  retryAfter: number;
+  retryCount: number;
+  elapsed: number;
+  message: string;
+};
+
+export type RelayerV2ProgressSucceeded<O extends RelayerPostOperation> = {
+  type: 'succeeded';
+  url: string;
+  method: 'GET';
+  status: 200;
+  jobId: string;
+  requestId: string;
+  retryCount: number;
+  elapsed: number;
+  operation: O;
+  result: RelayerV2PostOperationResultMap[O];
+};
+
+export type RelayerV2ProgressPublicDecryptSucceeded =
+  RelayerV2ProgressSucceeded<'PUBLIC_DECRYPT'>;
+export type RelayerV2ProgressUserDecryptSucceeded =
+  RelayerV2ProgressSucceeded<'USER_DECRYPT'>;
+export type RelayerV2ProgressInputProofSucceeded =
+  RelayerV2ProgressSucceeded<'INPUT_PROOF'>;
+
+export type RelayerV2ProgressArgs =
+  | RelayerV2PublicDecryptProgressArgs
+  | RelayerV2UserDecryptProgressArgs
+  | RelayerV2InputProofProgressArgs;
+
+export type RelayerV2PublicDecryptProgressArgs =
+  | RelayerV2ProgressQueued
+  | RelayerV2ProgressRateLimited
+  | RelayerV2ProgressPublicDecryptSucceeded
+  | RelayerV2ProgressFailed;
+
+export type RelayerV2UserDecryptProgressArgs =
+  | RelayerV2ProgressQueued
+  | RelayerV2ProgressRateLimited
+  | RelayerV2ProgressPublicDecryptSucceeded
+  | RelayerV2ProgressFailed;
+
+export type RelayerV2InputProofProgressArgs =
+  | RelayerV2ProgressQueued
+  | RelayerV2ProgressRateLimited
+  | RelayerV2ProgressPublicDecryptSucceeded
+  | RelayerV2ProgressFailed;
+
+export type RelayerV2ProgressFailureStatus = 400 | 404 | 500 | 503 | 504;
+
+export type RelayerV2ProgressFailed = {
+  type: 'failed';
+  url: string;
+  method: 'GET' | 'POST';
+  status: RelayerV2ProgressFailureStatus;
+  jobId?: string;
+  retryCount: number;
+  elapsed: number;
+  operation: RelayerPostOperation;
+  relayerApiError: RelayerV2ResponseApiErrorCode;
+};
+
+export type RelayerV2InputProofOptions = FhevmInstanceOptions & {
+  signal?: AbortSignal;
+  onProgress?: (args: RelayerV2InputProofProgressArgs) => void;
+};
+export type RelayerV2UserDecryptOptions = FhevmInstanceOptions & {
+  signal?: AbortSignal;
+  onProgress?: (args: RelayerV2UserDecryptProgressArgs) => void;
+};
+export type RelayerV2PublicDecryptOptions = FhevmInstanceOptions & {
+  signal?: AbortSignal;
+  onProgress?: (args: RelayerV2PublicDecryptProgressArgs) => void;
 };

@@ -1,12 +1,12 @@
 import fetchMock from 'fetch-mock';
 import { RelayerV2AsyncRequest } from './RelayerV2AsyncRequest';
 import { SepoliaConfig } from '../..';
-import { RelayerInputProofPayload } from '../../relayer/fetchRelayer';
 import {
   RelayerV2ResponseApiError500,
   RelayerV2ResponseFailed,
 } from './types/types';
 import { TEST_CONFIG } from '../../test/config';
+import { RelayerInputProofPayload } from '../../types/relayer';
 
 // Jest Command line
 // =================

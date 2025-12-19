@@ -1,5 +1,3 @@
-import type { ethers as EthersT } from 'ethers';
-import type { RelayerUserDecryptPayload } from '../../relayer/fetchRelayer';
 import { AbstractRelayerProvider } from '../AbstractRelayerProvider';
 import { createRelayerProvider } from '../createRelayerFhevm';
 import fetchMock from 'fetch-mock';
@@ -19,8 +17,10 @@ import { KmsSigner } from '../../test/fhevm-mock/KmsSigner';
 import { KmsEIP712 } from '../../sdk/kms/KmsEIP712';
 import { assertIsBytes65Hex, assertIsBytesHexNo0x } from '../../utils/bytes';
 import { ensure0x, safeJSONstringify } from '../../utils/string';
-import { FhevmInstanceConfig } from '../../config';
-import { Bytes65Hex, BytesHex } from '../../types/primitives';
+import type { ethers as EthersT } from 'ethers';
+import type { Bytes65Hex, BytesHex } from '../../types/primitives';
+import type { RelayerUserDecryptPayload } from '../../types/relayer';
+import type { FhevmInstanceConfig } from '../../types/relayer';
 
 // Jest Command line
 // =================

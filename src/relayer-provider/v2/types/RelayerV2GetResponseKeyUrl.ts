@@ -8,10 +8,10 @@ import {
   assertRecordStringProperty,
 } from '../../../utils/string';
 import {
-  RelayerKeyData,
-  RelayerKeyInfo,
-  RelayerKeyUrlResponse,
-} from '../../../relayer/fetchRelayer';
+  RelayerV1KeyData,
+  RelayerV1KeyInfo,
+  RelayerV1KeyUrlResponse,
+} from '../../../relayer-provider/v1/types';
 
 export function isRelayerV2GetResponseKeyUrl(
   value: unknown,
@@ -58,19 +58,18 @@ export function assertIsRelayerV2KeyData(
   assertRecordStringArrayProperty(value, 'urls', name);
 }
 
-export function toRelayerKeyUrlResponse(
+export function toRelayerV1KeyUrlResponse(
   response: RelayerV2GetResponseKeyUrl,
-): RelayerKeyUrlResponse {
-  const fheKeyInfoV1: Array<RelayerKeyInfo> = response.response.fheKeyInfo.map(
-    (v2Info) => ({
+): RelayerV1KeyUrlResponse {
+  const fheKeyInfoV1: Array<RelayerV1KeyInfo> =
+    response.response.fheKeyInfo.map((v2Info) => ({
       fhe_public_key: {
         data_id: v2Info.fhePublicKey.dataId,
         urls: v2Info.fhePublicKey.urls,
       },
-    }),
-  );
+    }));
 
-  const crsV1: Record<string, RelayerKeyData> = {};
+  const crsV1: Record<string, RelayerV1KeyData> = {};
   for (const [key, v2Data] of Object.entries(response.response.crs)) {
     crsV1[key] = {
       data_id: v2Data.dataId,

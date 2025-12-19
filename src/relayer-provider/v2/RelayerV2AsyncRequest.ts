@@ -15,8 +15,12 @@ import type {
   RelayerV2ResultUserDecrypt,
   RelayerV2PostResponseStatus,
   RelayerV2GetResponseStatus,
-  RelayerV2OperationResultMap,
-  RelayerV2Operation,
+  RelayerV2ProgressQueued,
+  RelayerV2ProgressRateLimited,
+  RelayerV2ProgressArgs,
+  RelayerV2ProgressSucceeded,
+  RelayerV2ProgressFailed,
+  RelayerV2ProgressFailureStatus,
 } from './types/types';
 import { RelayerV2ResponseInvalidBodyError } from './errors/RelayerV2ResponseInvalidBodyError';
 import { RelayerV2ResponseStatusError } from './errors/RelayerV2ResponseStatusError';
@@ -24,7 +28,6 @@ import { assertIsRelayerV2GetResponseInputProofSucceeded } from './types/Relayer
 import { assertIsRelayerV2GetResponsePublicDecryptSucceeded } from './types/RelayerV2GetResponsePublicDecryptSucceeded';
 import { assertIsRelayerV2GetResponseUserDecryptSucceeded } from './types/RelayerV2GetResponseUserDecryptSucceeded';
 import { RelayerV2RequestInternalError } from './errors/RelayerV2RequestInternalError';
-import type { FhevmInstanceOptions } from '../../config';
 import { RelayerProviderFetchOptions } from '../AbstractRelayerProvider';
 import { InvalidPropertyError } from '../../errors/InvalidPropertyError';
 import { RelayerV2ResponseApiError } from './errors/RelayerV2ResponseApiError';
@@ -38,6 +41,10 @@ import {
 } from './types/RelayerV2ResponseQueued';
 import { safeJSONstringify } from '../../utils/string';
 import { sdkName, version } from '../../_version';
+import type {
+  FhevmInstanceOptions,
+  RelayerPostOperation,
+} from '../../types/relayer';
 
 /*
     Actions:
@@ -87,74 +94,8 @@ export type RelayerV2AsyncRequestState = {
   terminated: boolean;
 };
 
-export type RelayerV2ProgressArgs =
-  | RelayerV2ProgressQueued
-  | RelayerV2ProgressRateLimited
-  | RelayerV2ProgressInputProofSucceeded
-  | RelayerV2ProgressPublicDecryptSucceeded
-  | RelayerV2ProgressUserDecryptSucceeded
-  | RelayerV2ProgressFailed;
-
-export type RelayerV2ProgressQueued = {
-  type: 'queued';
-  url: string;
-  method: 'POST' | 'GET';
-  status: 202;
-  jobId: string;
-  operation: RelayerV2Operation;
-  requestId: string;
-  retryAfter: number;
-  retryCount: number;
-  elapsed: number;
-};
-
-export type RelayerV2ProgressSucceeded<O extends RelayerV2Operation> = {
-  type: 'succeeded';
-  url: string;
-  method: 'GET';
-  status: 200;
-  jobId: string;
-  requestId: string;
-  retryCount: number;
-  elapsed: number;
-  operation: O;
-  result: RelayerV2OperationResultMap[O];
-};
-
-export type RelayerV2ProgressPublicDecryptSucceeded =
-  RelayerV2ProgressSucceeded<'PUBLIC_DECRYPT'>;
-export type RelayerV2ProgressUserDecryptSucceeded =
-  RelayerV2ProgressSucceeded<'USER_DECRYPT'>;
-export type RelayerV2ProgressInputProofSucceeded =
-  RelayerV2ProgressSucceeded<'INPUT_PROOF'>;
-
-export type RelayerV2ProgressRateLimited = {
-  type: 'ratelimited';
-  url: string;
-  method: 'POST';
-  status: 429;
-  retryAfter: number;
-  retryCount: number;
-  elapsed: number;
-  message: string;
-};
-
-type RelayerV2ProgressFailureStatus = 400 | 404 | 500 | 503 | 504;
-
-export type RelayerV2ProgressFailed = {
-  type: 'failed';
-  url: string;
-  method: 'GET' | 'POST';
-  status: RelayerV2ProgressFailureStatus;
-  jobId?: string;
-  retryCount: number;
-  elapsed: number;
-  operation: RelayerV2Operation;
-  relayerApiError: RelayerV2ResponseApiErrorCode;
-};
-
 type RelayerV2AsyncRequestParams = {
-  relayerOperation: RelayerV2Operation;
+  relayerOperation: RelayerPostOperation;
   url: string;
   payload: Record<string, unknown>;
   timeoutInSeconds?: number;
@@ -172,7 +113,7 @@ export class RelayerV2AsyncRequest {
   private _jobId: string | undefined;
   private _jobIdTimestamp: number | undefined;
   private _state: RelayerV2AsyncRequestState;
-  private _relayerOperation: RelayerV2Operation;
+  private _relayerOperation: RelayerPostOperation;
   private _publicAPINoReentrancy: boolean;
   private _internalAbortController: AbortController | undefined;
   private _internalAbortSignal: AbortSignal | undefined;
@@ -1404,7 +1345,7 @@ export class RelayerV2AsyncRequest {
   // Progress
   //////////////////////////////////////////////////////////////////////////////
 
-  private _postAsyncOnProgressCallback(args: RelayerV2ProgressArgs) {
+  private _postAsyncOnProgressCallback(args: any) {
     const onProgressFunc = this._onProgress;
     if (onProgressFunc) {
       // setTimeout(() => {

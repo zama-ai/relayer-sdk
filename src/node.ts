@@ -7,16 +7,6 @@ global.TKMS = TKMSPkg;
 // CommonJS no need to perform explicit named re-export. Wildcard is enough.
 export type { TFHEType } from './tfheType';
 
-export {
-  ENCRYPTION_TYPES,
-  SepoliaConfig,
-  createInstance,
-  generateKeypair,
-  createEIP712,
-  getErrorCauseCode,
-  getErrorCauseStatus,
-} from './index';
-
 export type {
   RelayerEncryptedInput,
   PublicParams,
@@ -33,6 +23,17 @@ export type {
   BearerToken,
   ApiKeyCookie,
   ApiKeyHeader,
+  FhevmInstanceConfig,
+  FhevmInstanceOptions,
 } from './index';
-export type { FhevmInstanceConfig, FhevmInstanceOptions } from './config';
+
+export {
+  SepoliaConfig,
+  createInstance,
+  generateKeypair,
+  createEIP712,
+  getErrorCauseCode,
+  getErrorCauseStatus,
+} from './index';
+
 export { createTfheKeypair, createTfhePublicKey } from './tfhe';

@@ -1,37 +1,35 @@
-import { Prettify } from '../../utils/types';
+import type {
+  RelayerV2GetResponseKeyUrl,
+  RelayerV2ProgressArgs,
+  RelayerV2ResultInputProof,
+  RelayerV2ResultUserDecrypt,
+} from './types/types';
+import type { RelayerV1KeyUrlResponse } from '../v1/types';
+import type { Prettify } from '../../utils/types';
+import type {
+  FhevmInstanceOptions,
+  RelayerInputProofPayload,
+  RelayerInputProofResult,
+  RelayerPublicDecryptPayload,
+  RelayerPublicDecryptResult,
+  RelayerUserDecryptPayload,
+  RelayerUserDecryptResult,
+} from '../../types/relayer';
+import type { RelayerProviderFetchOptions } from '../AbstractRelayerProvider';
 import { ensureError } from '../../errors/utils';
-import {
-  fetchRelayerGet,
-  type RelayerPublicDecryptPayload,
-  type RelayerUserDecryptPayload,
-  type RelayerInputProofPayload,
-  RelayerKeyUrlResponse,
-} from '../../relayer/fetchRelayer';
+import { fetchRelayerV1Get } from '../v1/fetchRelayerV1';
 import {
   AbstractRelayerProvider,
   assertIsRelayerInputProofResult,
   assertIsRelayerPublicDecryptResult,
   assertIsRelayerUserDecryptResult,
-  RelayerInputProofResult,
-  RelayerProviderFetchOptions,
-  RelayerPublicDecryptResult,
-  RelayerUserDecryptResult,
 } from '../AbstractRelayerProvider';
 import { RelayerV2GetKeyUrlInvalidResponseError } from './errors/RelayerV2GetKeyUrlError';
-import {
-  RelayerV2AsyncRequest,
-  RelayerV2ProgressArgs,
-} from './RelayerV2AsyncRequest';
+import { RelayerV2AsyncRequest } from './RelayerV2AsyncRequest';
 import {
   assertIsRelayerV2GetResponseKeyUrl,
-  toRelayerKeyUrlResponse,
+  toRelayerV1KeyUrlResponse,
 } from './types/RelayerV2GetResponseKeyUrl';
-import type { FhevmInstanceOptions } from '../../config';
-import {
-  RelayerV2GetResponseKeyUrl,
-  RelayerV2ResultInputProof,
-  RelayerV2ResultUserDecrypt,
-} from './types/types';
 
 export class RelayerV2Provider extends AbstractRelayerProvider {
   constructor(relayerUrl: string) {
@@ -43,7 +41,7 @@ export class RelayerV2Provider extends AbstractRelayerProvider {
   }
 
   public async fetchGetKeyUrlV2(): Promise<RelayerV2GetResponseKeyUrl> {
-    const response = await fetchRelayerGet('KEY_URL', this.keyUrl);
+    const response = await fetchRelayerV1Get('KEY_URL', this.keyUrl);
 
     // Relayer error
     try {
@@ -57,9 +55,9 @@ export class RelayerV2Provider extends AbstractRelayerProvider {
     return response;
   }
 
-  public async fetchGetKeyUrl(): Promise<RelayerKeyUrlResponse> {
+  public async fetchGetKeyUrl(): Promise<RelayerV1KeyUrlResponse> {
     const response = await this.fetchGetKeyUrlV2();
-    return toRelayerKeyUrlResponse(response);
+    return toRelayerV1KeyUrlResponse(response);
   }
 
   public override async fetchPostInputProof(

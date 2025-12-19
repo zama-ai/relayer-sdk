@@ -1,5 +1,5 @@
 import { createRelayerProvider } from '../createRelayerFhevm';
-import { createInstance, ENCRYPTION_TYPES } from '../..';
+import { createInstance } from '../..';
 import fetchMock from 'fetch-mock';
 import { InvalidPropertyError } from '../../errors/InvalidPropertyError';
 import { RelayerV2Provider } from './RelayerV2Provider';
@@ -15,11 +15,13 @@ import {
   setupAllFetchMockRoutes,
   TEST_CONFIG,
 } from '../../test/config';
-import { FhevmInstanceConfig, getProvider } from '../../config';
+import { getProvider } from '../../config';
 import { InputProof } from '../../sdk/coprocessor/InputProof';
 import { RelayerV2ResponseInputProofRejectedError } from './errors/RelayerV2ResponseInputProofRejectedError';
 import { assertIsBytes32Hex, assertIsBytes65Hex } from '../../utils/bytes';
 import { safeJSONstringify } from '../../utils/string';
+import type { FhevmInstanceConfig } from '../../types/relayer';
+import type { EncryptionBits } from '../../types/primitives';
 
 // Jest Command line
 // =================
@@ -320,7 +322,7 @@ describe('createEncryptedInput', () => {
     config: FhevmInstanceConfig;
     test: {
       values: number[];
-      bitWidths: (keyof typeof ENCRYPTION_TYPES)[];
+      bitWidths: EncryptionBits[];
       retry?: number;
     };
   }) {
@@ -348,7 +350,7 @@ describe('createEncryptedInput', () => {
     config: FhevmInstanceConfig;
     test: {
       values: number[];
-      bitWidths: (keyof typeof ENCRYPTION_TYPES)[];
+      bitWidths: EncryptionBits[];
       retry?: number;
     };
   }) {

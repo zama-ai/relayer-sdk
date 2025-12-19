@@ -16,7 +16,9 @@ import {
   uint32ToBytes32,
 } from '../utils/uint';
 import { keccak256 } from 'ethers';
-import {
+import { assertRelayer, InternalError } from '../errors/InternalError';
+import { FhevmHandleError } from '../errors/FhevmHandleError';
+import type {
   Bytes32,
   Bytes32Hex,
   BytesHex,
@@ -26,8 +28,6 @@ import {
   FheTypeId,
   FheTypeIdToEncryptionBitwidthMap,
 } from '../types/primitives';
-import { assertRelayer, InternalError } from '../errors/InternalError';
-import { FhevmHandleError } from '../errors/FhevmHandleError';
 
 type CreateInputHandlesBaseParams = {
   ciphertextWithZKProof: Uint8Array | BytesHex;
