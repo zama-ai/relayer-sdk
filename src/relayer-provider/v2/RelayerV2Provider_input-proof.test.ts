@@ -89,8 +89,7 @@ const consoleLogSpy = jest
 const describeIfFetchMock =
   TEST_CONFIG.type === 'fetch-mock' ? describe : describe.skip;
 
-const itIfFetchMock = TEST_CONFIG.type === 'fetch-mock' ? it : it.skip;
-const itIfFetch = TEST_CONFIG.type === 'fetch-mock' ? it.skip : it;
+const [itIfFetchMock, itIfFetch] = TEST_CONFIG.type === 'fetch-mock' ? [it, it.skip] : [it.skip, it];
 
 // const describeIfFetch =
 //   TEST_CONFIG.type === 'fetch-mock' ? describe.skip : describe;
