@@ -14,6 +14,7 @@ import {
 import type { TFHEType } from './tfheType';
 import { removeSuffix } from './utils/string';
 import type { FhevmInstanceConfig } from './types/relayer';
+import { ChecksummedAddress } from './types/primitives';
 
 const abiKmsVerifier = [
   'function getKmsSigners() view returns (address[])',
@@ -145,13 +146,14 @@ export const getKMSSignersThreshold = async (
 export const getCoprocessorSigners = async (
   provider: Provider,
   inputVerifierContractAddress: `0x${string}`,
-): Promise<string[]> => {
+): Promise<ChecksummedAddress[]> => {
   const inputContract = new Contract(
     inputVerifierContractAddress,
     abiInputVerifier,
     provider,
   );
-  const signers: string[] = await inputContract.getCoprocessorSigners();
+  const signers: ChecksummedAddress[] =
+    await inputContract.getCoprocessorSigners();
   return signers;
 };
 

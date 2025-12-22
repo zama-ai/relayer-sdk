@@ -21,6 +21,7 @@ export const RUNNING_REQ_STATE: RelayerV2AsyncRequestState = {
   running: true,
   succeeded: false,
   terminated: false,
+  timeout: false,
 } as const;
 
 // curl https://relayer.dev.zama.cloud/v2/keyurl

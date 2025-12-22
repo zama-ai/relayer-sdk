@@ -30,7 +30,7 @@ export function isBytes(value: unknown, bytewidth?: 32 | 65): value is Bytes {
 
 export function isBytesHex(
   value: unknown,
-  bytewidth?: 32 | 65,
+  bytewidth?: 21 | 32 | 65,
 ): value is BytesHex {
   if (!is0x(value)) {
     return false;
@@ -496,6 +496,60 @@ export function assertUint8ArrayProperty<K extends string>(
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// Hex
+////////////////////////////////////////////////////////////////////////////////
+
+const HEX_CHARS: Record<string, number> = {
+  '0': 0,
+  '1': 1,
+  '2': 2,
+  '3': 3,
+  '4': 4,
+  '5': 5,
+  '6': 6,
+  '7': 7,
+  '8': 8,
+  '9': 9,
+  a: 10,
+  b: 11,
+  c: 12,
+  d: 13,
+  e: 14,
+  f: 15,
+  A: 10,
+  B: 11,
+  C: 12,
+  D: 13,
+  E: 14,
+  F: 15,
+} as const;
+Object.freeze(HEX_CHARS);
+
+const HEX_BYTES: string[] = Array.from({ length: 256 }, (_, i) =>
+  i.toString(16).padStart(2, '0'),
+);
+Object.freeze(HEX_BYTES);
+
+const HEX_CHARS_CODES = new Uint8Array([
+  48,
+  49,
+  50,
+  51,
+  52,
+  53,
+  54,
+  55,
+  56,
+  57, // '0'-'9'
+  97,
+  98,
+  99,
+  100,
+  101,
+  102, // 'a'-'f'
+]);
+
 /**
  * Convert a Uint8Array to a hex string (without 0x prefix).
  */
@@ -517,13 +571,54 @@ export function bytesToHex(bytes: Uint8Array | undefined): BytesHex {
   return `0x${bytesToHexNo0x(bytes)}`;
 }
 
+export function bytesToHexLarge(bytes: Uint8Array): BytesHex {
+  const out = new Uint8Array(2 + bytes.length * 2);
+  out[0] = 48; // '0'
+  out[1] = 120; // 'x'
+
+  for (let i = 0; i < bytes.length; i++) {
+    const j = 2 + i * 2;
+    out[j] = HEX_CHARS_CODES[bytes[i] >> 4];
+    out[j + 1] = HEX_CHARS_CODES[bytes[i] & 0xf];
+  }
+
+  return new TextDecoder().decode(out) as BytesHex;
+}
+
 /**
  * Convert a hex string prefixed by 0x or not to a Uint8Array
+ * Any invalid byte string is converted to 0
+ * "0xzzff" = [0, 255]
+ * "0xzfff" = [0, 255]
  */
 export function hexToBytes(hexString: string): Uint8Array {
   const arr = hexString.replace(/^(0x)/, '').match(/.{1,2}/g);
   if (!arr) return new Uint8Array();
   return Uint8Array.from(arr.map((byte) => parseInt(byte, 16)));
+}
+
+export function hexToBytesFaster(
+  hexString: string,
+  strict: boolean = false,
+): Uint8Array {
+  const offset = hexString[0] === '0' && hexString[1] === 'x' ? 2 : 0;
+  const len = hexString.length - offset;
+
+  if (len % 2 !== 0) {
+    throw new Error('Invalid hex string: odd length');
+  }
+
+  const bytes = new Uint8Array(len / 2);
+  for (let i = 0; i < bytes.length; i++) {
+    const hi = HEX_CHARS[hexString[offset + i * 2]];
+    const lo = HEX_CHARS[hexString[offset + i * 2 + 1]];
+    if ((hi === undefined || lo === undefined) && strict) {
+      throw new Error(`Invalid hex character at position ${offset + i * 2}`);
+    }
+    bytes[i] = (hi << 4) | lo;
+  }
+
+  return bytes;
 }
 
 /**

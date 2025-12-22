@@ -21,6 +21,7 @@ import { assertRecordStringProperty } from '../utils/string';
 import { InvalidPropertyError } from '../errors/InvalidPropertyError';
 
 export type RelayerProviderFetchOptions<T> = {
+  timeout?: number;
   signal?: AbortSignal;
   onProgress?: (args: T) => void;
 };
@@ -52,18 +53,15 @@ export abstract class AbstractRelayerProvider {
   public abstract fetchGetKeyUrl(): Promise<RelayerV1KeyUrlResponse>;
   public abstract fetchPostInputProof(
     payload: RelayerInputProofPayload,
-    instanceOptions?: FhevmInstanceOptions,
-    fetchOptions?: RelayerProviderFetchOptions<unknown>,
+    options?: FhevmInstanceOptions & RelayerProviderFetchOptions<any>,
   ): Promise<RelayerInputProofResult>;
   public abstract fetchPostPublicDecrypt(
     payload: RelayerPublicDecryptPayload,
-    instanceOptions?: FhevmInstanceOptions,
-    fetchOptions?: RelayerProviderFetchOptions<unknown>,
+    options?: FhevmInstanceOptions & RelayerProviderFetchOptions<any>,
   ): Promise<RelayerPublicDecryptResult>;
   public abstract fetchPostUserDecrypt(
     payload: RelayerUserDecryptPayload,
-    instanceOptions?: FhevmInstanceOptions,
-    fetchOptions?: RelayerProviderFetchOptions<unknown>,
+    options?: FhevmInstanceOptions & RelayerProviderFetchOptions<any>,
   ): Promise<RelayerUserDecryptResult>;
 }
 

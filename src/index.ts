@@ -24,18 +24,23 @@ import type {
   FhevmInstanceOptions,
 } from './types/relayer';
 import type {
+  RelayerV2InputProofOptions,
   RelayerV2PublicDecryptOptions,
   RelayerV2UserDecryptOptions,
 } from './relayer-provider/v2/types/types';
 
 import { userDecryptRequest } from './relayer/userDecrypt';
-import { createRelayerEncryptedInput } from './relayer/sendEncryption';
+import {
+  createRelayerEncryptedInput,
+  requestCiphertextWithZKProofVerification,
+} from './relayer/sendEncryption';
 import { publicDecryptRequest } from './relayer/publicDecrypt';
 
 import { generateKeypair, createEIP712 } from './sdk/keypair';
 
 import { isChecksummedAddress } from './utils/address';
 import { createRelayerFhevm } from './relayer-provider/createRelayerFhevm';
+import type { BytesHex, ZKProof } from './types/primitives';
 
 // Disable global use of fetch-retry
 // Make sure `workerHelpers.js` behaviour is consistant and tfhe WASM module is
@@ -63,6 +68,7 @@ export type {
   ClearValues,
   FhevmInstanceConfig,
   FhevmInstanceOptions,
+  ZKProof,
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -74,6 +80,13 @@ export type FhevmInstance = {
     contractAddress: string,
     userAddress: string,
   ) => RelayerEncryptedInput;
+  requestZKProofVerification: (
+    zkProof: ZKProof,
+    options?: RelayerV2InputProofOptions,
+  ) => Promise<{
+    handles: Uint8Array[];
+    inputProof: Uint8Array;
+  }>;
   generateKeypair: () => { publicKey: string; privateKey: string };
   createEIP712: (
     publicKey: string,
@@ -222,11 +235,38 @@ export const createInstance = async (
       gatewayChainId,
       relayerFhevm.relayerProvider,
       relayerFhevm.getPublicKeyWasm().publicKey,
-      { 2048: relayerFhevm.getPublicParamsWasm(2048) },
+      { 2048: relayerFhevm.getPublicParamsWasmForBits(2048) },
       coprocessorSigners,
       thresholdCoprocessorSigners,
       auth && { auth },
     ),
+    requestZKProofVerification: (
+      zkProof: ZKProof,
+      options?: RelayerV2InputProofOptions,
+    ) => {
+      if (
+        zkProof.chainId !== chainId ||
+        zkProof.aclContractAddress !== aclContractAddress
+      ) {
+        throw new Error('Invalid ZKProof');
+      }
+      return requestCiphertextWithZKProofVerification({
+        ciphertext: zkProof.ciphertextWithZkProof,
+        aclContractAddress: aclContractAddress,
+        contractAddress: zkProof.contractAddress,
+        userAddress: zkProof.userAddress,
+        chainId,
+        gatewayChainId,
+        bits: zkProof.bits,
+        coprocessorSigners,
+        extraData: '0x00' as BytesHex,
+        thresholdCoprocessorSigners,
+        relayerProvider: relayerFhevm.relayerProvider,
+        verifyingContractAddressInputVerification:
+          verifyingContractAddressInputVerification,
+        options,
+      });
+    },
     generateKeypair,
     createEIP712: createEIP712(verifyingContractAddressDecryption, chainId),
     publicDecrypt: publicDecryptRequest(
@@ -253,7 +293,7 @@ export const createInstance = async (
     ),
     getPublicKey: () => relayerFhevm.getPublicKeyBytes(),
     getPublicParams: (bits: keyof PublicParams) =>
-      relayerFhevm.getPublicParamsBytes(bits),
+      relayerFhevm.getPublicParamsBytesForBits(bits),
     // getPublicKey: () =>
     //   publicKeyData.publicKey
     //     ? {

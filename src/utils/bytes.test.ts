@@ -35,10 +35,43 @@ describe('bytes', () => {
     expect(arr.length).toBe(1);
     expect(arr[0]).toBe(255);
 
+    arr = hexToBytes('0x00');
+    expect(arr instanceof Uint8Array).toBe(true);
+    expect(arr.length).toBe(1);
+    expect(arr[0]).toBe(0);
+
     arr = hexToBytes('0xf');
     expect(arr instanceof Uint8Array).toBe(true);
     expect(arr.length).toBe(1);
     expect(arr[0]).toBe(15);
+
+    arr = hexToBytes('za');
+    expect(arr instanceof Uint8Array).toBe(true);
+    expect(arr.length).toBe(1);
+    expect(arr[0]).toBe(0);
+    arr = hexToBytes('za');
+
+    arr = hexToBytes('0xzazazazazaza');
+    expect(arr instanceof Uint8Array).toBe(true);
+    expect(arr.length).toBe(6);
+    expect(arr[0]).toBe(0);
+    expect(arr[1]).toBe(0);
+    expect(arr[2]).toBe(0);
+    expect(arr[3]).toBe(0);
+    expect(arr[4]).toBe(0);
+    expect(arr[5]).toBe(0);
+
+    arr = hexToBytes('0xzzff');
+    expect(arr instanceof Uint8Array).toBe(true);
+    expect(arr.length).toBe(2);
+    expect(arr[0]).toBe(0);
+    expect(arr[1]).toBe(255);
+
+    arr = hexToBytes('0xzfff');
+    expect(arr instanceof Uint8Array).toBe(true);
+    expect(arr.length).toBe(2);
+    expect(arr[0]).toBe(0);
+    expect(arr[1]).toBe(255);
   });
 
   it('isBytesHex', () => {
@@ -566,5 +599,134 @@ describe('bytesToHex - hexToBytes', () => {
     const value0 = new Uint8Array();
     const bigint0 = bytesToBigInt(value0);
     expect(bigint0.toString()).toBe('0');
+  });
+
+  describe('hexToBytes edge cases', () => {
+    // Empty inputs
+    it('handles empty string', () => {
+      expect(hexToBytes('')).toEqual(new Uint8Array([]));
+    });
+
+    it('handles 0x only', () => {
+      expect(hexToBytes('0x')).toEqual(new Uint8Array([]));
+    });
+
+    // Single character (odd length)
+    it('handles single hex character (odd length)', () => {
+      expect(hexToBytes('f')).toEqual(new Uint8Array([15]));
+      expect(hexToBytes('0')).toEqual(new Uint8Array([0]));
+      expect(hexToBytes('a')).toEqual(new Uint8Array([10]));
+    });
+
+    it('handles 0x + single character (odd length)', () => {
+      expect(hexToBytes('0xf')).toEqual(new Uint8Array([15]));
+      expect(hexToBytes('0x0')).toEqual(new Uint8Array([0]));
+      expect(hexToBytes('0xa')).toEqual(new Uint8Array([10]));
+    });
+
+    // Valid hex strings
+    it('handles valid lowercase hex', () => {
+      expect(hexToBytes('0xdeadbeef')).toEqual(
+        new Uint8Array([0xde, 0xad, 0xbe, 0xef]),
+      );
+    });
+
+    it('handles valid uppercase hex', () => {
+      expect(hexToBytes('0xDEADBEEF')).toEqual(
+        new Uint8Array([0xde, 0xad, 0xbe, 0xef]),
+      );
+    });
+
+    it('handles mixed case hex', () => {
+      expect(hexToBytes('0xDeAdBeEf')).toEqual(
+        new Uint8Array([0xde, 0xad, 0xbe, 0xef]),
+      );
+    });
+
+    it('handles hex without 0x prefix', () => {
+      expect(hexToBytes('deadbeef')).toEqual(
+        new Uint8Array([0xde, 0xad, 0xbe, 0xef]),
+      );
+    });
+
+    // Invalid characters (parseInt returns NaN -> 0)
+    it('converts invalid hex chars to 0 (via parseInt NaN)', () => {
+      // 'zz' -> parseInt('zz', 16) = NaN -> becomes 0 in Uint8Array
+      expect(hexToBytes('zz')).toEqual(new Uint8Array([0]));
+      expect(hexToBytes('0xzz')).toEqual(new Uint8Array([0]));
+    });
+
+    it('handles mixed valid and invalid chars', () => {
+      // 'zf' -> parseInt('zf', 16) = NaN -> 0
+      // 'ff' -> 255
+      expect(hexToBytes('0xzfff')).toEqual(new Uint8Array([0, 255]));
+      expect(hexToBytes('0xffzf')).toEqual(new Uint8Array([255, 0]));
+    });
+
+    it('handles all zeros', () => {
+      expect(hexToBytes('0x0000')).toEqual(new Uint8Array([0, 0]));
+      expect(hexToBytes('0x00000000')).toEqual(new Uint8Array([0, 0, 0, 0]));
+    });
+
+    it('handles all ones (0xff)', () => {
+      expect(hexToBytes('0xffff')).toEqual(new Uint8Array([255, 255]));
+      expect(hexToBytes('0xffffffff')).toEqual(
+        new Uint8Array([255, 255, 255, 255]),
+      );
+    });
+
+    // Boundary values
+    it('handles boundary byte values', () => {
+      expect(hexToBytes('0x00')).toEqual(new Uint8Array([0]));
+      expect(hexToBytes('0x01')).toEqual(new Uint8Array([1]));
+      expect(hexToBytes('0x7f')).toEqual(new Uint8Array([127])); // max signed byte
+      expect(hexToBytes('0x80')).toEqual(new Uint8Array([128])); // min negative in signed
+      expect(hexToBytes('0xfe')).toEqual(new Uint8Array([254]));
+      expect(hexToBytes('0xff')).toEqual(new Uint8Array([255]));
+    });
+
+    // Whitespace (not handled - becomes invalid)
+    it('whitespace in string produces invalid bytes', () => {
+      // ' f' -> parseInt(' f', 16) = 15, but match splits differently
+      const result = hexToBytes('0x ff');
+      // Regex .{1,2} will match ' f' and 'f'
+      expect(result.length).toBe(2);
+    });
+
+    // Long strings
+    it('handles 32-byte (256-bit) hex string', () => {
+      const hex =
+        '0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+      const bytes = hexToBytes(hex);
+      expect(bytes.length).toBe(32);
+      expect(bytes[0]).toBe(0x01);
+      expect(bytes[1]).toBe(0x23);
+      expect(bytes[31]).toBe(0xef);
+    });
+
+    // Special prefix handling
+    it('handles 0X (uppercase X) prefix', () => {
+      // The regex only removes lowercase 0x
+      const result = hexToBytes('0Xff');
+      // '0Xff' without 0x removal -> ['0X', 'ff'] -> [NaN, 255] -> [0, 255]
+      expect(result).toEqual(new Uint8Array([0, 255]));
+    });
+
+    // Leading zeros preservation
+    it('preserves leading zeros', () => {
+      expect(hexToBytes('0x0001')).toEqual(new Uint8Array([0, 1]));
+      expect(hexToBytes('0x000000ff')).toEqual(new Uint8Array([0, 0, 0, 255]));
+    });
+  });
+
+  describe('bytesToHex - hexToBytes', () => {
+    it('converts a hex to bytes', async () => {
+      const value = '0xff';
+      const bytes1 = hexToBytes(value);
+      expect(bytes1).toEqual(new Uint8Array([255]));
+
+      const bytes2 = hexToBytes('0x');
+      expect(bytes2).toEqual(new Uint8Array([]));
+    });
   });
 });

@@ -26,6 +26,7 @@ import { safeJSONstringify } from '../../utils/string';
 // =======
 // npx jest --config jest.devnet.config.cjs --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_public-decrypt.test.ts --testNamePattern=xxx
 //
+// curl https://relayer.dev.zama.cloud/v2/public-decrypt/ab385343-ca64-4c58-beb0-bce684c856cf
 
 const ciphertextHandles: `0x${string}`[] = [
   '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
@@ -76,7 +77,7 @@ describeIfFetchMock('RelayerV2Provider:public-decrypt:mock:', () => {
 
   beforeEach(() => {
     removeAllFetchMockRoutes();
-    relayerProvider = createRelayerProvider(TEST_CONFIG.v2.urls.base);
+    relayerProvider = createRelayerProvider(TEST_CONFIG.v2.urls.base, 1);
     expect(relayerProvider.version).toBe(2);
     expect(relayerProvider.url).toBe(TEST_CONFIG.v2.urls.base);
     expect(relayerProvider.publicDecrypt).toBe(
@@ -240,7 +241,7 @@ describeIfFetch('RelayerV2Provider:public-decrypt:sepolia:', () => {
     consoleLogSpy.mockRestore();
   });
 
-  it('v2: succeeded', async () => {
+  it('xxx v2: succeeded', async () => {
     setupAllFetchMockRoutes({});
 
     const config = TEST_CONFIG.v2.fhevmInstanceConfig;

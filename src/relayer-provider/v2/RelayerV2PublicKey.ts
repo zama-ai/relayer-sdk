@@ -107,7 +107,7 @@ export class RelayerV2PublicKey {
   } {
     return {
       publicKey: this._publicKey.toBytes(),
-      publicParams: this._crs2048.toPublicParamsBytes(),
+      publicParams: this._crs2048.toPublicParams2048Bytes(),
     };
   }
 }

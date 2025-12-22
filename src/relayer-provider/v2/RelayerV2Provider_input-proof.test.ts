@@ -102,7 +102,7 @@ describeIfFetchMock('RelayerV2Provider', () => {
     fetchMock.removeRoutes();
     expect(TEST_CONFIG.type).toBe('fetch-mock');
 
-    const p = createRelayerProvider(TEST_CONFIG.v2.urls.base);
+    const p = createRelayerProvider(TEST_CONFIG.v2.urls.base, 1);
     if (!(p instanceof RelayerV2Provider)) {
       throw new Error(`Unable to create relayer provider`);
     }
@@ -290,7 +290,6 @@ describeIfFetchMock('RelayerV2Provider', () => {
 
     const res = await relayerProvider.fetchPostInputProof(
       DEADBEEF_INPUT_PROOF_PAYLOAD,
-      undefined,
       {
         onProgress: (args) => {
           console.log('onProgress: ' + JSON.stringify(args));
@@ -402,7 +401,7 @@ describe('createEncryptedInput', () => {
   }, 60000);
 
   itIfFetch(
-    'v2: succeeded',
+    'xxx v2: succeeded',
     async () => {
       await testCreateInstance({
         config: TEST_CONFIG.v2.fhevmInstanceConfig,

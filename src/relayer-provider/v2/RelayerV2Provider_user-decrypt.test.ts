@@ -93,7 +93,7 @@ describeIfFetchMock('RelayerV2Provider', () => {
 
   beforeEach(() => {
     fetchMock.removeRoutes();
-    relayerProvider = createRelayerProvider(TEST_CONFIG.v2.urls.base);
+    relayerProvider = createRelayerProvider(TEST_CONFIG.v2.urls.base, 1);
     expect(relayerProvider.version).toBe(2);
     expect(relayerProvider.url).toBe(TEST_CONFIG.v2.urls.base);
     expect(relayerProvider.userDecrypt).toBe(TEST_CONFIG.v2.urls.userDecrypt);
@@ -237,11 +237,7 @@ describeIfFetchMock('RelayerV2Provider', () => {
       headers: { 'Content-Type': 'application/json' },
     });
 
-    const result = await relayerProvider.fetchPostUserDecrypt(
-      payload,
-      undefined,
-      undefined,
-    );
+    const result = await relayerProvider.fetchPostUserDecrypt(payload);
     console.log(JSON.stringify(result, null, 2));
   });
 });

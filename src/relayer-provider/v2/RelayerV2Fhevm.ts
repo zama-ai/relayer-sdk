@@ -1,3 +1,4 @@
+import { TFHECrsError } from '../../errors/TFHECrsError';
 import type { TFHEType } from '../../tfheType';
 import { AbstractRelayerFhevm } from '../AbstractRelayerFhevm';
 import { RelayerV2Provider } from './RelayerV2Provider';
@@ -50,6 +51,13 @@ export class RelayerV2Fhevm extends AbstractRelayerFhevm {
     return this._relayerProvider;
   }
 
+  public override getPublicKeyInfo(): { id: string; srcUrl?: string } {
+    return {
+      id: this._relayerPublicKey.getTFHEPublicKey().id,
+      srcUrl: this._relayerPublicKey.getTFHEPublicKey().srcUrl,
+    };
+  }
+
   public override getPublicKeyBytes(): {
     publicKeyId: string;
     publicKey: Uint8Array;
@@ -64,23 +72,47 @@ export class RelayerV2Fhevm extends AbstractRelayerFhevm {
     return this._relayerPublicKey.getTFHEPublicKey().toPublicKeyWasm();
   }
 
-  public override getPublicParamsBytes(bits: number): {
+  public override getPublicParamsBytesForBits(bits: number): {
     publicParams: Uint8Array;
     publicParamsId: string;
   } {
-    if (bits !== 2048) {
-      throw new Error(`Unsupported PublicParams bits format ${bits}`);
+    if (bits === undefined) {
+      throw new TFHECrsError({ message: `Missing PublicParams bits format` });
     }
-    return this._relayerPublicKey.getTFHECrs().toPublicParamsBytes()['2048'];
+    if (bits !== 2048) {
+      throw new TFHECrsError({
+        message: `Unsupported PublicParams bits format '${bits}'`,
+      });
+    }
+    return this._relayerPublicKey.getTFHECrs().toPublicParams2048Bytes()[
+      '2048'
+    ];
   }
 
-  public override getPublicParamsWasm(bits: number): {
+  public override getPublicParamsWasmForBits(bits: number): {
     publicParamsId: string;
     publicParams: TFHEType['CompactPkeCrs'];
   } {
-    if (bits !== 2048) {
-      throw new Error(`Unsupported PublicParams bits format ${bits}`);
+    if (bits === undefined) {
+      throw new TFHECrsError({ message: `Missing PublicParams bits format` });
     }
-    return this._relayerPublicKey.getTFHECrs().toPublicParamsWasm()['2048'];
+    if (bits !== 2048) {
+      throw new TFHECrsError({
+        message: `Unsupported PublicParams bits format '${bits}'`,
+      });
+    }
+    return this._relayerPublicKey.getTFHECrs().toPublicParams2048Wasm()['2048'];
+  }
+
+  public override getPublicParamsInfo(): {
+    id: string;
+    bits: number;
+    srcUrl?: string;
+  } {
+    return {
+      id: this._relayerPublicKey.getTFHECrs().id,
+      bits: this._relayerPublicKey.getTFHECrs().bits,
+      srcUrl: this._relayerPublicKey.getTFHECrs().srcUrl,
+    };
   }
 }

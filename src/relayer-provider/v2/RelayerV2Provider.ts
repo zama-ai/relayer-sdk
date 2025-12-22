@@ -62,15 +62,15 @@ export class RelayerV2Provider extends AbstractRelayerProvider {
 
   public override async fetchPostInputProof(
     payload: RelayerInputProofPayload,
-    instanceOptions?: FhevmInstanceOptions,
-    fetchOptions?: Prettify<RelayerProviderFetchOptions<RelayerV2ProgressArgs>>,
+    options?: Prettify<
+      FhevmInstanceOptions & RelayerProviderFetchOptions<RelayerV2ProgressArgs>
+    >,
   ): Promise<RelayerInputProofResult> {
     const request = new RelayerV2AsyncRequest({
       relayerOperation: 'INPUT_PROOF',
       url: this.inputProof,
       payload,
-      instanceOptions,
-      ...fetchOptions,
+      options,
     });
     const result = (await request.run()) as RelayerV2ResultInputProof;
     assertIsRelayerInputProofResult(result, 'fetchPostInputProof()');
@@ -79,15 +79,15 @@ export class RelayerV2Provider extends AbstractRelayerProvider {
 
   public override async fetchPostPublicDecrypt(
     payload: RelayerPublicDecryptPayload,
-    instanceOptions?: FhevmInstanceOptions,
-    fetchOptions?: Prettify<RelayerProviderFetchOptions<RelayerV2ProgressArgs>>,
+    options?: Prettify<
+      FhevmInstanceOptions & RelayerProviderFetchOptions<RelayerV2ProgressArgs>
+    >,
   ): Promise<RelayerPublicDecryptResult> {
     const request = new RelayerV2AsyncRequest({
       relayerOperation: 'PUBLIC_DECRYPT',
       url: this.publicDecrypt,
       payload,
-      instanceOptions,
-      ...fetchOptions,
+      options,
     });
     const result = await request.run();
     assertIsRelayerPublicDecryptResult(result, 'fetchPostPublicDecrypt()');
@@ -96,15 +96,15 @@ export class RelayerV2Provider extends AbstractRelayerProvider {
 
   public override async fetchPostUserDecrypt(
     payload: RelayerUserDecryptPayload,
-    instanceOptions?: FhevmInstanceOptions,
-    fetchOptions?: Prettify<RelayerProviderFetchOptions<RelayerV2ProgressArgs>>,
+    options?: Prettify<
+      FhevmInstanceOptions & RelayerProviderFetchOptions<RelayerV2ProgressArgs>
+    >,
   ): Promise<RelayerUserDecryptResult> {
     const request = new RelayerV2AsyncRequest({
       relayerOperation: 'USER_DECRYPT',
       url: this.userDecrypt,
       payload,
-      instanceOptions,
-      ...fetchOptions,
+      options,
     });
     const result = (await request.run()) as RelayerV2ResultUserDecrypt;
     assertIsRelayerUserDecryptResult(result.result, 'fetchPostUserDecrypt()');

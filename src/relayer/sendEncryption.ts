@@ -4,6 +4,7 @@ import { createEncryptedInput as createEncryptedInput } from '../sdk/encrypt';
 import { ethers } from 'ethers';
 import { throwRelayerInternalError } from './error';
 import { AbstractRelayerProvider } from '../relayer-provider/AbstractRelayerProvider';
+import type { RelayerProviderFetchOptions } from '../relayer-provider/AbstractRelayerProvider';
 import { hexToBytes, toHexString } from '../utils/bytes';
 import { numberToHex } from '../utils/uint';
 import { FhevmHandle } from '../sdk/FhevmHandle';
@@ -13,7 +14,12 @@ import type {
   FhevmInstanceOptions,
   RelayerInputProofPayload,
 } from '../types/relayer';
-import type { ChecksummedAddress, EncryptionBits } from '../types/primitives';
+import type {
+  BytesHex,
+  ChecksummedAddress,
+  EncryptionBits,
+  ZKProof,
+} from '../types/primitives';
 import type { RelayerV2InputProofOptions } from '../relayer-provider/v2/types/types';
 
 // Add type checking
@@ -23,6 +29,144 @@ const getAddress = (value: string): `0x${string}` =>
 export const currentCiphertextVersion = () => {
   return 0;
 };
+
+export async function requestCiphertextWithZKProofVerification({
+  bits,
+  ciphertext,
+  contractAddress,
+  userAddress,
+  aclContractAddress,
+  verifyingContractAddressInputVerification,
+  chainId,
+  gatewayChainId,
+  relayerProvider,
+  coprocessorSigners,
+  thresholdCoprocessorSigners,
+  extraData,
+  options,
+}: {
+  bits: EncryptionBits[];
+  ciphertext: Uint8Array;
+  contractAddress: ChecksummedAddress;
+  userAddress: ChecksummedAddress;
+  aclContractAddress: ChecksummedAddress;
+  verifyingContractAddressInputVerification: ChecksummedAddress;
+  chainId: number;
+  gatewayChainId: number;
+  relayerProvider: AbstractRelayerProvider;
+  coprocessorSigners: ChecksummedAddress[];
+  thresholdCoprocessorSigners: number;
+  extraData: BytesHex;
+  options?: FhevmInstanceOptions & RelayerProviderFetchOptions<any>;
+}) {
+  const payload: RelayerInputProofPayload = {
+    contractAddress,
+    userAddress,
+    ciphertextWithInputVerification: toHexString(ciphertext),
+    contractChainId: ('0x' + chainId.toString(16)) as `0x${string}`,
+    extraData,
+  };
+
+  const json = await relayerProvider.fetchPostInputProof(payload, options);
+
+  if (!isFhevmRelayerInputProofResponse(json)) {
+    throwRelayerInternalError('INPUT_PROOF', json);
+  }
+
+  const fhevmHandles: FhevmHandle[] = FhevmHandle.fromZKProof({
+    ciphertextWithZKProof: ciphertext,
+    chainId,
+    aclAddress: aclContractAddress as ChecksummedAddress,
+    ciphertextVersion: currentCiphertextVersion(),
+    fheTypeEncryptionBitwidths: bits,
+  });
+
+  const handles: Uint8Array[] = fhevmHandles.map((h) => h.toBytes32());
+  const result = json;
+
+  // Note that the hex strings returned by the relayer do have have the 0x prefix
+  if (result.handles && result.handles.length > 0) {
+    const responseHandles = result.handles.map(hexToBytes);
+    if (handles.length != responseHandles.length) {
+      throw new Error(
+        `Incorrect Handles list sizes: (expected) ${handles.length} != ${responseHandles.length} (received)`,
+      );
+    }
+    for (let index = 0; index < handles.length; index += 1) {
+      let handle = handles[index];
+      let responseHandle = responseHandles[index];
+      let expected = toHexString(handle);
+      let current = toHexString(responseHandle);
+      if (expected !== current) {
+        throw new Error(
+          `Incorrect Handle ${index}: (expected) ${expected} != ${current} (received)`,
+        );
+      }
+    }
+  }
+
+  const signatures: string[] = result.signatures;
+
+  // verify signatures for inputs:
+  const domain = {
+    name: 'InputVerification',
+    version: '1',
+    chainId: gatewayChainId,
+    verifyingContract: verifyingContractAddressInputVerification,
+  };
+  const types = {
+    CiphertextVerification: [
+      { name: 'ctHandles', type: 'bytes32[]' },
+      { name: 'userAddress', type: 'address' },
+      { name: 'contractAddress', type: 'address' },
+      { name: 'contractChainId', type: 'uint256' },
+      { name: 'extraData', type: 'bytes' },
+    ],
+  };
+
+  const recoveredAddresses = signatures.map((signature: string) => {
+    const sig = signature.startsWith('0x') ? signature : `0x${signature}`;
+    const recoveredAddress = ethers.verifyTypedData(
+      domain,
+      types,
+      {
+        ctHandles: handles,
+        userAddress,
+        contractAddress,
+        contractChainId: chainId,
+        extraData,
+      },
+      sig,
+    );
+    return recoveredAddress;
+  });
+
+  const thresholdReached = isThresholdReached(
+    coprocessorSigners,
+    recoveredAddresses,
+    thresholdCoprocessorSigners,
+  );
+
+  if (!thresholdReached) {
+    throw Error('Coprocessor signers threshold is not reached');
+  }
+
+  // inputProof is len(list_handles) + numCoprocessorSigners + list_handles + signatureCoprocessorSigners (1+1+NUM_HANDLES*32+65*numSigners)
+  let inputProof = numberToHex(handles.length);
+  const numSigners = signatures.length;
+  inputProof += numberToHex(numSigners);
+
+  const listHandlesStr = handles.map((i) => toHexString(i));
+  listHandlesStr.map((handle) => (inputProof += handle));
+  signatures.map((signature) => (inputProof += signature.slice(2))); // removes the '0x' prefix from the `signature` string
+
+  // Append the extra data to the input proof
+  inputProof += extraData.slice(2);
+  return {
+    handles,
+    inputProof: hexToBytes(inputProof),
+  };
+}
 
 function isThresholdReached(
   coprocessorSigners: string[],
@@ -93,7 +237,7 @@ export type RelayerEncryptedInput = {
   add256: (value: number | bigint) => RelayerEncryptedInput;
   addAddress: (value: string) => RelayerEncryptedInput;
   getBits: () => EncryptionBits[];
-  getCiphertextWithInputVerification(): Uint8Array;
+  generateZKProof(): ZKProof;
   encrypt: (options?: RelayerV2InputProofOptions) => Promise<{
     handles: Uint8Array[];
     inputProof: Uint8Array;
@@ -171,14 +315,20 @@ export const createRelayerEncryptedInput =
       getBits(): EncryptionBits[] {
         return input.getBits();
       },
-      getCiphertextWithInputVerification(): Uint8Array {
-        return input.encrypt();
+      generateZKProof(): ZKProof {
+        return {
+          chainId,
+          aclContractAddress: aclContractAddress as ChecksummedAddress,
+          userAddress: userAddress as ChecksummedAddress,
+          contractAddress: contractAddress as ChecksummedAddress,
+          ciphertextWithZkProof: input.encrypt(),
+          bits: input.getBits(),
+        } as const;
       },
       encrypt: async (options?: RelayerV2InputProofOptions) => {
         const extraData: `0x${string}` = '0x00';
         const bits = input.getBits();
         const ciphertext = input.encrypt();
-
         const payload: RelayerInputProofPayload = {
           contractAddress: getAddress(contractAddress),
           userAddress: getAddress(userAddress),

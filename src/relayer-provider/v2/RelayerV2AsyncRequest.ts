@@ -21,6 +21,8 @@ import type {
   RelayerV2ProgressSucceeded,
   RelayerV2ProgressFailed,
   RelayerV2ProgressFailureStatus,
+  RelayerV2ProgressTimeout,
+  RelayerV2ProgressAbort,
 } from './types/types';
 import { RelayerV2ResponseInvalidBodyError } from './errors/RelayerV2ResponseInvalidBodyError';
 import { RelayerV2ResponseStatusError } from './errors/RelayerV2ResponseStatusError';
@@ -42,9 +44,12 @@ import {
 import { safeJSONstringify } from '../../utils/string';
 import { sdkName, version } from '../../_version';
 import type {
+  Auth,
   FhevmInstanceOptions,
   RelayerPostOperation,
 } from '../../types/relayer';
+import { RelayerV2TimeoutError } from './errors/RelayerV2TimeoutError';
+import { RelayerV2AbortError } from './errors/RelayerV2AbortError';
 
 /*
     Actions:
@@ -92,6 +97,7 @@ export type RelayerV2AsyncRequestState = {
   running: boolean;
   succeeded: boolean;
   terminated: boolean;
+  timeout: boolean;
 };
 
 type RelayerV2AsyncRequestParams = {
@@ -100,8 +106,9 @@ type RelayerV2AsyncRequestParams = {
   payload: Record<string, unknown>;
   timeoutInSeconds?: number;
   throwErrorIfNoRetryAfter?: boolean;
-  instanceOptions?: FhevmInstanceOptions;
-} & RelayerProviderFetchOptions<RelayerV2ProgressArgs>;
+  options?: FhevmInstanceOptions &
+    RelayerProviderFetchOptions<RelayerV2ProgressArgs>;
+};
 
 export type RelayerV2TerminateReason =
   | 'succeeded'
@@ -110,6 +117,7 @@ export type RelayerV2TerminateReason =
   | 'abort';
 
 export class RelayerV2AsyncRequest {
+  private _fetchMethod: 'GET' | 'POST' | undefined;
   private _jobId: string | undefined;
   private _jobIdTimestamp: number | undefined;
   private _state: RelayerV2AsyncRequestState;
@@ -124,18 +132,19 @@ export class RelayerV2AsyncRequest {
   private _retryAfterTimeoutID: any;
   private _url: string;
   private _payload: Record<string, unknown>;
-  private _fhevmInstanceOptions: FhevmInstanceOptions | undefined;
+  private _fhevmAuth: Auth | undefined;
   private _retryAfterTimeoutPromiseFuncReject?: (reason?: any) => void;
   private _onProgress?: (args: RelayerV2ProgressArgs) => void;
-  private _requestMaxDurationInSecs: number;
+  private _requestMaxDurationInMs: number;
   private _requestStartTimestamp: number | undefined;
   private _requestGlobalTimeoutID: any;
   private _throwErrorIfNoRetryAfter: boolean;
 
-  private static readonly DEFAULT_RETRY_AFTER_SECS = 2;
-  private static readonly DEFAULT_GLOBAL_REQUEST_TIMEOUT_SECS = 60 * 60;
-  private static readonly MAX_GET_RETRY = 100;
-  private static readonly MAX_POST_RETRY = 100;
+  private static readonly DEFAULT_RETRY_AFTER_MS = 2500;
+  private static readonly MINIMUM_RETRY_AFTER_MS = 1000;
+  private static readonly DEFAULT_GLOBAL_REQUEST_TIMEOUT_MS = 60 * 60 * 1000; // 1 hour
+  private static readonly MAX_GET_RETRY = 60 * 30; // number of default retries in 1 hour (30 retries/min)
+  private static readonly MAX_POST_RETRY = RelayerV2AsyncRequest.MAX_GET_RETRY;
 
   constructor(params: RelayerV2AsyncRequestParams) {
     if (
@@ -159,7 +168,7 @@ export class RelayerV2AsyncRequest {
       'abort',
       this._handleInternalSignalAbort,
     );
-    this._externalAbortSignal = params.signal;
+    this._externalAbortSignal = params.options?.signal;
     if (this._externalAbortSignal) {
       this._externalAbortSignal.addEventListener(
         'abort',
@@ -168,8 +177,8 @@ export class RelayerV2AsyncRequest {
     }
     this._url = params.url;
     this._payload = params.payload;
-    this._fhevmInstanceOptions = params.instanceOptions;
-    this._onProgress = params.onProgress;
+    this._fhevmAuth = params.options?.auth;
+    this._onProgress = params.options?.onProgress;
     this._state = {
       aborted: false,
       canceled: false,
@@ -178,6 +187,7 @@ export class RelayerV2AsyncRequest {
       running: false,
       succeeded: false,
       terminated: false,
+      timeout: false,
     };
     this._retryCount = 0;
     this._retryAfterTimeoutID = undefined;
@@ -185,9 +195,9 @@ export class RelayerV2AsyncRequest {
     this._terminateReason = undefined;
     this._publicAPINoReentrancy = false;
     this._throwErrorIfNoRetryAfter = params.throwErrorIfNoRetryAfter ?? false;
-    this._requestMaxDurationInSecs =
-      params.timeoutInSeconds ??
-      RelayerV2AsyncRequest.DEFAULT_GLOBAL_REQUEST_TIMEOUT_SECS;
+    this._requestMaxDurationInMs =
+      params.options?.timeout ??
+      RelayerV2AsyncRequest.DEFAULT_GLOBAL_REQUEST_TIMEOUT_MS;
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -241,6 +251,13 @@ export class RelayerV2AsyncRequest {
       });
     }
 
+    if (this._state.timeout) {
+      throw new RelayerV2StateError({
+        message: `Relayer.run() failed. Request already timeout.`,
+        state: { ...this._state },
+      });
+    }
+
     if (this._externalAbortSignal?.aborted === true) {
       throw new RelayerV2StateError({
         message: `Relayer.run() failed. External AbortSignal already aborted (reason:${this._externalAbortSignal?.reason}).`,
@@ -264,7 +281,7 @@ export class RelayerV2AsyncRequest {
     this._state.running = true;
 
     this._requestStartTimestamp = Date.now();
-    this._setGlobalRequestTimeout(this._requestMaxDurationInSecs * 1000);
+    this._setGlobalRequestTimeout(this._requestMaxDurationInMs);
 
     try {
       const json = await this._runPostLoop();
@@ -359,6 +376,14 @@ export class RelayerV2AsyncRequest {
     return this._state.failed;
   }
 
+  public get aborted(): boolean {
+    return this._state.aborted;
+  }
+
+  public get timeout(): boolean {
+    return this._state.timeout;
+  }
+
   public get succeeded(): boolean {
     return this._state.succeeded;
   }
@@ -388,6 +413,12 @@ export class RelayerV2AsyncRequest {
     | RelayerV2ResultUserDecrypt
     | RelayerV2ResultInputProof
   > {
+    this._assert(
+      this._fetchMethod === undefined,
+      'this._fetchMethod === undefined',
+    );
+    this._fetchMethod = 'POST';
+
     // No infinite loop!
     let i = 0;
     while (i < RelayerV2AsyncRequest.MAX_POST_RETRY) {
@@ -430,8 +461,7 @@ export class RelayerV2AsyncRequest {
             });
           }
 
-          let retry_after_sec = this._getRetryAfterHeaderValueInSecs(response);
-          if (retry_after_sec < 1) retry_after_sec = 1;
+          const retryAfterMs = this._getRetryAfterHeaderValueInMs(response);
 
           // Debug: will throw an assert failed error if jobId has already been set
           this._setJobIdOnce(bodyJson.result.jobId);
@@ -446,12 +476,11 @@ export class RelayerV2AsyncRequest {
             jobId: this.jobId,
             operation: this._relayerOperation,
             retryCount: this._retryCount,
-            retryAfter: retry_after_sec,
+            retryAfterMs,
             elapsed,
           } satisfies RelayerV2ProgressQueued);
 
-          // Wait if needed (minimum 1s)
-          await this._setRetryAfterTimeout(retry_after_sec * 1000);
+          await this._setRetryAfterTimeout(retryAfterMs);
 
           const json = await this._runGetLoop();
           return json;
@@ -500,8 +529,7 @@ export class RelayerV2AsyncRequest {
             });
           }
 
-          let retry_after_sec = this._getRetryAfterHeaderValueInSecs(response);
-          if (retry_after_sec < 1) retry_after_sec = 1;
+          const retryAfterMs = this._getRetryAfterHeaderValueInMs(response);
 
           // Async onProgress callback
           this._postAsyncOnProgressCallback({
@@ -509,14 +537,14 @@ export class RelayerV2AsyncRequest {
             url: this._url,
             method: 'POST',
             status: responseStatus,
-            retryAfter: retry_after_sec,
+            retryAfterMs,
             retryCount: this._retryCount,
             elapsed,
             message: bodyJson.error.message,
           } satisfies RelayerV2ProgressRateLimited);
 
           // Wait if needed (minimum 1s)
-          await this._setRetryAfterTimeout(retry_after_sec * 1000);
+          await this._setRetryAfterTimeout(retryAfterMs);
 
           continue;
         }
@@ -604,11 +632,13 @@ export class RelayerV2AsyncRequest {
     | RelayerV2ResultUserDecrypt
     | RelayerV2ResultInputProof
   > {
+    this._assert(this._fetchMethod === 'POST', "this._fetchMethod === 'POST'");
     this._assert(this._jobId !== undefined, 'this._jobId !== undefined');
     this._assert(
       this._jobIdTimestamp !== undefined,
       'this._jobIdTimestamp !== undefined',
     );
+    this._fetchMethod = 'GET';
 
     let i = 0;
     while (i < RelayerV2AsyncRequest.MAX_GET_RETRY) {
@@ -736,8 +766,7 @@ export class RelayerV2AsyncRequest {
             });
           }
 
-          let retry_after_sec = this._getRetryAfterHeaderValueInSecs(response);
-          if (retry_after_sec < 1) retry_after_sec = 1;
+          const retryAfterMs = this._getRetryAfterHeaderValueInMs(response);
 
           // Async onProgress callback
           this._postAsyncOnProgressCallback({
@@ -748,13 +777,13 @@ export class RelayerV2AsyncRequest {
             requestId: bodyJson.requestId,
             operation: this._relayerOperation,
             jobId: this.jobId,
-            retryAfter: retry_after_sec,
+            retryAfterMs,
             retryCount: this._retryCount,
             elapsed,
           } satisfies RelayerV2ProgressQueued);
 
           // Wait if needed (minimum 1s)
-          await this._setRetryAfterTimeout(retry_after_sec * 1000);
+          await this._setRetryAfterTimeout(retryAfterMs);
           continue;
         }
         case 400: {
@@ -917,18 +946,21 @@ export class RelayerV2AsyncRequest {
 
   //////////////////////////////////////////////////////////////////////////////
 
-  private _getRetryAfterHeaderValueInSecs(response: Response): number {
+  private _getRetryAfterHeaderValueInMs(response: Response): number {
     if (!response.headers.has('Retry-After')) {
       if (this._throwErrorIfNoRetryAfter) {
         throw new Error(`Missing 'Retry-After' header key`);
       }
-      return RelayerV2AsyncRequest.DEFAULT_RETRY_AFTER_SECS;
+      return RelayerV2AsyncRequest.DEFAULT_RETRY_AFTER_MS;
     }
 
     try {
       const n = Number.parseInt(response.headers.get('Retry-After')!);
       if (isUint(n)) {
-        return n;
+        const ms = n * 1000;
+        return ms < RelayerV2AsyncRequest.MINIMUM_RETRY_AFTER_MS
+          ? RelayerV2AsyncRequest.MINIMUM_RETRY_AFTER_MS
+          : ms;
       }
     } catch {
       //
@@ -938,7 +970,7 @@ export class RelayerV2AsyncRequest {
       throw new Error(`Invalid 'Retry-After' header key`);
     }
 
-    return RelayerV2AsyncRequest.DEFAULT_RETRY_AFTER_SECS;
+    return RelayerV2AsyncRequest.DEFAULT_RETRY_AFTER_MS;
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -999,7 +1031,7 @@ export class RelayerV2AsyncRequest {
           ? { signal: this._internalAbortSignal }
           : {}),
       } satisfies RequestInit,
-      this._fhevmInstanceOptions?.auth,
+      this._fhevmAuth,
     );
 
     this._state.fetching = true;
@@ -1172,7 +1204,22 @@ export class RelayerV2AsyncRequest {
       this._assert(!this._state.canceled, '!this._state.canceled');
     }
 
-    this._terminate('abort');
+    this._postAsyncOnProgressCallback({
+      type: 'abort',
+      url: this._url,
+      ...(this._jobId ? { jobId: this._jobId } : {}),
+      operation: this._relayerOperation,
+      retryCount: this._retryCount,
+    } satisfies RelayerV2ProgressAbort);
+
+    this._terminate(
+      'abort',
+      new RelayerV2AbortError({
+        operation: this._relayerOperation,
+        jobId: this._jobId,
+        url: this._url,
+      }),
+    );
   };
 
   //////////////////////////////////////////////////////////////////////////////
@@ -1220,7 +1267,7 @@ export class RelayerV2AsyncRequest {
     this._terminateError = error;
     this._state.terminated = true;
 
-    this._tryClearRetryAfterTimeout();
+    this._tryClearRetryAfterTimeout(error);
     this._tryClearGlobalRequestTimeout();
 
     const is = this._internalAbortSignal;
@@ -1251,7 +1298,10 @@ export class RelayerV2AsyncRequest {
       this._retryAfterTimeoutID === undefined,
       'this._retryAfterTimeoutID === undefined',
     );
-    this._assert(delayMs >= 1000, 'delayMs >= 1000');
+    this._assert(
+      delayMs >= RelayerV2AsyncRequest.MINIMUM_RETRY_AFTER_MS,
+      `delayMs >= ${RelayerV2AsyncRequest.MINIMUM_RETRY_AFTER_MS}`,
+    );
 
     this._trace('_setRetryAfterTimeout', `delayMs=${delayMs}`);
 
@@ -1286,7 +1336,7 @@ export class RelayerV2AsyncRequest {
 
   //////////////////////////////////////////////////////////////////////////////
 
-  private _tryClearRetryAfterTimeout() {
+  private _tryClearRetryAfterTimeout(error?: unknown) {
     if (this._retryAfterTimeoutID === undefined) {
       // Debug
       this._assert(
@@ -1304,7 +1354,8 @@ export class RelayerV2AsyncRequest {
 
     clearTimeout(tid);
 
-    reject(new Error('_tryClearRetryAfterTimeout'));
+    // Calling reject will
+    reject(error ?? new Error('_tryClearRetryAfterTimeout'));
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -1327,7 +1378,33 @@ export class RelayerV2AsyncRequest {
   }
 
   private _handleGlobalRequestTimeout() {
-    this._terminate('timeout');
+    this._state.timeout = true;
+
+    // Debug state-check guards:
+    this._assert(
+      this instanceof RelayerV2AsyncRequest,
+      `this instanceof RelayerV2AsyncRequest`,
+    );
+    this._assert(!this._state.terminated, `!this._state.terminated`);
+    this._assert(!this._state.timeout, '!this._state.timeout');
+
+    this._postAsyncOnProgressCallback({
+      type: 'timeout',
+      url: this._url,
+      ...(this._jobId ? { jobId: this._jobId } : {}),
+      operation: this._relayerOperation,
+      retryCount: this._retryCount,
+    } satisfies RelayerV2ProgressTimeout);
+
+    this._terminate(
+      'timeout',
+      new RelayerV2TimeoutError({
+        operation: this._relayerOperation,
+        jobId: this._jobId,
+        url: this._url,
+        timeoutMs: this._requestMaxDurationInMs,
+      }),
+    );
   }
 
   private _tryClearGlobalRequestTimeout() {
