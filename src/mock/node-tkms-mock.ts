@@ -130,10 +130,10 @@ global.TKMS = TKMSPkg;
 //   );
 //   const keypair = TKMS.ml_kem_pke_keygen();
 //   return {
-//     publicKey: toHexString(
+//     publicKey: bytesToHexNo0x(
 //       TKMS.ml_kem_pke_pk_to_u8vec(TKMS.ml_kem_pke_get_pk(keypair)),
 //     ),
-//     privateKey: toHexString(TKMS.ml_kem_pke_sk_to_u8vec(keypair)),
+//     privateKey: bytesToHexNo0x(TKMS.ml_kem_pke_sk_to_u8vec(keypair)),
 
 export function u8vec_to_ml_kem_pke_pk(
   v: Uint8Array,

@@ -15,8 +15,9 @@ import {
 import {
   assertIsUint64,
   assertIsUint8,
+  isUintNumber,
   MAX_UINT64,
-  uint32ToBytes32,
+  numberToBytes32,
 } from '../utils/uint';
 import { keccak256 } from 'ethers';
 import { assertRelayer, InternalError } from '../errors/InternalError';
@@ -106,6 +107,11 @@ export class FhevmHandle {
     handleBytes32?: Bytes32 | undefined;
     handleBytes32Hex?: Bytes32Hex | undefined;
   }) {
+    if (!isUintNumber(chainId)) {
+      throw new FhevmHandleError({
+        message: 'ChainId must be a positive integer',
+      });
+    }
     if (BigInt(chainId) > MAX_UINT64) {
       // fhevm assumes chainID is only taking up to 8 bytes
       throw new FhevmHandleError({
@@ -194,7 +200,7 @@ export class FhevmHandle {
           (this._index !== undefined && this._index < 255 && !this._computed),
       );
 
-      const chainId32Bytes = uint32ToBytes32(this._chainId);
+      const chainId32Bytes = numberToBytes32(this._chainId);
       const chainId8Bytes = chainId32Bytes.subarray(24, 32);
 
       const handleHash21 = hexToBytes(this._hash21);
@@ -450,7 +456,7 @@ export class FhevmHandle {
 
     const encryptionIndexByte1 = new Uint8Array([index]);
     const aclContractAddressBytes20 = checksummedAddressToBytes20(aclAddress);
-    const chainIdBytes32 = uint32ToBytes32(chainId);
+    const chainIdBytes32 = numberToBytes32(chainId);
 
     const encoder = new TextEncoder();
     const domainSepBytes = encoder.encode(

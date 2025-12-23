@@ -1,7 +1,12 @@
 import dotenv from 'dotenv';
 import fs from 'fs';
 import { ethers } from 'ethers';
-import { FhevmHandle, isChecksummedAddress } from '../lib/internal.js';
+import {
+  encryptionBitsFromFheTypeName,
+  FhevmHandle,
+  isChecksummedAddress,
+  isFheTypeName,
+} from '../lib/internal.js';
 
 export function logCLI(message, { json, verbose }) {
   if (json === true) {
@@ -12,16 +17,6 @@ export function logCLI(message, { json, verbose }) {
     console.log(message);
   }
 }
-
-export const prependHttps = (host) => {
-  if (!/^https?:\/\//i.test(host)) {
-    return 'https://' + host;
-  }
-  return host;
-};
-
-export const toHexString = (bytes) =>
-  bytes.reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), '');
 
 export const throwError = (error, cause) => {
   if (cause) {
@@ -296,4 +291,65 @@ export function parseCommonOptions(options) {
   };
 
   return { config, provider, wallet, signer };
+}
+
+export function valueColumnTypeListToFheTypedValues(list) {
+  return list.map((str) => {
+    const [valueStr, fheTypeName] = str.split(':');
+    if (!isFheTypeName(fheTypeName)) {
+      throwError(`Invalid FheType name: ${fheTypeName}`);
+    }
+    let value;
+    if (fheTypeName === 'ebool') {
+      value = valueStr === 'true' ? true : false;
+    } else if (fheTypeName === 'eaddress') {
+      value = valueStr;
+    } else if (
+      fheTypeName === 'euint8' ||
+      fheTypeName === 'euint16' ||
+      fheTypeName === 'euint32'
+    ) {
+      value = Number(valueStr);
+    } else {
+      value = BigInt(valueStr);
+      if (value <= BigInt(Number.MAX_SAFE_INTEGER)) {
+        value = Number(value);
+      }
+    }
+    return { fheType: fheTypeName, value };
+  });
+}
+
+export function fheTypedValuesToBuilderFunctionWithArg(fheTypedValues) {
+  return fheTypedValues.map((pair) => {
+    const { value, fheType } = pair;
+    if (!isFheTypeName(fheType)) {
+      throwError(`Invalid FheType name: ${fheType}`);
+    }
+    let funcName;
+    if (fheType === 'ebool') {
+      funcName = 'addBool';
+    } else if (fheType === 'eaddress') {
+      funcName = 'addAddress';
+    } else {
+      const bits = encryptionBitsFromFheTypeName(fheType);
+      funcName = `add${bits}`;
+    }
+    return { funcName, arg: value };
+  });
+}
+
+export function jsonParseFheTypedValues(text) {
+  return JSON.parse(text, (key, value) => {
+    if (value === 'true' || value === true) {
+      return true;
+    }
+    if (value === 'false' || value === true) {
+      return false;
+    }
+    if (typeof value === 'string' && value.startsWith('0x')) {
+      return value;
+    }
+    return BigInt(value);
+  });
 }

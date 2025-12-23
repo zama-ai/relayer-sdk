@@ -5,8 +5,8 @@ import { ethers } from 'ethers';
 import { throwRelayerInternalError } from './error';
 import { AbstractRelayerProvider } from '../relayer-provider/AbstractRelayerProvider';
 import type { RelayerProviderFetchOptions } from '../relayer-provider/AbstractRelayerProvider';
-import { hexToBytes, toHexString } from '../utils/bytes';
-import { numberToHex } from '../utils/uint';
+import { bytesToHexNo0x, hexToBytes } from '../utils/bytes';
+import { numberToHexNo0x } from '../utils/uint';
 import { FhevmHandle } from '../sdk/FhevmHandle';
 import type { EncryptedInput, PublicParams } from '../sdk/encrypt';
 import type { TFHEType } from '../tfheType';
@@ -62,7 +62,7 @@ export async function requestCiphertextWithZKProofVerification({
   const payload: RelayerInputProofPayload = {
     contractAddress,
     userAddress,
-    ciphertextWithInputVerification: toHexString(ciphertext),
+    ciphertextWithInputVerification: bytesToHexNo0x(ciphertext),
     contractChainId: ('0x' + chainId.toString(16)) as `0x${string}`,
     extraData,
   };
@@ -95,8 +95,8 @@ export async function requestCiphertextWithZKProofVerification({
     for (let index = 0; index < handles.length; index += 1) {
       let handle = handles[index];
       let responseHandle = responseHandles[index];
-      let expected = toHexString(handle);
-      let current = toHexString(responseHandle);
+      let expected = bytesToHexNo0x(handle);
+      let current = bytesToHexNo0x(responseHandle);
       if (expected !== current) {
         throw new Error(
           `Incorrect Handle ${index}: (expected) ${expected} != ${current} (received)`,
@@ -152,11 +152,11 @@ export async function requestCiphertextWithZKProofVerification({
   }
 
   // inputProof is len(list_handles) + numCoprocessorSigners + list_handles + signatureCoprocessorSigners (1+1+NUM_HANDLES*32+65*numSigners)
-  let inputProof = numberToHex(handles.length);
+  let inputProof = numberToHexNo0x(handles.length);
   const numSigners = signatures.length;
-  inputProof += numberToHex(numSigners);
+  inputProof += numberToHexNo0x(numSigners);
 
-  const listHandlesStr = handles.map((i) => toHexString(i));
+  const listHandlesStr = handles.map((i) => bytesToHexNo0x(i));
   listHandlesStr.map((handle) => (inputProof += handle));
   signatures.map((signature) => (inputProof += signature.slice(2))); // removes the '0x' prefix from the `signature` string
 
@@ -332,7 +332,7 @@ export const createRelayerEncryptedInput =
         const payload: RelayerInputProofPayload = {
           contractAddress: getAddress(contractAddress),
           userAddress: getAddress(userAddress),
-          ciphertextWithInputVerification: toHexString(ciphertext),
+          ciphertextWithInputVerification: bytesToHexNo0x(ciphertext),
           contractChainId: ('0x' + chainId.toString(16)) as `0x${string}`,
           extraData,
         };
@@ -368,8 +368,8 @@ export const createRelayerEncryptedInput =
           for (let index = 0; index < handles.length; index += 1) {
             let handle = handles[index];
             let responseHandle = responseHandles[index];
-            let expected = toHexString(handle);
-            let current = toHexString(responseHandle);
+            let expected = bytesToHexNo0x(handle);
+            let current = bytesToHexNo0x(responseHandle);
             if (expected !== current) {
               throw new Error(
                 `Incorrect Handle ${index}: (expected) ${expected} != ${current} (received)`,
@@ -425,11 +425,11 @@ export const createRelayerEncryptedInput =
         }
 
         // inputProof is len(list_handles) + numCoprocessorSigners + list_handles + signatureCoprocessorSigners (1+1+NUM_HANDLES*32+65*numSigners)
-        let inputProof = numberToHex(handles.length);
+        let inputProof = numberToHexNo0x(handles.length);
         const numSigners = signatures.length;
-        inputProof += numberToHex(numSigners);
+        inputProof += numberToHexNo0x(numSigners);
 
-        const listHandlesStr = handles.map((i) => toHexString(i));
+        const listHandlesStr = handles.map((i) => bytesToHexNo0x(i));
         listHandlesStr.map((handle) => (inputProof += handle));
         signatures.map((signature) => (inputProof += signature.slice(2))); // removes the '0x' prefix from the `signature` string
 

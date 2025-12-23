@@ -1,5 +1,5 @@
 import { isAddress } from 'ethers';
-import { toHexString } from '../utils/bytes';
+import { bytesToHexNo0x } from '../utils/bytes';
 
 export type EIP712Type = { name: string; type: string };
 
@@ -136,9 +136,9 @@ export const createEIP712 =
 export const generateKeypair = () => {
   const keypair = TKMS.ml_kem_pke_keygen();
   return {
-    publicKey: toHexString(
+    publicKey: bytesToHexNo0x(
       TKMS.ml_kem_pke_pk_to_u8vec(TKMS.ml_kem_pke_get_pk(keypair)),
     ),
-    privateKey: toHexString(TKMS.ml_kem_pke_sk_to_u8vec(keypair)),
+    privateKey: bytesToHexNo0x(TKMS.ml_kem_pke_sk_to_u8vec(keypair)),
   };
 };

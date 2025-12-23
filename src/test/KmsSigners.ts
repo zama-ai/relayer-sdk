@@ -1,4 +1,4 @@
-import { assertIsUint, uintToHexNoPrefix } from '../utils/uint';
+import { assertIsUint, uintToHexNo0x } from '../utils/uint';
 import { assertIsChecksummedAddress } from '../utils/address';
 import {
   assertIsBytes32HexArray,
@@ -171,12 +171,10 @@ export class KmsSigners {
     const numHandles = handlesBytes32HexList.length;
     const numCoprocessorSigners = coprocessorsSignaturesHex.length;
 
-    const numHandlesHexByte1 = uintToHexNoPrefix(numHandles);
+    const numHandlesHexByte1 = uintToHexNo0x(numHandles);
     assertRelayer(numHandlesHexByte1.length === 2); // 1 byte
 
-    const numCoprocessorSignersHexByte1 = uintToHexNoPrefix(
-      numCoprocessorSigners,
-    );
+    const numCoprocessorSignersHexByte1 = uintToHexNo0x(numCoprocessorSigners);
     assertRelayer(numCoprocessorSignersHexByte1.length === 2); // 1 byte
 
     // Compute inputProof

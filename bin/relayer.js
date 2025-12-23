@@ -118,4 +118,24 @@ addCommonOptions(test.command('fhecounter-get-count'))
     await mod.testFheCounterGetCountCommand(options);
   });
 
+////////////////////////////////////////////////////////////////////////////////
+
+// Create 'zkproof' command group
+const zkproof = program.command('zkproof').description('ZKProof operations');
+
+addCommonOptions(zkproof.command('generate'))
+  .description('Generate ZKProof')
+  .requiredOption('--values <value:type-name...>', 'List of values')
+  .action(async (options) => {
+    const mod = await import('./commands/zkproof-generate.js');
+    await mod.zkProofGenerateCommand(options);
+  });
+
+addCommonOptions(zkproof.command('verify'))
+  .description('Verify ZKProof')
+  .action(async (options) => {
+    const mod = await import('./commands/zkproof-verify.js');
+    await mod.zkProofVerifyCommand(options);
+  });
+
 program.parseAsync();

@@ -6,7 +6,7 @@ import {
 } from 'ethers';
 import { checkEncryptedBits } from './decryptUtils';
 import { AbstractRelayerProvider } from '../relayer-provider/AbstractRelayerProvider';
-import { bytesToBigInt, hexToBytes, toHexString } from '../utils/bytes';
+import { bytesToBigInt, bytesToHex, hexToBytes } from '../utils/bytes';
 import type {
   ClearValueType,
   FhevmInstanceOptions,
@@ -136,8 +136,8 @@ export const userDecryptRequest =
       (h) => ({
         handle:
           typeof h.handle === 'string'
-            ? toHexString(hexToBytes(h.handle), true)
-            : toHexString(h.handle, true),
+            ? bytesToHex(hexToBytes(h.handle))
+            : bytesToHex(h.handle),
         contractAddress: getAddress(h.contractAddress),
       }),
     );

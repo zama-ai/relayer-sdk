@@ -1,4 +1,4 @@
-import { MAX_UINT8, uintToHexNoPrefix } from '../../utils/uint';
+import { MAX_UINT8, uintToHexNo0x } from '../../utils/uint';
 import {
   assertIsBytes32HexArray,
   assertIsBytes65HexArray,
@@ -75,8 +75,8 @@ export class InputProof {
 
     assertRelayer(numberOfSignatures <= MAX_UINT8);
 
-    const numHandlesHexByte1 = uintToHexNoPrefix(numberOfHandles);
-    const numSignaturesHexByte1 = uintToHexNoPrefix(numberOfHandles);
+    const numHandlesHexByte1 = uintToHexNo0x(numberOfHandles);
+    const numSignaturesHexByte1 = uintToHexNo0x(numberOfHandles);
 
     assertRelayer(numHandlesHexByte1.length === 2); // Byte1
     assertRelayer(numSignaturesHexByte1.length === 2); // Byte1
@@ -93,10 +93,10 @@ export class InputProof {
     let proof: string = '';
 
     // Add number of handles (uint8 | Byte1)
-    proof += uintToHexNoPrefix(handles.length);
+    proof += uintToHexNo0x(handles.length);
 
     // Add number of signatures (uint8 | Byte1)
-    proof += uintToHexNoPrefix(signatures.length);
+    proof += uintToHexNo0x(signatures.length);
 
     // Add handles: (uint256 | Byte32) x numHandles
     handles.map(

@@ -1,4 +1,4 @@
-import { hexToBytes, toHexString } from '../utils/bytes';
+import { bytesToHex, hexToBytes } from '../utils/bytes';
 import { ethers, AbiCoder } from 'ethers';
 import { checkEncryptedBits } from './decryptUtils';
 import type {
@@ -208,8 +208,8 @@ export const publicDecryptRequest =
         _handles.map(async (_handle) => {
           const handle =
             typeof _handle === 'string'
-              ? toHexString(hexToBytes(_handle), true)
-              : toHexString(_handle, true);
+              ? bytesToHex(hexToBytes(_handle))
+              : bytesToHex(_handle);
 
           const isAllowedForDecryption =
             await acl.isAllowedForDecryption(handle);

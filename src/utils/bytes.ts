@@ -16,7 +16,7 @@ import {
   isNonNullableRecordProperty,
   typeofProperty,
 } from './record';
-import { is0x, isNo0x } from './string';
+import { is0x, isNo0x, remove0x } from './string';
 
 export function isBytes(value: unknown, bytewidth?: 32 | 65): value is Bytes {
   if (!value) {
@@ -592,9 +592,16 @@ export function bytesToHexLarge(bytes: Uint8Array): BytesHex {
  * "0xzfff" = [0, 255]
  */
 export function hexToBytes(hexString: string): Uint8Array {
+  if (hexString.length % 2 !== 0) {
+    throw new Error('Invalid hex string: odd length');
+  }
   const arr = hexString.replace(/^(0x)/, '').match(/.{1,2}/g);
   if (!arr) return new Uint8Array();
   return Uint8Array.from(arr.map((byte) => parseInt(byte, 16)));
+}
+
+export function hexToBytes8(hexString: string): Uint8Array {
+  return hexToBytes('0x' + remove0x(hexString).padStart(64, '0'));
 }
 
 export function hexToBytesFaster(
@@ -633,15 +640,6 @@ export function bytesToBigInt(byteArray: Uint8Array | undefined): bigint {
     result = (result << BigInt(8)) | BigInt(byteArray[i]);
   }
   return result;
-}
-
-export function toHexString(bytes: Uint8Array, with0x: true): `0x${string}`;
-export function toHexString(bytes: Uint8Array, with0x?: false): string;
-export function toHexString(bytes: Uint8Array, with0x = false): string {
-  return `${with0x ? '0x' : ''}${bytes.reduce(
-    (str, byte) => str + byte.toString(16).padStart(2, '0'),
-    '',
-  )}`;
 }
 
 export async function fetchBytes(url: string): Promise<Uint8Array> {

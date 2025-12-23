@@ -10,8 +10,10 @@ import {
   isBytesHexNo0x,
   assertIsBytesHexNo0x,
   hexToBytes,
+  hexToBytesFaster,
   bytesToBigInt,
   bytesToHex,
+  bytesToHexLarge,
 } from './bytes';
 import { InvalidTypeError } from '../errors/InvalidTypeError';
 import { InvalidPropertyError } from '../errors/InvalidPropertyError';
@@ -21,7 +23,7 @@ import { MAX_UINT256 } from './uint';
 // npx jest --colors --passWithNoTests --coverage ./src/utils/bytes.test.ts --collectCoverageFrom=./src/utils/bytes.ts --testNamePattern=xxx
 
 describe('bytes', () => {
-  it('xxx hexToBytes', () => {
+  it('hexToBytes', () => {
     let arr = hexToBytes('0x');
     expect(arr instanceof Uint8Array).toBe(true);
     expect(arr.length).toBe(0);
@@ -40,10 +42,7 @@ describe('bytes', () => {
     expect(arr.length).toBe(1);
     expect(arr[0]).toBe(0);
 
-    arr = hexToBytes('0xf');
-    expect(arr instanceof Uint8Array).toBe(true);
-    expect(arr.length).toBe(1);
-    expect(arr[0]).toBe(15);
+    expect(() => hexToBytes('0xf')).toThrow('Invalid hex string: odd length');
 
     arr = hexToBytes('za');
     expect(arr instanceof Uint8Array).toBe(true);
@@ -582,8 +581,10 @@ describe('bytesToHex - hexToBytes', () => {
   it('converts a bytes to hex', async () => {
     const bytes1 = bytesToHex(new Uint8Array([255]));
     expect(bytes1).toEqual('0xff');
+    expect(bytesToHexLarge(new Uint8Array([255]))).toEqual(bytes1);
 
     const bytes2 = bytesToHex(new Uint8Array());
+    expect(bytesToHexLarge(new Uint8Array())).toEqual(bytes2);
     expect(bytes2).toEqual('0x');
   });
 
@@ -611,17 +612,17 @@ describe('bytesToHex - hexToBytes', () => {
       expect(hexToBytes('0x')).toEqual(new Uint8Array([]));
     });
 
-    // Single character (odd length)
-    it('handles single hex character (odd length)', () => {
-      expect(hexToBytes('f')).toEqual(new Uint8Array([15]));
-      expect(hexToBytes('0')).toEqual(new Uint8Array([0]));
-      expect(hexToBytes('a')).toEqual(new Uint8Array([10]));
+    // Single character (odd length) - throws error
+    it('throws for single hex character (odd length)', () => {
+      expect(() => hexToBytes('f')).toThrow('Invalid hex string: odd length');
+      expect(() => hexToBytes('0')).toThrow('Invalid hex string: odd length');
+      expect(() => hexToBytes('a')).toThrow('Invalid hex string: odd length');
     });
 
-    it('handles 0x + single character (odd length)', () => {
-      expect(hexToBytes('0xf')).toEqual(new Uint8Array([15]));
-      expect(hexToBytes('0x0')).toEqual(new Uint8Array([0]));
-      expect(hexToBytes('0xa')).toEqual(new Uint8Array([10]));
+    it('throws for 0x + single character (odd length)', () => {
+      expect(() => hexToBytes('0xf')).toThrow('Invalid hex string: odd length');
+      expect(() => hexToBytes('0x0')).toThrow('Invalid hex string: odd length');
+      expect(() => hexToBytes('0xa')).toThrow('Invalid hex string: odd length');
     });
 
     // Valid hex strings
@@ -685,12 +686,12 @@ describe('bytesToHex - hexToBytes', () => {
       expect(hexToBytes('0xff')).toEqual(new Uint8Array([255]));
     });
 
-    // Whitespace (not handled - becomes invalid)
-    it('whitespace in string produces invalid bytes', () => {
-      // ' f' -> parseInt(' f', 16) = 15, but match splits differently
-      const result = hexToBytes('0x ff');
-      // Regex .{1,2} will match ' f' and 'f'
-      expect(result.length).toBe(2);
+    // Whitespace - odd length after removing 0x prefix throws
+    it('whitespace in string throws for odd length', () => {
+      // '0x ff' after removing '0x' is ' ff' (3 chars, odd length)
+      expect(() => hexToBytes('0x ff')).toThrow(
+        'Invalid hex string: odd length',
+      );
     });
 
     // Long strings
@@ -717,9 +718,69 @@ describe('bytesToHex - hexToBytes', () => {
       expect(hexToBytes('0x0001')).toEqual(new Uint8Array([0, 1]));
       expect(hexToBytes('0x000000ff')).toEqual(new Uint8Array([0, 0, 0, 255]));
     });
+
+    // Three-character odd length strings - throws error
+    it('throws for three-character hex (odd length)', () => {
+      expect(() => hexToBytes('fff')).toThrow('Invalid hex string: odd length');
+      expect(() => hexToBytes('0xfff')).toThrow(
+        'Invalid hex string: odd length',
+      );
+      expect(() => hexToBytes('abc')).toThrow('Invalid hex string: odd length');
+      expect(() => hexToBytes('0xabc')).toThrow(
+        'Invalid hex string: odd length',
+      );
+      expect(() => hexToBytes('123')).toThrow('Invalid hex string: odd length');
+      expect(() => hexToBytes('0x123')).toThrow(
+        'Invalid hex string: odd length',
+      );
+    });
+
+    // Five-character odd length strings - throws error
+    it('throws for five-character hex (odd length)', () => {
+      expect(() => hexToBytes('0x12345')).toThrow(
+        'Invalid hex string: odd length',
+      );
+      expect(() => hexToBytes('abcde')).toThrow(
+        'Invalid hex string: odd length',
+      );
+    });
+
+    // Ethereum address format (20 bytes)
+    it('handles Ethereum address format (20 bytes)', () => {
+      const address = '0x1234567890abcdef1234567890abcdef12345678';
+      const bytes = hexToBytes(address);
+      expect(bytes.length).toBe(20);
+      expect(bytes[0]).toBe(0x12);
+      expect(bytes[19]).toBe(0x78);
+    });
+
+    // Ethereum address without 0x prefix
+    it('handles Ethereum address without 0x prefix', () => {
+      const address = '1234567890abcdef1234567890abcdef12345678';
+      const bytes = hexToBytes(address);
+      expect(bytes.length).toBe(20);
+      expect(bytes[0]).toBe(0x12);
+      expect(bytes[19]).toBe(0x78);
+    });
+
+    // Round-trip: hexToBytes -> bytesToHex
+    it('round-trips correctly with bytesToHex', () => {
+      const testCases = [
+        '0x',
+        '0xff',
+        '0x00',
+        '0xdeadbeef',
+        '0x0123456789abcdef',
+        '0x000000ff',
+      ];
+      for (const hex of testCases) {
+        expect(bytesToHex(hexToBytes(hex))).toBe(hex);
+        expect(bytesToHexLarge(hexToBytes(hex))).toBe(hex);
+      }
+    });
   });
 
-  describe('bytesToHex - hexToBytes', () => {
+  describe('hexToBytes', () => {
     it('converts a hex to bytes', async () => {
       const value = '0xff';
       const bytes1 = hexToBytes(value);
@@ -728,5 +789,189 @@ describe('bytesToHex - hexToBytes', () => {
       const bytes2 = hexToBytes('0x');
       expect(bytes2).toEqual(new Uint8Array([]));
     });
+  });
+});
+
+describe('hexToBytesFaster', () => {
+  // Empty inputs
+  it('handles empty string', () => {
+    expect(hexToBytesFaster('')).toEqual(new Uint8Array([]));
+  });
+
+  it('handles 0x only', () => {
+    expect(hexToBytesFaster('0x')).toEqual(new Uint8Array([]));
+  });
+
+  // Basic conversions
+  it('converts single byte hex', () => {
+    expect(hexToBytesFaster('0xff')).toEqual(new Uint8Array([255]));
+    expect(hexToBytesFaster('0x00')).toEqual(new Uint8Array([0]));
+    expect(hexToBytesFaster('0x01')).toEqual(new Uint8Array([1]));
+    expect(hexToBytesFaster('0x7f')).toEqual(new Uint8Array([127]));
+    expect(hexToBytesFaster('0x80')).toEqual(new Uint8Array([128]));
+    expect(hexToBytesFaster('0xfe')).toEqual(new Uint8Array([254]));
+  });
+
+  it('converts multi-byte hex with 0x prefix', () => {
+    expect(hexToBytesFaster('0xdeadbeef')).toEqual(
+      new Uint8Array([0xde, 0xad, 0xbe, 0xef]),
+    );
+    expect(hexToBytesFaster('0x0123456789abcdef')).toEqual(
+      new Uint8Array([0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef]),
+    );
+  });
+
+  it('converts hex without 0x prefix', () => {
+    expect(hexToBytesFaster('ff')).toEqual(new Uint8Array([255]));
+    expect(hexToBytesFaster('deadbeef')).toEqual(
+      new Uint8Array([0xde, 0xad, 0xbe, 0xef]),
+    );
+  });
+
+  // Case handling
+  it('handles lowercase hex', () => {
+    expect(hexToBytesFaster('0xabcdef')).toEqual(
+      new Uint8Array([0xab, 0xcd, 0xef]),
+    );
+  });
+
+  it('handles uppercase hex', () => {
+    expect(hexToBytesFaster('0xABCDEF')).toEqual(
+      new Uint8Array([0xab, 0xcd, 0xef]),
+    );
+  });
+
+  it('handles mixed case hex', () => {
+    expect(hexToBytesFaster('0xAbCdEf')).toEqual(
+      new Uint8Array([0xab, 0xcd, 0xef]),
+    );
+  });
+
+  // Odd length - throws error
+  it('throws for odd length hex string', () => {
+    expect(() => hexToBytesFaster('f')).toThrow(
+      'Invalid hex string: odd length',
+    );
+    expect(() => hexToBytesFaster('0xf')).toThrow(
+      'Invalid hex string: odd length',
+    );
+    expect(() => hexToBytesFaster('fff')).toThrow(
+      'Invalid hex string: odd length',
+    );
+    expect(() => hexToBytesFaster('0xfff')).toThrow(
+      'Invalid hex string: odd length',
+    );
+    expect(() => hexToBytesFaster('0x12345')).toThrow(
+      'Invalid hex string: odd length',
+    );
+  });
+
+  // Invalid characters - non-strict mode (default)
+  it('converts invalid hex chars to 0 in non-strict mode', () => {
+    // Invalid chars result in undefined from lookup, which becomes NaN -> 0
+    expect(hexToBytesFaster('zz')).toEqual(new Uint8Array([0]));
+    expect(hexToBytesFaster('0xzz')).toEqual(new Uint8Array([0]));
+    expect(hexToBytesFaster('0xzzff')).toEqual(new Uint8Array([0, 255]));
+    expect(hexToBytesFaster('0xffzz')).toEqual(new Uint8Array([255, 0]));
+  });
+
+  // Invalid characters - strict mode
+  it('throws for invalid hex chars in strict mode', () => {
+    expect(() => hexToBytesFaster('zz', true)).toThrow(
+      'Invalid hex character at position 0',
+    );
+    expect(() => hexToBytesFaster('0xzz', true)).toThrow(
+      'Invalid hex character at position 2',
+    );
+    expect(() => hexToBytesFaster('0xffzz', true)).toThrow(
+      'Invalid hex character at position 4',
+    );
+    expect(() => hexToBytesFaster('0xghij', true)).toThrow(
+      'Invalid hex character at position 2',
+    );
+  });
+
+  it('does not throw for valid hex in strict mode', () => {
+    expect(hexToBytesFaster('0xdeadbeef', true)).toEqual(
+      new Uint8Array([0xde, 0xad, 0xbe, 0xef]),
+    );
+    expect(hexToBytesFaster('0xABCDEF', true)).toEqual(
+      new Uint8Array([0xab, 0xcd, 0xef]),
+    );
+    expect(hexToBytesFaster('0x0123456789abcdef', true)).toEqual(
+      new Uint8Array([0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef]),
+    );
+  });
+
+  // Leading zeros preservation
+  it('preserves leading zeros', () => {
+    expect(hexToBytesFaster('0x0001')).toEqual(new Uint8Array([0, 1]));
+    expect(hexToBytesFaster('0x000000ff')).toEqual(
+      new Uint8Array([0, 0, 0, 255]),
+    );
+  });
+
+  // Long strings
+  it('handles 32-byte (256-bit) hex string', () => {
+    const hex =
+      '0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+    const bytes = hexToBytesFaster(hex);
+    expect(bytes.length).toBe(32);
+    expect(bytes[0]).toBe(0x01);
+    expect(bytes[1]).toBe(0x23);
+    expect(bytes[31]).toBe(0xef);
+  });
+
+  // Ethereum address format (20 bytes)
+  it('handles Ethereum address format (20 bytes)', () => {
+    const address = '0x1234567890abcdef1234567890abcdef12345678';
+    const bytes = hexToBytesFaster(address);
+    expect(bytes.length).toBe(20);
+    expect(bytes[0]).toBe(0x12);
+    expect(bytes[19]).toBe(0x78);
+  });
+
+  // 0X uppercase prefix - treated as part of the hex string (no special handling)
+  it('handles 0X (uppercase X) prefix differently than 0x', () => {
+    // '0Xff' - the '0X' is not recognized as prefix, so it's parsed as hex
+    // '0X' -> invalid chars -> 0
+    // 'ff' -> 255
+    const result = hexToBytesFaster('0Xff');
+    expect(result).toEqual(new Uint8Array([0, 255]));
+  });
+
+  // Round-trip with bytesToHex
+  it('round-trips correctly with bytesToHex', () => {
+    const testCases = [
+      '0x',
+      '0xff',
+      '0x00',
+      '0xdeadbeef',
+      '0x0123456789abcdef',
+      '0x000000ff',
+    ];
+    for (const hex of testCases) {
+      expect(bytesToHex(hexToBytesFaster(hex))).toBe(hex);
+    }
+  });
+
+  // Comparison with hexToBytes for valid inputs
+  it('produces same results as hexToBytes for valid even-length hex', () => {
+    const testCases = [
+      '',
+      '0x',
+      '0xff',
+      '0x00',
+      '0xdeadbeef',
+      '0xDEADBEEF',
+      '0xDeAdBeEf',
+      'deadbeef',
+      '0x0123456789abcdef',
+      '0x000000ff',
+      '0x1234567890abcdef1234567890abcdef12345678',
+    ];
+    for (const hex of testCases) {
+      expect(hexToBytesFaster(hex)).toEqual(hexToBytes(hex));
+    }
   });
 });

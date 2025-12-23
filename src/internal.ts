@@ -21,6 +21,8 @@ export {
   concatBytes,
 } from './utils/bytes';
 
+export { safeJSONstringify } from './utils/string';
+
 export * from './sdk/FhevmHandle';
 export * from './sdk/FheType';
 
