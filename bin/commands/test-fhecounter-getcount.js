@@ -8,7 +8,7 @@ import {
 } from '../../lib/internal.js';
 import { getInstance } from '../instance.js';
 import { loadFhevmPubKey } from '../pubkeyCache.js';
-import { parseCommonOptions, throwError } from '../utils.js';
+import { logCLI, parseCommonOptions, throwError } from '../utils.js';
 import { ethers } from 'ethers';
 
 // npx . test fhecounter-get-count
@@ -38,10 +38,12 @@ export async function testFheCounterGetCountCommand(options) {
     ['function getCount() view returns (bytes32)'],
     provider,
   );
+
   const eCount = await contract.getCount();
   const handle = FhevmHandle.fromBytes32Hex(eCount);
 
-  console.log('network: ' + config.name);
-  console.log('contractAddress: ' + contractAddress);
+  logCLI('🚚 network: ' + config.name, options);
+  logCLI('🤖 contractAddress: ' + contractAddress, options);
+
   console.log(JSON.stringify(handle, null, 2));
 }

@@ -540,7 +540,7 @@ export class RelayerV2AsyncRequest {
             retryAfterMs,
             retryCount: this._retryCount,
             elapsed,
-            message: bodyJson.error.message,
+            relayerApiError: bodyJson.error,
           } satisfies RelayerV2ProgressRateLimited);
 
           // Wait if needed (minimum 1s)
@@ -1016,7 +1016,7 @@ export class RelayerV2AsyncRequest {
     this._assert(!this._state.terminated, '!this._state.terminated');
     this._assert(!this._state.fetching, '!this._state.fetching');
 
-    this._trace('_fetchPost', 'enter');
+    this._trace('_fetchPost', this._url);
 
     const init = setAuth(
       {

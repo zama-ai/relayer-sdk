@@ -260,7 +260,7 @@ export type RelayerV2ProgressRateLimited = {
   retryAfterMs: number;
   retryCount: number;
   elapsed: number;
-  message: string;
+  relayerApiError: RelayerV2ResponseApiError429;
 };
 
 export type RelayerV2ProgressSucceeded<O extends RelayerPostOperation> = {

@@ -1,15 +1,9 @@
 'use strict';
 
-import {
-  isFheTypeName,
-  encryptionBitsFromFheTypeName,
-  FhevmHandle,
-  bytesToHex,
-} from '../../lib/internal.js';
+import { safeJSONstringify } from '../../lib/internal.js';
 import { getInstance } from '../instance.js';
 import { loadFhevmPubKey } from '../pubkeyCache.js';
-import { parseCommonOptions, parseHandles, throwError } from '../utils.js';
-import { ethers } from 'ethers';
+import { logCLI, parseCommonOptions, parseHandles } from '../utils.js';
 
 // Old devnet handles publicly decryptable
 // =======================================
@@ -39,7 +33,7 @@ export async function publicDecryptCommand(options) {
       options,
     );
 
-    console.log('Running public decrypt...');
+    logCLI('Running public decrypt...', options);
 
     // setTimeout(() => {
     //   abortController.abort();
@@ -49,11 +43,11 @@ export async function publicDecryptCommand(options) {
       timeout: 5000,
       //signal: abortController.signal,
       onProgress: (args) => {
-        console.log('progress=' + args.type);
+        logCLI('progress=' + args.type, options);
       },
     });
 
-    console.log(res);
+    console.log(safeJSONstringify(res, 2));
   } catch (e) {
     console.log('');
     console.log('===================== ❌ ERROR ❌ ========================');

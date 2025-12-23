@@ -70,7 +70,7 @@ export function addCommonOptions(command) {
     .option('--contract-address <contract address>', 'address of the contract')
     .option('--user-address <user address>', 'address of the account')
     .option(
-      '--name <testnet|devnet>',
+      '--network <testnet|devnet>',
       'network name, must be "testnet" or "devnet"',
     )
     .option('--acl <ACL contract address>', 'ACL contract address')
@@ -128,7 +128,7 @@ export function addCommonOptions(command) {
  * }}
  */
 export function parseCommonOptions(options) {
-  const name = options?.name ?? 'devnet';
+  const name = options?.network ?? 'devnet';
   if (name !== 'testnet' && name !== 'devnet') {
     throwError(`Invalid network name '${name}'.`);
   }
