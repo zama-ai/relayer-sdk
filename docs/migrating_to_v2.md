@@ -26,15 +26,13 @@
 
 The relayer was upgraded on testnet, introducing **HTTP API V2** with improved async job handling (December 23, 2025).
 
-The Relayer SDK **[v0.4.0-alpha.1](https://github.com/zama-ai/relayer-sdk/releases/tag/v0.4.0-alpha.1)** adds support for HTTP API V2. Can be installed using the following command:
+The Relayer SDK **[v0.4.0-alpha.2](https://github.com/zama-ai/relayer-sdk/releases/tag/v0.4.0-alpha.2)** adds support for HTTP API V2. Install using:
 
 ```bash
-npm install @zama-ai/relayer-sdk@0.4.0-alpha.1
+npm install @zama-ai/relayer-sdk@0.4.0-alpha.2
 ```
 
-You could start trying out the new features using SDK v0.4.0-alpha.1 by following this guide. When the next release is available, you can adopt additional features incrementally. _(Alternatively, you can wait for the stable release, though you'll need to adopt all changes at once.)_
-
-**Key point**: The SDK's JavaScript API remains backward compatible. So, your existing code works unchanged. This guide explains the new capabilities enabled by HTTP API V2.
+**Key point**: The SDK's JavaScript API remains backward compatible. Your existing V1 code works unchanged. This guide explains the new capabilities enabled by HTTP API V2.
 
 ### About This Guide
 
@@ -74,9 +72,9 @@ HTTP API V2 introduces an async job pattern designed for reliability and transpa
 
 **How it works:**
 
-1. You make a request (POST) → Server creates a job and returns `jobId`, `requestId`, and `retryAfter`
+1. You make a request (POST) → Server creates a job and returns `jobId`, `requestId`, and `retryAfterMs` (milliseconds)
 2. SDK waits the specified interval, then polls (GET) to check job status
-3. If still processing, server returns another `retryAfter` interval
+3. If still processing, server returns another `retryAfterMs` interval
 4. When complete, server returns your result (200)
 
 This pattern enables the SDK to handle retries intelligently, expose progress events at each stage, support request cancellation, and provide complete traceability through identifiers. The SDK handles polling automatically, and you can opt-in to V2 features (progress tracking, cancellation, structured errors) as per your application needs.
@@ -153,7 +151,7 @@ fetchPostInputProof(payload, instanceOptions?)
 fetchPostUserDecrypt(payload, instanceOptions?)
 fetchPostPublicDecrypt(payload, instanceOptions?)
 
-// SDK v0.4.0+ (adds optional fetchOptions parameter)
+// SDK v0.4.0-alpha.2+ (adds optional fetchOptions parameter)
 fetchPostInputProof(payload, instanceOptions?, fetchOptions?)
 fetchPostUserDecrypt(payload, instanceOptions?, fetchOptions?)
 fetchPostPublicDecrypt(payload, instanceOptions?, fetchOptions?)
@@ -188,7 +186,7 @@ Add progress tracking with just a few lines:
 const result = await provider.fetchPostInputProof(payload, instanceOptions, {
   onProgress: (event) => {
     if (event.type === 'queued') {
-      console.log(`Waiting... retry in ${event.retryAfter}s`);
+      console.log(`Waiting... retry in ${event.retryAfterMs / 1000}s`);
     } else if (event.type === 'succeeded') {
       console.log(`Done in ${event.elapsed}ms`);
     }
@@ -214,7 +212,7 @@ fetchPostInputProof(payload, instanceOptions?, fetchOptions?)
 | ----------------- | ---------------------------------------- | ------------------------------------------------------------------- |
 | `payload`         | Operation-specific request data          | Refer to the TypeScript definitions in `src/types/relayer.d.ts`     |
 | `instanceOptions` | Authentication (optional)                | `auth?: { __type: 'ApiKeyHeader', header?: string, value: string }` |
-| `fetchOptions`    | Request lifecycle (SDK v0.4.0, optional) | `signal?: AbortSignal`, `onProgress?: (event) => void`              |
+| `fetchOptions`    | Request lifecycle (SDK v0.4.0-alpha.2, optional) | `signal?: AbortSignal`, `onProgress?: (event) => void`              |
 
 ### Authentication
 
@@ -243,11 +241,12 @@ const result = await provider.fetchPostInputProof(payload, instanceOptions, {
   onProgress: (event) => {
     switch (event.type) {
       case 'queued':
-        console.log(`Waiting... retry in ${event.retryAfter}s`);
+        console.log(`Waiting... retry in ${event.retryAfterMs / 1000}s`);
         break;
 
       case 'ratelimited':
-        console.log(`Rate limited, retry in ${event.retryAfter}s`);
+        console.log(`Rate limited, retry in ${event.retryAfterMs / 1000}s`);
+        console.log(`Error: ${event.relayerApiError.label}`);
         break;
 
       case 'succeeded':
@@ -257,12 +256,22 @@ const result = await provider.fetchPostInputProof(payload, instanceOptions, {
       case 'failed':
         console.error(`Failed: ${event.relayerApiError.label}`);
         break;
+
+      case 'timeout':
+        console.error('Request timed out');
+        break;
+
+      case 'abort':
+        console.log('Request was cancelled');
+        break;
     }
   },
 });
 ```
 
 All events include `elapsed` (milliseconds since request started) and `retryCount` (number of retries attempted). For complete type definitions, refer to the TypeScript types in `src/relayer-provider/v2/types/types.d.ts`.
+
+> **Note:** Timing values are reported in milliseconds (`retryAfterMs`, `elapsed`). Convert to seconds by dividing by 1000 if needed for display purposes.
 
 ### Request Cancellation
 
@@ -407,16 +416,19 @@ The SDK handles retries automatically in all cases. Use the progress callback to
 
 To prevent infinite loops, the SDK enforces limits:
 
-- **Timeout**: 1 hour default. Throws an error when exceeded.
-- **Max retries**: 100 per phase (POST phase and GET phase are tracked separately). Throws `RelayerV2MaxRetryError` when exceeded.
+- **Timeout**: 1 hour (3,600,000ms) default. Throws `RelayerV2TimeoutError` when exceeded. Fires `type: 'timeout'` progress event before throwing.
+- **Max retries**: 1800 per phase (POST phase and GET phase are tracked separately). Throws `RelayerV2MaxRetryError` when exceeded.
+- **Minimum retry interval**: 1000ms (1 second). Server-suggested intervals below this are enforced to this minimum.
 
-The `retryCount` metric in progress events includes all retry attempts (including rate-limited retries) for visibility into the request lifecycle.
+The `retryCount` metric in progress events includes all retry attempts (including rate-limited retries) for visibility into the request lifecycle. These limits support long-running operations while preventing infinite loops.
 
 ## API Reference
 
 For complete type definitions of progress events and errors, refer to the TypeScript types in `src/relayer-provider/v2/types/types.d.ts`.
 
 ### Error Labels
+
+The SDK provides detailed error labels for programmatic error handling. Alpha.2 introduced dedicated error classes (`RelayerV2TimeoutError`, `RelayerV2AbortError`) for timeout and cancellation scenarios.
 
 Complete list of error labels for programmatic error handling:
 
