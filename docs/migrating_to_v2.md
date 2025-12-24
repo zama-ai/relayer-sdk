@@ -2,61 +2,114 @@
 
 ## Contents
 
-**Migration Guide**
-
 - [Introduction](#introduction)
-- [Backward Compatibility](#backward-compatibility)
-- [What is HTTP API V2](#what-is-http-api-v2)
-- [What's New in HTTP API V2](#whats-new-in-http-api-v2)
-- [How to Choose the API Version](#how-to-choose-the-api-version)
-- [Function Signatures Comparison](#function-signatures-comparison)
-- [Quick Start](#quick-start)
-
-**Reference**
-
-- [Working with V2 Features](#working-with-v2-features)
-- [Technical Details](#technical-details)
-- [API Reference](#api-reference)
+- [Quick Migration Steps](#quick-migration-steps)
+- [How HTTP API V2 Works](#how-http-api-v2-works)
+- [Using V2 Features](#using-v2-features)
+- [Reference](#reference)
 
 ---
 
 ## Introduction
 
-### Release Information
+**TL;DR:** HTTP API V2 is fully backward compatible. Change one line in your config, and your existing code works unchanged. Optionally adopt new features like progress tracking and request cancellation.
 
-The relayer was upgraded on testnet, introducing **HTTP API V2** with improved async job handling (December 23, 2025).
+```typescript
+// Before (V1)
+const instance = await createInstance({
+  ...SepoliaConfig,
+  relayerUrl: 'https://relayer.testnet.zama.org/v1',
+});
 
-The Relayer SDK **[v0.4.0-alpha.1](https://github.com/zama-ai/relayer-sdk/releases/tag/v0.4.0-alpha.1)** adds support for HTTP API V2. Can be installed using the following command:
-
-```bash
-npm install @zama-ai/relayer-sdk@0.4.0-alpha.1
+// After (V2) - existing code works unchanged!
+const instance = await createInstance({
+  ...SepoliaConfig,
+  relayerUrl: 'https://relayer.testnet.zama.org/v2', // Just change this
+});
 ```
 
-You could start trying out the new features using SDK v0.4.0-alpha.1 by following this guide. When the next release is available, you can adopt additional features incrementally. _(Alternatively, you can wait for the stable release, though you'll need to adopt all changes at once.)_
+**Installation:**
 
-**Key point**: The SDK's JavaScript API remains backward compatible. So, your existing code works unchanged. This guide explains the new capabilities enabled by HTTP API V2.
+```bash
+npm install @zama-ai/relayer-sdk@0.4.0-alpha.2
+```
 
-### About This Guide
+---
 
-This document will help you understand what's new in HTTP API V2 and how to take advantage of its features.
+## Quick Migration Steps
 
-HTTP API V2 applies to all three operations: `fetchPostInputProof`, `fetchPostUserDecrypt`, and `fetchPostPublicDecrypt`. The examples throughout this guide use `fetchPostInputProof` for illustration, but the same patterns apply to all operations.
+### Step 1: Update Your relayerUrl
 
-Whether you're a current V1 user or new to the SDK, this guide covers:
+Change the URL suffix from `/v1` to `/v2` when creating your instance:
 
-- What makes HTTP API V2 better (async job pattern with managed retries)
-- How to migrate your code (the SDK API is backward compatible)
-- How to use new V2 features (progress tracking, cancellation, structured errors)
-- Complete API reference (progress events, error labels)
+```typescript
+import { createInstance, SepoliaConfig } from '@zama-ai/relayer-sdk';
 
-## Backward Compatibility
+const instance = await createInstance({
+  ...SepoliaConfig,
+  relayerUrl: 'https://relayer.testnet.zama.org/v2', // Changed from /v1 to /v2
+});
+```
 
-The SDK API is fully backward compatible—your existing code works unchanged. V2 features are fully opt-in, allowing you to gradually adopt new capabilities like progress tracking, cancellation, and structured errors as per your application needs.
+**That's it!** Your existing code continues to work exactly as before.
 
-## What is HTTP API V2
+### Step 2: Everything Still Works (Backward Compatible)
 
-HTTP API V2 introduces an async job pattern designed for reliability and transparency. Instead of blocking while your request is processed, the server immediately returns a job identifier and tells you when to check back. The SDK automatically handles all the polling in the background—you just await the promise as usual.
+The SDK's JavaScript API hasn't changed. All your existing operations work unchanged:
 
+```typescript
+// Input proof encryption - works exactly like V1
+const input = instance.createEncryptedInput(contractAddress, userAddress);
+input.add8(42).add16(100);
+const result = await input.encrypt();
+
+// Public decryption - works exactly like V1
+const decrypted = await instance.publicDecrypt(handles);
+
+// User decryption - works exactly like V1
+const userDecrypted = await instance.userDecrypt(
+  handles,
+  privateKey,
+  publicKey,
+  signature,
+  contractAddresses,
+  userAddress,
+  startTimestamp,
+  durationDays,
+);
+```
+
+### Step 3: Optionally Add V2 Features
+
+V2 enables new capabilities through an optional `options` parameter. Add them when you're ready:
+
+- **Progress tracking** - Real-time visibility into request status
+- **Request cancellation** - Cancel operations using AbortSignal
+- **Structured errors** - Programmatic error handling with stable identifiers
+- **Request tracing** - Unique IDs for debugging and support
+
+See [Using V2 Features](#using-v2-features) to learn how to adopt these capabilities.
+
+---
+
+## How HTTP API V2 Works
+
+### The Async Job Pattern
+
+HTTP API V2 introduces an async job pattern that enables better UX when requests take longer than a few seconds to process (e.g., during peak loads). Instead of blocking while your request is processed, the server immediately returns a job identifier and tells you when to check back. The SDK automatically handles all the polling in the background—you just await the promise as usual.
+
+**V1 (Synchronous Blocking):**
+```
+  INITIAL ─► POST ────────────────┬─► 200 ────────► SUCCESS
+                                  │
+                                  ├─► 429 ────────► RATE LIMITED
+                                  │
+                                  └─► 400/500/503 ─► FAILED
+
+  Client waits (blocks) until server completes processing
+```
+
+**V2 (Async Job Pattern):**
 ```
  POST PHASE                                                GET PHASE
 
@@ -74,121 +127,107 @@ HTTP API V2 introduces an async job pattern designed for reliability and transpa
 
 **How it works:**
 
-1. You make a request (POST) → Server creates a job and returns `jobId`, `requestId`, and `retryAfter`
+1. You make a request (POST) → Server creates a job and returns `jobId`, `requestId`, and `retryAfterMs` (milliseconds)
 2. SDK waits the specified interval, then polls (GET) to check job status
-3. If still processing, server returns another `retryAfter` interval
+3. If still processing, server returns another `retryAfterMs` interval
 4. When complete, server returns your result (200)
 
-This pattern enables the SDK to handle retries intelligently, expose progress events at each stage, support request cancellation, and provide complete traceability through identifiers. The SDK handles polling automatically, and you can opt-in to V2 features (progress tracking, cancellation, structured errors) as per your application needs.
+All of this happens automatically when you await the promise. The SDK handles polling, retries, and error handling intelligently.
 
-For detailed mechanics including failure modes and limits, see [Technical Details](#technical-details).
+### Why This Matters
 
-## What's New in HTTP API V2
+The async job pattern provides several key benefits:
 
-The async job pattern enables five key improvements:
+- **Better UX** - No timeouts during peak loads; users see progress instead of generic spinners
+- **Automatic retry management** - Server-directed retry intervals optimize throughput
+- **Request traceability** - Unique identifiers (`requestId`, `jobId`) for debugging and support
+- **Resource efficiency** - Cancel requests when no longer needed
+- **Transparent errors** - Structured error information for programmatic handling
 
-### Progress Tracking
+### V1 and V2 Support Timeline
 
-Track your requests as they move through the system—queued, rate-limited, succeeded, or failed. Each progress event includes timing information and retry counts, giving you real-time visibility into long-running operations. Show users meaningful progress updates instead of generic loading spinners.
+**V2 is the recommended API for all new development.** V1 support varies by network:
 
-### Structured Errors
+#### Testnet (Sepolia)
+- **V1**: Supported for transition period
+- **V2**: Fully available and recommended
+- Both V1 and V2 work side-by-side
 
-Errors include stable identifiers (`label`) for programmatic handling, human-readable messages for display, and field-specific details when applicable. Handle specific error types in your code while showing user-friendly messages—no more parsing error strings.
+#### Mainnet
+- **V1**: Temporarily supported for existing applications
+- **V2**: Fully available and recommended
+- **Important**: For the auction and after, only V2 may be supported on mainnet
 
-### Managed Retries
+> **Note**: Mainnet V1 support is temporary. Starting with the auction period, only V2 may be available. Migrate to V2 before the auction to ensure uninterrupted service.
 
-The SDK automatically manages polling for queued or rate-limited responses using server-suggested retry intervals. This handles the majority of retry scenarios. However, applications should still handle edge cases where delays exceed the timeout (such as when user API quota is exhausted or system load is very high causing processing times longer than the timeout limit).
+#### Migration Flexibility
 
-### Request Traceability
+- URLs without a version suffix default to `/v1` for backward compatibility
+- Existing V1 code continues to work unchanged during the support period
+- V2 is purely additive - no breaking changes
+- Both V1 and V2 can coexist in the same application (different instances)
 
-Every request gets a unique `requestId` for tracking the complete roundtrip. When issues arise, share the requestId with support for full visibility into what happened.
+```typescript
+// Mix V1 and V2 in the same app if needed
+const v1Instance = await createInstance({
+  ...SepoliaConfig,
+  relayerUrl: 'https://relayer.testnet.zama.org/v1',
+});
 
-### Request Cancellation
+const v2Instance = await createInstance({
+  ...SepoliaConfig,
+  relayerUrl: 'https://relayer.testnet.zama.org/v2',
+});
+```
 
-Cancel in-flight requests using AbortSignal when they're no longer needed—whether users navigate away, requests time out, or operations become obsolete. The SDK immediately stops polling and cleans up resources.
+**Recommendation**: Migrate to V2 as soon as possible, especially for mainnet deployments.
+
+Now that you understand how V2 works and its backward compatibility guarantees, let's explore how to use V2 features in your application.
 
 ---
 
-These features are fully opt-in—enable them by passing the `fetchOptions` parameter. Adopt them gradually as per your application needs.
+## Using V2 Features
 
-## How to Choose the API Version
+HTTP API V2 applies to all three types of operations:
 
-The SDK determines which HTTP API version to use based on the `relayerUrl` you provide when calling `createInstance()`:
+- Input proof encryption (`input.encrypt()`)
+- Public decryption (`instance.publicDecrypt()`)
+- User decryption (`instance.userDecrypt()`)
+
+The examples below primarily use `input.encrypt()` for illustration, but the same patterns apply to all operations.
+
+### Progressive Enhancement Levels
+
+V2 features are opt-in through an optional `options` parameter. Choose your complexity level:
+
+#### Level 1: Zero Changes (Just Migration)
+
+Simply change the URL. Your V1 code works unchanged on V2:
 
 ```typescript
-import { createInstance, SepoliaConfig } from '@zama-ai/relayer-sdk';
-
-// Option 1: Use HTTP API V1 (current default behavior)
 const instance = await createInstance({
   ...SepoliaConfig,
-  relayerUrl: 'https://relayer.testnet.zama.org/v1', // explicit V1
+  relayerUrl: 'https://relayer.testnet.zama.org/v2',
 });
 
-// Option 2: Use HTTP API V2 (for new features)
-const instance = await createInstance({
-  ...SepoliaConfig,
-  relayerUrl: 'https://relayer.testnet.zama.org/v2', // explicit V2
-});
-
-// Option 3: No version suffix (defaults to /v1 for backward compatibility)
-const instance = await createInstance({
-  ...SepoliaConfig,
-  relayerUrl: 'https://relayer.testnet.zama.org', // defaults to /v1
-});
+// Same V1 code - no changes needed
+const input = instance.createEncryptedInput(contractAddress, userAddress);
+input.add8(42).add16(100);
+const result = await input.encrypt();
 ```
 
-**Key points:**
+#### Level 2: Add Progress Tracking
 
-- **Existing code continues to work** because URLs without a version suffix default to `/v1`
-- **To use HTTP API V2**, append `/v2` to your relayerUrl
-- **V2 features** (progress tracking, cancellation, structured errors) are only available when using HTTP API V2
-
-## Function Signatures Comparison
-
-The function signatures show how V2 extends V1 with an optional parameter:
+Show users meaningful progress updates with just a few lines:
 
 ```typescript
-// V1 (still works exactly as before)
-fetchPostInputProof(payload, instanceOptions?)
-fetchPostUserDecrypt(payload, instanceOptions?)
-fetchPostPublicDecrypt(payload, instanceOptions?)
+const input = instance.createEncryptedInput(contractAddress, userAddress);
+input.add8(42).add16(100);
 
-// SDK v0.4.0+ (adds optional fetchOptions parameter)
-fetchPostInputProof(payload, instanceOptions?, fetchOptions?)
-fetchPostUserDecrypt(payload, instanceOptions?, fetchOptions?)
-fetchPostPublicDecrypt(payload, instanceOptions?, fetchOptions?)
-```
-
-The only difference is the optional third parameter (`fetchOptions`), which unlocks V2 features (progress tracking, cancellation, structured errors). If you don't pass it, the SDK behaves exactly like V1.
-
-## Quick Start
-
-This section provides minimal examples to get started with HTTP API V2 quickly.
-
-### Simple Example: Same SDK API as V1
-
-To use HTTP API V2, change your relayerUrl to `/v2`. The SDK API remains the same:
-
-```typescript
-// Change relayerUrl when creating instance
-const instance = await createInstance({
-  ...SepoliaConfig,
-  relayerUrl: 'https://relayer.testnet.zama.org/v2', // Changed from /v1 to /v2
-});
-
-// SDK API unchanged - works exactly like V1
-const result = await provider.fetchPostInputProof(payload);
-```
-
-### Simple Example: Using a V2 Feature
-
-Add progress tracking with just a few lines:
-
-```typescript
-const result = await provider.fetchPostInputProof(payload, instanceOptions, {
+const result = await input.encrypt({
   onProgress: (event) => {
     if (event.type === 'queued') {
-      console.log(`Waiting... retry in ${event.retryAfter}s`);
+      console.log(`Waiting... retry in ${event.retryAfterMs / 1000}s`);
     } else if (event.type === 'succeeded') {
       console.log(`Done in ${event.elapsed}ms`);
     }
@@ -196,58 +235,132 @@ const result = await provider.fetchPostInputProof(payload, instanceOptions, {
 });
 ```
 
-You're now using HTTP API V2 progress tracking.
+#### Level 3: Full V2 Features
 
-## Working with V2 Features
-
-This section explores each Quick Start feature in detail, showing you how to use progress tracking, cancellation, structured errors, and request tracking in your applications.
-
-All V2 features are enabled via the optional `fetchOptions` parameter. You can use any combination of features together.
-
-### Parameters Reference
+Use all V2 capabilities together:
 
 ```typescript
-fetchPostInputProof(payload, instanceOptions?, fetchOptions?)
+const controller = new AbortController();
+let requestId: string | undefined;
+let errorInfo = null;
+
+const input = instance.createEncryptedInput(contractAddress, userAddress);
+input.add8(42);
+
+try {
+  const result = await input.encrypt({
+    signal: controller.signal, // Cancellation support
+    onProgress: (event) => {
+      // Track request ID
+      if (event.type === 'queued' || event.type === 'succeeded') {
+        requestId = event.requestId;
+      }
+
+      // Capture structured errors
+      if (event.type === 'failed') {
+        errorInfo = event.relayerApiError;
+      }
+
+      // Show progress
+      console.log(`State: ${event.type}, Elapsed: ${event.elapsed}ms`);
+    },
+  });
+} catch (error) {
+  if (error.name === 'AbortError') {
+    console.log('Request cancelled');
+  } else if (errorInfo) {
+    console.error(`[${errorInfo.label}] ${errorInfo.message}`);
+  }
+}
+
+// Cancel from anywhere
+// controller.abort();
 ```
 
-| Parameter         | Purpose                                  | Fields                                                              |
-| ----------------- | ---------------------------------------- | ------------------------------------------------------------------- |
-| `payload`         | Operation-specific request data          | Refer to the TypeScript definitions in `src/types/relayer.d.ts`     |
-| `instanceOptions` | Authentication (optional)                | `auth?: { __type: 'ApiKeyHeader', header?: string, value: string }` |
-| `fetchOptions`    | Request lifecycle (SDK v0.4.0, optional) | `signal?: AbortSignal`, `onProgress?: (event) => void`              |
+### Feature Reference
 
-### Authentication
+#### Function Signatures
 
-Authentication works the same as in V1. It is not required on testnet but is required on mainnet. Use the `ApiKeyHeader` authentication method:
+V2 adds an optional `options` parameter to existing methods:
 
 ```typescript
-const result = await provider.fetchPostInputProof(
-  payload,
-  {
-    auth: {
-      __type: 'ApiKeyHeader',
-      header: 'x-api-key',  // optional, defaults to 'x-api-key'
-      value: 'your-api-key-here'
-    }
+// V1 (still works exactly as before)
+input.encrypt()
+instance.publicDecrypt(handles)
+instance.userDecrypt(handles, privateKey, publicKey, signature, contractAddresses, userAddress, startTimestamp, durationDays)
+
+// SDK v0.4.0-alpha.2+ (adds optional options parameter for V2 features)
+input.encrypt(options?)
+instance.publicDecrypt(handles, options?)
+instance.userDecrypt(handles, privateKey, publicKey, signature, contractAddresses, userAddress, startTimestamp, durationDays, options?)
+```
+
+The `options` parameter includes:
+
+- `signal?: AbortSignal` - for request cancellation
+- `onProgress?: (event) => void` - for progress tracking
+
+#### Parameters Reference
+
+| Parameter | Purpose                                          | Fields                                                 |
+| --------- | ------------------------------------------------ | ------------------------------------------------------ |
+| `options` | Request lifecycle (SDK v0.4.0-alpha.2, optional) | `signal?: AbortSignal`, `onProgress?: (event) => void` |
+
+The same `options` parameter is available for all operations:
+
+- `input.encrypt(options?)` - For input proof encryption
+- `instance.publicDecrypt(handles, options?)` - For public decryption
+- `instance.userDecrypt(..., options?)` - For user decryption (last parameter)
+
+**Note:** Authentication is configured once during instance creation via the `auth` field in `FhevmInstanceConfig`, not passed per-request.
+
+#### Authentication
+
+Authentication works the same as in V1. Configure it once during instance creation:
+
+```typescript
+const instance = await createInstance({
+  ...SepoliaConfig,
+  relayerUrl: 'https://relayer.testnet.zama.org/v2',
+  auth: {
+    __type: 'ApiKeyHeader',
+    header: 'x-api-key', // Optional, defaults to 'x-api-key'
+    value: 'your-api-key-here',
+  }, // Required on mainnet, optional on testnet
+});
+
+// Then use instance methods - auth is handled automatically
+const input = instance.createEncryptedInput(contractAddress, userAddress);
+input.add8(42);
+const result = await input.encrypt({
+  onProgress: (event) => {
+    /* ... */
   },
-  fetchOptions
-);
+});
 ```
 
-### Progress Tracking
+The examples above show the three levels of V2 adoption. Below are detailed guides for each V2 feature:
 
-The progress callback receives an event for each state transition. Filter by `event.type` to handle specific states:
+### Detailed Feature Guides
+
+#### Progress Tracking
+
+Track your requests as they move through the system—queued, rate-limited, succeeded, or failed. Each progress event includes timing information and retry counts:
 
 ```typescript
-const result = await provider.fetchPostInputProof(payload, instanceOptions, {
+const input = instance.createEncryptedInput(contractAddress, userAddress);
+input.add8(42).add16(100);
+
+const result = await input.encrypt({
   onProgress: (event) => {
     switch (event.type) {
       case 'queued':
-        console.log(`Waiting... retry in ${event.retryAfter}s`);
+        console.log(`Waiting... retry in ${event.retryAfterMs / 1000}s`);
         break;
 
       case 'ratelimited':
-        console.log(`Rate limited, retry in ${event.retryAfter}s`);
+        console.log(`Rate limited, retry in ${event.retryAfterMs / 1000}s`);
+        console.log(`Error: ${event.relayerApiError.label}`);
         break;
 
       case 'succeeded':
@@ -257,21 +370,39 @@ const result = await provider.fetchPostInputProof(payload, instanceOptions, {
       case 'failed':
         console.error(`Failed: ${event.relayerApiError.label}`);
         break;
+
+      case 'timeout':
+        console.error('Request timed out');
+        break;
+
+      case 'abort':
+        console.log('Request was cancelled');
+        break;
     }
   },
 });
 ```
 
-All events include `elapsed` (milliseconds since request started) and `retryCount` (number of retries attempted). For complete type definitions, refer to the TypeScript types in `src/relayer-provider/v2/types/types.d.ts`.
+All events include:
 
-### Request Cancellation
+- `elapsed` - Milliseconds since request started
+- `retryCount` - Number of retries attempted
 
-Use an `AbortController` to cancel requests at any time:
+For complete type definitions, refer to `src/relayer-provider/v2/types/types.d.ts`.
+
+> **Note:** Timing values are reported in milliseconds (`retryAfterMs`, `elapsed`). Convert to seconds by dividing by 1000 if needed for display purposes.
+
+#### Request Cancellation
+
+Cancel in-flight requests using `AbortController` when they're no longer needed—whether users navigate away, requests time out, or operations become obsolete:
 
 ```typescript
 const controller = new AbortController();
 
-const result = await provider.fetchPostInputProof(payload, instanceOptions, {
+const input = instance.createEncryptedInput(contractAddress, userAddress);
+input.add8(42);
+
+const result = await input.encrypt({
   signal: controller.signal,
 });
 
@@ -280,7 +411,10 @@ controller.abort();
 
 // Handle cancellation in your catch block
 try {
-  const result = await provider.fetchPostInputProof(payload, instanceOptions, {
+  const input = instance.createEncryptedInput(contractAddress, userAddress);
+  input.add8(42);
+
+  const result = await input.encrypt({
     signal: controller.signal,
   });
 } catch (error) {
@@ -290,21 +424,26 @@ try {
 }
 ```
 
-### Accessing Structured Errors
+The SDK immediately stops polling and cleans up resources when a request is cancelled.
 
-Structured errors provide three fields, each serving a specific purpose:
+#### Structured Errors
 
-- **`label`**: Stable identifier for programmatic handling. Treat this as a contract—use it in your code logic to handle specific error types (e.g., retry on `rate_limited`, show user-friendly message for `validation_failed`).
-- **`message`**: Human-readable description. This is flexible and useful for displaying to users or logging. The format may evolve over time.
-- **`details`**: Additional debugging information. For validation errors, this includes field-specific issues (e.g., which fields failed validation and why).
+Errors include stable identifiers (`label`) for programmatic handling, human-readable messages for display, and field-specific details when applicable:
 
-Without the progress callback, errors throw an exception with only `message` and `status`. To access structured error details (`label`, `details`), use the progress callback and filter for `type: 'failed'`:
+- **`label`**: Stable identifier for programmatic handling. Use it in your code logic to handle specific error types (e.g., retry on `rate_limited`, show user-friendly message for `validation_failed`).
+- **`message`**: Human-readable description for displaying to users or logging.
+- **`details`**: Additional debugging information. For validation errors, includes field-specific issues.
+
+Without the progress callback, errors throw an exception with only `message` and `status`. To access structured error details, use the progress callback:
 
 ```typescript
 let errorInfo = null;
 
 try {
-  const result = await provider.fetchPostInputProof(payload, instanceOptions, {
+  const input = instance.createEncryptedInput(contractAddress, userAddress);
+  input.add8(42);
+
+  const result = await input.encrypt({
     onProgress: (event) => {
       if (event.type === 'failed') {
         errorInfo = event.relayerApiError;
@@ -315,9 +454,8 @@ try {
   if (errorInfo) {
     console.error(`[${errorInfo.label}] ${errorInfo.message}`);
 
-    // Some errors include field-specific details (see Error Labels table)
+    // Some errors include field-specific details
     if (errorInfo.details) {
-      // e.g., [{ field: 'contractAddress', issue: 'invalid format' }]
       errorInfo.details.forEach((d) => {
         console.error(`  ${d.field}: ${d.issue}`);
       });
@@ -326,16 +464,19 @@ try {
 }
 ```
 
-See [Error Labels](#error-labels) in the API Reference for a complete list of error types.
+See [Error Labels](#error-labels) in the Reference section for a complete list of error types.
 
-### Request Tracking
+#### Request Tracking
 
-The `requestId` is a unique identifier for the entire round-trip request. Use it when contacting support. Note that `ratelimited` and `failed` events do not include `requestId`.
+The `requestId` is a unique identifier for the entire round-trip request. Use it when contacting support:
 
 ```typescript
 let requestId: string | undefined;
 
-await provider.fetchPostInputProof(payload, instanceOptions, {
+const input = instance.createEncryptedInput(contractAddress, userAddress);
+input.add8(42);
+
+await input.encrypt({
   onProgress: (event) => {
     if (event.type === 'queued' || event.type === 'succeeded') {
       requestId = event.requestId;
@@ -344,12 +485,17 @@ await provider.fetchPostInputProof(payload, instanceOptions, {
 });
 ```
 
-### Job Tracking
+Note: `ratelimited` and `failed` events do not include `requestId`.
 
-The `jobId` identifies the async job on the server. Available in `queued` and `succeeded` events. Also present in `failed` events when failure occurs after job creation (during the GET phase):
+#### Job Tracking
+
+The `jobId` identifies the async job on the server. Available in `queued` and `succeeded` events. Also present in `failed` events when failure occurs after job creation:
 
 ```typescript
-await provider.fetchPostInputProof(payload, instanceOptions, {
+const input = instance.createEncryptedInput(contractAddress, userAddress);
+input.add8(42);
+
+await input.encrypt({
   onProgress: (event) => {
     if (event.type === 'queued') {
       console.log(`Job ${event.jobId} queued, polling...`);
@@ -362,15 +508,19 @@ await provider.fetchPostInputProof(payload, instanceOptions, {
 });
 ```
 
-## Technical Details
+---
 
-### How Async Jobs Work
+## Reference
 
-The async job flow involves two phases: POST (job creation) and GET (polling for results). The diagram in [What is HTTP API V2](#what-is-http-api-v2) illustrates this flow.
+### Technical Details
 
-All of this happens automatically when you await the promise.
+#### How Async Jobs Work
 
-### Key Identifiers
+The async job flow involves two phases: POST (job creation) and GET (polling for results). The diagram in [How HTTP API V2 Works](#the-async-job-pattern) illustrates this flow.
+
+All of this happens automatically when you await the promise. The SDK handles polling, retries, and error handling.
+
+#### Key Identifiers
 
 The system uses two identifiers:
 
@@ -379,7 +529,7 @@ The system uses two identifiers:
 
 Both identifiers are available in `queued` and `succeeded` progress events.
 
-### Failure Points
+#### Failure Points
 
 Requests can fail at different stages:
 
@@ -403,20 +553,27 @@ Requests can fail at different stages:
 
 The SDK handles retries automatically in all cases. Use the progress callback to observe what's happening.
 
-### Limits
+#### Limits
 
 To prevent infinite loops, the SDK enforces limits:
 
-- **Timeout**: 1 hour default. Throws an error when exceeded.
-- **Max retries**: 100 per phase (POST phase and GET phase are tracked separately). Throws `RelayerV2MaxRetryError` when exceeded.
+- **Timeout**: 1 hour (3,600,000ms) default. Throws `RelayerV2TimeoutError` when exceeded. Fires `type: 'timeout'` progress event before throwing.
+- **Max retries**: 1800 per phase (POST phase and GET phase are tracked separately). Throws `RelayerV2MaxRetryError` when exceeded.
+- **Minimum retry interval**: 1000ms (1 second). Server-suggested intervals below this are enforced to this minimum.
 
-The `retryCount` metric in progress events includes all retry attempts (including rate-limited retries) for visibility into the request lifecycle.
+The `retryCount` metric in progress events includes all retry attempts for visibility into the request lifecycle.
 
-## API Reference
+#### Managed Retries
 
-For complete type definitions of progress events and errors, refer to the TypeScript types in `src/relayer-provider/v2/types/types.d.ts`.
+The SDK automatically manages polling for queued or rate-limited responses using server-suggested retry intervals. This handles the majority of retry scenarios. However, applications should still handle edge cases where delays exceed the timeout (such as when user API quota is exhausted or system load is very high causing processing times longer than the timeout limit).
 
-### Error Labels
+### API Reference
+
+For complete API type definitions, refer to the TypeScript types in `src/relayer-provider/v2/types/types.d.ts`.
+
+#### Error Labels
+
+The SDK provides detailed error labels for programmatic error handling. Alpha.2 introduced dedicated error classes (`RelayerV2TimeoutError`, `RelayerV2AbortError`) for timeout and cancellation scenarios.
 
 Complete list of error labels for programmatic error handling:
 
@@ -435,4 +592,4 @@ Complete list of error labels for programmatic error handling:
 | 504    | `readiness_check_timedout` | Readiness check exceeded timeout     | Decrypt operations only  |
 | 504    | `response_timedout`        | Response processing exceeded timeout |                          |
 
-For error handling examples, see [Accessing Structured Errors](#accessing-structured-errors) in Working with V2 Features.
+For error handling examples, see [Structured Errors](#structured-errors).
