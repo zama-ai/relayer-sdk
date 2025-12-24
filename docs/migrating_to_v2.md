@@ -36,6 +36,8 @@ npm install @zama-ai/relayer-sdk@0.4.0-alpha.2
 
 **Additional Resources:**
 - **[SDK Enhancements](./sdk-enhancements.md)** - New features in v0.4.0-alpha.2 (ZK proof verification, enhanced methods, method renames)
+- **[CLI Reference](./cli-reference.md)** - Command-line tools for testing and debugging
+
 ### About This Guide
 
 This document will help you understand what's new in HTTP API V2 and how to take advantage of its features.
