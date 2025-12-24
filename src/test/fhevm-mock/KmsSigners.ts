@@ -81,7 +81,7 @@ export class KmsSigners extends EIP712Signers<
       signers.push(
         KmsSigner.fromMnemonic({
           mnemonic: params.mnemonic,
-          path: basePath + i + startIndex,
+          path: `${basePath}${i + startIndex}`,
           wordlist: params.wordlist,
         }),
       );

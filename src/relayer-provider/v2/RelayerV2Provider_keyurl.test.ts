@@ -73,6 +73,7 @@ describeIfFetchMock('RelayerV2Provider', () => {
     const SepoliaConfigeRelayerUrl = SepoliaConfig.relayerUrl!;
     relayerProvider = createRelayerProvider(
       `${SepoliaConfigeRelayerUrl}/v2`,
+      1,
     ) as RelayerV2Provider;
     expect(relayerProvider instanceof RelayerV2Provider).toBe(true);
     expect(relayerProvider.version).toBe(2);

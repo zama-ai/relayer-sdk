@@ -5,12 +5,9 @@ import {
 } from './sendEncryption';
 import { publicKey, publicParams } from '../test';
 import fetchMock from 'fetch-mock';
-import { computeHandles } from './handles';
-import { hexToBytes, toHexString } from '../utils/bytes';
 import { createRelayerProvider } from '../relayer-provider/createRelayerFhevm';
 import { InvalidPropertyError } from '../errors/InvalidPropertyError';
 import { TEST_CONFIG } from '../test/config';
-import { assertRelayer } from '../errors/InternalError';
 import { FhevmHandle } from '../sdk/FhevmHandle';
 import { FhevmInstanceOptions } from '../types/relayer';
 
@@ -31,7 +28,7 @@ const verifyingContractAddressInputVerification =
   TEST_CONFIG.fhevmInstanceConfig.verifyingContractAddressInputVerification;
 const chainId = TEST_CONFIG.fhevmInstanceConfig.chainId!;
 const gatewayChainId = TEST_CONFIG.fhevmInstanceConfig.gatewayChainId;
-const relayerProvider = createRelayerProvider(TEST_CONFIG.v1.urls.base);
+const relayerProvider = createRelayerProvider(TEST_CONFIG.v1.urls.base, 1);
 
 const autoMock = (
   input: RelayerEncryptedInput,
@@ -82,19 +79,6 @@ const autoMock = (
       fheTypeEncryptionBitwidths: input.getBits(),
       ciphertextVersion: currentCiphertextVersion(),
     }).map((handle: FhevmHandle) => handle.toBytes32Hex());
-
-    //////// TO BE REMOVED
-    const _handles = computeHandles(
-      hexToBytes(ciphertextWithInputVerification),
-      input.getBits(),
-      aclContractAddress,
-      chainId,
-      currentCiphertextVersion(),
-    ).map((handle: Uint8Array) => toHexString(handle, true));
-    for (let i = 0; i < handles.length; ++i) {
-      assertRelayer(handles[i] === _handles[i]);
-    }
-    //////// TO BE REMOVED
 
     return {
       options: options,

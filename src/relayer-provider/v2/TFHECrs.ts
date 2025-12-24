@@ -1,17 +1,30 @@
-import type { PublicParams } from '../../sdk/encrypt';
+import type { PublicParams as PublicParams2048 } from '../../sdk/encrypt';
 import { SERIALIZED_SIZE_LIMIT_CRS } from '../../constants';
 import { assertRecordStringProperty } from '../../utils/string';
 import {
   assertNonNullableRecordProperty,
   isNonNullableRecordProperty,
 } from '../../utils/record';
-import { assertUint8ArrayProperty, fetchBytes } from '../../utils/bytes';
+import {
+  assertUint8ArrayProperty,
+  bytesToHexLarge,
+  fetchBytes,
+  hexToBytesFaster,
+} from '../../utils/bytes';
 import { assertRecordUintProperty } from '../../utils/uint';
+import type { BytesHex } from '../../types/primitives';
+import { TFHECrsError } from '../../errors/TFHECrsError';
 
 type CompactPkeCrsType = object;
 type TFHECrsBytesType = {
   id: string;
   data: Uint8Array;
+  bits: number;
+  srcUrl?: string;
+};
+type TFHECrsBytesHexType = {
+  id: string;
+  data: BytesHex;
   bits: number;
   srcUrl?: string;
 };
@@ -33,6 +46,16 @@ export class TFHECrs {
     this._compactPkeCrs = params.compactPkeCrs;
     this._bits = params.bits;
     this._srcUrl = params.srcUrl;
+  }
+
+  public get id() {
+    return this._id;
+  }
+  public get bits() {
+    return this._bits;
+  }
+  public get srcUrl() {
+    return this._srcUrl;
   }
 
   /*
@@ -115,7 +138,7 @@ export class TFHECrs {
   public static assertIsPublicParams2048BytesType(
     value: unknown,
     name: string,
-  ): asserts value is PublicParams<Uint8Array> {
+  ): asserts value is PublicParams2048<Uint8Array> {
     assertNonNullableRecordProperty(value, '2048', name);
     assertRecordStringProperty(value['2048'], 'publicParamsId', `${name}.2048`);
     assertUint8ArrayProperty(value['2048'], 'publicParams', `${name}.2048`);
@@ -131,7 +154,7 @@ export class TFHECrs {
   */
   public static isPublicParams2048BytesType(
     value: unknown,
-  ): value is PublicParams<Uint8Array> {
+  ): value is PublicParams2048<Uint8Array> {
     try {
       TFHECrs.assertIsPublicParams2048BytesType(value, '');
       return true;
@@ -141,7 +164,7 @@ export class TFHECrs {
   }
 
   static async fromBytesOrUrl(
-    params: PublicParams<Uint8Array> | TFHECrsBytesType | TFHECrsUrlType,
+    params: PublicParams2048<Uint8Array> | TFHECrsBytesType | TFHECrsUrlType,
   ): Promise<TFHECrs> {
     if (TFHECrs.isKeyBytesType(params)) {
       return TFHECrs._fromBytes(params);
@@ -150,19 +173,57 @@ export class TFHECrs {
     } else if (TFHECrs.isKeyUrlType(params)) {
       return TFHECrs._fromUrl(params);
     } else {
-      throw new Error('Invalid public key (deserialization failed)');
+      throw new TFHECrsError({
+        message: 'Invalid public key (deserialization failed)',
+      });
     }
   }
 
-  public static fromBytes(params: TFHECrsBytesType) {
+  /*
+    {
+      id: string;
+      data: Uint8Array;
+      bits: number;
+      srcUrl?: string;
+    }
+  */
+  public static fromBytes(params: TFHECrsBytesType): TFHECrs {
     try {
       TFHECrs.assertKeyBytesType(params, 'arg');
       return TFHECrs._fromBytes(params);
     } catch (e) {
-      throw new Error('Invalid public key (deserialization failed)', {
+      throw new TFHECrsError({
+        message: 'Invalid public key (deserialization failed)',
         cause: e,
       });
     }
+  }
+
+  /*
+    {
+      id: string;
+      data: BytesHex;
+      bits: number;
+      srcUrl?: string;
+    }
+  */
+  public static fromBytesHex(params: TFHECrsBytesHexType): TFHECrs {
+    let data;
+    try {
+      assertRecordStringProperty(params, 'data', 'arg');
+      data = hexToBytesFaster(params.data, true /* strict */);
+    } catch (e) {
+      throw new TFHECrsError({
+        message: 'Invalid public key (deserialization failed)',
+        cause: e,
+      });
+    }
+    return TFHECrs.fromBytes({
+      id: params?.id,
+      bits: params?.bits,
+      srcUrl: params?.srcUrl,
+      data,
+    });
   }
 
   private static _fromBytes(params: TFHECrsBytesType) {
@@ -179,18 +240,71 @@ export class TFHECrs {
     return new TFHECrs(_params);
   }
 
-  public static fromPublicParamsBytes(params: PublicParams<Uint8Array>) {
+  public static fromPublicParamsBytes(params: PublicParams2048<Uint8Array>) {
     try {
       TFHECrs.assertIsPublicParams2048BytesType(params, 'arg');
       return TFHECrs._fromPublicParamsBytes(params);
     } catch (e) {
-      throw new Error('Invalid public key (deserialization failed)', {
+      throw new TFHECrsError({
+        message: 'Invalid public key (deserialization failed)',
         cause: e,
       });
     }
   }
 
-  private static _fromPublicParamsBytes(params: PublicParams<Uint8Array>) {
+  public static fromBitsPublicParamsBytes(
+    bits: number,
+    params: {
+      publicParams: Uint8Array;
+      publicParamsId: string;
+    },
+  ) {
+    if (bits === undefined) {
+      throw new TFHECrsError({ message: 'Missing PublicParams bits format' });
+    }
+    if (bits !== 2048) {
+      throw new TFHECrsError({
+        message: `Unsupported PublicParams bits format '${bits}'`,
+      });
+    }
+
+    try {
+      assertRecordStringProperty(params, 'publicParamsId', `arg`);
+      assertUint8ArrayProperty(params, 'publicParams', `arg`);
+      return TFHECrs._fromPublicParamsBytes({
+        2048: params,
+      });
+    } catch (e) {
+      throw new TFHECrsError({
+        message: 'Invalid public key (deserialization failed)',
+        cause: e,
+      });
+    }
+  }
+
+  public static fromPublicParamsBytesHex(params: PublicParams2048<BytesHex>) {
+    try {
+      assertNonNullableRecordProperty(params, '2048', 'arg');
+      assertRecordStringProperty(params['2048'], 'publicParamsId', `arg.2048`);
+      assertRecordStringProperty(params['2048'], 'publicParams', `arg.2048`);
+      return TFHECrs._fromPublicParamsBytes({
+        2048: {
+          publicParams: hexToBytesFaster(
+            params['2048'].publicParams,
+            true /* strict */,
+          ),
+          publicParamsId: params['2048'].publicParamsId,
+        },
+      });
+    } catch (e) {
+      throw new TFHECrsError({
+        message: 'Invalid public key (deserialization failed)',
+        cause: e,
+      });
+    }
+  }
+
+  private static _fromPublicParamsBytes(params: PublicParams2048<Uint8Array>) {
     return TFHECrs._fromBytes({
       bits: 2048,
       data: params['2048'].publicParams,
@@ -203,7 +317,8 @@ export class TFHECrs {
       TFHECrs.assertKeyUrlType(params, 'arg');
       return TFHECrs._fromUrl(params);
     } catch (e) {
-      throw new Error('Impossible to fetch public key: wrong relayer url.', {
+      throw new TFHECrsError({
+        message: 'Impossible to fetch public key: wrong relayer url.',
         cause: e,
       });
     }
@@ -243,17 +358,39 @@ export class TFHECrs {
 
   /*
     {
+      id: string,
+      bits: number,
+      data: BytesHex,
+      srcUrl?: string
+    }
+  */
+  public toBytesHex(): TFHECrsBytesHexType {
+    return {
+      data: bytesToHexLarge(
+        (this._compactPkeCrs as any).safe_serialize(SERIALIZED_SIZE_LIMIT_CRS),
+      ),
+      id: this._id,
+      bits: this._bits,
+      ...(this._srcUrl ? { srcUrl: this._srcUrl } : {}),
+    };
+  }
+
+  /*
+    {
       2048: {
         publicParamsId: string,
         publicParams: TFHE.CompactPkeCrs
       }
     }
   */
-  public toPublicParamsWasm(): PublicParams<CompactPkeCrsType> {
+  public toPublicParams2048Wasm(): PublicParams2048<CompactPkeCrsType> {
     if (this._bits !== 2048) {
-      throw new Error(`Unsupported PublicParams bits format ${this._bits}`);
+      throw new TFHECrsError({
+        message: `Unsupported PublicParams bits format '2048'`,
+      });
     }
-    const pp: PublicParams<CompactPkeCrsType> = {
+
+    const pp: PublicParams2048<CompactPkeCrsType> = {
       2048: {
         publicParams: this._compactPkeCrs,
         publicParamsId: this._id,
@@ -270,17 +407,74 @@ export class TFHECrs {
       }
     }
   */
-  public toPublicParamsBytes(): PublicParams<Uint8Array> {
+  public toPublicParams2048Bytes(): PublicParams2048<Uint8Array> {
     if (this._bits !== 2048) {
-      throw new Error(`Unsupported PublicParams bits format ${this._bits}`);
+      throw new TFHECrsError({
+        message: `Unsupported PublicParams bits format '2048'`,
+      });
     }
 
-    const pp: PublicParams<Uint8Array> = {
+    const pp: PublicParams2048<Uint8Array> = {
       2048: {
         publicParams: this.toBytes().data,
         publicParamsId: this._id,
       },
     };
     return pp;
+  }
+
+  /*
+    {
+      2048: {
+        publicParamsId: string,
+        publicParams: BytesHex
+      }
+    }
+  */
+  public toPublicParams2048BytesHex(): PublicParams2048<BytesHex> {
+    if (this._bits === undefined) {
+      throw new TFHECrsError({ message: 'Missing PublicParams bits format' });
+    }
+    if (this._bits !== 2048) {
+      throw new TFHECrsError({
+        message: `Unsupported PublicParams bits format '${this._bits}'`,
+      });
+    }
+
+    const pp: PublicParams2048<BytesHex> = {
+      2048: {
+        publicParams: this.toBytesHex().data,
+        publicParamsId: this._id,
+      },
+    };
+    return pp;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  // JSON
+  //////////////////////////////////////////////////////////////////////////////
+
+  /*
+    {
+      __type: 'TFHECrs',
+      id: string,
+      data: BytesHex,
+      srcUrl?: string
+    }
+  */
+  public toJSON(): TFHECrsBytesHexType & {
+    __type: 'TFHECrs';
+  } {
+    return {
+      __type: 'TFHECrs',
+      ...this.toBytesHex(),
+    };
+  }
+
+  public static fromJSON(json: unknown): TFHECrs {
+    if ((json as any).__type !== 'TFHECrs') {
+      throw new TFHECrsError({ message: 'Invalid TFHECrs JSON.' });
+    }
+    return TFHECrs.fromBytesHex(json as any);
   }
 }

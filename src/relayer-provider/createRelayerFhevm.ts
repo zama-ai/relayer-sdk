@@ -14,7 +14,7 @@ export async function createRelayerFhevm(config: {
     id: string | null;
   };
   publicParams?: PublicParams<Uint8Array> | null;
-  defaultRelayerVersion?: 1 | 2;
+  defaultRelayerVersion: 1 | 2;
 }): Promise<AbstractRelayerFhevm> {
   const resolved = _resolveRelayerUrl(
     config.relayerUrl,
@@ -30,18 +30,20 @@ export async function createRelayerFhevm(config: {
       publicKey: config.publicKey,
       publicParams: config.publicParams,
     });
+  } else if (resolved.version === 1) {
+    return RelayerV1Fhevm.fromConfig({
+      relayerVersionUrl: resolved.url,
+      publicKey: config.publicKey,
+      publicParams: config.publicParams,
+    });
+  } else {
+    throw new Error(`Invalid relayerUrl: ${config.relayerUrl}`);
   }
-
-  return RelayerV1Fhevm.fromConfig({
-    relayerVersionUrl: resolved.url,
-    publicKey: config.publicKey,
-    publicParams: config.publicParams,
-  });
 }
 
 export function createRelayerProvider(
   relayerUrl: string,
-  defaultRelayerVersion?: 1 | 2,
+  defaultRelayerVersion: 1 | 2,
 ): AbstractRelayerProvider {
   const resolved = _resolveRelayerUrl(relayerUrl, defaultRelayerVersion);
   if (!resolved) {
@@ -57,7 +59,7 @@ export function createRelayerProvider(
 
 function _resolveRelayerUrl(
   value: unknown,
-  defaultVersion?: 1 | 2,
+  defaultVersion: 1 | 2,
 ): { url: string; version: 1 | 2 } | null {
   if (!value || typeof value !== 'string') {
     return null;

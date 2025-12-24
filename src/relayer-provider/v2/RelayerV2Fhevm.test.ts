@@ -74,6 +74,7 @@ describeIfFetchMock('RelayerV2Fhevm', () => {
     const SepoliaConfigRelayerUrl = SepoliaConfig.relayerUrl!;
     const relayerFhevm = await createRelayerFhevm({
       relayerUrl: `${SepoliaConfigRelayerUrl}/v2`,
+      defaultRelayerVersion: 1,
     });
     expect(relayerFhevm.version).toBe(2);
   });
@@ -82,6 +83,7 @@ describeIfFetchMock('RelayerV2Fhevm', () => {
     const SepoliaConfigRelayerUrl = SepoliaConfig.relayerUrl!;
     const relayerFhevm = await createRelayerFhevm({
       relayerUrl: `${SepoliaConfigRelayerUrl}/v2`,
+      defaultRelayerVersion: 1,
     });
     const pub_key = relayerFhevm.getPublicKeyBytes();
     expect(pub_key.publicKeyId).toBe('fhe-public-key-data-id');
@@ -91,6 +93,7 @@ describeIfFetchMock('RelayerV2Fhevm', () => {
     const SepoliaConfigRelayerUrl = SepoliaConfig.relayerUrl!;
     const relayerFhevm = await createRelayerFhevm({
       relayerUrl: `${SepoliaConfigRelayerUrl}/v2`,
+      defaultRelayerVersion: 1,
     });
     const pub_key = relayerFhevm.getPublicKeyBytes();
     expect(pub_key.publicKey).toStrictEqual(assetPublicKeyBytes);
@@ -100,8 +103,9 @@ describeIfFetchMock('RelayerV2Fhevm', () => {
     const SepoliaConfigRelayerUrl = SepoliaConfig.relayerUrl!;
     const relayerFhevm = await createRelayerFhevm({
       relayerUrl: `${SepoliaConfigRelayerUrl}/v2`,
+      defaultRelayerVersion: 1,
     });
-    const pub_params = relayerFhevm.getPublicParamsBytes(2048);
+    const pub_params = relayerFhevm.getPublicParamsBytesForBits(2048);
     expect(pub_params.publicParamsId).toBe('crs-data-id');
   });
 
@@ -109,8 +113,9 @@ describeIfFetchMock('RelayerV2Fhevm', () => {
     const SepoliaConfigRelayerUrl = SepoliaConfig.relayerUrl!;
     const relayerFhevm = await createRelayerFhevm({
       relayerUrl: `${SepoliaConfigRelayerUrl}/v2`,
+      defaultRelayerVersion: 1,
     });
-    const pub_params = relayerFhevm.getPublicParamsBytes(2048);
+    const pub_params = relayerFhevm.getPublicParamsBytesForBits(2048);
     expect(pub_params.publicParams).toStrictEqual(assetPublicParams2048Bytes);
   });
 
@@ -118,9 +123,10 @@ describeIfFetchMock('RelayerV2Fhevm', () => {
     const SepoliaConfigeRelayerUrl = SepoliaConfig.relayerUrl!;
     const relayerFhevm = await createRelayerFhevm({
       relayerUrl: `${SepoliaConfigeRelayerUrl}/v2`,
+      defaultRelayerVersion: 1,
     });
-    expect(() => relayerFhevm.getPublicParamsBytes(123)).toThrow(
-      'Unsupported PublicParams bits format 123',
+    expect(() => relayerFhevm.getPublicParamsBytesForBits(123)).toThrow(
+      "Unsupported PublicParams bits format '123'",
     );
   });
 
@@ -128,6 +134,7 @@ describeIfFetchMock('RelayerV2Fhevm', () => {
     const SepoliaConfigeRelayerUrl = SepoliaConfig.relayerUrl!;
     const relayerFhevm = await createRelayerFhevm({
       relayerUrl: `${SepoliaConfigeRelayerUrl}/v2`,
+      defaultRelayerVersion: 1,
     });
     expect(relayerFhevm instanceof RelayerV2Fhevm).toBe(true);
     const relayerFhevmV2 = relayerFhevm as RelayerV2Fhevm;
@@ -139,10 +146,11 @@ describeIfFetchMock('RelayerV2Fhevm', () => {
     const SepoliaConfigRelayerUrl = SepoliaConfig.relayerUrl!;
     const relayerFhevm1 = await createRelayerFhevm({
       relayerUrl: `${SepoliaConfigRelayerUrl}/v2`,
+      defaultRelayerVersion: 1,
     });
 
     const pub_key = relayerFhevm1.getPublicKeyBytes();
-    const pub_params = relayerFhevm1.getPublicParamsBytes(2048);
+    const pub_params = relayerFhevm1.getPublicParamsBytesForBits(2048);
 
     const relayerFhevm2 = await createRelayerFhevm({
       relayerUrl: `${SepoliaConfigRelayerUrl}/v2`,
@@ -153,13 +161,14 @@ describeIfFetchMock('RelayerV2Fhevm', () => {
       publicParams: {
         2048: pub_params,
       },
+      defaultRelayerVersion: 1,
     });
 
     expect(relayerFhevm2.getPublicKeyBytes()).toStrictEqual(
       relayerFhevm1.getPublicKeyBytes(),
     );
-    expect(relayerFhevm2.getPublicParamsBytes(2048)).toStrictEqual(
-      relayerFhevm1.getPublicParamsBytes(2048),
+    expect(relayerFhevm2.getPublicParamsBytesForBits(2048)).toStrictEqual(
+      relayerFhevm1.getPublicParamsBytesForBits(2048),
     );
   });
 });

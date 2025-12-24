@@ -73,6 +73,23 @@ export class RelayerV1Fhevm extends AbstractRelayerFhevm {
     };
   }
 
+  public override getPublicKeyInfo(): { id: string; srcUrl?: string } {
+    return {
+      id: this._publicKeyData.publicKeyId,
+    };
+  }
+
+  public override getPublicParamsInfo(): {
+    id: string;
+    bits: number;
+    srcUrl?: string;
+  } {
+    return {
+      id: this._publicParamsData['2048']!.publicParamsId,
+      bits: 2048,
+    };
+  }
+
   public override getPublicKeyWasm(): {
     publicKey: TFHEType['TfheCompactPublicKey'];
     publicKeyId: string;
@@ -83,28 +100,35 @@ export class RelayerV1Fhevm extends AbstractRelayerFhevm {
     };
   }
 
-  public override getPublicParamsBytes(bits: number): {
+  public override getPublicParamsBytesForBits(bits: number): {
     publicParams: Uint8Array;
     publicParamsId: string;
   } {
+    if (bits === undefined) {
+      throw new Error(`Missing PublicParams bits format`);
+    }
     if (bits !== 2048) {
-      throw new Error(`Unsupported PublicParams bits format ${bits}`);
+      throw new Error(`Unsupported PublicParams bits format '${bits}'`);
     }
 
-    return {
+    const res = {
       publicParams: this._publicParamsData['2048']!.publicParams.safe_serialize(
         SERIALIZED_SIZE_LIMIT_CRS,
       ),
       publicParamsId: this._publicParamsData['2048']!.publicParamsId,
     };
+    return res;
   }
 
-  public override getPublicParamsWasm(bits: number): {
+  public override getPublicParamsWasmForBits(bits: number): {
     publicParamsId: string;
     publicParams: TFHEType['CompactPkeCrs'];
   } {
+    if (bits === undefined) {
+      throw new Error(`Missing PublicParams bits format`);
+    }
     if (bits !== 2048) {
-      throw new Error(`Unsupported PublicParams bits format ${bits}`);
+      throw new Error(`Unsupported PublicParams bits format '${bits}'`);
     }
 
     return {

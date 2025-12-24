@@ -1,4 +1,4 @@
-import { hexToBytes, toHexString } from '../utils/bytes';
+import { bytesToHex, hexToBytes } from '../utils/bytes';
 import { ethers, AbiCoder } from 'ethers';
 import { checkEncryptedBits } from './decryptUtils';
 import type {
@@ -11,9 +11,9 @@ import type {
 import { ensure0x } from '../utils/string';
 import { AbstractRelayerProvider } from '../relayer-provider/AbstractRelayerProvider';
 import type { RelayerV2PublicDecryptOptions } from '../relayer-provider/v2/types/types';
+import { solidityPrimitiveTypeNameFromFheTypeId } from '../sdk/FheType';
 import { FhevmHandle } from '../sdk/FhevmHandle';
 import { Bytes32Hex, FheTypeId } from '../types/primitives';
-import { assertRelayer } from '../errors/InternalError';
 import { assertNever } from '../errors/utils';
 
 const aclABI = [
@@ -55,7 +55,7 @@ function abiEncodeClearValues(clearValues: ClearValues) {
 
   for (let i = 0; i < handlesBytes32Hex.length; ++i) {
     const handle = handlesBytes32Hex[i];
-    const handleType = FhevmHandle.getFheTypeId(handle);
+    const handleType = FhevmHandle.parse(handle).fheTypeId;
 
     let clearTextValue: ClearValueType =
       clearValues[handle as keyof typeof clearValues];
@@ -152,11 +152,10 @@ function deserializeClearValues(
   handles: Bytes32Hex[],
   decryptedResult: `0x${string}`,
 ): ClearValues {
-  let typesList: FheTypeId[] = [];
+  let fheTypeIdList: FheTypeId[] = [];
   for (const handle of handles) {
-    const typeDiscriminant = FhevmHandle.getFheTypeId(handle);
-    assertRelayer(FhevmHandle.isFheTypeId(typeDiscriminant));
-    typesList.push(typeDiscriminant as FheTypeId);
+    const typeDiscriminant = FhevmHandle.parse(handle).fheTypeId;
+    fheTypeIdList.push(typeDiscriminant);
   }
 
   const restoredEncoded =
@@ -165,8 +164,8 @@ function deserializeClearValues(
     decryptedResult.slice(2) +
     '00'.repeat(32); // dummy empty bytes[] length (ignored)
 
-  const abiTypes = typesList.map((t) => {
-    const abiType = FhevmHandle.FheTypeIdToSolidityPrimitiveType[t]; // all types are valid because this was supposedly checked already inside the `checkEncryptedBits` function
+  const abiTypes = fheTypeIdList.map((t: FheTypeId) => {
+    const abiType = solidityPrimitiveTypeNameFromFheTypeId(t); // all types are valid because this was supposedly checked already inside the `checkEncryptedBits` function
     return abiType;
   });
 
@@ -177,7 +176,7 @@ function deserializeClearValues(
   );
 
   // strip dummy first/last element
-  const rawValues = decoded.slice(1, 1 + typesList.length);
+  const rawValues = decoded.slice(1, 1 + fheTypeIdList.length);
 
   const results: ClearValues = {};
   handles.forEach((handle, idx) => (results[handle] = rawValues[idx]));
@@ -203,14 +202,15 @@ export const publicDecryptRequest =
     const extraData: `0x${string}` = '0x00';
     const acl = new ethers.Contract(aclContractAddress, aclABI, provider);
 
+    // This will be replaced by new sanitize classes
     let handles: `0x${string}`[];
     try {
       handles = await Promise.all(
         _handles.map(async (_handle) => {
           const handle =
             typeof _handle === 'string'
-              ? toHexString(hexToBytes(_handle), true)
-              : toHexString(_handle, true);
+              ? bytesToHex(hexToBytes(_handle))
+              : bytesToHex(_handle);
 
           const isAllowedForDecryption =
             await acl.isAllowedForDecryption(handle);

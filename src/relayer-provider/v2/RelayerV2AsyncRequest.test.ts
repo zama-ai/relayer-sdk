@@ -67,8 +67,10 @@ describeIfFetchMock('RelayerV2Request', () => {
       relayerOperation: 'INPUT_PROOF',
       url: requestUrl,
       payload,
-      onProgress: () => {
-        trace('onProgress()');
+      options: {
+        onProgress: () => {
+          trace('onProgress()');
+        },
       },
     });
 
@@ -111,8 +113,10 @@ describeIfFetchMock('RelayerV2Request', () => {
       relayerOperation: 'INPUT_PROOF',
       url: requestUrl,
       payload,
-      onProgress: () => {
-        trace('onProgress()');
+      options: {
+        onProgress: () => {
+          trace('onProgress()');
+        },
       },
     });
 
@@ -147,13 +151,14 @@ describeIfFetchMock('RelayerV2Request', () => {
     trace('relayerRequest.cancel() done.');
 
     expect(relayerRequest.state).toEqual({
-      running: true,
-      canceled: true,
-      terminated: true,
-      succeeded: false,
       aborted: true,
+      canceled: true,
       failed: false,
       fetching: true,
+      running: true,
+      succeeded: false,
+      terminated: true,
+      timeout: false,
     });
 
     trace(`wait for end of test...`);
@@ -167,13 +172,14 @@ describeIfFetchMock('RelayerV2Request', () => {
     expect((runCatchReason as any).name).toBe('AbortError');
 
     expect(relayerRequest.state).toEqual({
-      running: true,
-      canceled: true,
-      terminated: true,
-      succeeded: false,
       aborted: true,
+      canceled: true,
       failed: true,
       fetching: false,
+      running: true,
+      succeeded: false,
+      terminated: true,
+      timeout: false,
     });
 
     trace('test ended.');

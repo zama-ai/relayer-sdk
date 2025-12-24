@@ -40,13 +40,19 @@ describeIfFetchMock('createRelayerProvider', () => {
   });
 
   it('v1: https://foo-relayer.org/v1', () => {
-    const relayerProvider = createRelayerProvider('https://foo-relayer.org/v1');
+    const relayerProvider = createRelayerProvider(
+      'https://foo-relayer.org/v1',
+      1,
+    );
     expect(relayerProvider.version).toBe(1);
     expect(relayerProvider.url).toBe('https://foo-relayer.org/v1');
   });
 
   it('v1: https://foo-relayer.org/v2', () => {
-    const relayerProvider = createRelayerProvider('https://foo-relayer.org/v2');
+    const relayerProvider = createRelayerProvider(
+      'https://foo-relayer.org/v2',
+      1,
+    );
     expect(relayerProvider.version).toBe(2);
     expect(relayerProvider.url).toBe('https://foo-relayer.org/v2');
   });
@@ -58,6 +64,7 @@ describeIfFetchMock('createRelayerProvider', () => {
 
     const relayerProvider = createRelayerProvider(
       `${SepoliaConfigeRelayerUrl}/v2`,
+      1,
     );
     expect(relayerProvider.version).toBe(2);
     expect(relayerProvider.url).toBe(`${SepoliaConfigeRelayerUrl}/v2`);

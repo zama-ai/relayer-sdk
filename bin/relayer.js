@@ -2,67 +2,140 @@
 'use strict';
 
 import { program } from 'commander';
-import { toHexString, prependHttps, throwError } from './utils.js';
-import { createInstance, SepoliaConfig } from '../lib/node.cjs';
+import { addCommonOptions } from './utils.js';
+import { inputProofCommand } from './commands/input-proof.js';
+import { configCommand } from './commands/config.js';
+import { publicDecryptCommand } from './commands/public-decrypt.js';
 
-const allowedBits = [1, 4, 8, 16, 32, 64];
+////////////////////////////////////////////////////////////////////////////////
+// input-proof
+////////////////////////////////////////////////////////////////////////////////
 
-let _instance;
-
-const getInstance = async (networkUrl) => {
-  if (_instance) return _instance;
-
-  try {
-    // NOTE: hack to get the instance created
-    const config = { ...SepoliaConfig, network: networkUrl };
-    console.debug(`Using network ${config.network}`);
-    _instance = await createInstance(config);
-  } catch (e) {
-    return throwError(
-      `This network (${networkUrl}) doesn't seem to use Fhevm or use an incompatible version.`,
-      e,
-    );
-  }
-  return _instance;
-};
-
+// npx . input-proof --values true:ebool
+// npx . input-proof --contract-address 0xb2a8A265dD5A27026693Aa6cE87Fb21Ac197b6b9 --user-address 0x37AC010c1c566696326813b840319B58Bb5840E4 --values true:ebool
 // TODO: be able to pass a full configuration, or simply the chain-id/name, or relayer-url
-program
-  .command('encrypt')
-  .argument('<contractAddress>', 'address of the contract')
-  .argument('<userAddress>', 'address of the account')
-  .argument('<values:bits...>', 'values with number of bits eg: 1:1 3324242:64')
-  .requiredOption(
-    '-n, --node <url>',
-    'url of the blockchain',
-    'https://eth-sepolia.public.blastapi.io',
-  )
-  .action(async (contractAddress, userAddress, valuesArr, options) => {
-    const host = prependHttps(options.node);
-    const instance = await getInstance(host);
-    const encryptedInput = instance.createEncryptedInput(
-      contractAddress,
-      userAddress,
-    );
-    valuesArr.forEach((str, i) => {
-      const [value, bits] = str.split(':');
-      if (!allowedBits.includes(+bits)) throwError('Invalid number of bits');
-      const suffix = +bits === 1 ? 'Bool' : bits === '160' ? 'Address' : bits;
-      try {
-        encryptedInput[`add${suffix}`](parseInt(value, 10));
-      } catch (e) {
-        return throwError(e.message);
-      }
-    });
-    const result = await encryptedInput.encrypt();
-
-    console.log('Input proof:');
-    console.log(`0x${toHexString(result.inputProof)}`);
-    console.log('Handles:');
-    result.handles.forEach((handle, i) => {
-      console.log(`Handle ${i}`);
-      console.log(`0x${toHexString(handle)}`);
-    });
+addCommonOptions(program.command('input-proof'))
+  .requiredOption('--values <value:type-name...>', 'List of values')
+  .action(async (options) => {
+    await inputProofCommand(options);
   });
+
+////////////////////////////////////////////////////////////////////////////////
+// public-decrypt
+////////////////////////////////////////////////////////////////////////////////
+
+addCommonOptions(program.command('public-decrypt'))
+  .requiredOption('--handles <handles...>', 'List of handles to decrypt')
+  .action(async (options) => {
+    await publicDecryptCommand(options);
+  });
+
+////////////////////////////////////////////////////////////////////////////////
+// user-decrypt
+////////////////////////////////////////////////////////////////////////////////
+
+addCommonOptions(program.command('user-decrypt'))
+  .requiredOption('--handles <handles...>', 'List of handles to decrypt')
+  .action(async (options) => {
+    const mod = await import('./commands/user-decrypt.js');
+    await mod.userDecryptCommand(options);
+  });
+
+////////////////////////////////////////////////////////////////////////////////
+// handle
+////////////////////////////////////////////////////////////////////////////////
+
+addCommonOptions(program.command('handle'))
+  .argument('<handles...>', 'List of handles to parse')
+  .action(async (handles, options) => {
+    const mod = await import('./commands/handle.js');
+    await mod.handleCommand(handles, options);
+  });
+
+////////////////////////////////////////////////////////////////////////////////
+// config
+////////////////////////////////////////////////////////////////////////////////
+
+// npx . config --contract-address 0xb2a8A265dD5A27026693Aa6cE87Fb21Ac197b6b9 --user-address 0x37AC010c1c566696326813b840319B58Bb5840E4
+addCommonOptions(program.command('config')).action(async (options) => {
+  await configCommand(options);
+});
+
+////////////////////////////////////////////////////////////////////////////////
+
+// Create 'pubkey' command group
+const pubkey = program.command('pubkey').description('Public key operations');
+
+////////////////////////////////////////////////////////////////////////////////
+// pubkey info
+////////////////////////////////////////////////////////////////////////////////
+
+// npx . pubkey info
+pubkey
+  .command('info')
+  .description('Display public key information')
+  .action(async (options) => {
+    const mod = await import('./commands/pubkey-info.js');
+    await mod.pubkeyInfoCommand(options);
+  });
+
+////////////////////////////////////////////////////////////////////////////////
+// pubkey fetch
+////////////////////////////////////////////////////////////////////////////////
+
+// npx . pubkey fetch
+addCommonOptions(pubkey.command('fetch'))
+  .description('Fetch FHEVM public key')
+  .action(async (options) => {
+    const mod = await import('./commands/pubkey-fetch.js');
+    await mod.pubkeyFetchCommand(options);
+  });
+
+////////////////////////////////////////////////////////////////////////////////
+// pubkey delete
+////////////////////////////////////////////////////////////////////////////////
+
+// npx . pubkey delete
+pubkey
+  .command('delete')
+  .description('Clear FHEVM public key cache')
+  .action(async () => {
+    const mod = await import('./commands/pubkey-clear.js');
+    await mod.pubkeyClearCommand();
+  });
+
+////////////////////////////////////////////////////////////////////////////////
+// test fhecounter-get-count
+////////////////////////////////////////////////////////////////////////////////
+
+const test = program.command('test').description('Test operations');
+
+// npx . test fhecounter-get-count
+addCommonOptions(test.command('fhecounter-get-count'))
+  .description('Call FHECounter.getCount()')
+  .action(async (options) => {
+    const mod = await import('./commands/test-fhecounter-getcount.js');
+    await mod.testFheCounterGetCountCommand(options);
+  });
+
+////////////////////////////////////////////////////////////////////////////////
+
+// Create 'zkproof' command group
+const zkproof = program.command('zkproof').description('ZKProof operations');
+
+addCommonOptions(zkproof.command('generate'))
+  .description('Generate ZKProof')
+  .requiredOption('--values <value:type-name...>', 'List of values')
+  .action(async (options) => {
+    const mod = await import('./commands/zkproof-generate.js');
+    await mod.zkProofGenerateCommand(options);
+  });
+
+// addCommonOptions(zkproof.command('verify'))
+//   .description('Verify ZKProof')
+//   .action(async (options) => {
+//     const mod = await import('./commands/zkproof-verify.js');
+//     await mod.zkProofVerifyCommand(options);
+//   });
 
 program.parseAsync();

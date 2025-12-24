@@ -1,10 +1,22 @@
 import { SERIALIZED_SIZE_LIMIT_PK } from '../../constants';
 import { assertRecordStringProperty } from '../../utils/string';
 import { isNonNullableRecordProperty } from '../../utils/record';
-import { assertUint8ArrayProperty, fetchBytes } from '../../utils/bytes';
+import {
+  assertUint8ArrayProperty,
+  bytesToHexLarge,
+  fetchBytes,
+  hexToBytesFaster,
+} from '../../utils/bytes';
+import type { BytesHex } from '../../types/primitives';
+import { TFHEPublicKeyError } from '../../errors/TFHEPublicKeyError';
 
 type TfheCompactPublicKeyType = object;
 type TFHEPublicKeyBytesType = { id: string; data: Uint8Array; srcUrl?: string };
+type TFHEPublicKeyBytesHexType = {
+  id: string;
+  data: BytesHex;
+  srcUrl?: string;
+};
 type TFHEPublicKeyUrlType = { id: string; srcUrl: string };
 
 export class TFHEPublicKey {
@@ -20,6 +32,13 @@ export class TFHEPublicKey {
     this._id = params.id;
     this._tfheCompactPublicKey = params.tfheCompactPublicKey;
     this._srcUrl = params.srcUrl;
+  }
+
+  public get id() {
+    return this._id;
+  }
+  public get srcUrl() {
+    return this._srcUrl;
   }
 
   /*
@@ -120,6 +139,30 @@ export class TFHEPublicKey {
   /*
     {
       id: string,
+      data: BytesHex,
+      srcUrl?: string
+    }
+  */
+  public static fromBytesHex(params: TFHEPublicKeyBytesHexType): TFHEPublicKey {
+    let data;
+    try {
+      assertRecordStringProperty(params, 'data', 'arg');
+      data = hexToBytesFaster(params.data, true /* strict */);
+    } catch (e) {
+      throw new Error('Invalid public key (deserialization failed)', {
+        cause: e,
+      });
+    }
+    return TFHEPublicKey.fromBytes({
+      id: params?.id,
+      srcUrl: params?.srcUrl,
+      data,
+    });
+  }
+
+  /*
+    {
+      id: string,
       data: Uint8Array,
       srcUrl?: string
     }
@@ -194,6 +237,25 @@ export class TFHEPublicKey {
   }
 
   /*
+    {
+      id: string,
+      data: BytesHex,
+      srcUrl?: string
+    }
+  */
+  public toBytesHex(): TFHEPublicKeyBytesHexType {
+    return {
+      data: bytesToHexLarge(
+        (this._tfheCompactPublicKey as any).safe_serialize(
+          SERIALIZED_SIZE_LIMIT_PK,
+        ),
+      ),
+      id: this._id,
+      ...(this._srcUrl ? { srcUrl: this._srcUrl } : {}),
+    };
+  }
+
+  /*
     { 
       publicKey: TFHE.TfheCompactPublicKey
       publicKeyId: string
@@ -223,5 +285,95 @@ export class TFHEPublicKey {
       publicKey: this.toBytes().data,
       publicKeyId: this._id,
     };
+  }
+
+  /*
+    { 
+      publicKey: Uint8Array
+      publicKeyId: string
+    }   
+  */
+  public toPublicKeyBytesHex(): {
+    publicKey: BytesHex;
+    publicKeyId: string;
+  } {
+    return {
+      publicKey: this.toBytesHex().data,
+      publicKeyId: this._id,
+    };
+  }
+
+  private static _fromPublicKeyBytes(params: {
+    publicKey: Uint8Array;
+    publicKeyId: string;
+    srcUrl?: string;
+  }) {
+    return TFHEPublicKey._fromBytes({
+      data: params.publicKey,
+      id: params.publicKeyId,
+      srcUrl: params.srcUrl,
+    });
+  }
+
+  public static fromPublicKeyBytesHex(params: {
+    publicKey: BytesHex;
+    publicKeyId: string;
+  }) {
+    try {
+      assertRecordStringProperty(params, 'publicKey', `arg`);
+      assertRecordStringProperty(params, 'publicKeyId', `arg`);
+      return TFHEPublicKey._fromPublicKeyBytes({
+        publicKey: hexToBytesFaster(params.publicKey, true /* strict */),
+        publicKeyId: params.publicKeyId,
+      });
+    } catch (e) {
+      throw new Error('Invalid public key (deserialization failed)', {
+        cause: e,
+      });
+    }
+  }
+
+  public static fromPublicKeyBytes(params: {
+    publicKey: Uint8Array;
+    publicKeyId: string;
+    srcUrl?: string;
+  }) {
+    try {
+      assertUint8ArrayProperty(params, 'publicKey', `arg`);
+      assertRecordStringProperty(params, 'publicKeyId', `arg`);
+      return TFHEPublicKey._fromPublicKeyBytes(params);
+    } catch (e) {
+      throw new Error('Invalid public key (deserialization failed)', {
+        cause: e,
+      });
+    }
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  // JSON
+  //////////////////////////////////////////////////////////////////////////////
+
+  /*
+    {
+      __type: 'TFHEPublicKey',
+      id: string,
+      data: BytesHex,
+      srcUrl?: string
+    }
+  */
+  public toJSON(): TFHEPublicKeyBytesHexType & {
+    __type: 'TFHEPublicKey';
+  } {
+    return {
+      __type: 'TFHEPublicKey',
+      ...this.toBytesHex(),
+    };
+  }
+
+  public static fromJSON(json: unknown): TFHEPublicKey {
+    if ((json as any).__type !== 'TFHEPublicKey') {
+      throw new TFHEPublicKeyError({ message: 'Invalid TFHEPublicKey JSON.' });
+    }
+    return TFHEPublicKey.fromBytesHex(json as any);
   }
 }

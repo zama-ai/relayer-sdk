@@ -86,7 +86,7 @@ export class CoprocessorSigners extends EIP712Signers<
       signers.push(
         CoprocessorSigner.fromMnemonic({
           mnemonic: params.mnemonic,
-          path: basePath + i + startIndex,
+          path: `${basePath}${i + startIndex}`,
           wordlist: params.wordlist,
         }),
       );

@@ -78,7 +78,7 @@ export class ACL {
 
     if (options.checkArguments === true) {
       for (let i = 0; i < handlesArray.length; ++i) {
-        FhevmHandle.checkHandleHex(handlesArray[i]);
+        FhevmHandle.assertIsHandleHex(handlesArray[i]);
       }
     }
 
@@ -154,7 +154,7 @@ export class ACL {
 
     if (options.checkArguments === true) {
       for (const p of handleAddressPairsArray) {
-        FhevmHandle.checkHandleHex(p.handle);
+        FhevmHandle.assertIsHandleHex(p.handle);
         assertIsChecksummedAddress(p.address);
       }
     }
@@ -222,7 +222,7 @@ export class ACL {
     if (options.checkArguments === true) {
       assertIsChecksummedAddress(params.userAddress);
       for (const pair of pairsArray) {
-        FhevmHandle.checkHandleHex(pair.handle);
+        FhevmHandle.assertIsHandleHex(pair.handle);
         assertIsChecksummedAddress(pair.contractAddress);
       }
     }

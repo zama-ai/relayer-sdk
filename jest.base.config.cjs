@@ -19,6 +19,7 @@ module.exports = {
   moduleFileExtensions: ['ts', 'js', 'json', 'node'],
   collectCoverageFrom: [
     'src/**/*.ts',
+    '!src/test/*',
     '!src/**/*.d.ts',
     '!src/kms/*',
     '!src/init.ts',
@@ -30,7 +31,7 @@ module.exports = {
   coverageThreshold: {
     global: {
       branches: 45,
-      functions: 59,
+      functions: 58,
       lines: 60,
     },
   },

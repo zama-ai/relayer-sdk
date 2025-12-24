@@ -14,6 +14,7 @@ import { TEST_CONFIG } from '../../test/config';
 
 // Jest Command line
 // =================
+// npx jest --colors --passWithNoTests ./src/relayer-provider/v1/RelayerV1Fhevm.test.ts --testNamePattern=xxx
 // npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v1/RelayerV1Fhevm.test.ts --collectCoverageFrom=./src/relayer-provider/v1/RelayerV1Fhevm.ts --testNamePattern=xxx
 // npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v1/RelayerV1Fhevm.test.ts --collectCoverageFrom=./src/relayer-provider/v1/RelayerV1Fhevm.ts
 
@@ -106,7 +107,7 @@ describeIfFetchMock('RelayerV1Fhevm', () => {
       relayerUrl: `${SepoliaConfigeRelayerUrl}`,
       defaultRelayerVersion,
     });
-    const pub_params = relayerFhevm.getPublicParamsBytes(2048);
+    const pub_params = relayerFhevm.getPublicParamsBytesForBits(2048);
     expect(pub_params.publicParamsId).toBe('crs-data-id');
   });
 
@@ -116,7 +117,7 @@ describeIfFetchMock('RelayerV1Fhevm', () => {
       relayerUrl: `${SepoliaConfigeRelayerUrl}`,
       defaultRelayerVersion,
     });
-    const pub_params = relayerFhevm.getPublicParamsBytes(2048);
+    const pub_params = relayerFhevm.getPublicParamsBytesForBits(2048);
     expect(pub_params.publicParams).toStrictEqual(assetPublicParams2048Bytes);
   });
 
@@ -126,8 +127,8 @@ describeIfFetchMock('RelayerV1Fhevm', () => {
       relayerUrl: `${SepoliaConfigeRelayerUrl}`,
       defaultRelayerVersion,
     });
-    expect(() => relayerFhevm.getPublicParamsBytes(123)).toThrow(
-      'Unsupported PublicParams bits format 123',
+    expect(() => relayerFhevm.getPublicParamsBytesForBits(123)).toThrow(
+      "Unsupported PublicParams bits format '123'",
     );
   });
 
@@ -150,7 +151,7 @@ describeIfFetchMock('RelayerV1Fhevm', () => {
       defaultRelayerVersion,
     });
     const pub_key = relayerFhevm1.getPublicKeyBytes();
-    const pub_params = relayerFhevm1.getPublicParamsBytes(2048);
+    const pub_params = relayerFhevm1.getPublicParamsBytesForBits(2048);
 
     const relayerFhevm2 = await createRelayerFhevm({
       relayerUrl: `${SepoliaConfigRelayerUrl}`,
@@ -168,8 +169,8 @@ describeIfFetchMock('RelayerV1Fhevm', () => {
       relayerFhevm1.getPublicKeyBytes(),
     );
 
-    expect(relayerFhevm2.getPublicParamsBytes(2048)).toStrictEqual(
-      relayerFhevm1.getPublicParamsBytes(2048),
+    expect(relayerFhevm2.getPublicParamsBytesForBits(2048)).toStrictEqual(
+      relayerFhevm1.getPublicParamsBytesForBits(2048),
     );
   });
 });

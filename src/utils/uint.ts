@@ -1,7 +1,7 @@
 import { InvalidTypeError } from '../errors/InvalidTypeError';
 import { InvalidPropertyError } from '../errors/InvalidPropertyError';
 import { isNonNullableRecordProperty, typeofProperty } from './record';
-import type { Bytes32, BytesHexNo0x } from '../types/primitives';
+import type { Bytes32, Bytes8, BytesHexNo0x } from '../types/primitives';
 
 type UintNumber = number;
 type UintBigInt = bigint;
@@ -18,7 +18,7 @@ export const MAX_UINT256 = BigInt(
 export const MAX_UINT32 = 0xffffffff;
 export const MAX_UINT8 = 0xff;
 
-export function numberToHex(num: number): BytesHexNo0x {
+export function numberToHexNo0x(num: number): BytesHexNo0x {
   let hex = num.toString(16);
   return hex.length % 2 ? '0' + hex : hex;
 }
@@ -77,14 +77,25 @@ export function isUint256(value: unknown): value is Uint256 {
   return value <= MAX_UINT256;
 }
 
-export function uint32ToBytes32(uint32: Uint32): Bytes32 {
-  if (!isUint32(uint32)) {
-    throw new InvalidTypeError({ expectedType: 'Uint32' });
+export function numberToBytes32(num: number): Bytes32 {
+  if (!isUintNumber(num)) {
+    throw new InvalidTypeError({ expectedType: 'Uint' });
   }
 
   const buffer = new ArrayBuffer(32);
   const view = new DataView(buffer);
-  view.setUint32(28, Number(uint32), false);
+  view.setBigUint64(24, BigInt(num), false);
+  return new Uint8Array(buffer);
+}
+
+export function numberToBytes8(num: number): Bytes8 {
+  if (!isUintNumber(num)) {
+    throw new InvalidTypeError({ expectedType: 'Uint' });
+  }
+
+  const buffer = new ArrayBuffer(8);
+  const view = new DataView(buffer);
+  view.setBigUint64(0, BigInt(num), false);
   return new Uint8Array(buffer);
 }
 
@@ -93,7 +104,7 @@ export function uintToHex(uint: Uint): `0x${string}` {
   return hex.length % 2 ? `0x0${hex}` : `0x${hex}`;
 }
 
-export function uintToHexNoPrefix(uint: Uint): BytesHexNo0x {
+export function uintToHexNo0x(uint: Uint): BytesHexNo0x {
   let hex = uint.toString(16);
   return hex.length % 2 ? `0${hex}` : hex;
 }

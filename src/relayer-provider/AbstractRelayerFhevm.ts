@@ -13,12 +13,18 @@ export abstract class AbstractRelayerFhevm {
     publicKey: TFHEType['TfheCompactPublicKey'];
     publicKeyId: string;
   };
-  public abstract getPublicParamsBytes(bits: number): {
+  public abstract getPublicParamsBytesForBits(bits: number): {
     publicParams: Uint8Array;
     publicParamsId: string;
   };
-  public abstract getPublicParamsWasm(bits: number): {
+  public abstract getPublicParamsWasmForBits(bits: number): {
     publicParams: TFHEType['CompactPkeCrs'];
     publicParamsId: string;
+  };
+  public abstract getPublicKeyInfo(): { id: string; srcUrl?: string };
+  public abstract getPublicParamsInfo(): {
+    id: string;
+    bits: number;
+    srcUrl?: string;
   };
 }

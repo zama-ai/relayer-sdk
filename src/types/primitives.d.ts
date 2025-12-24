@@ -1,9 +1,11 @@
 import { Prettify } from '../utils/types';
 
 export type Bytes = Uint8Array;
+export type Bytes8 = Uint8Array;
 export type Bytes32 = Uint8Array;
 export type BytesHex = `0x${string}`;
 export type BytesHexNo0x = string;
+export type Bytes21Hex = `0x${string}`;
 export type Bytes32Hex = `0x${string}`;
 export type Bytes = Uint8Array;
 export type Bytes32 = Uint8Array;
@@ -86,3 +88,21 @@ export type FheTypeIdToEncryptionBitwidthMap = {
 };
 
 export type EncryptionBits = Prettify<keyof FheTypeEncryptionBitwidthToIdMap>;
+
+export type ZKProof = {
+  chainId: number;
+  aclContractAddress: ChecksummedAddress;
+  contractAddress: ChecksummedAddress;
+  userAddress: ChecksummedAddress;
+  ciphertextWithZkProof: Uint8Array;
+  bits: EncryptionBits[];
+};
+
+export type FheTypedValue<T extends FheTypeName> = {
+  value: T extends 'ebool'
+    ? boolean
+    : T extends 'eaddress'
+      ? string
+      : number | bigint;
+  fheType: T;
+};

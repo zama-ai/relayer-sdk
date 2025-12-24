@@ -247,7 +247,7 @@ export type RelayerV2ProgressQueued = {
   jobId: string;
   operation: RelayerPostOperation;
   requestId: string;
-  retryAfter: number;
+  retryAfterMs: number;
   retryCount: number;
   elapsed: number;
 };
@@ -257,10 +257,10 @@ export type RelayerV2ProgressRateLimited = {
   url: string;
   method: 'POST';
   status: 429;
-  retryAfter: number;
+  retryAfterMs: number;
   retryCount: number;
   elapsed: number;
-  message: string;
+  relayerApiError: RelayerV2ResponseApiError429;
 };
 
 export type RelayerV2ProgressSucceeded<O extends RelayerPostOperation> = {
@@ -292,18 +292,24 @@ export type RelayerV2PublicDecryptProgressArgs =
   | RelayerV2ProgressQueued
   | RelayerV2ProgressRateLimited
   | RelayerV2ProgressPublicDecryptSucceeded
+  | RelayerV2ProgressTimeout
+  | RelayerV2ProgressAbort
   | RelayerV2ProgressFailed;
 
 export type RelayerV2UserDecryptProgressArgs =
   | RelayerV2ProgressQueued
   | RelayerV2ProgressRateLimited
   | RelayerV2ProgressPublicDecryptSucceeded
+  | RelayerV2ProgressTimeout
+  | RelayerV2ProgressAbort
   | RelayerV2ProgressFailed;
 
 export type RelayerV2InputProofProgressArgs =
   | RelayerV2ProgressQueued
   | RelayerV2ProgressRateLimited
   | RelayerV2ProgressPublicDecryptSucceeded
+  | RelayerV2ProgressTimeout
+  | RelayerV2ProgressAbort
   | RelayerV2ProgressFailed;
 
 export type RelayerV2ProgressFailureStatus = 400 | 404 | 500 | 503 | 504;
@@ -318,6 +324,22 @@ export type RelayerV2ProgressFailed = {
   elapsed: number;
   operation: RelayerPostOperation;
   relayerApiError: RelayerV2ResponseApiErrorCode;
+};
+
+export type RelayerV2ProgressTimeout = {
+  type: 'timeout';
+  url: string;
+  jobId?: string;
+  retryCount: number;
+  operation: RelayerPostOperation;
+};
+
+export type RelayerV2ProgressAbort = {
+  type: 'abort';
+  url: string;
+  jobId?: string;
+  retryCount: number;
+  operation: RelayerPostOperation;
 };
 
 export type RelayerV2InputProofOptions = FhevmInstanceOptions & {
