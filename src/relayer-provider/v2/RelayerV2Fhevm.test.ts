@@ -119,7 +119,7 @@ describeIfFetchMock('RelayerV2Fhevm', () => {
     expect(pub_params.publicParams).toStrictEqual(assetPublicParams2048Bytes);
   });
 
-  it('xxx v2: getPublicParams(123).publicParams', async () => {
+  it('v2: getPublicParams(123).publicParams', async () => {
     const SepoliaConfigeRelayerUrl = SepoliaConfig.relayerUrl!;
     const relayerFhevm = await createRelayerFhevm({
       relayerUrl: `${SepoliaConfigeRelayerUrl}/v2`,

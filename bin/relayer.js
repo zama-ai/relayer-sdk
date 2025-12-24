@@ -131,11 +131,11 @@ addCommonOptions(zkproof.command('generate'))
     await mod.zkProofGenerateCommand(options);
   });
 
-addCommonOptions(zkproof.command('verify'))
-  .description('Verify ZKProof')
-  .action(async (options) => {
-    const mod = await import('./commands/zkproof-verify.js');
-    await mod.zkProofVerifyCommand(options);
-  });
+// addCommonOptions(zkproof.command('verify'))
+//   .description('Verify ZKProof')
+//   .action(async (options) => {
+//     const mod = await import('./commands/zkproof-verify.js');
+//     await mod.zkProofVerifyCommand(options);
+//   });
 
 program.parseAsync();

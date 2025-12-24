@@ -29,7 +29,7 @@ const INPUT_PROOF_ASSET_3 = JSON.parse(
 // npx jest --colors --passWithNoTests ./src/sdk/FhevmHandle.test.ts --testNamePattern=xxx
 
 describe('FhevmHandle', () => {
-  it('xxx fromZKProof 1', () => {
+  it('fromZKProof 1', () => {
     const handles = FhevmHandle.fromZKProof({
       ciphertextWithZKProof:
         INPUT_PROOF_ASSET_1.ciphertextWithInputVerification,
@@ -55,7 +55,7 @@ describe('FhevmHandle', () => {
     }
   });
 
-  it('xxx fromZKProof 2', () => {
+  it('fromZKProof 2', () => {
     const handles = FhevmHandle.fromZKProof({
       ciphertextWithZKProof:
         INPUT_PROOF_ASSET_2.ciphertextWithInputVerification,
@@ -86,7 +86,7 @@ describe('FhevmHandle', () => {
     }
   });
 
-  it('xxx fromZKProof 3', () => {
+  it('fromZKProof 3', () => {
     const handles = FhevmHandle.fromZKProof({
       ciphertextWithZKProof:
         INPUT_PROOF_ASSET_3.ciphertextWithInputVerification,
@@ -117,7 +117,7 @@ describe('FhevmHandle', () => {
     }
   });
 
-  it('xxx bytesToHex(hexToBytes)', () => {
+  it('bytesToHex(hexToBytes)', () => {
     expect(
       bytesToHex(
         hexToBytes(INPUT_PROOF_ASSET_1.ciphertextWithInputVerification),

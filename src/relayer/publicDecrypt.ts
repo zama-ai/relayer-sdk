@@ -202,6 +202,7 @@ export const publicDecryptRequest =
     const extraData: `0x${string}` = '0x00';
     const acl = new ethers.Contract(aclContractAddress, aclABI, provider);
 
+    // This will be replaced by new sanitize classes
     let handles: `0x${string}`[];
     try {
       handles = await Promise.all(

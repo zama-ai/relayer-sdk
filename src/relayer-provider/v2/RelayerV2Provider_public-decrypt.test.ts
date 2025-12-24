@@ -241,7 +241,7 @@ describeIfFetch('RelayerV2Provider:public-decrypt:sepolia:', () => {
     consoleLogSpy.mockRestore();
   });
 
-  it('xxx v2: succeeded', async () => {
+  it('v2: succeeded', async () => {
     setupAllFetchMockRoutes({});
 
     const config = TEST_CONFIG.v2.fhevmInstanceConfig;

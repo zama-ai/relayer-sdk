@@ -78,7 +78,7 @@ function computeHandles(
   ciphertextVersion: number,
 ) {
   // Should be identical to:
-  // https://github.com/zama-ai/fhevm-backend/blob/bae00d1b0feafb63286e94acdc58dc88d9c481bf/fhevm-engine/zkproof-worker/src/verifier.rs#L301
+  // https://github.com/zama-ai/fhevm/blob/e3cd9f3c25851fcbe960c9f337e7214edefe8e64/coprocessor/fhevm-engine/zkproof-worker/src/verifier.rs#L459
   const blob_hash = createHash('keccak256')
     .update(Buffer.from(FhevmHandle.RAW_CT_HASH_DOMAIN_SEPARATOR))
     .update(Buffer.from(ciphertextWithZKProof))

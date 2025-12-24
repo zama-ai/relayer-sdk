@@ -401,7 +401,7 @@ describe('createEncryptedInput', () => {
   }, 60000);
 
   itIfFetch(
-    'xxx v2: succeeded',
+    'v2: succeeded',
     async () => {
       await testCreateInstance({
         config: TEST_CONFIG.v2.fhevmInstanceConfig,
