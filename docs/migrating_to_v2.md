@@ -34,6 +34,8 @@ npm install @zama-ai/relayer-sdk@0.4.0-alpha.2
 
 **Key point**: The SDK's JavaScript API remains backward compatible. Your existing V1 code works unchanged. This guide explains the new capabilities enabled by HTTP API V2.
 
+**Additional Resources:**
+- **[SDK Enhancements](./sdk-enhancements.md)** - New features in v0.4.0-alpha.2 (ZK proof verification, enhanced methods, method renames)
 ### About This Guide
 
 This document will help you understand what's new in HTTP API V2 and how to take advantage of its features.
