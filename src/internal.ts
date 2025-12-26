@@ -28,7 +28,7 @@ export * from './sdk/FheType';
 
 export { ACL } from './sdk/ACL';
 
-export { TFHECrs } from './relayer-provider/v2/TFHECrs';
+export { TFHEPkeCrs as TFHECrs } from './relayer-provider/v2/TFHEPkeCrs';
 export { TFHEPublicKey } from './relayer-provider/v2/TFHEPublicKey';
 
 export { RelayerV1Fhevm } from './relayer-provider/v1/RelayerV1Fhevm';

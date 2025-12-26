@@ -167,3 +167,55 @@ export type PublicDecryptResults = {
   abiEncodedClearValues: BytesHex;
   decryptionProof: BytesHex;
 };
+
+/**
+ * The FHEVM TFHE Compact public key.
+ * @property data - The TFHE compact public key as raw bytes.
+ * @property id - A server-assigned identifier for the key (not required for cryptographic operations).
+ */
+export type FhevmPublicKey = {
+  data: Uint8Array;
+  id: string;
+};
+
+/**
+ * The FHEVM TFHE Compact PKE (Public Key Encryption) CRS (Common Reference String).
+ * For more info about CRS see: https://docs.zama.org/tfhe-rs/fhe-computation/advanced-features/zk-pok
+ * @property publicParams - The TFHE compact pke crs as raw bytes.
+ * @property publicParamsId - A server-assigned identifier for the key (not required for cryptographic operations).
+ */
+export type FhevmPkeCrs = {
+  publicParams: Uint8Array;
+  publicParamsId: string;
+};
+
+/**
+ * TFHE Compact PKE CRS parameters indexed by maximum encryption capacity in bits.
+ *
+ * The key (e.g., 2048) represents the maximum number of plaintext bits that can be
+ * encrypted together in a single compact list. When encrypting multiple values,
+ * choose a CRS configuration that supports at least the total bit count of all values.
+ * Note that a boolean needs 2 encryption bits instead of 1.
+ *
+ * Currently only 2048-bit capacity is supported.
+ * @see {@link FhevmPkeCrs}
+ */
+export type FhevmPkeCrsByCapacity = {
+  2048: FhevmPkeCrs;
+};
+
+/**
+ * Complete FHEVM public key configuration.
+ *
+ * Contains the TFHE compact public key and the associated PKE CRS parameters
+ * required for encrypting values on the client side.
+ * @see {@link FhevmPublicKey}
+ * @see {@link FhevmPkeCrsByCapacity}
+ *
+ * @property publicKey - The TFHE compact public key used for encryption.
+ * @property publicParams - PKE CRS parameters indexed by encryption capacity.
+ */
+export type FhevmPublicKeyConfig = {
+  publicKey: FhevmPublicKey;
+  publicParams: FhevmPkeCrsByCapacity;
+};

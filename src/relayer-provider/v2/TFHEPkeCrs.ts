@@ -16,21 +16,24 @@ import type { BytesHex } from '../../types/primitives';
 import { TFHECrsError } from '../../errors/TFHECrsError';
 
 type CompactPkeCrsType = object;
-type TFHECrsBytesType = {
+type TFHEPkeCrsBytesType = {
   id: string;
   data: Uint8Array;
   bits: number;
   srcUrl?: string;
 };
-type TFHECrsBytesHexType = {
+type TFHEPkeCrsBytesHexType = {
   id: string;
   data: BytesHex;
   bits: number;
   srcUrl?: string;
 };
-type TFHECrsUrlType = { id: string; bits: number; srcUrl: string };
+type TFHEPkeCrsUrlType = { id: string; bits: number; srcUrl: string };
 
-export class TFHECrs {
+/*
+  PkeCrs = Public Key Encryption (PKE) Common Reference String (CRS)
+*/
+export class TFHEPkeCrs {
   private readonly _id: string;
   private readonly _compactPkeCrs: CompactPkeCrsType;
   private readonly _bits: number;
@@ -66,9 +69,9 @@ export class TFHECrs {
       srcUrl?: string
     }
   */
-  private static isKeyBytesType(value: unknown): value is TFHECrsBytesType {
+  private static isKeyBytesType(value: unknown): value is TFHEPkeCrsBytesType {
     try {
-      TFHECrs.assertKeyBytesType(value, '');
+      TFHEPkeCrs.assertKeyBytesType(value, '');
       return true;
     } catch {
       return false;
@@ -82,9 +85,9 @@ export class TFHECrs {
       srcUrl: string
     }
   */
-  private static isKeyUrlType(value: unknown): value is TFHECrsUrlType {
+  private static isKeyUrlType(value: unknown): value is TFHEPkeCrsUrlType {
     try {
-      TFHECrs.assertKeyUrlType(value, '');
+      TFHEPkeCrs.assertKeyUrlType(value, '');
       return true;
     } catch {
       return false;
@@ -102,7 +105,7 @@ export class TFHECrs {
   private static assertKeyBytesType(
     value: unknown,
     name: string,
-  ): asserts value is TFHECrsBytesType {
+  ): asserts value is TFHEPkeCrsBytesType {
     assertRecordStringProperty(value, 'id', name);
     assertUint8ArrayProperty(value, 'data', name);
     assertRecordUintProperty(value, 'bits', name);
@@ -121,7 +124,7 @@ export class TFHECrs {
   private static assertKeyUrlType(
     value: unknown,
     name: string,
-  ): asserts value is TFHECrsUrlType {
+  ): asserts value is TFHEPkeCrsUrlType {
     assertRecordStringProperty(value, 'id', name);
     assertRecordUintProperty(value, 'bits', name);
     assertRecordStringProperty(value, 'srcUrl', name);
@@ -156,7 +159,7 @@ export class TFHECrs {
     value: unknown,
   ): value is PublicParams2048<Uint8Array> {
     try {
-      TFHECrs.assertIsPublicParams2048BytesType(value, '');
+      TFHEPkeCrs.assertIsPublicParams2048BytesType(value, '');
       return true;
     } catch {
       return false;
@@ -164,14 +167,17 @@ export class TFHECrs {
   }
 
   static async fromBytesOrUrl(
-    params: PublicParams2048<Uint8Array> | TFHECrsBytesType | TFHECrsUrlType,
-  ): Promise<TFHECrs> {
-    if (TFHECrs.isKeyBytesType(params)) {
-      return TFHECrs._fromBytes(params);
-    } else if (TFHECrs.isPublicParams2048BytesType(params)) {
-      return TFHECrs._fromPublicParamsBytes(params);
-    } else if (TFHECrs.isKeyUrlType(params)) {
-      return TFHECrs._fromUrl(params);
+    params:
+      | PublicParams2048<Uint8Array>
+      | TFHEPkeCrsBytesType
+      | TFHEPkeCrsUrlType,
+  ): Promise<TFHEPkeCrs> {
+    if (TFHEPkeCrs.isKeyBytesType(params)) {
+      return TFHEPkeCrs._fromBytes(params);
+    } else if (TFHEPkeCrs.isPublicParams2048BytesType(params)) {
+      return TFHEPkeCrs._fromPublicParamsBytes(params);
+    } else if (TFHEPkeCrs.isKeyUrlType(params)) {
+      return TFHEPkeCrs._fromUrl(params);
     } else {
       throw new TFHECrsError({
         message: 'Invalid public key (deserialization failed)',
@@ -187,10 +193,10 @@ export class TFHECrs {
       srcUrl?: string;
     }
   */
-  public static fromBytes(params: TFHECrsBytesType): TFHECrs {
+  public static fromBytes(params: TFHEPkeCrsBytesType): TFHEPkeCrs {
     try {
-      TFHECrs.assertKeyBytesType(params, 'arg');
-      return TFHECrs._fromBytes(params);
+      TFHEPkeCrs.assertKeyBytesType(params, 'arg');
+      return TFHEPkeCrs._fromBytes(params);
     } catch (e) {
       throw new TFHECrsError({
         message: 'Invalid public key (deserialization failed)',
@@ -207,7 +213,7 @@ export class TFHECrs {
       srcUrl?: string;
     }
   */
-  public static fromBytesHex(params: TFHECrsBytesHexType): TFHECrs {
+  public static fromBytesHex(params: TFHEPkeCrsBytesHexType): TFHEPkeCrs {
     let data;
     try {
       assertRecordStringProperty(params, 'data', 'arg');
@@ -218,7 +224,7 @@ export class TFHECrs {
         cause: e,
       });
     }
-    return TFHECrs.fromBytes({
+    return TFHEPkeCrs.fromBytes({
       id: params?.id,
       bits: params?.bits,
       srcUrl: params?.srcUrl,
@@ -226,7 +232,7 @@ export class TFHECrs {
     });
   }
 
-  private static _fromBytes(params: TFHECrsBytesType) {
+  private static _fromBytes(params: TFHEPkeCrsBytesType) {
     const _params = {
       compactPkeCrs: TFHE.CompactPkeCrs.safe_deserialize(
         params.data,
@@ -237,13 +243,13 @@ export class TFHECrs {
       srcUrl: params.srcUrl,
     };
 
-    return new TFHECrs(_params);
+    return new TFHEPkeCrs(_params);
   }
 
   public static fromPublicParamsBytes(params: PublicParams2048<Uint8Array>) {
     try {
-      TFHECrs.assertIsPublicParams2048BytesType(params, 'arg');
-      return TFHECrs._fromPublicParamsBytes(params);
+      TFHEPkeCrs.assertIsPublicParams2048BytesType(params, 'arg');
+      return TFHEPkeCrs._fromPublicParamsBytes(params);
     } catch (e) {
       throw new TFHECrsError({
         message: 'Invalid public key (deserialization failed)',
@@ -271,7 +277,7 @@ export class TFHECrs {
     try {
       assertRecordStringProperty(params, 'publicParamsId', `arg`);
       assertUint8ArrayProperty(params, 'publicParams', `arg`);
-      return TFHECrs._fromPublicParamsBytes({
+      return TFHEPkeCrs._fromPublicParamsBytes({
         2048: params,
       });
     } catch (e) {
@@ -287,7 +293,7 @@ export class TFHECrs {
       assertNonNullableRecordProperty(params, '2048', 'arg');
       assertRecordStringProperty(params['2048'], 'publicParamsId', `arg.2048`);
       assertRecordStringProperty(params['2048'], 'publicParams', `arg.2048`);
-      return TFHECrs._fromPublicParamsBytes({
+      return TFHEPkeCrs._fromPublicParamsBytes({
         2048: {
           publicParams: hexToBytesFaster(
             params['2048'].publicParams,
@@ -305,17 +311,17 @@ export class TFHECrs {
   }
 
   private static _fromPublicParamsBytes(params: PublicParams2048<Uint8Array>) {
-    return TFHECrs._fromBytes({
+    return TFHEPkeCrs._fromBytes({
       bits: 2048,
       data: params['2048'].publicParams,
       id: params['2048'].publicParamsId,
     });
   }
 
-  public static async fromUrl(params: TFHECrsUrlType): Promise<TFHECrs> {
+  public static async fromUrl(params: TFHEPkeCrsUrlType): Promise<TFHEPkeCrs> {
     try {
-      TFHECrs.assertKeyUrlType(params, 'arg');
-      return TFHECrs._fromUrl(params);
+      TFHEPkeCrs.assertKeyUrlType(params, 'arg');
+      return TFHEPkeCrs._fromUrl(params);
     } catch (e) {
       throw new TFHECrsError({
         message: 'Impossible to fetch public key: wrong relayer url.',
@@ -324,12 +330,14 @@ export class TFHECrs {
     }
   }
 
-  private static async _fromUrl(params: TFHECrsUrlType): Promise<TFHECrs> {
-    TFHECrs.assertKeyUrlType(params, 'arg');
+  private static async _fromUrl(
+    params: TFHEPkeCrsUrlType,
+  ): Promise<TFHEPkeCrs> {
+    TFHEPkeCrs.assertKeyUrlType(params, 'arg');
 
     const compactPkeCrsBytes: Uint8Array = await fetchBytes(params.srcUrl);
 
-    return TFHECrs.fromBytes({
+    return TFHEPkeCrs.fromBytes({
       data: compactPkeCrsBytes,
       id: params.id,
       bits: params.bits,
@@ -345,7 +353,7 @@ export class TFHECrs {
       srcUrl?: string
     }
   */
-  public toBytes(): TFHECrsBytesType {
+  public toBytes(): TFHEPkeCrsBytesType {
     return {
       data: (this._compactPkeCrs as any).safe_serialize(
         SERIALIZED_SIZE_LIMIT_CRS,
@@ -364,7 +372,7 @@ export class TFHECrs {
       srcUrl?: string
     }
   */
-  public toBytesHex(): TFHECrsBytesHexType {
+  public toBytesHex(): TFHEPkeCrsBytesHexType {
     return {
       data: bytesToHexLarge(
         (this._compactPkeCrs as any).safe_serialize(SERIALIZED_SIZE_LIMIT_CRS),
@@ -462,7 +470,7 @@ export class TFHECrs {
       srcUrl?: string
     }
   */
-  public toJSON(): TFHECrsBytesHexType & {
+  public toJSON(): TFHEPkeCrsBytesHexType & {
     __type: 'TFHECrs';
   } {
     return {
@@ -471,10 +479,10 @@ export class TFHECrs {
     };
   }
 
-  public static fromJSON(json: unknown): TFHECrs {
+  public static fromJSON(json: unknown): TFHEPkeCrs {
     if ((json as any).__type !== 'TFHECrs') {
       throw new TFHECrsError({ message: 'Invalid TFHECrs JSON.' });
     }
-    return TFHECrs.fromBytesHex(json as any);
+    return TFHEPkeCrs.fromBytesHex(json as any);
   }
 }

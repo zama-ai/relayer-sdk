@@ -1,5 +1,13 @@
 import { Prettify } from '../utils/types';
 
+export type UintNumber = number;
+export type UintBigInt = bigint;
+export type Uint = UintNumber | UintBigInt;
+export type Uint8 = UintNumber | UintBigInt;
+export type Uint32 = UintNumber | UintBigInt;
+export type Uint64 = UintNumber | UintBigInt;
+export type Uint256 = UintNumber | UintBigInt;
+
 export type Bytes = Uint8Array;
 export type Bytes8 = Uint8Array;
 export type Bytes32 = Uint8Array;

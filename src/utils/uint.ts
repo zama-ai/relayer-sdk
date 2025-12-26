@@ -1,15 +1,18 @@
 import { InvalidTypeError } from '../errors/InvalidTypeError';
 import { InvalidPropertyError } from '../errors/InvalidPropertyError';
 import { isNonNullableRecordProperty, typeofProperty } from './record';
-import type { Bytes32, Bytes8, BytesHexNo0x } from '../types/primitives';
-
-type UintNumber = number;
-type UintBigInt = bigint;
-type Uint = UintNumber | UintBigInt;
-type Uint8 = UintNumber | UintBigInt;
-type Uint32 = UintNumber | UintBigInt;
-type Uint64 = UintNumber | UintBigInt;
-type Uint256 = UintNumber | UintBigInt;
+import type {
+  Bytes32,
+  Bytes8,
+  BytesHexNo0x,
+  Uint,
+  Uint256,
+  Uint32,
+  Uint64,
+  Uint8,
+  UintBigInt,
+  UintNumber,
+} from '../types/primitives';
 
 export const MAX_UINT64 = BigInt('18446744073709551615'); // 2^64 - 1
 export const MAX_UINT256 = BigInt(
@@ -63,7 +66,7 @@ export function isUint32(value: unknown): value is Uint32 {
   return value <= MAX_UINT32;
 }
 
-export function isUint64(value: unknown): value is Uint32 {
+export function isUint64(value: unknown): value is Uint64 {
   if (!isUint(value)) {
     return false;
   }

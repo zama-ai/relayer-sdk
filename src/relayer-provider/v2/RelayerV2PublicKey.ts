@@ -1,4 +1,4 @@
-import { TFHECrs } from './TFHECrs';
+import { TFHEPkeCrs } from './TFHEPkeCrs';
 import { TFHEPublicKey } from './TFHEPublicKey';
 import type { PublicParams } from '../../sdk/encrypt';
 import { assertIsRelayerV2GetResponseKeyUrl } from './types/RelayerV2GetResponseKeyUrl';
@@ -8,10 +8,13 @@ import { isNonNullableRecordProperty } from '../../utils/record';
 //const __KEY_URL_CACHE__: Record<string, RelayerV2PublicKey> = {};
 
 export class RelayerV2PublicKey {
-  private _crs2048: TFHECrs;
+  private _crs2048: TFHEPkeCrs;
   private _publicKey: TFHEPublicKey;
 
-  private constructor(params: { publicKey: TFHEPublicKey; crs2048: TFHECrs }) {
+  private constructor(params: {
+    publicKey: TFHEPublicKey;
+    crs2048: TFHEPkeCrs;
+  }) {
     this._publicKey = params.publicKey;
     this._crs2048 = params.crs2048;
   }
@@ -20,7 +23,7 @@ export class RelayerV2PublicKey {
     if (!isNonNullableRecordProperty(value, 'publicParams')) {
       return null;
     }
-    if (!TFHECrs.isPublicParams2048BytesType(value.publicParams)) {
+    if (!TFHEPkeCrs.isPublicParams2048BytesType(value.publicParams)) {
       return null;
     }
     if (!isNonNullableRecordProperty(value, 'publicKey')) {
@@ -43,14 +46,14 @@ export class RelayerV2PublicKey {
     publicKey: { data: Uint8Array; id: string };
     publicParams: PublicParams<Uint8Array>;
   }) {
-    TFHECrs.assertIsPublicParams2048BytesType(
+    TFHEPkeCrs.assertIsPublicParams2048BytesType(
       params.publicParams,
       'arg.publicParams',
     );
 
     const publicKey: TFHEPublicKey = TFHEPublicKey.fromBytes(params.publicKey);
 
-    const crs2048: TFHECrs = TFHECrs.fromBytes({
+    const crs2048: TFHEPkeCrs = TFHEPkeCrs.fromBytes({
       id: params.publicParams[2048].publicParamsId,
       data: params.publicParams[2048].publicParams,
       bits: 2048,
@@ -79,7 +82,7 @@ export class RelayerV2PublicKey {
         srcUrl: tfheCompactPublicKeyUrl,
       });
 
-      const crs: TFHECrs = await TFHECrs.fromUrl({
+      const crs: TFHEPkeCrs = await TFHEPkeCrs.fromUrl({
         id: compactPkeCrs2048Id,
         bits: 2048,
         srcUrl: compactPkeCrs2048Url,
@@ -97,7 +100,7 @@ export class RelayerV2PublicKey {
     return this._publicKey;
   }
 
-  public getTFHECrs(): TFHECrs {
+  public getTFHECrs(): TFHEPkeCrs {
     return this._crs2048;
   }
 
