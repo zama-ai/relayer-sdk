@@ -1,9 +1,7 @@
+import type { Prettify } from '../../../utils/types';
 import type { RelayerOperation } from '../../../types/relayer';
-import {
-  RelayerErrorBase,
-  RelayerErrorBaseParams,
-} from '../../../errors/RelayerErrorBase';
-import { Prettify } from '../../../utils/types';
+import type { RelayerErrorBaseParams } from '../../../errors/RelayerErrorBase';
+import { RelayerErrorBase } from '../../../errors/RelayerErrorBase';
 
 ////////////////////////////////////////////////////////////////////////////////
 // RelayerV2RequestErrorBase

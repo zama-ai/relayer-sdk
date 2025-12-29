@@ -6,25 +6,26 @@ export abstract class AbstractRelayerFhevm {
   public abstract get relayerVersionUrl(): string;
   public abstract get relayerProvider(): AbstractRelayerProvider;
   public abstract getPublicKeyBytes(): {
-    publicKey: Uint8Array;
-    publicKeyId: string;
+    id: string;
+    bytes: Uint8Array;
   };
   public abstract getPublicKeyWasm(): {
-    publicKey: TFHEType['TfheCompactPublicKey'];
-    publicKeyId: string;
-  };
-  public abstract getPublicParamsBytesForBits(bits: number): {
-    publicParams: Uint8Array;
-    publicParamsId: string;
-  };
-  public abstract getPublicParamsWasmForBits(bits: number): {
-    publicParams: TFHEType['CompactPkeCrs'];
-    publicParamsId: string;
-  };
-  public abstract getPublicKeyInfo(): { id: string; srcUrl?: string };
-  public abstract getPublicParamsInfo(): {
     id: string;
-    bits: number;
-    srcUrl?: string;
+    wasm: TFHEType['TfheCompactPublicKey'];
+  };
+  public abstract supportsCapacity(capacity: number): boolean;
+  public abstract getPkeCrsBytesForCapacity<C extends number>(
+    capacity: C,
+  ): {
+    capacity: C;
+    id: string;
+    bytes: Uint8Array;
+  };
+  public abstract getPkeCrsWasmForCapacity<C extends number>(
+    capacity: C,
+  ): {
+    capacity: C;
+    id: string;
+    wasm: TFHEType['CompactPkeCrs'];
   };
 }

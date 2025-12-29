@@ -1,4 +1,4 @@
-import { createRelayerProvider } from '../createRelayerFhevm';
+import { createRelayerProvider } from '../createRelayerProvider';
 import { createInstance } from '../..';
 import fetchMock from 'fetch-mock';
 import { InvalidPropertyError } from '../../errors/InvalidPropertyError';
@@ -23,19 +23,28 @@ import { safeJSONstringify } from '../../utils/string';
 import type { FhevmInstanceConfig } from '../../types/relayer';
 import type { EncryptionBits } from '../../types/primitives';
 
+////////////////////////////////////////////////////////////////////////////////
+//
 // Jest Command line
 // =================
-// npx jest --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_input-proof.test.ts --testNamePattern=xxx
+//
 // npx jest --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_input-proof.test.ts
+// npx jest --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_input-proof.test.ts --testNamePattern=xxx
 // npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v2/RelayerV2Provider_input-proof.test.ts --collectCoverageFrom=./src/relayer-provider/v2/RelayerV2Provider.ts
+//
 //
 // Devnet:
 // =======
+//
 // npx jest --config jest.devnet.config.cjs --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_input-proof.test.ts --testNamePattern=xxx
+//
 //
 // Testnet:
 // ========
+//
 // npx jest --config jest.testnet.config.cjs --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_input-proof.test.ts --testNamePattern=xxx
+//
+////////////////////////////////////////////////////////////////////////////////
 
 jest.mock('ethers', () => {
   const actual = jest.requireActual('ethers');
@@ -80,6 +89,8 @@ jest.mock('ethers', () => {
   };
 });
 
+////////////////////////////////////////////////////////////////////////////////
+
 const consoleLogSpy = jest
   .spyOn(console, 'log')
   .mockImplementation((message) => {
@@ -92,8 +103,7 @@ const describeIfFetchMock =
 const [itIfFetchMock, itIfFetch] =
   TEST_CONFIG.type === 'fetch-mock' ? [it, it.skip] : [it.skip, it];
 
-// const describeIfFetch =
-//   TEST_CONFIG.type === 'fetch-mock' ? describe.skip : describe;
+////////////////////////////////////////////////////////////////////////////////
 
 describeIfFetchMock('RelayerV2Provider', () => {
   let relayerProvider: RelayerV2Provider;
@@ -116,6 +126,8 @@ describeIfFetchMock('RelayerV2Provider', () => {
     consoleLogSpy.mockRestore();
   });
 
+  //////////////////////////////////////////////////////////////////////////////
+
   it('v2:input-proof: 202 - malformed json', async () => {
     const malformedBodyJson = '{ "some_key": "incomplete_json"';
 
@@ -131,6 +143,8 @@ describeIfFetchMock('RelayerV2Provider', () => {
       relayerProvider.fetchPostInputProof(DEADBEEF_INPUT_PROOF_PAYLOAD),
     ).rejects.toThrow(syntaxError);
   });
+
+  //////////////////////////////////////////////////////////////////////////////
 
   it('v2:input-proof: 202 - empty json', async () => {
     mockV2Post202('input-proof', {});
@@ -148,6 +162,8 @@ describeIfFetchMock('RelayerV2Provider', () => {
       }),
     );
   });
+
+  //////////////////////////////////////////////////////////////////////////////
 
   it('v2:input-proof: 202 - status:failed', async () => {
     mockV2Post202('input-proof', { status: 'failed' });
@@ -168,6 +184,8 @@ describeIfFetchMock('RelayerV2Provider', () => {
     );
   });
 
+  //////////////////////////////////////////////////////////////////////////////
+
   it('v2:input-proof: 202 - status:succeeded', async () => {
     mockV2Post202('input-proof', { status: 'succeeded' });
     await expect(() =>
@@ -187,6 +205,8 @@ describeIfFetchMock('RelayerV2Provider', () => {
     );
   });
 
+  //////////////////////////////////////////////////////////////////////////////
+
   it('v2:input-proof: 202 - status:queued', async () => {
     const bodyJson = { status: 'queued' };
     mockV2Post202('input-proof', bodyJson);
@@ -204,6 +224,8 @@ describeIfFetchMock('RelayerV2Provider', () => {
     );
   });
 
+  //////////////////////////////////////////////////////////////////////////////
+
   it('v2:input-proof: 202 - status:queued, result empty', async () => {
     const bodyJson = { status: 'queued', requestId: 'hello', result: {} };
     mockV2Post202('input-proof', bodyJson);
@@ -220,6 +242,8 @@ describeIfFetchMock('RelayerV2Provider', () => {
       }),
     );
   });
+
+  //////////////////////////////////////////////////////////////////////////////
 
   it('v2:input-proof: 202 - status:queued, rejected', async () => {
     const bodyJson = {
@@ -257,6 +281,8 @@ describeIfFetchMock('RelayerV2Provider', () => {
       }),
     );
   });
+
+  //////////////////////////////////////////////////////////////////////////////
 
   it('v2:input-proof: 202 - status:queued, rejected', async () => {
     const bodyJson = {
@@ -317,6 +343,10 @@ describe('createEncryptedInput', () => {
     consoleLogSpy.mockRestore();
   });
 
+  //////////////////////////////////////////////////////////////////////////////
+  // prepareTest
+  //////////////////////////////////////////////////////////////////////////////
+
   async function prepareTest(params: {
     config: FhevmInstanceConfig;
     test: {
@@ -345,6 +375,10 @@ describe('createEncryptedInput', () => {
     return verifier;
   }
 
+  //////////////////////////////////////////////////////////////////////////////
+  // testCreateInstance
+  //////////////////////////////////////////////////////////////////////////////
+
   async function testCreateInstance(params: {
     config: FhevmInstanceConfig;
     test: {
@@ -362,8 +396,8 @@ describe('createEncryptedInput', () => {
     const instance = await createInstance(config);
 
     const builder = instance.createEncryptedInput(
-      TEST_CONFIG.testContracts.FHECounterPublicDecryptAddress,
-      TEST_CONFIG.testContracts.DeployerAddress,
+      TEST_CONFIG.testContracts.FHETestAddress,
+      TEST_CONFIG.signerAddress,
     );
 
     for (let i = 0; i < numHandles; ++i) {
@@ -390,6 +424,8 @@ describe('createEncryptedInput', () => {
     expect(inputProof.signatures.length).toBe(verifier.count);
   }
 
+  //////////////////////////////////////////////////////////////////////////////
+
   it('v1: succeeded', async () => {
     await testCreateInstance({
       config: TEST_CONFIG.v1.fhevmInstanceConfig,
@@ -399,6 +435,8 @@ describe('createEncryptedInput', () => {
       },
     });
   }, 60000);
+
+  //////////////////////////////////////////////////////////////////////////////
 
   itIfFetch(
     'v2: succeeded',
@@ -414,6 +452,8 @@ describe('createEncryptedInput', () => {
     60000,
   );
 
+  //////////////////////////////////////////////////////////////////////////////
+
   itIfFetchMock(
     'v2: succeeded no retry',
     async () => {
@@ -428,6 +468,8 @@ describe('createEncryptedInput', () => {
     },
     60000,
   );
+
+  //////////////////////////////////////////////////////////////////////////////
 
   itIfFetchMock(
     'v2: succeeded 1 retry',

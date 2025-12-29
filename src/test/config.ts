@@ -6,7 +6,7 @@ import { getProvider as config_getProvider } from '../config';
 import { KmsSigners } from './fhevm-mock/KmsSigners';
 import { setupV1RoutesInputProof, setupV1RoutesKeyUrl } from './v1/mockRoutes';
 import { setupV2RoutesInputProof, setupV2RoutesKeyUrl } from './v2/mockRoutes';
-import { Contract } from 'ethers';
+import { Contract, HDNodeWallet, Wallet } from 'ethers';
 import { FhevmHandle } from '../sdk/FhevmHandle';
 import type {
   FhevmInstanceConfig,
@@ -18,6 +18,7 @@ import type {
   Bytes65Hex,
   ChecksummedAddress,
   EncryptionBits,
+  FheTypeName,
 } from '../types/primitives';
 import type { ethers as EthersT } from 'ethers';
 
@@ -42,14 +43,13 @@ export type TestRelayerUrls = {
 export type TestConfig = {
   type: 'devnet' | 'testnet' | 'fetch-mock';
   testContracts: {
-    FHECounterUserDecryptAddress: ChecksummedAddress;
-    FHECounterPublicDecryptAddress: ChecksummedAddress;
-    DeployerAddress: ChecksummedAddress;
+    FHETestAddress: ChecksummedAddress;
   };
   fhevmInstanceConfig: Prettify<Omit<FhevmInstanceConfig, 'relayerUrl'>>;
   v1: TestRelayerConfig<1>;
   v2: TestRelayerConfig<2>;
   mnemonic: string;
+  signerAddress: ChecksummedAddress;
 };
 
 const relayerUrlV1 =
@@ -59,6 +59,9 @@ const relayerUrlV2 =
 
 export const TEST_CONFIG: TestConfig = {
   mnemonic: (global as any).JEST_FHEVM_CONFIG.mnemonic,
+  signerAddress: getAddressFromMnemonic(
+    (global as any).JEST_FHEVM_CONFIG.mnemonic,
+  ),
   type: (global as any).JEST_FHEVM_CONFIG.type,
   testContracts: (global as any).JEST_FHEVM_CONFIG.testContracts,
   fhevmInstanceConfig: {
@@ -96,8 +99,8 @@ export const TEST_CONFIG: TestConfig = {
 };
 
 export const DEADBEEF_INPUT_PROOF_PAYLOAD: RelayerInputProofPayload = {
-  contractAddress: TEST_CONFIG.testContracts.FHECounterPublicDecryptAddress,
-  userAddress: TEST_CONFIG.testContracts.DeployerAddress,
+  contractAddress: TEST_CONFIG.testContracts.FHETestAddress,
+  userAddress: TEST_CONFIG.signerAddress,
   ciphertextWithInputVerification: '0xdeadbeef',
   contractChainId: ('0x' +
     Number(TEST_CONFIG.fhevmInstanceConfig.chainId!).toString(
@@ -115,6 +118,30 @@ export const TEST_COPROCESSORS: CoprocessorSigners =
     verifyingContractAddressInputVerification: TEST_CONFIG.fhevmInstanceConfig
       .verifyingContractAddressInputVerification! as ChecksummedAddress,
   });
+
+export const TEST_INPUT_VERIFIER = {
+  eip712Domain: [
+    '0x0f', // fields
+    'InputVerification', // name
+    '1', // version
+    BigInt(TEST_CONFIG.fhevmInstanceConfig.gatewayChainId),
+    TEST_CONFIG.fhevmInstanceConfig.verifyingContractAddressInputVerification,
+    '0x0000000000000000000000000000000000000000000000000000000000000000' as Bytes32Hex, //salt
+    [], // extensions
+  ],
+};
+
+export const TEST_KMS_VERIFIER = {
+  eip712Domain: [
+    '0x0f', // fields
+    'Decryption', // name
+    '1', // version
+    BigInt(TEST_CONFIG.fhevmInstanceConfig.gatewayChainId),
+    TEST_CONFIG.fhevmInstanceConfig.verifyingContractAddressDecryption,
+    '0x0000000000000000000000000000000000000000000000000000000000000000' as Bytes32Hex, //salt
+    [], // extensions
+  ],
+};
 
 // Must have the same number of signers as TEST_COPROCESSORS
 export const TEST_KMS: KmsSigners = KmsSigners.fromPrivateKeys({
@@ -194,14 +221,38 @@ export function getTestProvider(
   return config_getProvider(network);
 }
 
-export async function fheCounterGeCount(
+export function getTestSigner(mnemonic: string, provider: EthersT.Provider) {
+  const basePath = "m/44'/60'/0'/0/";
+  const index = 0;
+  const hdNode = HDNodeWallet.fromPhrase(
+    mnemonic,
+    undefined, // password
+    `${basePath}${index}`,
+  );
+  return {
+    signer: hdNode.connect(provider),
+    wallet: hdNode,
+    address: hdNode.address,
+  };
+}
+
+export function getAddressFromMnemonic(mnemonic: string) {
+  const hdNode = Wallet.fromPhrase(mnemonic);
+  return hdNode.address as ChecksummedAddress;
+}
+
+export async function fheTestGet(
+  type: FheTypeName,
   address: ChecksummedAddress,
   provider: EthersT.Provider,
+  from: ChecksummedAddress,
 ) {
-  const counterABI = ['function getCount() view returns (bytes32)'];
-  const counter = new Contract(address, counterABI, provider);
-  const eCount = await counter.getCount();
-  return eCount;
+  const typeNameUpperCase = 'E' + type.substring(1);
+  const getFuncName = `get${typeNameUpperCase}`;
+
+  const abi = [`function ${getFuncName}() view returns (bytes32)`];
+  const contract = new Contract(address, abi, provider);
+  return await contract[getFuncName]({ from });
 }
 
 export function timestampNow(): number {

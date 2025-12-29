@@ -46,15 +46,9 @@ function setupGlobalJestFhevmConfig(type, envFile) {
         parsedEnv['RELAYER_URL'] ?? 'https://relayer.testnet.zama.org',
     },
     testContracts: {
-      FHECounterUserDecryptAddress:
-        parsedEnv['FHE_COUNTER_USER_DECRYPT_ADDRESS'] ??
-        '0x9F3fd46B454D35cc4c661a97FB5e6FaBb70A18C2',
-      FHECounterPublicDecryptAddress:
-        parsedEnv['FHE_COUNTER_PUBLIC_DECRYPT_ADDRESS'] ??
-        '0x69c4511f85E9acBb9a3D4Be7098d1d2232Ed1F7f',
-      DeployerAddress:
-        parsedEnv['FHE_COUNTER_DEPLOYER_ADDRESS'] ??
-        '0x37AC010c1c566696326813b840319B58Bb5840E4',
+      FHETestAddress:
+        parsedEnv['FHE_TEST_ADDRESS'] ??
+        '0x1E7eA8fE4877E6ea5dc8856f0dA92da8d5066241',
     },
     mnemonic:
       parsedMnemonicEnv['MNEMONIC'] ??

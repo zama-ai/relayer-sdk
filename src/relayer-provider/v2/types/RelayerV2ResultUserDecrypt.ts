@@ -16,17 +16,20 @@ export function assertIsRelayerV2ResultUserDecrypt(
   value: unknown,
   name: string,
 ): asserts value is RelayerV2ResultUserDecrypt {
-  assertRecordArrayProperty(value, 'result', name);
+  type T = RelayerV2ResultUserDecrypt;
+  type ResultItem = T['result'][number];
+
+  assertRecordArrayProperty(value, 'result' satisfies keyof T, name);
   for (let i = 0; i < value.result.length; ++i) {
     // Missing extraData
     assertRecordBytesHexNo0xProperty(
       value.result[i],
-      'payload',
+      'payload' satisfies keyof ResultItem,
       `${name}.result[${i}]`,
     );
     assertRecordBytesHexNo0xProperty(
       value.result[i],
-      'signature',
+      'signature' satisfies keyof ResultItem,
       `${name}.result[${i}]`,
     );
   }

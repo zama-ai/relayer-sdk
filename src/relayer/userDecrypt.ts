@@ -1,12 +1,5 @@
-import {
-  BrowserProvider,
-  JsonRpcProvider,
-  Contract,
-  getAddress as ethersGetAddress,
-} from 'ethers';
-import { checkEncryptedBits } from './decryptUtils';
-import { AbstractRelayerProvider } from '../relayer-provider/AbstractRelayerProvider';
-import { bytesToBigInt, bytesToHex, hexToBytes } from '../utils/bytes';
+import type { RelayerV2InputProofOptions } from '../relayer-provider/v2/types/types';
+import type { BytesHex } from '../types/primitives';
 import type {
   ClearValueType,
   FhevmInstanceOptions,
@@ -14,8 +7,15 @@ import type {
   RelayerUserDecryptPayload,
   UserDecryptResults,
 } from '../types/relayer';
-import type { BytesHex } from '../types/primitives';
-import type { RelayerV2InputProofOptions } from '../relayer-provider/v2/types/types';
+import {
+  BrowserProvider,
+  JsonRpcProvider,
+  Contract,
+  getAddress as ethersGetAddress,
+} from 'ethers';
+import { bytesToBigInt, bytesToHex, hexToBytes } from '../utils/bytes';
+import { AbstractRelayerProvider } from '../relayer-provider/AbstractRelayerProvider';
+import { check2048EncryptedBits } from './decryptUtils';
 
 // Add type checking
 const getAddress = (value: string): `0x${string}` =>
@@ -142,7 +142,7 @@ export const userDecryptRequest =
       }),
     );
 
-    checkEncryptedBits(handleContractPairs.map((h) => h.handle));
+    check2048EncryptedBits(handleContractPairs.map((h) => h.handle));
 
     checkDeadlineValidity(BigInt(startTimestamp), BigInt(durationDays));
 

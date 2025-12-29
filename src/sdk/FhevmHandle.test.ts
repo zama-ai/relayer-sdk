@@ -3,6 +3,18 @@ import path from 'path';
 import { bytesToHex, hexToBytes } from '../utils/bytes';
 import { FhevmHandle } from './FhevmHandle';
 
+////////////////////////////////////////////////////////////////////////////////
+//
+// Jest Command line
+// =================
+// npx jest --colors --passWithNoTests ./src/sdk/FhevmHandle.test.ts --testNamePattern=xxx
+//
+////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////
+// Constants
+////////////////////////////////////////////////////////////////////////////////
+
 const INPUT_PROOF_ASSET_1 = JSON.parse(
   fs.readFileSync(
     path.join(__dirname, '../test/assets/input-proof-payload-1.json'),
@@ -24,9 +36,7 @@ const INPUT_PROOF_ASSET_3 = JSON.parse(
   ),
 );
 
-// Jest Command line
-// =================
-// npx jest --colors --passWithNoTests ./src/sdk/FhevmHandle.test.ts --testNamePattern=xxx
+////////////////////////////////////////////////////////////////////////////////
 
 describe('FhevmHandle', () => {
   it('fromZKProof 1', () => {
@@ -49,7 +59,7 @@ describe('FhevmHandle', () => {
       expect(FhevmHandle.fromComponents(handles[i]).toBytes32Hex()).toEqual(
         INPUT_PROOF_ASSET_1.handles[i],
       );
-      expect(handles[i].encryptedBitwidth).toEqual(
+      expect(handles[i].encryptionBits).toEqual(
         INPUT_PROOF_ASSET_1.fheTypeEncryptionBitwidths[i],
       );
     }
@@ -80,7 +90,7 @@ describe('FhevmHandle', () => {
       expect(FhevmHandle.fromComponents(handles[i]).toBytes32Hex()).toEqual(
         INPUT_PROOF_ASSET_2.handles[i],
       );
-      expect(handles[i].encryptedBitwidth).toEqual(
+      expect(handles[i].encryptionBits).toEqual(
         INPUT_PROOF_ASSET_2.fheTypeEncryptionBitwidths[i],
       );
     }
@@ -111,7 +121,7 @@ describe('FhevmHandle', () => {
       expect(FhevmHandle.fromComponents(handles[i]).toBytes32Hex()).toEqual(
         INPUT_PROOF_ASSET_3.handles[i],
       );
-      expect(handles[i].encryptedBitwidth).toEqual(
+      expect(handles[i].encryptionBits).toEqual(
         INPUT_PROOF_ASSET_3.fheTypeEncryptionBitwidths[i],
       );
     }

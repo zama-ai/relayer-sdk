@@ -1,5 +1,5 @@
+import type { RelayerV2ResponseApiError503 } from '../types';
 import { assertRecordStringProperty } from '../../../../utils/string';
-import { RelayerV2ResponseApiError503 } from '../types';
 
 /*
     export type RelayerV2ApiError503 = {
@@ -11,9 +11,10 @@ export function assertIsRelayerV2ApiError503(
   value: unknown,
   name: string,
 ): asserts value is RelayerV2ResponseApiError503 {
-  assertRecordStringProperty(value, 'label', name, [
-    'protocol_paused',
-    'gateway_not_reachable',
+  type T = RelayerV2ResponseApiError503;
+  assertRecordStringProperty(value, 'label' satisfies keyof T, name, [
+    'protocol_paused' satisfies T['label'],
+    'gateway_not_reachable' satisfies T['label'],
   ]);
-  assertRecordStringProperty(value, 'message', name);
+  assertRecordStringProperty(value, 'message' satisfies keyof T, name);
 }

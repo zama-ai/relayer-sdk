@@ -1,5 +1,5 @@
+import type { RelayerV2ResponseApiError429 } from '../types';
 import { assertRecordStringProperty } from '../../../../utils/string';
-import { RelayerV2ResponseApiError429 } from '../types';
 
 /*
   export type RelayerV2ApiError429 = {
@@ -11,6 +11,12 @@ export function assertIsRelayerV2ApiError429(
   value: unknown,
   name: string,
 ): asserts value is RelayerV2ResponseApiError429 {
-  assertRecordStringProperty(value, 'label', name, 'rate_limited');
-  assertRecordStringProperty(value, 'message', name);
+  type T = RelayerV2ResponseApiError429;
+  assertRecordStringProperty(
+    value,
+    'label' satisfies keyof T,
+    name,
+    'rate_limited' satisfies T['label'],
+  );
+  assertRecordStringProperty(value, 'message' satisfies keyof T, name);
 }

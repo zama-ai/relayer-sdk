@@ -1,12 +1,12 @@
-import type { PublicParams } from '../../sdk/encrypt';
 import type { TFHEType } from '../../tfheType';
+import type { PublicParams } from '../../types/relayer';
 import { getPublicParams, getTfheCompactPublicKey } from '../../config';
 import { AbstractRelayerFhevm } from '../AbstractRelayerFhevm';
 import { RelayerV1Provider } from './RelayerV1Provider';
 import {
   SERIALIZED_SIZE_LIMIT_CRS,
   SERIALIZED_SIZE_LIMIT_PK,
-} from '../../constants';
+} from '../../sdk/lowlevel/constants';
 
 type RelayerV1PublicKeyDataType = {
   publicKey: TFHEType['TfheCompactPublicKey'];
@@ -62,78 +62,73 @@ export class RelayerV1Fhevm extends AbstractRelayerFhevm {
   }
 
   public override getPublicKeyBytes(): {
-    publicKey: Uint8Array;
-    publicKeyId: string;
+    id: string;
+    bytes: Uint8Array;
   } {
-    return {
-      publicKey: this._publicKeyData.publicKey.safe_serialize(
-        SERIALIZED_SIZE_LIMIT_PK,
-      ),
-      publicKeyId: this._publicKeyData.publicKeyId,
-    };
-  }
-
-  public override getPublicKeyInfo(): { id: string; srcUrl?: string } {
     return {
       id: this._publicKeyData.publicKeyId,
-    };
-  }
-
-  public override getPublicParamsInfo(): {
-    id: string;
-    bits: number;
-    srcUrl?: string;
-  } {
-    return {
-      id: this._publicParamsData['2048']!.publicParamsId,
-      bits: 2048,
+      bytes: this._publicKeyData.publicKey.safe_serialize(
+        SERIALIZED_SIZE_LIMIT_PK,
+      ),
     };
   }
 
   public override getPublicKeyWasm(): {
-    publicKey: TFHEType['TfheCompactPublicKey'];
-    publicKeyId: string;
+    id: string;
+    wasm: TFHEType['TfheCompactPublicKey'];
   } {
     return {
-      publicKey: this._publicKeyData.publicKey,
-      publicKeyId: this._publicKeyData.publicKeyId,
+      id: this._publicKeyData.publicKeyId,
+      wasm: this._publicKeyData.publicKey,
     };
   }
 
-  public override getPublicParamsBytesForBits(bits: number): {
-    publicParams: Uint8Array;
-    publicParamsId: string;
+  public override supportsCapacity(capacity: number): boolean {
+    return capacity === 2048;
+  }
+
+  public override getPkeCrsBytesForCapacity<C extends number>(
+    capacity: C,
+  ): {
+    capacity: C;
+    id: string;
+    bytes: Uint8Array;
   } {
-    if (bits === undefined) {
+    if (capacity === undefined) {
       throw new Error(`Missing PublicParams bits format`);
     }
-    if (bits !== 2048) {
-      throw new Error(`Unsupported PublicParams bits format '${bits}'`);
+    if (capacity !== 2048) {
+      throw new Error(`Unsupported PublicParams bits format '${capacity}'`);
     }
 
     const res = {
-      publicParams: this._publicParamsData['2048']!.publicParams.safe_serialize(
+      capacity,
+      id: this._publicParamsData['2048']!.publicParamsId,
+      bytes: this._publicParamsData['2048']!.publicParams.safe_serialize(
         SERIALIZED_SIZE_LIMIT_CRS,
       ),
-      publicParamsId: this._publicParamsData['2048']!.publicParamsId,
     };
     return res;
   }
 
-  public override getPublicParamsWasmForBits(bits: number): {
-    publicParamsId: string;
-    publicParams: TFHEType['CompactPkeCrs'];
+  public override getPkeCrsWasmForCapacity<C extends number>(
+    capacity: C,
+  ): {
+    capacity: C;
+    id: string;
+    wasm: TFHEType['CompactPkeCrs'];
   } {
-    if (bits === undefined) {
+    if (capacity === undefined) {
       throw new Error(`Missing PublicParams bits format`);
     }
-    if (bits !== 2048) {
-      throw new Error(`Unsupported PublicParams bits format '${bits}'`);
+    if (capacity !== 2048) {
+      throw new Error(`Unsupported PublicParams bits format '${capacity}'`);
     }
 
     return {
-      publicParams: this._publicParamsData['2048']!.publicParams,
-      publicParamsId: this._publicParamsData['2048']!.publicParamsId,
+      capacity,
+      id: this._publicParamsData['2048']!.publicParamsId,
+      wasm: this._publicParamsData['2048']!.publicParams,
     };
   }
 }

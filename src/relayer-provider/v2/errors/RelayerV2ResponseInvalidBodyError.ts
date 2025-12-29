@@ -1,11 +1,9 @@
-import { RelayerErrorBaseParams } from '../../../errors/RelayerErrorBase';
-import { ensureError } from '../../../errors/utils';
-import {
-  RelayerV2ResponseErrorBase,
-  RelayerV2ResponseErrorBaseParams,
-} from './RelayerV2ResponseErrorBase';
-import { Prettify } from '../../../utils/types';
+import type { Prettify } from '../../../utils/types';
+import type { RelayerErrorBaseParams } from '../../../errors/RelayerErrorBase';
+import type { RelayerV2ResponseErrorBaseParams } from './RelayerV2ResponseErrorBase';
+import { RelayerV2ResponseErrorBase } from './RelayerV2ResponseErrorBase';
 import { InvalidPropertyError } from '../../../errors/InvalidPropertyError';
+import { ensureError } from '../../../errors/utils';
 
 ////////////////////////////////////////////////////////////////////////////////
 // RelayerV2ResponseInvalidBodyError

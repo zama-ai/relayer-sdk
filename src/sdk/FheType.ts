@@ -11,6 +11,12 @@ import type {
 } from '../types/primitives';
 
 ////////////////////////////////////////////////////////////////////////////////
+
+// TFHE encryption requires a minimum of 2 bits per value.
+// Booleans use 2 bits despite only needing 1 bit for the value itself.
+const MINIMUM_ENCRYPTION_BIT_WIDTH = 2;
+
+////////////////////////////////////////////////////////////////////////////////
 // Lookup Maps
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -38,6 +44,8 @@ const FheTypeIdToName: FheTypeIdToNameMap = {
   8: 'euint256',
 } as const;
 
+// TFHE encryption requires a minimum of 2 bits per value.
+// Booleans use 2 bits despite only needing 1 bit for the value itself.
 const FheTypeIdToEncryptionBitwidth: FheTypeIdToEncryptionBitwidthMap = {
   0: 2,
   //1:?, euint4 has been deprecated
@@ -207,6 +215,8 @@ export function solidityPrimitiveTypeNameFromFheTypeId(
 
 /**
  * Returns the encryption bit width for an FheTypeId.
+ * @param typeId - The FHE type Id
+ * @returns The encryption bit width (always >= 2)
  * @example encryptionBitsFromFheTypeId(2) // 8 (euint8)
  * @example encryptionBitsFromFheTypeId(7) // 160 (eaddress)
  */
@@ -216,11 +226,19 @@ export function encryptionBitsFromFheTypeId(typeId: FheTypeId): EncryptionBits {
       message: `Invalid FheType id '${typeId}'`,
     });
   }
-  return FheTypeIdToEncryptionBitwidth[typeId];
+
+  const bw = FheTypeIdToEncryptionBitwidth[typeId];
+
+  // Invariant: bit width must be >= 2 (TFHE minimum encryption granularity)
+  _assertMinimumEncryptionBitWidth(bw);
+
+  return bw;
 }
 
 /**
  * Returns the encryption bit width for an FheType name.
+ * @param name - The FHE type name (e.g., 'ebool', 'euint32', 'eaddress')
+ * @returns The encryption bit width (always >= 2)
  * @example encryptionBitsFromFheTypeName('ebool') // 2
  * @example encryptionBitsFromFheTypeName('euint32') // 32
  * @example encryptionBitsFromFheTypeName('eaddress') // 160
@@ -233,5 +251,19 @@ export function encryptionBitsFromFheTypeName(
       message: `Invalid FheType name '${name}'`,
     });
   }
-  return FheTypeIdToEncryptionBitwidth[FheTypeNameToId[name]];
+
+  const bw = FheTypeIdToEncryptionBitwidth[FheTypeNameToId[name]];
+
+  // Invariant: bit width must be >= 2 (TFHE minimum encryption granularity)
+  _assertMinimumEncryptionBitWidth(bw);
+
+  return bw;
+}
+
+function _assertMinimumEncryptionBitWidth(bw: number) {
+  if (bw < MINIMUM_ENCRYPTION_BIT_WIDTH) {
+    throw new FheTypeError({
+      message: `Invalid FheType encryption bit width: ${bw}. Minimum encryption bit width is ${MINIMUM_ENCRYPTION_BIT_WIDTH} bits.`,
+    });
+  }
 }

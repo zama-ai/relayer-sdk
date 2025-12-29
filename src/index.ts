@@ -1,46 +1,42 @@
-import {
-  getChainId,
-  getKMSSigners,
-  getKMSSignersThreshold,
-  getCoprocessorSigners,
-  getCoprocessorSignersThreshold,
-  getProvider,
-} from './config';
-
 import type { HandleContractPair } from './relayer/userDecrypt';
 import type { RelayerEncryptedInput } from './relayer/sendEncryption';
-import type { PublicParams } from './sdk/encrypt';
-import type { EIP712, EIP712Type } from './sdk/keypair';
-import type {
-  FhevmInstanceConfig,
-  Auth,
-  BearerToken,
-  ApiKeyCookie,
-  ApiKeyHeader,
-  PublicDecryptResults,
-  UserDecryptResults,
-  ClearValueType,
-  ClearValues,
-  FhevmInstanceOptions,
-} from './types/relayer';
 import type {
   RelayerV2InputProofOptions,
   RelayerV2PublicDecryptOptions,
   RelayerV2UserDecryptOptions,
 } from './relayer-provider/v2/types/types';
-
+import type { EIP712, EIP712Type } from './sdk/keypair';
+import type { BytesHex, ZKProof } from './types/primitives';
+import type {
+  Auth,
+  ApiKeyCookie,
+  ApiKeyHeader,
+  BearerToken,
+  ClearValues,
+  ClearValueType,
+  FhevmInstanceConfig,
+  FhevmInstanceOptions,
+  PublicDecryptResults,
+  PublicParams,
+  UserDecryptResults,
+} from './types/relayer';
+import { isChecksummedAddress } from './utils/address';
+import {
+  getChainId,
+  getCoprocessorSigners,
+  getCoprocessorSignersThreshold,
+  getKMSSigners,
+  getKMSSignersThreshold,
+  getProvider,
+} from './config';
 import { userDecryptRequest } from './relayer/userDecrypt';
 import {
   createRelayerEncryptedInput,
   requestCiphertextWithZKProofVerification,
 } from './relayer/sendEncryption';
 import { publicDecryptRequest } from './relayer/publicDecrypt';
-
-import { generateKeypair, createEIP712 } from './sdk/keypair';
-
-import { isChecksummedAddress } from './utils/address';
 import { createRelayerFhevm } from './relayer-provider/createRelayerFhevm';
-import type { BytesHex, ZKProof } from './types/primitives';
+import { generateKeypair, createEIP712 } from './sdk/keypair';
 
 // Disable global use of fetch-retry
 // Make sure `workerHelpers.js` behaviour is consistant and tfhe WASM module is
@@ -110,7 +106,7 @@ export type FhevmInstance = {
     options?: RelayerV2UserDecryptOptions,
   ) => Promise<UserDecryptResults>;
   getPublicKey: () => { publicKeyId: string; publicKey: Uint8Array } | null;
-  getPublicParams: (bits: keyof PublicParams) => {
+  getPublicParams: (bits: keyof PublicParams<Uint8Array>) => {
     publicParams: Uint8Array;
     publicParamsId: string;
   } | null;
@@ -227,37 +223,41 @@ export const createInstance = async (
     inputVerifierContractAddress,
   );
 
+  const tfheCompactPublicKeyWasm = relayerFhevm.getPublicKeyWasm().wasm;
+  const tfheCompactPkeCrs2048Wasm = relayerFhevm.getPkeCrsWasmForCapacity(2048);
+
   return {
-    createEncryptedInput: createRelayerEncryptedInput(
+    createEncryptedInput: createRelayerEncryptedInput({
       aclContractAddress,
       verifyingContractAddressInputVerification,
       chainId,
       gatewayChainId,
-      relayerFhevm.relayerProvider,
-      relayerFhevm.getPublicKeyWasm().publicKey,
-      { 2048: relayerFhevm.getPublicParamsWasmForBits(2048) },
+      relayerProvider: relayerFhevm.relayerProvider,
+      tfheCompactPublicKey: tfheCompactPublicKeyWasm,
+      tfheCompactPkeCrs: tfheCompactPkeCrs2048Wasm.wasm,
       coprocessorSigners,
       thresholdCoprocessorSigners,
-      auth && { auth },
-    ),
+      capacity: 2048,
+      defaultOptions: auth ? { auth } : undefined,
+    }),
     requestZKProofVerification: (
       zkProof: ZKProof,
       options?: RelayerV2InputProofOptions,
     ) => {
       if (
-        zkProof.chainId !== chainId ||
+        zkProof.chainId !== BigInt(chainId) ||
         zkProof.aclContractAddress !== aclContractAddress
       ) {
         throw new Error('Invalid ZKProof');
       }
       return requestCiphertextWithZKProofVerification({
-        ciphertext: zkProof.ciphertextWithZkProof,
-        aclContractAddress: aclContractAddress,
-        contractAddress: zkProof.contractAddress,
-        userAddress: zkProof.userAddress,
-        chainId,
+        ciphertext: zkProof.ciphertextWithZkProof, // ZKProof
+        aclContractAddress: aclContractAddress, // ZKProof
+        contractAddress: zkProof.contractAddress, // ZKProof
+        userAddress: zkProof.userAddress, // ZKProof
+        chainId, // ZKProof
+        bits: zkProof.bits, // ZKProof
         gatewayChainId,
-        bits: zkProof.bits,
         coprocessorSigners,
         extraData: '0x00' as BytesHex,
         thresholdCoprocessorSigners,
@@ -275,7 +275,6 @@ export const createInstance = async (
       gatewayChainId,
       verifyingContractAddressDecryption,
       aclContractAddress,
-      //cleanURL(config.relayerUrl),
       relayerFhevm.relayerProvider,
       provider,
       auth && { auth },
@@ -286,14 +285,29 @@ export const createInstance = async (
       chainId,
       verifyingContractAddressDecryption,
       aclContractAddress,
-      //cleanURL(config.relayerUrl),
       relayerFhevm.relayerProvider,
       provider,
       auth && { auth },
     ),
-    getPublicKey: () => relayerFhevm.getPublicKeyBytes(),
-    getPublicParams: (bits: keyof PublicParams) =>
-      relayerFhevm.getPublicParamsBytesForBits(bits),
+    getPublicKey: () => {
+      const pk = relayerFhevm.getPublicKeyBytes();
+      return {
+        publicKey: pk.bytes,
+        publicKeyId: pk.id,
+      };
+    },
+    getPublicParams: (capacity: keyof PublicParams<Uint8Array>) => {
+      if (relayerFhevm.supportsCapacity(capacity)) {
+        const crs = relayerFhevm.getPkeCrsBytesForCapacity(capacity);
+        return {
+          publicParamsId: crs.id,
+          publicParams: crs.bytes,
+        };
+      } else {
+        return null;
+      }
+    },
+
     // getPublicKey: () =>
     //   publicKeyData.publicKey
     //     ? {

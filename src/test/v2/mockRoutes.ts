@@ -1,17 +1,12 @@
-import fetchMock, { CallLog } from 'fetch-mock';
-import { fetchMockInputProof, TEST_CONFIG } from '../config';
-import {
-  publicKey as assetPublicKey,
-  publicParams as assetPublicParams,
-} from '..';
-import {
-  SERIALIZED_SIZE_LIMIT_CRS,
-  SERIALIZED_SIZE_LIMIT_PK,
-} from '../../constants';
-import { RelayerV2ResponseInvalidBodyError } from '../../relayer-provider/v2/errors/RelayerV2ResponseInvalidBodyError';
-import { InvalidPropertyError } from '../../errors/InvalidPropertyError';
 import type { RelayerV2AsyncRequestState } from '../../relayer-provider/v2/RelayerV2AsyncRequest';
 import type { EncryptionBits } from '../../types/primitives';
+import fetchMock, { CallLog } from 'fetch-mock';
+import { fetchMockInputProof, TEST_CONFIG } from '../config';
+import { tfheCompactPublicKeyBytes, tfheCompactPkeCrsBytes } from '..';
+import { RelayerV2ResponseInvalidBodyError } from '../../relayer-provider/v2/errors/RelayerV2ResponseInvalidBodyError';
+import { InvalidPropertyError } from '../../errors/InvalidPropertyError';
+
+////////////////////////////////////////////////////////////////////////////////
 
 export const RUNNING_REQ_STATE: RelayerV2AsyncRequestState = {
   aborted: false,
@@ -23,6 +18,8 @@ export const RUNNING_REQ_STATE: RelayerV2AsyncRequestState = {
   terminated: false,
   timeout: false,
 } as const;
+
+////////////////////////////////////////////////////////////////////////////////
 
 // curl https://relayer.dev.zama.cloud/v2/keyurl
 export const relayerV2ResponseGetKeyUrl = {
@@ -49,6 +46,8 @@ export const relayerV2ResponseGetKeyUrl = {
   },
 };
 
+////////////////////////////////////////////////////////////////////////////////
+
 export function mockV2Post202(
   operation: 'input-proof' | 'user-decrypt' | 'public-decrypt',
   body: any,
@@ -63,6 +62,8 @@ export function mockV2Post202(
     headers: { 'Content-Type': 'application/json' },
   });
 }
+
+////////////////////////////////////////////////////////////////////////////////
 
 export function post202InvalidBodyError(params: {
   cause: InvalidPropertyError;
@@ -80,30 +81,26 @@ export function post202InvalidBodyError(params: {
   });
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
 export function setupV2RoutesKeyUrl() {
   if (TEST_CONFIG.type !== 'fetch-mock') {
     throw new Error('Test is not running using fetch-mock');
   }
 
-  const assetPublicKeyBytes = assetPublicKey.safe_serialize(
-    SERIALIZED_SIZE_LIMIT_PK,
-  );
-  const assetPublicParams2048Bytes =
-    assetPublicParams[2048].publicParams.safe_serialize(
-      SERIALIZED_SIZE_LIMIT_CRS,
-    );
-
   fetchMock.get(TEST_CONFIG.v2.urls.keyUrl, relayerV2ResponseGetKeyUrl);
   fetchMock.get(
     relayerV2ResponseGetKeyUrl.response.fheKeyInfo[0].fhePublicKey.urls[0],
-    assetPublicKeyBytes,
+    tfheCompactPublicKeyBytes,
   );
 
   fetchMock.get(
     relayerV2ResponseGetKeyUrl.response.crs[2048].urls[0],
-    assetPublicParams2048Bytes,
+    tfheCompactPkeCrsBytes,
   );
 }
+
+////////////////////////////////////////////////////////////////////////////////
 
 export function setupV2RoutesInputProof(
   bitwidths: EncryptionBits[],

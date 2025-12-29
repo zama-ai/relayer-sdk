@@ -1378,8 +1378,6 @@ export class RelayerV2AsyncRequest {
   }
 
   private _handleGlobalRequestTimeout() {
-    this._state.timeout = true;
-
     // Debug state-check guards:
     this._assert(
       this instanceof RelayerV2AsyncRequest,
@@ -1387,6 +1385,8 @@ export class RelayerV2AsyncRequest {
     );
     this._assert(!this._state.terminated, `!this._state.terminated`);
     this._assert(!this._state.timeout, '!this._state.timeout');
+
+    this._state.timeout = true;
 
     this._postAsyncOnProgressCallback({
       type: 'timeout',

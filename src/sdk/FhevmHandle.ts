@@ -1,34 +1,3 @@
-import {
-  assertIsBytes32,
-  bytesToHex,
-  concatBytes,
-  hexToBytes,
-  isBytes,
-  isBytes32,
-  isBytes32Hex,
-  isBytesHex,
-} from '../utils/bytes';
-import {
-  assertIsChecksummedAddress,
-  checksummedAddressToBytes20,
-} from '../utils/address';
-import {
-  assertIsUint64,
-  assertIsUint8,
-  isUintNumber,
-  MAX_UINT64,
-  numberToBytes32,
-} from '../utils/uint';
-import { keccak256 } from 'ethers';
-import { assertRelayer, InternalError } from '../errors/InternalError';
-import { FhevmHandleError } from '../errors/FhevmHandleError';
-import {
-  encryptionBitsFromFheTypeId,
-  fheTypeIdFromEncryptionBits,
-  fheTypeNameFromId,
-  isFheTypeId,
-  solidityPrimitiveTypeNameFromFheTypeId,
-} from './FheType';
 import type {
   Bytes21Hex,
   Bytes32,
@@ -41,6 +10,37 @@ import type {
   FheTypeName,
   SolidityPrimitiveTypeName,
 } from '../types/primitives';
+import { keccak256 } from 'ethers';
+import {
+  assertIsChecksummedAddress,
+  checksummedAddressToBytes20,
+} from '../utils/address';
+import {
+  assertIsBytes32,
+  bytesToHex,
+  concatBytes,
+  hexToBytes,
+  isBytes,
+  isBytes32,
+  isBytes32Hex,
+  isBytesHex,
+} from '../utils/bytes';
+import {
+  assertIsUint64,
+  assertIsUint8,
+  isUintNumber,
+  MAX_UINT64,
+  numberToBytes32,
+} from '../utils/uint';
+import { assertRelayer, InternalError } from '../errors/InternalError';
+import { FhevmHandleError } from '../errors/FhevmHandleError';
+import {
+  encryptionBitsFromFheTypeId,
+  fheTypeIdFromEncryptionBits,
+  fheTypeNameFromId,
+  isFheTypeId,
+  solidityPrimitiveTypeNameFromFheTypeId,
+} from './FheType';
 
 type CreateInputHandlesBaseParams = {
   ciphertextWithZKProof: Uint8Array | BytesHex;
@@ -67,14 +67,14 @@ export class FhevmHandle {
   // Instance Properties
   //////////////////////////////////////////////////////////////////////////////
 
-  private readonly _hash21: Bytes21Hex;
-  private readonly _chainId: number;
-  private readonly _fheTypeId: FheTypeId;
-  private readonly _version: number;
-  private readonly _computed: boolean;
-  private readonly _index?: number;
-  private _handleBytes32Hex: Bytes32Hex | undefined;
-  private _handleBytes32: Bytes32 | undefined;
+  readonly #hash21: Bytes21Hex;
+  readonly #chainId: number;
+  readonly #fheTypeId: FheTypeId;
+  readonly #version: number;
+  readonly #computed: boolean;
+  readonly #index?: number;
+  #handleBytes32Hex: Bytes32Hex | undefined;
+  #handleBytes32: Bytes32 | undefined;
 
   //////////////////////////////////////////////////////////////////////////////
   // Static Constants
@@ -122,15 +122,15 @@ export class FhevmHandle {
       throw new FhevmHandleError({ message: 'Hash21 should be 21 bytes long' });
     }
 
-    this._handleBytes32 = handleBytes32;
-    this._handleBytes32Hex = handleBytes32Hex;
-    this._hash21 = hash21;
-    this._chainId = chainId;
-    this._fheTypeId = fheTypeId;
-    this._version = version;
-    this._computed = computed;
+    this.#handleBytes32 = handleBytes32;
+    this.#handleBytes32Hex = handleBytes32Hex;
+    this.#hash21 = hash21;
+    this.#chainId = chainId;
+    this.#fheTypeId = fheTypeId;
+    this.#version = version;
+    this.#computed = computed;
     if (index !== undefined) {
-      this._index = index;
+      this.#index = index;
     }
   }
 
@@ -139,39 +139,39 @@ export class FhevmHandle {
   //////////////////////////////////////////////////////////////////////////////
 
   public get hash21(): Bytes21Hex {
-    return this._hash21;
+    return this.#hash21;
   }
 
   public get chainId(): number {
-    return this._chainId;
+    return this.#chainId;
   }
 
   public get fheTypeId(): FheTypeId {
-    return this._fheTypeId;
+    return this.#fheTypeId;
   }
 
   public get fheTypeName(): FheTypeName {
-    return fheTypeNameFromId(this._fheTypeId);
+    return fheTypeNameFromId(this.#fheTypeId);
   }
 
   public get version(): number {
-    return this._version;
+    return this.#version;
   }
 
   public get computed(): boolean {
-    return this._computed;
+    return this.#computed;
   }
 
   public get index(): number | undefined {
-    return this._index;
+    return this.#index;
   }
 
-  public get encryptedBitwidth(): EncryptionBits {
-    return encryptionBitsFromFheTypeId(this._fheTypeId);
+  public get encryptionBits(): EncryptionBits {
+    return encryptionBitsFromFheTypeId(this.#fheTypeId);
   }
 
   public get solidityPrimitiveTypeName(): SolidityPrimitiveTypeName {
-    return solidityPrimitiveTypeNameFromFheTypeId(this._fheTypeId);
+    return solidityPrimitiveTypeNameFromFheTypeId(this.#fheTypeId);
   }
 
   public toJSON() {
@@ -182,7 +182,7 @@ export class FhevmHandle {
       chainId: this.chainId,
       index: this.index,
       computed: this.computed,
-      encryptedBitwidth: this.encryptedBitwidth,
+      encryptionBits: this.encryptionBits,
       version: this.version,
       solidityPrimitiveTypeName: this.solidityPrimitiveTypeName,
       hash21: this.hash21,
@@ -194,35 +194,35 @@ export class FhevmHandle {
   //////////////////////////////////////////////////////////////////////////////
 
   public toBytes32(): Bytes32 {
-    if (this._handleBytes32 === undefined) {
+    if (this.#handleBytes32 === undefined) {
       assertRelayer(
-        (this._index === undefined && this._computed) ||
-          (this._index !== undefined && this._index < 255 && !this._computed),
+        (this.#index === undefined && this.#computed) ||
+          (this.#index !== undefined && this.#index < 255 && !this.#computed),
       );
 
-      const chainId32Bytes = numberToBytes32(this._chainId);
+      const chainId32Bytes = numberToBytes32(this.#chainId);
       const chainId8Bytes = chainId32Bytes.subarray(24, 32);
 
-      const handleHash21 = hexToBytes(this._hash21);
+      const handleHash21 = hexToBytes(this.#hash21);
       assertRelayer(handleHash21.length === 21);
 
       const handleBytes32AsBytes = new Uint8Array(32);
       handleBytes32AsBytes.set(handleHash21, 0);
-      handleBytes32AsBytes[21] = this._index === undefined ? 255 : this._index;
+      handleBytes32AsBytes[21] = this.#index === undefined ? 255 : this.#index;
       handleBytes32AsBytes.set(chainId8Bytes, 22);
-      handleBytes32AsBytes[30] = this._fheTypeId;
-      handleBytes32AsBytes[31] = this._version;
-      this._handleBytes32 = handleBytes32AsBytes;
+      handleBytes32AsBytes[30] = this.#fheTypeId;
+      handleBytes32AsBytes[31] = this.#version;
+      this.#handleBytes32 = handleBytes32AsBytes;
     }
 
-    return this._handleBytes32;
+    return this.#handleBytes32;
   }
 
   public toBytes32Hex(): Bytes32Hex {
-    if (this._handleBytes32Hex === undefined) {
-      this._handleBytes32Hex = bytesToHex(this.toBytes32()) as Bytes32Hex;
+    if (this.#handleBytes32Hex === undefined) {
+      this.#handleBytes32Hex = bytesToHex(this.toBytes32()) as Bytes32Hex;
     }
-    return this._handleBytes32Hex;
+    return this.#handleBytes32Hex;
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -238,6 +238,21 @@ export class FhevmHandle {
     index?: number | undefined;
   }): FhevmHandle {
     return new FhevmHandle(params);
+  }
+
+  public static from(handle: unknown): FhevmHandle {
+    if (handle instanceof FhevmHandle) {
+      return handle;
+    }
+    if (typeof handle === 'string') {
+      return FhevmHandle.fromBytes32Hex(handle);
+    }
+    if (isBytes(handle)) {
+      return FhevmHandle.fromBytes32(handle);
+    }
+    throw new FhevmHandleError({
+      message: `FHEVM Handle must be a Uint8Array or a string.`,
+    });
   }
 
   public static fromBytes32(handle: unknown): FhevmHandle {
@@ -294,7 +309,7 @@ export class FhevmHandle {
     const bytes: Uint8Array = hexToBytes(handle);
 
     const h = FhevmHandle.fromBytes32(bytes);
-    h._handleBytes32Hex = handle;
+    h.#handleBytes32Hex = handle;
 
     return h;
   }

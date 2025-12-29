@@ -1,20 +1,20 @@
+import type {
+  CoprocessorEIP712MessageType,
+  CoprocessorEIP712Params,
+} from './types';
+import type { Bytes65Hex, ChecksummedAddress } from '../../types/primitives';
+import type { Prettify } from '../../utils/types';
+import type { ethers as EthersT } from 'ethers';
 import { RelayerDuplicateCoprocessorSignerError } from '../../errors/RelayerDuplicateCoprocessorSignerError';
 import {
   assertIsChecksummedAddress,
   assertIsChecksummedAddressArray,
 } from '../../utils/address';
 import { RelayerUnknownCoprocessorSignerError } from '../../errors/RelayerUnknownCoprocessorSignerError';
-import {
-  CoprocessorEIP712,
-  CoprocessorEIP712MessageType,
-  CoprocessorEIP712Params,
-} from './CoprocessorEIP712';
-import type { Prettify } from '../../utils/types';
+import { CoprocessorEIP712 } from './CoprocessorEIP712';
 import { RelayerThresholdCoprocessorSignerError } from '../../errors/RelayerThresholdCoprocessorSignerError';
 import { InputProof } from './InputProof';
-import type { ethers as EthersT } from 'ethers';
 import { Contract } from 'ethers';
-import { Bytes65Hex, ChecksummedAddress } from '../../types/primitives';
 
 ////////////////////////////////////////////////////////////////////////////////
 // CoprocessorSignersVerifier

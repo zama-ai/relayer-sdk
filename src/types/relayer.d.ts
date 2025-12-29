@@ -48,6 +48,14 @@ export type FhevmInstanceOptions = {
   auth?: Auth;
 };
 
+// export type PublicParams<T = TFHEType['CompactPkeCrs']> = {
+//   2048: { publicParams: T; publicParamsId: string };
+// };
+
+export type PublicParams<T> = {
+  2048: { publicParams: T; publicParamsId: string };
+};
+
 export type FhevmInstanceConfig = Prettify<
   {
     verifyingContractAddressDecryption: string;
@@ -56,15 +64,11 @@ export type FhevmInstanceConfig = Prettify<
     inputVerifierContractAddress: string;
     aclContractAddress: string;
     gatewayChainId: number;
+    relayerUrl: string;
+    network: Eip1193Provider | string;
     chainId?: number;
-    relayerUrl?: string;
-    network?: Eip1193Provider | string;
-    publicParams?: PublicParams<Uint8Array> | null;
-    publicKey?: {
-      data: Uint8Array | null;
-      id: string | null;
-    };
-  } & FhevmInstanceOptions
+  } & Partial<FhevmPkeConfigType> &
+    FhevmInstanceOptions
 >;
 
 export type RelayerOperation =
@@ -173,7 +177,7 @@ export type PublicDecryptResults = {
  * @property data - The TFHE compact public key as raw bytes.
  * @property id - A server-assigned identifier for the key (not required for cryptographic operations).
  */
-export type FhevmPublicKey = {
+export type FhevmPublicKeyType = {
   data: Uint8Array;
   id: string;
 };
@@ -184,7 +188,7 @@ export type FhevmPublicKey = {
  * @property publicParams - The TFHE compact pke crs as raw bytes.
  * @property publicParamsId - A server-assigned identifier for the key (not required for cryptographic operations).
  */
-export type FhevmPkeCrs = {
+export type FhevmPkeCrsType = {
   publicParams: Uint8Array;
   publicParamsId: string;
 };
@@ -198,24 +202,24 @@ export type FhevmPkeCrs = {
  * Note that a boolean needs 2 encryption bits instead of 1.
  *
  * Currently only 2048-bit capacity is supported.
- * @see {@link FhevmPkeCrs}
+ * @see {@link FhevmPkeCrsType}
  */
-export type FhevmPkeCrsByCapacity = {
-  2048: FhevmPkeCrs;
+export type FhevmPkeCrsByCapacityType = {
+  2048: FhevmPkeCrsType;
 };
 
 /**
- * Complete FHEVM public key configuration.
+ * Complete FHEVM public key encryption (PKE) configuration.
  *
  * Contains the TFHE compact public key and the associated PKE CRS parameters
  * required for encrypting values on the client side.
- * @see {@link FhevmPublicKey}
- * @see {@link FhevmPkeCrsByCapacity}
+ * @see {@link FhevmPublicKeyType}
+ * @see {@link FhevmPkeCrsByCapacityType}
  *
  * @property publicKey - The TFHE compact public key used for encryption.
  * @property publicParams - PKE CRS parameters indexed by encryption capacity.
  */
-export type FhevmPublicKeyConfig = {
-  publicKey: FhevmPublicKey;
-  publicParams: FhevmPkeCrsByCapacity;
+export type FhevmPkeConfigType = {
+  publicKey: FhevmPublicKeyType;
+  publicParams: FhevmPkeCrsByCapacityType;
 };

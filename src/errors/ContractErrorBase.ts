@@ -1,5 +1,5 @@
-import { Prettify } from '../utils/types';
-import { ChecksummedAddress } from '../types/primitives';
+import type { Prettify } from '../utils/types';
+import type { ChecksummedAddress } from '../types/primitives';
 import { RelayerErrorBase, RelayerErrorBaseParams } from './RelayerErrorBase';
 
 ////////////////////////////////////////////////////////////////////////////////

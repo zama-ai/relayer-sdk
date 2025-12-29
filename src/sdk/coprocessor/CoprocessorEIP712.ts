@@ -1,59 +1,23 @@
-import { assertIsUint256 } from '../../utils/uint';
+import type { ethers as EthersT } from 'ethers';
+import type {
+  Bytes65Hex,
+  BytesHex,
+  ChecksummedAddress,
+} from '../../types/primitives';
+import type {
+  CoprocessorEIP712DomainType,
+  CoprocessorEIP712MessageType,
+  CoprocessorEIP712Type,
+  CoprocessorEIP712TypesType,
+} from './types';
 import { assertIsChecksummedAddress } from '../../utils/address';
 import {
   assertIsBytes32HexArray,
   assertIsBytes65HexArray,
   assertIsBytesHex,
 } from '../../utils/bytes';
-import type { ethers as EthersT } from 'ethers';
-import { Prettify } from '../../utils/types';
 import { verifySignature } from '../../utils/signature';
-import {
-  Bytes32Hex,
-  Bytes65Hex,
-  BytesHex,
-  ChecksummedAddress,
-} from '../../types/primitives';
-
-////////////////////////////////////////////////////////////////////////////////
-// CoprocessorEIP712 Types
-////////////////////////////////////////////////////////////////////////////////
-
-export type CoprocessorEIP712Params = {
-  gatewayChainId: number;
-  verifyingContractAddressInputVerification: ChecksummedAddress;
-};
-
-export type CoprocessorEIP712DomainType = {
-  readonly name: 'InputVerification';
-  readonly version: '1';
-  chainId: number;
-  verifyingContract: ChecksummedAddress;
-};
-
-export type CoprocessorEIP712MessageType = {
-  ctHandles: Bytes32Hex[];
-  userAddress: ChecksummedAddress;
-  contractAddress: ChecksummedAddress;
-  contractChainId: number;
-  extraData: BytesHex;
-};
-
-export type CoprocessorEIP712TypesType = {
-  CiphertextVerification: readonly [
-    { readonly name: 'ctHandles'; readonly type: 'bytes32[]' },
-    { readonly name: 'userAddress'; readonly type: 'address' },
-    { readonly name: 'contractAddress'; readonly type: 'address' },
-    { readonly name: 'contractChainId'; readonly type: 'uint256' },
-    { readonly name: 'extraData'; readonly type: 'bytes' },
-  ];
-};
-
-export type CoprocessorEIP712Type = Prettify<{
-  domain: CoprocessorEIP712DomainType;
-  types: CoprocessorEIP712TypesType;
-  message: CoprocessorEIP712MessageType;
-}>;
+import { assertIsUint256 } from '../../utils/uint';
 
 ////////////////////////////////////////////////////////////////////////////////
 // CoprocessorEIP712 Class

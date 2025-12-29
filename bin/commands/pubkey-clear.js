@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { homedir } from 'os';
-import { logCLI } from '../utils';
+import { logCLI } from '../utils.js';
 
 // npx . pubkey clear
 export async function pubkeyClearCommand(options) {

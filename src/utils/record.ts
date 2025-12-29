@@ -1,8 +1,9 @@
+import type {
+  RecordArrayPropertyType,
+  RecordBooleanPropertyType,
+  RecordNonNullablePropertyType,
+} from './private';
 import { InvalidPropertyError } from '../errors/InvalidPropertyError';
-
-type NonNullableRecordProperty<K extends string> = Record<string, unknown> & {
-  [P in K]: NonNullable<unknown>;
-};
 
 /**
  * Type guard that checks if a property exists on an object and is non-null/non-undefined.
@@ -15,15 +16,15 @@ type NonNullableRecordProperty<K extends string> = Record<string, unknown> & {
  * @example
  * ```typescript
  * const data: unknown = { name: "Alice", age: 30 };
- * if (isNonNullableRecordProperty(data, 'name')) {
+ * if (isRecordNonNullableProperty(data, 'name')) {
  *   console.log(data.name); // OK
  * }
  * ```
  */
-export function isNonNullableRecordProperty<K extends string>(
+export function isRecordNonNullableProperty<K extends string>(
   o: unknown,
   property: K,
-): o is NonNullableRecordProperty<K> {
+): o is RecordNonNullablePropertyType<K> {
   if (
     !o ||
     typeof o !== 'object' ||
@@ -50,17 +51,17 @@ export function isNonNullableRecordProperty<K extends string>(
  * @example
  * ```typescript
  * function processUser(data: unknown) {
- *   assertNonNullableRecordProperty(data, 'userId', 'user');
+ *   assertRecordNonNullableProperty(data, 'userId', 'user');
  *   console.log(data.userId);
  * }
  * ```
  */
-export function assertNonNullableRecordProperty<K extends string>(
+export function assertRecordNonNullableProperty<K extends string>(
   o: unknown,
   property: K,
   objName: string,
-): asserts o is NonNullableRecordProperty<K> {
-  if (!isNonNullableRecordProperty(o, property)) {
+): asserts o is RecordNonNullablePropertyType<K> {
+  if (!isRecordNonNullableProperty(o, property)) {
     throw new InvalidPropertyError({
       objName,
       property,
@@ -69,10 +70,6 @@ export function assertNonNullableRecordProperty<K extends string>(
     });
   }
 }
-
-type RecordArrayProperty<K extends string> = Record<string, unknown> & {
-  [P in K]: NonNullable<Array<unknown>>;
-};
 
 /**
  * Type guard that checks if a property exists on an object and is an array.
@@ -94,8 +91,8 @@ type RecordArrayProperty<K extends string> = Record<string, unknown> & {
 export function isRecordArrayProperty<K extends string>(
   o: unknown,
   property: K,
-): o is RecordArrayProperty<K> {
-  if (!isNonNullableRecordProperty(o, property)) {
+): o is RecordArrayPropertyType<K> {
+  if (!isRecordNonNullableProperty(o, property)) {
     return false;
   }
   return Array.isArray(o[property]);
@@ -125,7 +122,7 @@ export function assertRecordArrayProperty<K extends string>(
   o: unknown,
   property: K,
   objName: string,
-): asserts o is RecordArrayProperty<K> {
+): asserts o is RecordArrayPropertyType<K> {
   if (!isRecordArrayProperty(o, property)) {
     throw new InvalidPropertyError({
       objName,
@@ -136,15 +133,11 @@ export function assertRecordArrayProperty<K extends string>(
   }
 }
 
-type RecordBooleanProperty<K extends string> = Record<string, unknown> & {
-  [P in K]: NonNullable<boolean>;
-};
-
 export function isRecordBooleanProperty<K extends string>(
   o: unknown,
   property: K,
-): o is RecordBooleanProperty<K> {
-  if (!isNonNullableRecordProperty(o, property)) {
+): o is RecordBooleanPropertyType<K> {
+  if (!isRecordNonNullableProperty(o, property)) {
     return false;
   }
   return typeof o[property] === 'boolean';
@@ -155,7 +148,7 @@ export function assertRecordBooleanProperty<K extends string>(
   property: K,
   objName: string,
   expectedValue?: boolean,
-): asserts o is RecordBooleanProperty<K> {
+): asserts o is RecordBooleanPropertyType<K> {
   if (!isRecordBooleanProperty(o, property))
     throw new InvalidPropertyError({
       objName,
@@ -181,7 +174,7 @@ export function typeofProperty<K extends string>(
   o: unknown,
   property: K,
 ): string {
-  if (isNonNullableRecordProperty(o, property)) {
+  if (isRecordNonNullableProperty(o, property)) {
     return typeof o[property];
   }
   return 'undefined';

@@ -1,9 +1,7 @@
-import { Prettify } from '../../../utils/types';
-import {
-  RelayerV2FetchErrorBase,
-  RelayerV2FetchErrorBaseParams,
-} from './RelayerV2FetchErrorBase';
-import { RelayerErrorBaseParams } from '../../../errors/RelayerErrorBase';
+import type { RelayerErrorBaseParams } from '../../../errors/RelayerErrorBase';
+import type { RelayerV2FetchErrorBaseParams } from './RelayerV2FetchErrorBase';
+import type { Prettify } from '../../../utils/types';
+import { RelayerV2FetchErrorBase } from './RelayerV2FetchErrorBase';
 
 ////////////////////////////////////////////////////////////////////////////////
 // RelayerV2MaxRetryError

@@ -7,8 +7,9 @@ import {
   isChecksummedAddress,
   isFheTypeName,
 } from '../lib/internal.js';
+import { FHETestAddresses } from './commands/test/fheTest.js';
 
-export function logCLI(message, { json, verbose }) {
+export function logCLI(message, { json, verbose } = {}) {
   if (json === true) {
     if (verbose === true) {
       process.stderr.write(message + '\n');
@@ -24,7 +25,7 @@ export const throwError = (error, cause) => {
   } else {
     console.error(`Error: ${error}`);
   }
-  process.exit();
+  process.exit(1);
 };
 
 export function getEnv(envName, envFile) {
@@ -70,8 +71,8 @@ export function addCommonOptions(command) {
     .option('--contract-address <contract address>', 'address of the contract')
     .option('--user-address <user address>', 'address of the account')
     .option(
-      '--network <testnet|devnet>',
-      'network name, must be "testnet" or "devnet"',
+      '--network <testnet|devnet|mainnet>',
+      'network name, must be "testnet", "devnet" or "mainnet"',
     )
     .option('--acl <ACL contract address>', 'ACL contract address')
     .option(
@@ -98,14 +99,15 @@ export function addCommonOptions(command) {
     .option('--version <route v1 or v2>', 'The default route version: 1|2')
     .option('--clear-cache', 'Clear the FHEVM public key cache')
     .option('--json', 'Ouput in JSON format')
-    .option('--verbose', 'Verbose output');
+    .option('--verbose', 'Verbose output')
+    .option('--timeout <duration in ms>', 'Timeout in milliseconds');
 }
 
 /**
  * @param {object} options - Command line options
  * @returns {{
  *   config: {
- *     name: 'testnet' | 'devnet',
+ *     name: 'testnet' | 'devnet' | 'mainnet',
  *     version: 1 | 2,
  *     walletAddress: string,
  *     userAddress: string,
@@ -129,7 +131,7 @@ export function addCommonOptions(command) {
  */
 export function parseCommonOptions(options) {
   const name = options?.network ?? 'devnet';
-  if (name !== 'testnet' && name !== 'devnet') {
+  if (name !== 'testnet' && name !== 'devnet' && name !== 'mainnet') {
     throwError(`Invalid network name '${name}'.`);
   }
 
@@ -176,10 +178,7 @@ export function parseCommonOptions(options) {
     contractAddress = getEnv('CONTRACT_ADDRESS', `.env.${name}`);
   }
   if (!contractAddress) {
-    contractAddress = getEnv(
-      'FHE_COUNTER_PUBLIC_DECRYPT_ADDRESS',
-      `.env.${name}`,
-    );
+    contractAddress = FHETestAddresses[name];
   }
   if (!isChecksummedAddress(contractAddress)) {
     throwError(`Invalid contract address '${contractAddress}'.`);

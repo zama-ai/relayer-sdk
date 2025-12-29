@@ -1,16 +1,22 @@
+import type { RelayerUserDecryptPayload } from '../types/relayer';
 import { userDecryptRequest } from './userDecrypt';
 import fetchMock from 'fetch-mock';
 import { ethers } from 'ethers';
 import { getErrorCause, getErrorCauseErrorMessage } from './error';
-import { createRelayerProvider } from '../relayer-provider/createRelayerFhevm';
+import { createRelayerProvider } from '../relayer-provider/createRelayerProvider';
 import { TEST_CONFIG } from '../test/config';
-import { RelayerUserDecryptPayload } from '../types/relayer';
 import { fetchRelayerV1Post } from '../relayer-provider/v1/fetchRelayerV1';
 
+////////////////////////////////////////////////////////////////////////////////
+//
 // Jest Command line
 // =================
-// npx jest --colors --passWithNoTests --coverage ./src/relayer/userDecrypt.test.ts --collectCoverageFrom=./src/relayer/userDecrypt.ts --testNamePattern=xxx
+//
+// npx jest --colors --passWithNoTests ./src/relayer/userDecrypt.test.ts
 // npx jest --colors --passWithNoTests --coverage ./src/relayer/userDecrypt.test.ts --collectCoverageFrom=./src/relayer/userDecrypt.ts
+// npx jest --colors --passWithNoTests --coverage ./src/relayer/userDecrypt.test.ts --collectCoverageFrom=./src/relayer/userDecrypt.ts --testNamePattern=xxx
+//
+////////////////////////////////////////////////////////////////////////////////
 
 const defaultRelayerVersion = 1;
 const relayerProvider = createRelayerProvider(
@@ -41,6 +47,8 @@ const dummyRelayerUserDecryptPayload: RelayerUserDecryptPayload = {
 
 const describeIfFetchMock =
   TEST_CONFIG.type === 'fetch-mock' ? describe : describe.skip;
+
+////////////////////////////////////////////////////////////////////////////////
 
 describeIfFetchMock('userDecrypt', () => {
   beforeEach(() => {

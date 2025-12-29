@@ -1,5 +1,5 @@
+import type { RelayerV2AsyncRequestState } from '../RelayerV2AsyncRequest';
 import { RelayerErrorBase } from '../../../errors/RelayerErrorBase';
-import { RelayerV2AsyncRequestState } from '../RelayerV2AsyncRequest';
 
 ////////////////////////////////////////////////////////////////////////////////
 // RelayerStateError

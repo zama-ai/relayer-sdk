@@ -4,11 +4,12 @@ export type InvalidPropertyErrorType = InvalidPropertyError & {
   name: 'InvalidPropertyError';
 };
 
-type ExpectedType =
+type ExpectedPropertyType =
   | 'string'
   | 'boolean'
   | 'non-nullable'
   | 'Uint'
+  | 'Uint256'
   | 'Array'
   | 'ChecksummedAddress'
   | 'Bytes32Hex'
@@ -42,7 +43,7 @@ export class InvalidPropertyError extends RelayerErrorBase {
     type?: string;
     value?: string;
     expectedValue?: string | string[];
-    expectedType: ExpectedType;
+    expectedType: ExpectedPropertyType;
   }) {
     let missing = type === 'undefined' && expectedValue !== undefined;
 
@@ -98,7 +99,7 @@ export class InvalidPropertyError extends RelayerErrorBase {
   }: {
     objName: string;
     property: string;
-    expectedType: ExpectedType;
+    expectedType: ExpectedPropertyType;
     expectedValue?: string | string[] | undefined;
   }): InvalidPropertyError {
     return new InvalidPropertyError({
@@ -130,7 +131,7 @@ export class InvalidPropertyError extends RelayerErrorBase {
     type,
   }: {
     objName: string;
-    expectedType: ExpectedType;
+    expectedType: ExpectedPropertyType;
     type?: string;
   }): InvalidPropertyError {
     return new InvalidPropertyError({

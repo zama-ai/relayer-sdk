@@ -1,14 +1,14 @@
 import {
-  assertIsRelayerV2GetResponseKeyUrl,
-  isRelayerV2GetResponseKeyUrl,
-} from './RelayerV2GetResponseKeyUrl';
+  assertIsRelayerGetResponseKeyUrlCamelCase,
+  isRelayerGetResponseKeyUrlCamelCase,
+} from './AbstractRelayerGetResponseKeyUrl';
 
 // npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v2/types/RelayerV2GetResponseKeyUrl.test.ts --collectCoverageFrom=./src/relayer-provider/v2/types/RelayerV2GetResponseKeyUrl.ts
 
 describe('RelayerV2GetResponseKeyUrl', () => {
   it('isRelayerV2GetResponseKeyUrl', () => {
     expect(
-      isRelayerV2GetResponseKeyUrl({
+      isRelayerGetResponseKeyUrlCamelCase({
         response: {
           fheKeyInfo: [
             {
@@ -22,13 +22,13 @@ describe('RelayerV2GetResponseKeyUrl', () => {
       }),
     ).toBe(true);
 
-    expect(isRelayerV2GetResponseKeyUrl({})).toBe(false);
+    expect(isRelayerGetResponseKeyUrlCamelCase({})).toBe(false);
   });
 
   it('assertIsRelayerV2GetResponseKeyUrl', () => {
     // True
     expect(() =>
-      assertIsRelayerV2GetResponseKeyUrl(
+      assertIsRelayerGetResponseKeyUrlCamelCase(
         {
           response: {
             fheKeyInfo: [
@@ -46,7 +46,7 @@ describe('RelayerV2GetResponseKeyUrl', () => {
     ).not.toThrow();
 
     expect(() =>
-      assertIsRelayerV2GetResponseKeyUrl(
+      assertIsRelayerGetResponseKeyUrlCamelCase(
         {
           response: {
             crs: {
@@ -70,10 +70,14 @@ describe('RelayerV2GetResponseKeyUrl', () => {
     ).not.toThrow();
 
     // False
-    expect(() => assertIsRelayerV2GetResponseKeyUrl({}, 'Foo')).toThrow();
-    expect(() => assertIsRelayerV2GetResponseKeyUrl({}, 'Foo')).toThrow();
     expect(() =>
-      assertIsRelayerV2GetResponseKeyUrl(
+      assertIsRelayerGetResponseKeyUrlCamelCase({}, 'Foo'),
+    ).toThrow();
+    expect(() =>
+      assertIsRelayerGetResponseKeyUrlCamelCase({}, 'Foo'),
+    ).toThrow();
+    expect(() =>
+      assertIsRelayerGetResponseKeyUrlCamelCase(
         {
           response: {},
         },
@@ -81,7 +85,7 @@ describe('RelayerV2GetResponseKeyUrl', () => {
       ),
     ).toThrow();
     expect(() =>
-      assertIsRelayerV2GetResponseKeyUrl(
+      assertIsRelayerGetResponseKeyUrlCamelCase(
         {
           response: {
             crs: {},
@@ -91,7 +95,7 @@ describe('RelayerV2GetResponseKeyUrl', () => {
       ),
     ).toThrow();
     expect(() =>
-      assertIsRelayerV2GetResponseKeyUrl(
+      assertIsRelayerGetResponseKeyUrlCamelCase(
         {
           response: {
             crs: {},
@@ -102,7 +106,7 @@ describe('RelayerV2GetResponseKeyUrl', () => {
       ),
     ).toThrow();
     expect(() =>
-      assertIsRelayerV2GetResponseKeyUrl(
+      assertIsRelayerGetResponseKeyUrlCamelCase(
         {
           response: {
             crs: {},
@@ -113,7 +117,7 @@ describe('RelayerV2GetResponseKeyUrl', () => {
       ),
     ).toThrow();
     expect(() =>
-      assertIsRelayerV2GetResponseKeyUrl(
+      assertIsRelayerGetResponseKeyUrlCamelCase(
         {
           response: {
             crs: {},
@@ -124,7 +128,7 @@ describe('RelayerV2GetResponseKeyUrl', () => {
       ),
     ).toThrow();
     expect(() =>
-      assertIsRelayerV2GetResponseKeyUrl(
+      assertIsRelayerGetResponseKeyUrlCamelCase(
         {
           response: {
             crs: {},
@@ -139,7 +143,7 @@ describe('RelayerV2GetResponseKeyUrl', () => {
       ),
     ).toThrow();
     expect(() =>
-      assertIsRelayerV2GetResponseKeyUrl(
+      assertIsRelayerGetResponseKeyUrlCamelCase(
         {
           response: {
             crs: {},
@@ -156,7 +160,7 @@ describe('RelayerV2GetResponseKeyUrl', () => {
       ),
     ).toThrow();
     expect(() =>
-      assertIsRelayerV2GetResponseKeyUrl(
+      assertIsRelayerGetResponseKeyUrlCamelCase(
         {
           response: {
             crs: {},
@@ -173,7 +177,7 @@ describe('RelayerV2GetResponseKeyUrl', () => {
       ),
     ).toThrow();
     expect(() =>
-      assertIsRelayerV2GetResponseKeyUrl(
+      assertIsRelayerGetResponseKeyUrlCamelCase(
         {
           response: {
             crs: {},
@@ -191,7 +195,7 @@ describe('RelayerV2GetResponseKeyUrl', () => {
       ),
     ).toThrow();
     expect(() =>
-      assertIsRelayerV2GetResponseKeyUrl(
+      assertIsRelayerGetResponseKeyUrlCamelCase(
         {
           response: {
             crs: {},
@@ -209,7 +213,7 @@ describe('RelayerV2GetResponseKeyUrl', () => {
       ),
     ).toThrow();
     expect(() =>
-      assertIsRelayerV2GetResponseKeyUrl(
+      assertIsRelayerGetResponseKeyUrlCamelCase(
         {
           response: {
             crs: {
@@ -229,7 +233,7 @@ describe('RelayerV2GetResponseKeyUrl', () => {
       ),
     ).toThrow();
     expect(() =>
-      assertIsRelayerV2GetResponseKeyUrl(
+      assertIsRelayerGetResponseKeyUrlCamelCase(
         {
           response: {
             crs: {
@@ -251,7 +255,7 @@ describe('RelayerV2GetResponseKeyUrl', () => {
       ),
     ).toThrow();
     expect(() =>
-      assertIsRelayerV2GetResponseKeyUrl(
+      assertIsRelayerGetResponseKeyUrlCamelCase(
         {
           response: {
             crs: {
@@ -273,7 +277,7 @@ describe('RelayerV2GetResponseKeyUrl', () => {
       ),
     ).toThrow();
     expect(() =>
-      assertIsRelayerV2GetResponseKeyUrl(
+      assertIsRelayerGetResponseKeyUrlCamelCase(
         {
           response: {
             crs: {

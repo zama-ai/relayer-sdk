@@ -1,9 +1,7 @@
-import { RelayerErrorBaseParams } from '../../../errors/RelayerErrorBase';
-import { Prettify } from '../../../utils/types';
-import {
-  RelayerV2RequestErrorBase,
-  RelayerV2RequestErrorBaseParams,
-} from './RelayerV2RequestErrorBase';
+import type { RelayerV2RequestErrorBaseParams } from './RelayerV2RequestErrorBase';
+import type { RelayerErrorBaseParams } from '../../../errors/RelayerErrorBase';
+import type { Prettify } from '../../../utils/types';
+import { RelayerV2RequestErrorBase } from './RelayerV2RequestErrorBase';
 
 ////////////////////////////////////////////////////////////////////////////////
 // RelayerV2TimeoutError

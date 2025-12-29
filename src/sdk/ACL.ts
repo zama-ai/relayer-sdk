@@ -1,15 +1,15 @@
-import { Contract } from 'ethers';
 import type { ethers as EthersT } from 'ethers';
-import { Bytes32Hex, ChecksummedAddress } from '../types/primitives';
+import type { Bytes32Hex, ChecksummedAddress } from '../types/primitives';
+import { Contract } from 'ethers';
 import {
   assertIsChecksummedAddress,
   isChecksummedAddress,
 } from '../utils/address';
-import { ChecksummedAddressError } from '../errors/ChecksummedAddressError';
 import {
   ACLPublicDecryptionError,
   ACLUserDecryptionError,
 } from '../errors/ACLError';
+import { ChecksummedAddressError } from '../errors/ChecksummedAddressError';
 import { ContractError } from '../errors/ContractErrorBase';
 import { FhevmHandle } from './FhevmHandle';
 
@@ -18,13 +18,17 @@ import { FhevmHandle } from './FhevmHandle';
 ////////////////////////////////////////////////////////////////////////////////
 
 export class ACL {
-  private readonly _aclAddress: ChecksummedAddress;
-  private readonly _contract: Contract;
+  #aclAddress: ChecksummedAddress;
+  #contract: Contract;
 
-  private static readonly aclABI = [
+  static readonly #abi = [
     'function persistAllowed(bytes32 handle, address account) view returns (bool)',
     'function isAllowedForDecryption(bytes32 handle) view returns (bool)',
   ] as const;
+
+  static {
+    Object.freeze(ACL.#abi);
+  }
 
   /**
    * Creates an ACL instance for checking decryption permissions.
@@ -48,8 +52,8 @@ export class ACL {
         message: 'Invalid provider.',
       });
     }
-    this._aclAddress = aclAddress;
-    this._contract = new Contract(this._aclAddress, ACL.aclABI, provider);
+    this.#aclAddress = aclAddress;
+    this.#contract = new Contract(this.#aclAddress, ACL.#abi, provider);
   }
 
   /**
@@ -83,7 +87,7 @@ export class ACL {
     }
 
     const results = await Promise.all(
-      handlesArray.map((h) => this._contract.isAllowedForDecryption(h)),
+      handlesArray.map((h) => this.#contract.isAllowedForDecryption(h)),
     );
 
     return isArray ? results : results[0];
@@ -117,7 +121,7 @@ export class ACL {
     const failedHandles = handlesArray.filter((_, i) => !results[i]);
     if (failedHandles.length > 0) {
       throw new ACLPublicDecryptionError({
-        contractAddress: this._aclAddress,
+        contractAddress: this.#aclAddress,
         handles: failedHandles,
       });
     }
@@ -161,7 +165,7 @@ export class ACL {
 
     const results = await Promise.all(
       handleAddressPairsArray.map((p) =>
-        this._contract.persistAllowed(p.handle, p.address),
+        this.#contract.persistAllowed(p.handle, p.address),
       ),
     );
 
@@ -230,7 +234,7 @@ export class ACL {
     for (const pair of pairsArray) {
       if (params.userAddress === pair.contractAddress) {
         throw new ACLUserDecryptionError({
-          contractAddress: this._aclAddress,
+          contractAddress: this.#aclAddress,
           message: `userAddress ${params.userAddress} should not be equal to contractAddress when requesting user decryption!`,
         });
       }
@@ -272,7 +276,7 @@ export class ACL {
       const userKey = `${params.userAddress.toLowerCase()}:${pair.handle}`;
       if (!resultMap.get(userKey)) {
         throw new ACLUserDecryptionError({
-          contractAddress: this._aclAddress,
+          contractAddress: this.#aclAddress,
           message: `User ${params.userAddress} is not authorized to user decrypt handle ${pair.handle}!`,
         });
       }
@@ -283,7 +287,7 @@ export class ACL {
       const contractKey = `${pair.contractAddress.toLowerCase()}:${pair.handle}`;
       if (!resultMap.get(contractKey)) {
         throw new ACLUserDecryptionError({
-          contractAddress: this._aclAddress,
+          contractAddress: this.#aclAddress,
           message: `dapp contract ${pair.contractAddress} is not authorized to user decrypt handle ${pair.handle}!`,
         });
       }

@@ -1,8 +1,6 @@
-import {
-  RelayerV2RequestErrorBase,
-  RelayerV2RequestErrorBaseParams,
-} from './RelayerV2RequestErrorBase';
-import { Prettify } from '../../../utils/types';
+import type { RelayerV2RequestErrorBaseParams } from './RelayerV2RequestErrorBase';
+import type { Prettify } from '../../../utils/types';
+import { RelayerV2RequestErrorBase } from './RelayerV2RequestErrorBase';
 
 ////////////////////////////////////////////////////////////////////////////////
 // RelayerV2RequestInternalError

@@ -1,10 +1,8 @@
-import { Prettify } from '../../../utils/types';
+import type { RelayerV2FetchErrorBaseParams } from './RelayerV2FetchErrorBase';
+import type { RelayerErrorBaseParams } from '../../../errors/RelayerErrorBase';
+import type { Prettify } from '../../../utils/types';
 import { ensureError } from '../../../errors/utils';
-import { RelayerErrorBaseParams } from '../../../errors/RelayerErrorBase';
-import {
-  RelayerV2FetchErrorBase,
-  RelayerV2FetchErrorBaseParams,
-} from './RelayerV2FetchErrorBase';
+import { RelayerV2FetchErrorBase } from './RelayerV2FetchErrorBase';
 
 ////////////////////////////////////////////////////////////////////////////////
 // RelayerV2FetchError

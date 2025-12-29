@@ -1,3 +1,4 @@
+import type { Bytes32Hex, Bytes65Hex, BytesHex } from '../../types/primitives';
 import { MAX_UINT8, uintToHexNo0x } from '../../utils/uint';
 import {
   assertIsBytes32HexArray,
@@ -9,13 +10,12 @@ import { RelayerTooManyHandlesError } from '../../errors/RelayerTooManyHandlesEr
 import { assertRelayer } from '../../errors/InternalError';
 import { remove0x } from '../../utils/string';
 import { RelayerInvalidProofError } from '../../errors/RelayerInvalidProofError';
-import { Bytes32Hex, Bytes65Hex, BytesHex } from '../../types/primitives';
 
 export class InputProof {
-  private readonly _proof: BytesHex;
-  private readonly _signatures: Bytes65Hex[];
-  private readonly _handles: Bytes32Hex[];
-  private readonly _extraData: BytesHex;
+  #proof: BytesHex;
+  #signatures: Bytes65Hex[];
+  #handles: Bytes32Hex[];
+  #extraData: BytesHex;
 
   private constructor({
     proof,
@@ -28,29 +28,29 @@ export class InputProof {
     handles: Bytes32Hex[];
     extraData: BytesHex;
   }) {
-    this._proof = proof;
-    this._signatures = signatures;
-    this._handles = handles;
-    this._extraData = extraData;
+    this.#proof = proof;
+    this.#signatures = signatures;
+    this.#handles = handles;
+    this.#extraData = extraData;
 
-    Object.freeze(this._signatures);
-    Object.freeze(this._handles);
+    Object.freeze(this.#signatures);
+    Object.freeze(this.#handles);
   }
 
   public get proof(): BytesHex {
-    return this._proof;
+    return this.#proof;
   }
 
   public get signatures(): Bytes65Hex[] {
-    return this._signatures;
+    return this.#signatures;
   }
 
   public get handles(): Bytes32Hex[] {
-    return this._handles;
+    return this.#handles;
   }
 
   public get extraData(): BytesHex {
-    return this._extraData;
+    return this.#extraData;
   }
 
   public static from({
@@ -180,9 +180,8 @@ export class InputProof {
 
     const inputProof = InputProof.from({ signatures, handles, extraData });
 
-    // Debug TO BE REMOVED
-    const pb = bytesToHex(proofBytes);
-    assertRelayer(pb === inputProof.proof);
+    /// Debug TO BE REMOVED
+    assertRelayer(bytesToHex(proofBytes) === inputProof.proof);
     //////////
 
     return inputProof;

@@ -1,26 +1,25 @@
-import { isAddress, getAddress as ethersGetAddress } from 'ethers';
-
-import { createEncryptedInput as createEncryptedInput } from '../sdk/encrypt';
-import { ethers } from 'ethers';
-import { throwRelayerInternalError } from './error';
-import { AbstractRelayerProvider } from '../relayer-provider/AbstractRelayerProvider';
 import type { RelayerProviderFetchOptions } from '../relayer-provider/AbstractRelayerProvider';
-import { bytesToHexNo0x, hexToBytes } from '../utils/bytes';
-import { numberToHexNo0x } from '../utils/uint';
-import { FhevmHandle } from '../sdk/FhevmHandle';
-import type { EncryptedInput, PublicParams } from '../sdk/encrypt';
+import type { RelayerV2InputProofOptions } from '../relayer-provider/v2/types/types';
+import type { EncryptedInput } from '../sdk/encrypt';
 import type { TFHEType } from '../tfheType';
-import type {
-  FhevmInstanceOptions,
-  RelayerInputProofPayload,
-} from '../types/relayer';
 import type {
   BytesHex,
   ChecksummedAddress,
   EncryptionBits,
   ZKProof,
 } from '../types/primitives';
-import type { RelayerV2InputProofOptions } from '../relayer-provider/v2/types/types';
+import type {
+  FhevmInstanceOptions,
+  RelayerInputProofPayload,
+} from '../types/relayer';
+import { ethers, getAddress as ethersGetAddress } from 'ethers';
+import { isChecksummedAddress } from '../utils/address';
+import { bytesToHexNo0x, hexToBytes } from '../utils/bytes';
+import { numberToHexNo0x } from '../utils/uint';
+import { AbstractRelayerProvider } from '../relayer-provider/AbstractRelayerProvider';
+import { createEncryptedInput } from '../sdk/encrypt';
+import { FhevmHandle } from '../sdk/FhevmHandle';
+import { throwRelayerInternalError } from './error';
 
 // Add type checking
 const getAddress = (value: string): `0x${string}` =>
@@ -168,6 +167,8 @@ export async function requestCiphertextWithZKProofVerification({
   };
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
 function isThresholdReached(
   coprocessorSigners: string[],
   recoveredAddresses: string[],
@@ -194,6 +195,8 @@ function isThresholdReached(
 
   return recoveredAddresses.length >= threshold;
 }
+
+////////////////////////////////////////////////////////////////////////////////
 
 export type FhevmRelayerInputProofResponse = {
   response: {
@@ -245,27 +248,40 @@ export type RelayerEncryptedInput = {
 };
 
 export const createRelayerEncryptedInput =
-  (
-    aclContractAddress: string,
-    verifyingContractAddressInputVerification: string,
-    chainId: number,
-    gatewayChainId: number,
-    relayerProvider: AbstractRelayerProvider,
-    tfheCompactPublicKey: TFHEType['TfheCompactPublicKey'],
-    publicParams: PublicParams,
-    coprocessorSigners: string[],
-    thresholdCoprocessorSigners: number,
-    defaultOptions?: FhevmInstanceOptions,
-  ) =>
+  ({
+    aclContractAddress,
+    verifyingContractAddressInputVerification,
+    chainId,
+    gatewayChainId,
+    relayerProvider,
+    tfheCompactPublicKey,
+    tfheCompactPkeCrs,
+    coprocessorSigners,
+    thresholdCoprocessorSigners,
+    capacity,
+    defaultOptions,
+  }: {
+    aclContractAddress: string;
+    verifyingContractAddressInputVerification: string;
+    chainId: number;
+    gatewayChainId: number;
+    relayerProvider: AbstractRelayerProvider;
+    tfheCompactPublicKey: TFHEType['TfheCompactPublicKey'];
+    tfheCompactPkeCrs: TFHEType['CompactPkeCrs'];
+    coprocessorSigners: string[];
+    thresholdCoprocessorSigners: number;
+    capacity: number;
+    defaultOptions?: FhevmInstanceOptions;
+  }) =>
   (
     contractAddress: string,
     userAddress: string,
   ): RelayerEncryptedInputInternal => {
-    if (!isAddress(contractAddress)) {
+    if (!isChecksummedAddress(contractAddress)) {
       throw new Error('Contract address is not a valid address.');
     }
 
-    if (!isAddress(userAddress)) {
+    if (!isChecksummedAddress(userAddress)) {
       throw new Error('User address is not a valid address.');
     }
 
@@ -273,9 +289,10 @@ export const createRelayerEncryptedInput =
       aclContractAddress,
       chainId,
       tfheCompactPublicKey,
-      publicParams,
+      tfheCompactPkeCrs,
       contractAddress,
       userAddress,
+      capacity,
     });
 
     return {
@@ -317,7 +334,7 @@ export const createRelayerEncryptedInput =
       },
       generateZKProof(): ZKProof {
         return {
-          chainId,
+          chainId: BigInt(chainId),
           aclContractAddress: aclContractAddress as ChecksummedAddress,
           userAddress: userAddress as ChecksummedAddress,
           contractAddress: contractAddress as ChecksummedAddress,

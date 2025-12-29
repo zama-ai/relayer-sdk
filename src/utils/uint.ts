@@ -1,11 +1,10 @@
-import { InvalidTypeError } from '../errors/InvalidTypeError';
-import { InvalidPropertyError } from '../errors/InvalidPropertyError';
-import { isNonNullableRecordProperty, typeofProperty } from './record';
 import type {
   Bytes32,
   Bytes8,
   BytesHexNo0x,
   Uint,
+  Uint128,
+  Uint16,
   Uint256,
   Uint32,
   Uint64,
@@ -13,13 +12,40 @@ import type {
   UintBigInt,
   UintNumber,
 } from '../types/primitives';
+import type {
+  RecordWithPropertyType,
+  RecordUintPropertyType,
+  RecordUint256PropertyType,
+} from './private';
+import { isRecordNonNullableProperty, typeofProperty } from './record';
+import { InvalidPropertyError } from '../errors/InvalidPropertyError';
+import { InvalidTypeError } from '../errors/InvalidTypeError';
 
-export const MAX_UINT64 = BigInt('18446744073709551615'); // 2^64 - 1
+////////////////////////////////////////////////////////////////////////////////
+// Constants
+////////////////////////////////////////////////////////////////////////////////
+
+// 2^8 - 1 = 255
+export const MAX_UINT8 = 0xff;
+
+// 2^16 - 1 = 65535
+export const MAX_UINT16 = 0xffff;
+
+// 2^32 - 1 = 4294967295
+export const MAX_UINT32 = 0xffffffff;
+
+// 2^64 - 1 = 18446744073709551615
+export const MAX_UINT64 = BigInt('0xffffffffffffffff');
+
+// 2^128 - 1 = 340282366920938463463374607431768211455
+export const MAX_UINT128 = BigInt('0xffffffffffffffffffffffffffffffff');
+
+// 2^256 - 1 = 115792089237316195423570985008687907853269984665640564039457584007913129639935
 export const MAX_UINT256 = BigInt(
   '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
 );
-export const MAX_UINT32 = 0xffffffff;
-export const MAX_UINT8 = 0xff;
+
+////////////////////////////////////////////////////////////////////////////////
 
 export function numberToHexNo0x(num: number): BytesHexNo0x {
   let hex = num.toString(16);
@@ -59,6 +85,13 @@ export function isUint8(value: unknown): value is Uint8 {
   return value <= MAX_UINT8;
 }
 
+export function isUint16(value: unknown): value is Uint16 {
+  if (!isUint(value)) {
+    return false;
+  }
+  return value <= MAX_UINT16;
+}
+
 export function isUint32(value: unknown): value is Uint32 {
   if (!isUint(value)) {
     return false;
@@ -70,14 +103,40 @@ export function isUint64(value: unknown): value is Uint64 {
   if (!isUint(value)) {
     return false;
   }
-  return value <= MAX_UINT64;
+  return BigInt(value) <= MAX_UINT64;
+}
+
+export function isUint128(value: unknown): value is Uint128 {
+  if (!isUint(value)) {
+    return false;
+  }
+  return BigInt(value) <= MAX_UINT128;
 }
 
 export function isUint256(value: unknown): value is Uint256 {
   if (!isUint(value)) {
     return false;
   }
-  return value <= MAX_UINT256;
+  return BigInt(value) <= MAX_UINT256;
+}
+
+export function uint256ToBytes32(value: unknown): Bytes32 {
+  if (!isUint256(value)) {
+    throw new InvalidTypeError({ expectedType: 'Uint256' });
+  }
+
+  const buffer = new ArrayBuffer(32);
+  const view = new DataView(buffer);
+
+  let v = BigInt(value);
+
+  // Fill from right to left (big-endian), 8 bytes at a time
+  view.setBigUint64(24, v & 0xffffffffffffffffn, false);
+  view.setBigUint64(16, (v >> 64n) & 0xffffffffffffffffn, false);
+  view.setBigUint64(8, (v >> 128n) & 0xffffffffffffffffn, false);
+  view.setBigUint64(0, (v >> 192n) & 0xffffffffffffffffn, false);
+
+  return new Uint8Array(buffer);
 }
 
 export function numberToBytes32(num: number): Bytes32 {
@@ -157,35 +216,52 @@ export function assertIsUint256(value: unknown): asserts value is Uint256 {
   }
 }
 
-type RecordUintProperty<K extends string> = Record<string, unknown> & {
-  [P in K]: NonNullable<Uint>;
-};
-
 export function isRecordUintProperty<K extends string>(
   o: unknown,
   property: K,
-): o is RecordUintProperty<K> {
-  if (!isNonNullableRecordProperty(o, property)) {
+): o is RecordUintPropertyType<K> {
+  if (!isRecordNonNullableProperty(o, property)) {
     return false;
   }
   return isUint(o[property]);
 }
 
-type ObjectWithProperty<K extends string, T> = Record<string, unknown> & {
-  [P in K]: T;
-};
-
 export function assertRecordUintProperty<K extends string>(
   o: unknown,
   property: K,
   objName: string,
-): asserts o is ObjectWithProperty<K, Uint> {
+): asserts o is RecordWithPropertyType<K, Uint> {
   if (!isRecordUintProperty(o, property)) {
     throw new InvalidPropertyError({
       objName,
       property,
       type: typeofProperty(o, property),
       expectedType: 'Uint',
+    });
+  }
+}
+
+export function isRecordUint256Property<K extends string>(
+  o: unknown,
+  property: K,
+): o is RecordUint256PropertyType<K> {
+  if (!isRecordNonNullableProperty(o, property)) {
+    return false;
+  }
+  return isUint256(o[property]);
+}
+
+export function assertRecordUint256Property<K extends string>(
+  o: unknown,
+  property: K,
+  objName: string,
+): asserts o is RecordWithPropertyType<K, Uint256> {
+  if (!isRecordUint256Property(o, property)) {
+    throw new InvalidPropertyError({
+      objName,
+      property,
+      type: typeofProperty(o, property),
+      expectedType: 'Uint256',
     });
   }
 }

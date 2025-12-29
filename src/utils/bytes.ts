@@ -1,4 +1,4 @@
-import {
+import type {
   Bytes,
   Bytes32,
   Bytes32Hex,
@@ -9,14 +9,18 @@ import {
   BytesHex,
   BytesHexNo0x,
 } from '../types/primitives';
-import { InvalidPropertyError } from '../errors/InvalidPropertyError';
-import { InvalidTypeError } from '../errors/InvalidTypeError';
+import type {
+  RecordUint8ArrayPropertyType,
+  RecordWithPropertyType,
+} from './private';
 import {
   assertRecordArrayProperty,
-  isNonNullableRecordProperty,
+  isRecordNonNullableProperty,
   typeofProperty,
 } from './record';
 import { is0x, isNo0x, remove0x } from './string';
+import { InvalidPropertyError } from '../errors/InvalidPropertyError';
+import { InvalidTypeError } from '../errors/InvalidTypeError';
 
 export function isBytes(value: unknown, bytewidth?: 32 | 65): value is Bytes {
   if (!value) {
@@ -231,10 +235,6 @@ export function assertIsBytes65HexArray(
   }
 }
 
-type RecordWithProperty<K extends string, T> = Record<string, unknown> & {
-  [P in K]: T;
-};
-
 /**
  * Type guard that checks if a property exists on an object and is a valid hex bytes string.
  * A valid BytesHex string starts with "0x" followed by an even number of hexadecimal characters.
@@ -255,8 +255,8 @@ type RecordWithProperty<K extends string, T> = Record<string, unknown> & {
 export function isRecordBytesHexProperty<K extends string>(
   o: unknown,
   property: K,
-): o is RecordWithProperty<K, BytesHex> {
-  if (!isNonNullableRecordProperty(o, property)) {
+): o is RecordWithPropertyType<K, BytesHex> {
+  if (!isRecordNonNullableProperty(o, property)) {
     return false;
   }
   return isBytesHex(o[property]);
@@ -286,7 +286,7 @@ export function assertRecordBytesHexProperty<K extends string>(
   o: unknown,
   property: K,
   objName: string,
-): asserts o is RecordWithProperty<K, BytesHex> {
+): asserts o is RecordWithPropertyType<K, BytesHex> {
   if (!isRecordBytesHexProperty(o, property)) {
     throw new InvalidPropertyError({
       objName,
@@ -300,8 +300,8 @@ export function assertRecordBytesHexProperty<K extends string>(
 export function isRecordBytesHexNo0xProperty<K extends string>(
   o: unknown,
   property: K,
-): o is RecordWithProperty<K, BytesHexNo0x> {
-  if (!isNonNullableRecordProperty(o, property)) {
+): o is RecordWithPropertyType<K, BytesHexNo0x> {
+  if (!isRecordNonNullableProperty(o, property)) {
     return false;
   }
   return isBytesHexNo0x(o[property]);
@@ -311,7 +311,7 @@ export function assertRecordBytesHexNo0xProperty<K extends string>(
   o: unknown,
   property: K,
   objName: string,
-): asserts o is RecordWithProperty<K, BytesHexNo0x> {
+): asserts o is RecordWithPropertyType<K, BytesHexNo0x> {
   if (!isRecordBytesHexNo0xProperty(o, property)) {
     throw new InvalidPropertyError({
       objName,
@@ -325,8 +325,8 @@ export function assertRecordBytesHexNo0xProperty<K extends string>(
 export function isRecordBytes32HexProperty<K extends string>(
   o: unknown,
   property: K,
-): o is RecordWithProperty<K, Bytes32Hex> {
-  if (!isNonNullableRecordProperty(o, property)) {
+): o is RecordWithPropertyType<K, Bytes32Hex> {
+  if (!isRecordNonNullableProperty(o, property)) {
     return false;
   }
   return isBytes32Hex(o[property]);
@@ -336,7 +336,7 @@ export function assertRecordBytes32HexProperty<K extends string>(
   o: unknown,
   property: K,
   objName: string,
-): asserts o is RecordWithProperty<K, Bytes32Hex> {
+): asserts o is RecordWithPropertyType<K, Bytes32Hex> {
   if (!isRecordBytes32HexProperty(o, property)) {
     throw new InvalidPropertyError({
       objName,
@@ -351,7 +351,7 @@ export function assertRecordBytes32HexArrayProperty<K extends string>(
   o: unknown,
   property: K,
   objName: string,
-): asserts o is RecordWithProperty<K, Array<Bytes32Hex>> {
+): asserts o is RecordWithPropertyType<K, Array<Bytes32Hex>> {
   assertRecordArrayProperty(o, property, objName);
   const arr = o[property];
   for (let i = 0; i < arr.length; ++i) {
@@ -370,7 +370,7 @@ export function assertRecordBytes65HexArrayProperty<K extends string>(
   o: unknown,
   property: K,
   objName: string,
-): asserts o is RecordWithProperty<K, Array<Bytes65Hex>> {
+): asserts o is RecordWithPropertyType<K, Array<Bytes65Hex>> {
   assertRecordArrayProperty(o, property, objName);
   const arr = o[property];
   for (let i = 0; i < arr.length; ++i) {
@@ -411,7 +411,7 @@ export function assertRecordBytesHexArrayProperty<K extends string>(
   o: unknown,
   property: K,
   objName: string,
-): asserts o is RecordWithProperty<K, Array<BytesHex>> {
+): asserts o is RecordWithPropertyType<K, Array<BytesHex>> {
   assertRecordArrayProperty(o, property, objName);
   const arr = o[property];
   for (let i = 0; i < arr.length; ++i) {
@@ -452,7 +452,7 @@ export function assertRecordBytesHexNo0xArrayProperty<K extends string>(
   o: unknown,
   property: K,
   objName: string,
-): asserts o is RecordWithProperty<K, Array<BytesHexNo0x>> {
+): asserts o is RecordWithPropertyType<K, Array<BytesHexNo0x>> {
   assertRecordArrayProperty(o, property, objName);
   const arr = o[property];
   for (let i = 0; i < arr.length; ++i) {
@@ -467,25 +467,21 @@ export function assertRecordBytesHexNo0xArrayProperty<K extends string>(
   }
 }
 
-type RecordUint8ArrayProperty<K extends string> = Record<string, unknown> & {
-  [P in K]: NonNullable<Uint8Array>;
-};
-
 export function isRecordUint8ArrayProperty<K extends string>(
   o: unknown,
   property: K,
-): o is RecordUint8ArrayProperty<K> {
-  if (!isNonNullableRecordProperty(o, property)) {
+): o is RecordUint8ArrayPropertyType<K> {
+  if (!isRecordNonNullableProperty(o, property)) {
     return false;
   }
   return o[property] instanceof Uint8Array;
 }
 
-export function assertUint8ArrayProperty<K extends string>(
+export function assertRecordUint8ArrayProperty<K extends string>(
   o: unknown,
   property: K,
   objName: string,
-): asserts o is RecordWithProperty<K, Uint8Array> {
+): asserts o is RecordWithPropertyType<K, Uint8Array> {
   if (!isRecordUint8ArrayProperty(o, property)) {
     throw new InvalidPropertyError({
       objName,
@@ -600,7 +596,7 @@ export function hexToBytes(hexString: string): Uint8Array {
   return Uint8Array.from(arr.map((byte) => parseInt(byte, 16)));
 }
 
-export function hexToBytes8(hexString: string): Uint8Array {
+export function hexToBytes32(hexString: string): Uint8Array {
   return hexToBytes('0x' + remove0x(hexString).padStart(64, '0'));
 }
 
@@ -640,23 +636,6 @@ export function bytesToBigInt(byteArray: Uint8Array | undefined): bigint {
     result = (result << BigInt(8)) | BigInt(byteArray[i]);
   }
   return result;
-}
-
-export async function fetchBytes(url: string): Promise<Uint8Array> {
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(
-      `HTTP error! status: ${response.status} on ${response.url}`,
-    );
-  }
-
-  // Warning : bytes is not widely supported yet!
-  const bytes: Uint8Array =
-    typeof response.bytes === 'function'
-      ? await response.bytes()
-      : new Uint8Array(await response.arrayBuffer());
-
-  return bytes;
 }
 
 export function concatBytes(...arrays: Uint8Array[]): Uint8Array {

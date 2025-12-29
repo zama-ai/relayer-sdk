@@ -1,45 +1,11 @@
-// This file contains common utilities for both user and public decryption requests
-const NumEncryptedBits: Record<number, number> = {
-  0: 2, // ebool
-  2: 8, // euint8
-  3: 16, // euint16
-  4: 32, // euint32
-  5: 64, // euint64
-  6: 128, // euint128
-  7: 160, // eaddress
-  8: 256, // euint256
-} as const;
+import { FhevmHandle } from '../sdk/FhevmHandle';
 
-// export function getHandleType(handle: `0x${string}`): number {
-//   if (handle.length !== 66) {
-//     throw new Error(`Handle ${handle} is not of valid length`);
-//   }
-//   const hexPair = handle.slice(-4, -2).toLowerCase();
-//   const typeDiscriminant = parseInt(hexPair, 16);
-
-//   if (!(typeDiscriminant in NumEncryptedBits)) {
-//     throw new Error(`Handle ${handle} is not of valid type`);
-//   }
-//   return typeDiscriminant;
-// }
-
-export function checkEncryptedBits(handles: `0x${string}`[]) {
+export function check2048EncryptedBits(handles: `0x${string}`[]) {
   let total = 0;
 
   for (const handle of handles) {
-    if (handle.length !== 66) {
-      throw new Error(`Handle ${handle} is not of valid length`);
-    }
-
-    const hexPair = handle.slice(-4, -2).toLowerCase();
-    const typeDiscriminant = parseInt(hexPair, 16);
-
-    if (!(typeDiscriminant in NumEncryptedBits)) {
-      throw new Error(`Handle ${handle} is not of valid type`);
-    }
-
-    total +=
-      NumEncryptedBits[typeDiscriminant as keyof typeof NumEncryptedBits];
+    const fhevmHandle = FhevmHandle.fromBytes32Hex(handle);
+    total += fhevmHandle.encryptionBits;
 
     // enforce 2048‑bit limit
     if (total > 2048) {

@@ -1,14 +1,9 @@
+import type { EncryptionBits } from '../../types/primitives';
 import fetchMock, { type CallLog } from 'fetch-mock';
 import { fetchMockInputProof, TEST_CONFIG } from '../config';
-import {
-  publicKey as assetPublicKey,
-  publicParams as assetPublicParams,
-} from '..';
-import {
-  SERIALIZED_SIZE_LIMIT_CRS,
-  SERIALIZED_SIZE_LIMIT_PK,
-} from '../../constants';
-import { EncryptionBits } from '../../types/primitives';
+import { tfheCompactPublicKeyBytes, tfheCompactPkeCrsBytes } from '..';
+
+////////////////////////////////////////////////////////////////////////////////
 
 // curl https://relayer.dev.zama.cloud/v1/keyurl
 export const relayerV1ResponseGetKeyUrl = {
@@ -34,30 +29,26 @@ export const relayerV1ResponseGetKeyUrl = {
   },
 } as const;
 
+////////////////////////////////////////////////////////////////////////////////
+
 export function setupV1RoutesKeyUrl() {
   if (TEST_CONFIG.type !== 'fetch-mock') {
     throw new Error('Test is not running using fetch-mock');
   }
 
-  const assetPublicKeyBytes = assetPublicKey.safe_serialize(
-    SERIALIZED_SIZE_LIMIT_PK,
-  );
-  const assetPublicParams2048Bytes =
-    assetPublicParams[2048].publicParams.safe_serialize(
-      SERIALIZED_SIZE_LIMIT_CRS,
-    );
-
   fetchMock.get(TEST_CONFIG.v1.urls.keyUrl, relayerV1ResponseGetKeyUrl);
   fetchMock.get(
     relayerV1ResponseGetKeyUrl.response.fhe_key_info[0].fhe_public_key.urls[0],
-    assetPublicKeyBytes,
+    tfheCompactPublicKeyBytes,
   );
 
   fetchMock.get(
     relayerV1ResponseGetKeyUrl.response.crs[2048].urls[0],
-    assetPublicParams2048Bytes,
+    tfheCompactPkeCrsBytes,
   );
 }
+
+////////////////////////////////////////////////////////////////////////////////
 
 export function setupV1RoutesInputProof(bitwidths: EncryptionBits[]) {
   if (TEST_CONFIG.type !== 'fetch-mock') {

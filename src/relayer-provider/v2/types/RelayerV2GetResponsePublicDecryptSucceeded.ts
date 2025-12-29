@@ -1,14 +1,20 @@
+import type { RelayerV2GetResponsePublicDecryptSucceeded } from './types';
 import { assertRecordStringProperty } from '../../../utils/string';
-import { assertNonNullableRecordProperty } from '../../../utils/record';
+import { assertRecordNonNullableProperty } from '../../../utils/record';
 import { assertIsRelayerV2ResultPublicDecrypt } from './RelayerV2ResultPublicDecrypt';
-import { RelayerV2GetResponsePublicDecryptSucceeded } from './types';
 
 export function assertIsRelayerV2GetResponsePublicDecryptSucceeded(
   value: unknown,
   name: string,
 ): asserts value is RelayerV2GetResponsePublicDecryptSucceeded {
-  assertNonNullableRecordProperty(value, 'result', name);
-  assertRecordStringProperty(value, 'status', name, 'succeeded');
-  assertRecordStringProperty(value, 'requestId', name);
+  type T = RelayerV2GetResponsePublicDecryptSucceeded;
+  assertRecordNonNullableProperty(value, 'result' satisfies keyof T, name);
+  assertRecordStringProperty(
+    value,
+    'status' satisfies keyof T,
+    name,
+    'succeeded' satisfies T['status'],
+  );
+  assertRecordStringProperty(value, 'requestId' satisfies keyof T, name);
   assertIsRelayerV2ResultPublicDecrypt(value.result, `${name}.result`);
 }

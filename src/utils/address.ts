@@ -1,20 +1,39 @@
+import type { ChecksummedAddress } from '../types/primitives';
+import type {
+  RecordChecksummedAddressArrayPropertyType,
+  RecordChecksummedAddressPropertyType,
+} from './private';
 import {
   isAddress as ethersIsAddress,
   getAddress as ethersGetAddress,
 } from 'ethers';
 import {
   assertRecordArrayProperty,
-  isNonNullableRecordProperty,
+  isRecordNonNullableProperty,
   typeofProperty,
 } from './record';
-import { ChecksummedAddressError } from '../errors/ChecksummedAddressError';
+import { remove0x } from './string';
 import { AddressError } from '../errors/AddressError';
+import { ChecksummedAddressError } from '../errors/ChecksummedAddressError';
 import { InvalidPropertyError } from '../errors/InvalidPropertyError';
 import { InvalidTypeError } from '../errors/InvalidTypeError';
-import type { ChecksummedAddress } from '../types/primitives';
-import { remove0x } from './string';
 
 export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
+
+export function checksummedAddressToBytes20(
+  address: ChecksummedAddress,
+): Uint8Array {
+  if (!isAddress(address)) {
+    throw new InvalidTypeError({ expectedType: 'ChecksummedAddress' });
+  }
+
+  const hex = remove0x(address);
+  const bytes = new Uint8Array(20);
+  for (let i = 0; i < 20; i++) {
+    bytes[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
+  }
+  return bytes;
+}
 
 export function isChecksummedAddress(
   value: unknown,
@@ -84,15 +103,11 @@ export function assertIsAddress(
   }
 }
 
-type RecordWithProperty<K extends string, T> = Record<string, unknown> & {
-  [P in K]: T;
-};
-
 export function isRecordChecksummedAddressProperty<K extends string>(
   o: unknown,
   property: K,
-): o is RecordWithProperty<K, ChecksummedAddress> {
-  if (!isNonNullableRecordProperty(o, property)) {
+): o is RecordChecksummedAddressPropertyType<K> {
+  if (!isRecordNonNullableProperty(o, property)) {
     return false;
   }
   return isChecksummedAddress(o[property]);
@@ -102,7 +117,7 @@ export function assertRecordChecksummedAddressProperty<K extends string>(
   o: unknown,
   property: K,
   objName: string,
-): asserts o is RecordWithProperty<K, ChecksummedAddress> {
+): asserts o is RecordChecksummedAddressPropertyType<K> {
   if (!isRecordChecksummedAddressProperty(o, property)) {
     throw new InvalidPropertyError({
       objName,
@@ -117,7 +132,7 @@ export function assertRecordChecksummedAddressArrayProperty<K extends string>(
   o: unknown,
   property: K,
   objName: string,
-): asserts o is RecordWithProperty<K, Array<ChecksummedAddress>> {
+): asserts o is RecordChecksummedAddressArrayPropertyType<K> {
   assertRecordArrayProperty(o, property, objName);
   const arr = o[property];
   for (let i = 0; i < arr.length; ++i) {
@@ -130,19 +145,4 @@ export function assertRecordChecksummedAddressArrayProperty<K extends string>(
       });
     }
   }
-}
-
-export function checksummedAddressToBytes20(
-  address: ChecksummedAddress,
-): Uint8Array {
-  if (!isAddress(address)) {
-    throw new InvalidTypeError({ expectedType: 'ChecksummedAddress' });
-  }
-
-  const hex = remove0x(address);
-  const bytes = new Uint8Array(20);
-  for (let i = 0; i < 20; i++) {
-    bytes[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
-  }
-  return bytes;
 }

@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { homedir } from 'os';
-import { TFHECrs, TFHEPublicKey } from '../../lib/internal.js';
+import { TFHEPkeCrs, TFHEPublicKey } from '../../lib/internal.js';
 import { logCLI } from '../utils.js';
 
 // npx . pubkey info
@@ -20,9 +20,11 @@ export async function pubkeyInfoCommand(options) {
       `✅ pubKey file size : ${fs.statSync(pubKeyFile).size} bytes`,
       options,
     );
+
     const pk = TFHEPublicKey.fromJSON(
       JSON.parse(fs.readFileSync(pubKeyFile, 'utf-8')),
     );
+
     logCLI(`✅ pubKey id : ${pk.id}`, options);
   } else {
     logCLI(`❌ pubKey file size : file does not exist`, options);
@@ -33,7 +35,7 @@ export async function pubkeyInfoCommand(options) {
       `✅ pubKeyParams2048 file size : ${fs.statSync(pubKeyParams2048File).size} bytes`,
       options,
     );
-    const crs = TFHECrs.fromJSON(
+    const crs = TFHEPkeCrs.fromJSON(
       JSON.parse(fs.readFileSync(pubKeyParams2048File, 'utf-8')),
     );
     logCLI(`✅ pubKeyParams2048 bits : ${crs.bits}`, options);

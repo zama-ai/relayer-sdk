@@ -1,5 +1,5 @@
+import type { RelayerV2ResponseApiError500 } from '../types';
 import { assertRecordStringProperty } from '../../../../utils/string';
-import { RelayerV2ResponseApiError500 } from '../types';
 
 /*
     export type RelayerV2ApiError500 = {
@@ -11,6 +11,12 @@ export function assertIsRelayerV2ApiError500(
   value: unknown,
   name: string,
 ): asserts value is RelayerV2ResponseApiError500 {
-  assertRecordStringProperty(value, 'label', name, 'internal_server_error');
-  assertRecordStringProperty(value, 'message', name);
+  type T = RelayerV2ResponseApiError500;
+  assertRecordStringProperty(
+    value,
+    'label' satisfies keyof T,
+    name,
+    'internal_server_error' satisfies T['label'],
+  );
+  assertRecordStringProperty(value, 'message' satisfies keyof T, name);
 }

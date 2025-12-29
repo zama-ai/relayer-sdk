@@ -1,6 +1,5 @@
-import { bytesToHex, hexToBytes } from '../utils/bytes';
-import { ethers, AbiCoder } from 'ethers';
-import { checkEncryptedBits } from './decryptUtils';
+import type { RelayerV2PublicDecryptOptions } from '../relayer-provider/v2/types/types';
+import type { Bytes32Hex, FheTypeId } from '../types/primitives';
 import type {
   ClearValues,
   ClearValueType,
@@ -8,13 +7,14 @@ import type {
   PublicDecryptResults,
   RelayerPublicDecryptPayload,
 } from '../types/relayer';
+import { ethers, AbiCoder } from 'ethers';
+import { bytesToHex, hexToBytes } from '../utils/bytes';
 import { ensure0x } from '../utils/string';
+import { assertNever } from '../errors/utils';
 import { AbstractRelayerProvider } from '../relayer-provider/AbstractRelayerProvider';
-import type { RelayerV2PublicDecryptOptions } from '../relayer-provider/v2/types/types';
 import { solidityPrimitiveTypeNameFromFheTypeId } from '../sdk/FheType';
 import { FhevmHandle } from '../sdk/FhevmHandle';
-import { Bytes32Hex, FheTypeId } from '../types/primitives';
-import { assertNever } from '../errors/utils';
+import { check2048EncryptedBits } from './decryptUtils';
 
 const aclABI = [
   'function isAllowedForDecryption(bytes32 handle) view returns (bool)',
@@ -227,7 +227,7 @@ export const publicDecryptRequest =
     }
 
     // check 2048 bits limit
-    checkEncryptedBits(handles);
+    check2048EncryptedBits(handles);
 
     const payloadForRequest: RelayerPublicDecryptPayload = {
       ciphertextHandles: handles,

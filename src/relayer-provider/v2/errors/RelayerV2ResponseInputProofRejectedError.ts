@@ -1,10 +1,10 @@
+import type { Prettify } from '../../../utils/types';
+import type { RelayerV2ResultInputProofRejected } from '../types/types';
 import { RelayerErrorBaseParams } from '../../../errors/RelayerErrorBase';
 import {
   RelayerV2ResponseErrorBase,
   RelayerV2ResponseErrorBaseParams,
 } from './RelayerV2ResponseErrorBase';
-import { Prettify } from '../../../utils/types';
-import { RelayerV2ResultInputProofRejected } from '../types/types';
 
 ////////////////////////////////////////////////////////////////////////////////
 // RelayerV2ResponseInputProofRejectedError

@@ -19,10 +19,13 @@ export class InvalidTypeError extends RelayerErrorBase {
     type?: string;
     expectedType:
       | 'string'
+      | 'boolean'
       | 'Uint'
       | 'Uint8'
+      | 'Uint16'
       | 'Uint32'
       | 'Uint64'
+      | 'Uint128'
       | 'Uint256'
       | 'ChecksummedAddress'
       | 'ChecksummedAddressArray'

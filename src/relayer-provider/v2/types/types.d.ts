@@ -210,19 +210,6 @@ export type RelayerV2ResultInputProofRejected = {
 };
 
 ////////////////////////////////////////////////////////////////////////////////
-// KeyUrl
-////////////////////////////////////////////////////////////////////////////////
-
-export type RelayerV2KeyInfo = { fhePublicKey: RelayerV2KeyData };
-export type RelayerV2KeyData = { dataId: string; urls: Array<string> };
-export type RelayerV2GetResponseKeyUrl = {
-  response: {
-    fheKeyInfo: Array<RelayerV2KeyInfo>;
-    crs: Record<string, RelayerV2KeyData>;
-  };
-};
-
-////////////////////////////////////////////////////////////////////////////////
 
 export type RelayerV2PostOperationResult =
   | RelayerV2PostOperationResultMap['INPUT_PROOF']

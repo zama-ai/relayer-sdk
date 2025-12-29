@@ -35,8 +35,12 @@ addCommonOptions(program.command('public-decrypt'))
 ////////////////////////////////////////////////////////////////////////////////
 
 addCommonOptions(program.command('user-decrypt'))
-  .requiredOption('--handles <handles...>', 'List of handles to decrypt')
+  .requiredOption('--handle <handle>', 'The handle to decrypt')
   .action(async (options) => {
+    if (!options.contractAddress) {
+      console.error('Error: --contract-address is required for user-decrypt');
+      process.exit(1);
+    }
     const mod = await import('./commands/user-decrypt.js');
     await mod.userDecryptCommand(options);
   });
@@ -105,20 +109,6 @@ pubkey
   });
 
 ////////////////////////////////////////////////////////////////////////////////
-// test fhecounter-get-count
-////////////////////////////////////////////////////////////////////////////////
-
-const test = program.command('test').description('Test operations');
-
-// npx . test fhecounter-get-count
-addCommonOptions(test.command('fhecounter-get-count'))
-  .description('Call FHECounter.getCount()')
-  .action(async (options) => {
-    const mod = await import('./commands/test-fhecounter-getcount.js');
-    await mod.testFheCounterGetCountCommand(options);
-  });
-
-////////////////////////////////////////////////////////////////////////////////
 
 // Create 'zkproof' command group
 const zkproof = program.command('zkproof').description('ZKProof operations');
@@ -137,5 +127,110 @@ addCommonOptions(zkproof.command('generate'))
 //     const mod = await import('./commands/zkproof-verify.js');
 //     await mod.zkProofVerifyCommand(options);
 //   });
+
+////////////////////////////////////////////////////////////////////////////////
+// ACL
+////////////////////////////////////////////////////////////////////////////////
+
+const acl = program.command('acl').description('ACL operations');
+
+// npx . acl address
+addCommonOptions(acl.command('address'))
+  .description('Display ACL contract address')
+  .action(async (options) => {
+    const mod = await import('./commands/acl-address.js');
+    await mod.testACLAddressCommand(options);
+  });
+
+// npx . acl is-publicly-decryptable --handle 0x...
+addCommonOptions(acl.command('is-publicly-decryptable'))
+  .description('Display ACL contract address')
+  .requiredOption('--handle <handle>', 'The handle as bytes 32 hex')
+  .action(async (options) => {
+    const mod = await import('./commands/acl-is-publicly-decryptable.js');
+    await mod.testFHETestIsPubliclyDecryptableCommand(options);
+  });
+
+////////////////////////////////////////////////////////////////////////////////
+// test FHETest.sol
+////////////////////////////////////////////////////////////////////////////////
+
+const test = program.command('test').description('Test operations');
+
+// npx . test address
+addCommonOptions(test.command('address'))
+  .description('Display FHETest contract address')
+  .action(async (options) => {
+    const mod = await import('./commands/test/test-address.js');
+    await mod.testFHETestAddressCommand(options);
+  });
+
+// npx . test get --type euint32
+addCommonOptions(test.command('get'))
+  .description('Call view function: FHETest.get<Type>')
+  .requiredOption(
+    '--type <ebool|euint8|euint16|euint32|euint64|euint128|euint256|eaddress>',
+    'The encrypted type',
+  )
+  .action(async (options) => {
+    const mod = await import('./commands/test/test-get.js');
+    await mod.testFHETestGetCommand(options);
+  });
+
+// npx . test make-publicly-decryptable --type euint32
+addCommonOptions(test.command('make-publicly-decryptable'))
+  .description(
+    'Execute the transaction: FHETest.makePubliclyDecryptable<Type>()',
+  )
+  .requiredOption(
+    '--type <ebool|euint8|euint16|euint32|euint64|euint128|euint256|eaddress>',
+    'The encrypted type',
+  )
+  .action(async (options) => {
+    const mod = await import(
+      './commands/test/test-make-publicly-decryptable.js'
+    );
+    await mod.testFHETestMakePubliclyDecryptableCommand(options);
+  });
+
+// npx . test random --type euint32
+addCommonOptions(test.command('random'))
+  .description('Execute the transaction: FHETest.rand<Type>()')
+  .requiredOption(
+    '--type <ebool|euint8|euint16|euint32|euint64|euint128|euint256|eaddress>',
+    'The encrypted type',
+  )
+  .action(async (options) => {
+    const mod = await import('./commands/test/test-random.js');
+    await mod.testFHETestRandomCommand(options);
+  });
+
+// npx . test public-decrypt --type euint32 --network testnet
+addCommonOptions(test.command('public-decrypt'))
+  .description(
+    'Performs a public decryption of the handle returned by FHETest.get<Type>()',
+  )
+  .requiredOption(
+    '--type <ebool|euint8|euint16|euint32|euint64|euint128|euint256|eaddress>',
+    'The encrypted type',
+  )
+  .action(async (options) => {
+    const mod = await import('./commands/test/test-public-decrypt.js');
+    await mod.testFHETestPublicDecryptCommand(options);
+  });
+
+// npx . test user-decrypt --type euint32 --network testnet
+addCommonOptions(test.command('user-decrypt'))
+  .description(
+    'Performs a user decryption of the handle returned by FHETest.get<Type>()',
+  )
+  .requiredOption(
+    '--type <ebool|euint8|euint16|euint32|euint64|euint128|euint256|eaddress>',
+    'The encrypted type',
+  )
+  .action(async (options) => {
+    const mod = await import('./commands/test/test-user-decrypt.js');
+    await mod.testFHETestUserDecryptCommand(options);
+  });
 
 program.parseAsync();

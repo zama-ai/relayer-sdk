@@ -1,11 +1,15 @@
-import { InvalidPropertyError } from '../errors/InvalidPropertyError';
+import type {
+  RecordStringArrayPropertyType,
+  RecordStringPropertyType,
+} from './private';
 import {
-  assertNonNullableRecordProperty,
+  assertRecordNonNullableProperty,
   assertRecordArrayProperty,
-  isNonNullableRecordProperty,
+  isRecordNonNullableProperty,
   typeofProperty,
 } from './record';
 import { InternalError } from '../errors/InternalError';
+import { InvalidPropertyError } from '../errors/InvalidPropertyError';
 
 export function removeSuffix(s: string | undefined, suffix: string): string {
   if (!s) {
@@ -39,10 +43,6 @@ export function assertIs0xString(s: unknown): asserts s is `0x${string}` {
   }
 }
 
-type RecordStringProperty<K extends string> = Record<string, unknown> & {
-  [P in K]: NonNullable<string>;
-};
-
 /**
  * Type guard that checks if a property exists on an object and is a string.
  *
@@ -62,8 +62,8 @@ type RecordStringProperty<K extends string> = Record<string, unknown> & {
 export function isRecordStringProperty<K extends string>(
   o: unknown,
   property: K,
-): o is RecordStringProperty<K> {
-  if (!isNonNullableRecordProperty(o, property)) {
+): o is RecordStringPropertyType<K> {
+  if (!isRecordNonNullableProperty(o, property)) {
     return false;
   }
   return typeof o[property] === 'string';
@@ -99,7 +99,7 @@ export function assertRecordStringProperty<K extends string>(
   property: K,
   objName: string,
   expectedValue?: string | string[],
-): asserts o is RecordStringProperty<K> {
+): asserts o is RecordStringPropertyType<K> {
   if (!isRecordStringProperty(o, property)) {
     throw new InvalidPropertyError({
       objName,
@@ -142,15 +142,11 @@ export function assertRecordStringProperty<K extends string>(
   }
 }
 
-type RecordStringArrayProperty<K extends string> = Record<string, unknown> & {
-  [P in K]: NonNullable<Array<string>>;
-};
-
 export function assertRecordStringArrayProperty<K extends string>(
   o: unknown,
   property: K,
   objName: string,
-): asserts o is RecordStringArrayProperty<K> {
+): asserts o is RecordStringArrayPropertyType<K> {
   assertRecordArrayProperty(o, property, objName);
   const arr = o[property];
   for (let i = 0; i < arr.length; ++i) {
@@ -165,16 +161,12 @@ export function assertRecordStringArrayProperty<K extends string>(
   }
 }
 
-type RecordTimestampProperty<K extends string> = Record<string, unknown> & {
-  [P in K]: NonNullable<string>;
-};
-
 export function assertRecordTimestampProperty<K extends string>(
   o: unknown,
   property: K,
   objName: string,
-): asserts o is RecordTimestampProperty<K> {
-  assertNonNullableRecordProperty(o, property, objName);
+): asserts o is RecordStringPropertyType<K> {
+  assertRecordNonNullableProperty(o, property, objName);
   if (typeof o[property] !== 'string') {
     throw new InvalidPropertyError({
       objName,

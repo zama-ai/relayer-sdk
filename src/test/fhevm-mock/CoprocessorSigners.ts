@@ -1,21 +1,21 @@
-import { ethers } from 'ethers';
-import { CoprocessorSigner } from './CoprocessorSigner';
-import { EIP712Signers } from './EIP712Signers';
 import type {
   CoprocessorEIP712MessageType,
   CoprocessorEIP712Params,
   CoprocessorEIP712Type,
-} from '../../sdk/coprocessor/CoprocessorEIP712';
-import { CoprocessorEIP712 } from '../../sdk/coprocessor/CoprocessorEIP712';
+} from '../../sdk/coprocessor/types';
 import type { Prettify } from '../../utils/types';
-import { remove0x } from '../../utils/string';
-import {
+import type {
   Bytes32Hex,
   Bytes32HexNo0x,
   Bytes65Hex,
   Bytes65HexNo0x,
   BytesHex,
 } from '../../types/primitives';
+import { ethers } from 'ethers';
+import { CoprocessorSigner } from './CoprocessorSigner';
+import { EIP712Signers } from './EIP712Signers';
+import { CoprocessorEIP712 } from '../../sdk/coprocessor/CoprocessorEIP712';
+import { remove0x } from '../../utils/string';
 
 ////////////////////////////////////////////////////////////////////////////////
 // CoprocessorSigners (Multi-sig for Coprocessor)

@@ -1,11 +1,13 @@
-import { Prettify } from '../utils/types';
+import type { Prettify } from '../utils/types';
 
 export type UintNumber = number;
 export type UintBigInt = bigint;
 export type Uint = UintNumber | UintBigInt;
 export type Uint8 = UintNumber | UintBigInt;
+export type Uint16 = UintNumber | UintBigInt;
 export type Uint32 = UintNumber | UintBigInt;
 export type Uint64 = UintNumber | UintBigInt;
+export type Uint128 = UintNumber | UintBigInt;
 export type Uint256 = UintNumber | UintBigInt;
 
 export type Bytes = Uint8Array;
@@ -98,7 +100,7 @@ export type FheTypeIdToEncryptionBitwidthMap = {
 export type EncryptionBits = Prettify<keyof FheTypeEncryptionBitwidthToIdMap>;
 
 export type ZKProof = {
-  chainId: number;
+  chainId: bigint;
   aclContractAddress: ChecksummedAddress;
   contractAddress: ChecksummedAddress;
   userAddress: ChecksummedAddress;

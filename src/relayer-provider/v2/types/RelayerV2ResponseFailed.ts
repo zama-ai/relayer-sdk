@@ -1,6 +1,4 @@
-import { assertNonNullableRecordProperty } from '../../../utils/record';
-import { assertRecordStringProperty } from '../../../utils/string';
-import {
+import type {
   RelayerV2ResponseApiErrorCode,
   RelayerV2ResponseApiError500,
   RelayerV2ResponseApiError400,
@@ -10,11 +8,13 @@ import {
   RelayerV2ResponseApiError503,
   RelayerV2ResponseApiError504,
 } from './types';
+import { InvalidPropertyError } from '../../../errors/InvalidPropertyError';
+import { assertRecordNonNullableProperty } from '../../../utils/record';
+import { assertRecordStringProperty } from '../../../utils/string';
 import { assertIsRelayerV2ApiError400NoDetails } from './errors/RelayerV2ApiError400NoDetails';
 import { assertIsRelayerV2ApiError400WithDetails } from './errors/RelayerV2ApiError400WithDetails';
 import { assertIsRelayerV2ApiError429 } from './errors/RelayerV2ApiError429';
 import { assertIsRelayerV2ApiError500 } from './errors/RelayerV2ApiError500';
-import { InvalidPropertyError } from '../../../errors/InvalidPropertyError';
 import { assertIsRelayerV2ApiError404 } from './errors/RelayerV2ApiError404';
 import { assertIsRelayerV2ApiError503 } from './errors/RelayerV2ApiError503';
 import { assertIsRelayerV2ApiError504 } from './errors/RelayerV2ApiError504';
@@ -23,8 +23,14 @@ export function assertIsRelayerV2ResponseFailed(
   value: unknown,
   name: string,
 ): asserts value is RelayerV2ResponseFailed {
-  assertRecordStringProperty(value, 'status', name, 'failed');
-  assertNonNullableRecordProperty(value, 'error', name);
+  type T = RelayerV2ResponseFailed;
+  assertRecordStringProperty(
+    value,
+    'status' satisfies keyof T,
+    name,
+    'failed' satisfies T['status'],
+  );
+  assertRecordNonNullableProperty(value, 'error' satisfies keyof T, name);
   assertIsRelayerV2ApiError(value.error, `${name}.error`);
 }
 

@@ -1,27 +1,38 @@
-import type { PublicParams } from '../sdk/encrypt';
-import { removeSuffix } from '../utils/string';
-import { AbstractRelayerProvider } from './AbstractRelayerProvider';
-import { RelayerV1Provider } from './v1/RelayerV1Provider';
-import { RelayerV2Provider } from './v2/RelayerV2Provider';
-import { RelayerV2Fhevm } from './v2/RelayerV2Fhevm';
-import { RelayerV1Fhevm } from './v1/RelayerV1Fhevm';
+import type { FhevmPkeConfigType } from '../types/relayer';
+import type { Prettify } from '../utils/types';
+import { InvalidRelayerUrlError } from '../errors/InvalidRelayerUrlError';
 import { AbstractRelayerFhevm } from './AbstractRelayerFhevm';
+import { parseRelayerUrl } from './relayerUrl';
+import { RelayerV1Fhevm } from './v1/RelayerV1Fhevm';
+import { RelayerV2Fhevm } from './v2/RelayerV2Fhevm';
 
-export async function createRelayerFhevm(config: {
-  relayerUrl: string;
-  publicKey?: {
-    data: Uint8Array | null;
-    id: string | null;
-  };
-  publicParams?: PublicParams<Uint8Array> | null;
-  defaultRelayerVersion: 1 | 2;
-}): Promise<AbstractRelayerFhevm> {
-  const resolved = _resolveRelayerUrl(
+/**
+ * Creates a relayer FHEVM instance based on the URL and version.
+ *
+ * @param config - Configuration object
+ * @param config.relayerUrl - The relayer API URL (may include `/v1` or `/v2` suffix)
+ * @param config.defaultRelayerVersion - Version to use if URL doesn't specify one
+ * @param config.publicKey - Optional TFHE public key (fetched from relayer if not provided)
+ * @param config.publicParams - Optional TFHE public params (fetched from relayer if not provided)
+ * @returns A {@link RelayerV1Fhevm} or {@link RelayerV2Fhevm} instance
+ * @throws {InvalidRelayerUrlError} If the URL is invalid
+ */
+export async function createRelayerFhevm(
+  config: Prettify<
+    {
+      relayerUrl: string;
+      defaultRelayerVersion: 1 | 2;
+    } & Partial<FhevmPkeConfigType>
+  >,
+): Promise<AbstractRelayerFhevm> {
+  const resolved = parseRelayerUrl(
     config.relayerUrl,
     config.defaultRelayerVersion,
   );
   if (!resolved) {
-    throw new Error(`Invalid relayerUrl: ${config.relayerUrl}`);
+    throw new InvalidRelayerUrlError({
+      message: `Invalid relayerUrl: ${config.relayerUrl}`,
+    });
   }
 
   if (resolved.version === 2) {
@@ -37,59 +48,8 @@ export async function createRelayerFhevm(config: {
       publicParams: config.publicParams,
     });
   } else {
-    throw new Error(`Invalid relayerUrl: ${config.relayerUrl}`);
+    throw new InvalidRelayerUrlError({
+      message: `Invalid relayerUrl: ${config.relayerUrl}`,
+    });
   }
-}
-
-export function createRelayerProvider(
-  relayerUrl: string,
-  defaultRelayerVersion: 1 | 2,
-): AbstractRelayerProvider {
-  const resolved = _resolveRelayerUrl(relayerUrl, defaultRelayerVersion);
-  if (!resolved) {
-    throw new Error(`Invalid relayerUrl: ${relayerUrl}`);
-  }
-
-  if (resolved.version === 2) {
-    return new RelayerV2Provider(resolved.url);
-  }
-
-  return new RelayerV1Provider(resolved.url);
-}
-
-function _resolveRelayerUrl(
-  value: unknown,
-  defaultVersion: 1 | 2,
-): { url: string; version: 1 | 2 } | null {
-  if (!value || typeof value !== 'string') {
-    return null;
-  }
-
-  const urlNoSlash = removeSuffix(value, '/');
-  if (!URL.canParse(urlNoSlash)) {
-    return null;
-  }
-
-  if (urlNoSlash.endsWith('/v1')) {
-    return {
-      url: value,
-      version: 1,
-    };
-  }
-
-  if (urlNoSlash.endsWith('/v2')) {
-    return {
-      url: value,
-      version: 2,
-    };
-  }
-
-  if (typeof defaultVersion !== 'number') {
-    throw new Error(`relayerUrl cannot be resolved. (value=${value})`);
-  }
-
-  return {
-    url: `${urlNoSlash}/v${defaultVersion}`,
-    version: defaultVersion,
-  };
 }

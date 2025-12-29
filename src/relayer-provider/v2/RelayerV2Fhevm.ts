@@ -1,21 +1,25 @@
-import { TFHECrsError } from '../../errors/TFHECrsError';
 import type { TFHEType } from '../../tfheType';
+import type {
+  FhevmPublicKeyType,
+  FhevmPkeCrsByCapacityType,
+  FhevmPkeConfigType,
+} from '../../types/relayer';
+import type { Prettify } from '../../utils/types';
+import { TFHEPkeParams } from '../../sdk/lowlevel/TFHEPkeParams';
 import { AbstractRelayerFhevm } from '../AbstractRelayerFhevm';
 import { RelayerV2Provider } from './RelayerV2Provider';
-import { RelayerV2PublicKey } from './RelayerV2PublicKey';
-import type { RelayerV2GetResponseKeyUrl } from './types/types';
 
 export class RelayerV2Fhevm extends AbstractRelayerFhevm {
-  private readonly _relayerProvider: RelayerV2Provider;
-  private readonly _relayerPublicKey: RelayerV2PublicKey;
+  readonly #relayerProvider: RelayerV2Provider;
+  readonly #tfhePkeParams: TFHEPkeParams;
 
   private constructor(params: {
     relayerProvider: RelayerV2Provider;
-    relayerPublicKey: RelayerV2PublicKey;
+    tfhePkeParams: TFHEPkeParams;
   }) {
     super();
-    this._relayerProvider = params.relayerProvider;
-    this._relayerPublicKey = params.relayerPublicKey;
+    this.#relayerProvider = params.relayerProvider;
+    this.#tfhePkeParams = params.tfhePkeParams;
   }
 
   public get version(): number {
@@ -26,93 +30,97 @@ export class RelayerV2Fhevm extends AbstractRelayerFhevm {
     return this.relayerProvider.url;
   }
 
-  public static async fromConfig(config: {
-    relayerVersionUrl: string;
-    publicKey?: unknown;
-    publicParams?: unknown;
-  }) {
+  /**
+   * Creates a RelayerV2Fhevm instance from configuration.
+   *
+   * @param config - Configuration object
+   * @param config.relayerVersionUrl - The relayer v2 API URL
+   * @param config.publicKey - Optional TFHE public key ({@link FhevmPublicKeyType}). Fetched from relayer if not provided.
+   * @param config.publicParams - Optional TFHE public params ({@link FhevmPkeCrsByCapacityType}). Fetched from relayer if not provided.
+   * @returns A new RelayerV2Fhevm instance
+   */
+  public static async fromConfig(
+    config: Prettify<
+      {
+        relayerVersionUrl: string;
+      } & Partial<FhevmPkeConfigType>
+    >,
+  ) {
     const relayerProvider = new RelayerV2Provider(config.relayerVersionUrl);
 
-    let relayerPublicKey = RelayerV2PublicKey.tryFromBytes(config);
-
+    let relayerPublicKey = TFHEPkeParams.tryFromFhevmPkeConfig(config);
     if (!relayerPublicKey) {
-      const response: RelayerV2GetResponseKeyUrl =
-        await relayerProvider.fetchGetKeyUrlV2();
-      relayerPublicKey = await RelayerV2PublicKey.fromRelayerResponse(response);
+      relayerPublicKey = await relayerProvider.fetchTFHEPkeParams();
     }
+
+    // Missing:
+    // Create FhevmHostChain
+    // const cfg = FhevmHostChainConfig.fromUserConfig(userConfig);
+    // const fhevmHostChain = await cfg.loadFromChain();
+    // const fhevmHostChain = await FhevmHostChainConfig.fromUserConfig(userConfig).loadFromChain();
 
     return new RelayerV2Fhevm({
       relayerProvider,
-      relayerPublicKey,
+      tfhePkeParams: relayerPublicKey,
     });
   }
 
   public get relayerProvider(): RelayerV2Provider {
-    return this._relayerProvider;
-  }
-
-  public override getPublicKeyInfo(): { id: string; srcUrl?: string } {
-    return {
-      id: this._relayerPublicKey.getTFHEPublicKey().id,
-      srcUrl: this._relayerPublicKey.getTFHEPublicKey().srcUrl,
-    };
+    return this.#relayerProvider;
   }
 
   public override getPublicKeyBytes(): {
-    publicKeyId: string;
-    publicKey: Uint8Array;
+    id: string;
+    bytes: Uint8Array;
   } {
-    return this._relayerPublicKey.getTFHEPublicKey().toPublicKeyBytes();
+    const pk = this.#tfhePkeParams.getTFHEPublicKey().toBytes();
+    return {
+      id: pk.id,
+      bytes: pk.bytes,
+    };
   }
 
   public override getPublicKeyWasm(): {
-    publicKeyId: string;
-    publicKey: TFHEType['TfheCompactPublicKey'];
-  } {
-    return this._relayerPublicKey.getTFHEPublicKey().toPublicKeyWasm();
-  }
-
-  public override getPublicParamsBytesForBits(bits: number): {
-    publicParams: Uint8Array;
-    publicParamsId: string;
-  } {
-    if (bits === undefined) {
-      throw new TFHECrsError({ message: `Missing PublicParams bits format` });
-    }
-    if (bits !== 2048) {
-      throw new TFHECrsError({
-        message: `Unsupported PublicParams bits format '${bits}'`,
-      });
-    }
-    return this._relayerPublicKey.getTFHECrs().toPublicParams2048Bytes()[
-      '2048'
-    ];
-  }
-
-  public override getPublicParamsWasmForBits(bits: number): {
-    publicParamsId: string;
-    publicParams: TFHEType['CompactPkeCrs'];
-  } {
-    if (bits === undefined) {
-      throw new TFHECrsError({ message: `Missing PublicParams bits format` });
-    }
-    if (bits !== 2048) {
-      throw new TFHECrsError({
-        message: `Unsupported PublicParams bits format '${bits}'`,
-      });
-    }
-    return this._relayerPublicKey.getTFHECrs().toPublicParams2048Wasm()['2048'];
-  }
-
-  public override getPublicParamsInfo(): {
     id: string;
-    bits: number;
-    srcUrl?: string;
+    wasm: TFHEType['TfheCompactPublicKey'];
   } {
     return {
-      id: this._relayerPublicKey.getTFHECrs().id,
-      bits: this._relayerPublicKey.getTFHECrs().bits,
-      srcUrl: this._relayerPublicKey.getTFHECrs().srcUrl,
+      id: this.#tfhePkeParams.getTFHEPublicKey().id,
+      wasm: this.#tfhePkeParams.getTFHEPublicKey().tfheCompactPublicKeyWasm,
+    };
+  }
+
+  public override supportsCapacity(capacity: number): boolean {
+    return this.#tfhePkeParams.getTFHEPkeCrs().supportsCapacity(capacity);
+  }
+
+  public override getPkeCrsBytesForCapacity<C extends number>(
+    capacity: C,
+  ): {
+    capacity: C;
+    id: string;
+    bytes: Uint8Array;
+  } {
+    const b = this.#tfhePkeParams.getTFHEPkeCrs().getBytesForCapacity(capacity);
+    return {
+      capacity,
+      id: b.id,
+      bytes: b.bytes,
+    };
+  }
+
+  public override getPkeCrsWasmForCapacity<C extends number>(
+    capacity: C,
+  ): {
+    capacity: C;
+    id: string;
+    wasm: TFHEType['CompactPkeCrs'];
+  } {
+    const w = this.#tfhePkeParams.getTFHEPkeCrs().getWasmForCapacity(capacity);
+    return {
+      capacity,
+      id: w.id,
+      wasm: w.wasm,
     };
   }
 }

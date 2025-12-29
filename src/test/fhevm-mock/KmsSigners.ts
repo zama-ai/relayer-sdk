@@ -1,15 +1,15 @@
+import type {
+  KmsDelegateEIP712Type,
+  KmsEIP712Params,
+  KmsEIP712Type,
+} from '../../sdk/kms/types';
 import type { Prettify } from '../../utils/types';
 import type { BytesHex } from '../../types/primitives';
 
 import { Wordlist } from 'ethers';
 import { KmsSigner } from './KmsSigner';
 import { EIP712Signers } from './EIP712Signers';
-import {
-  KmsEIP712,
-  type KmsEIP712Params,
-  type KmsDelegateEIP712Type,
-  type KmsEIP712Type,
-} from '../../sdk/kms/KmsEIP712';
+import { KmsEIP712 } from '../../sdk/kms/KmsEIP712';
 
 ////////////////////////////////////////////////////////////////////////////////
 // KmsSigners (Multi-sig for KMS)

@@ -1,15 +1,15 @@
 import { RelayerErrorBase } from './RelayerErrorBase';
 import { ensureError } from './utils';
 
-export type TFHECrsErrorType = TFHECrsError & {
-  name: 'TFHECrsError';
+export type EncryptionErrorType = EncryptionError & {
+  name: 'EncryptionError';
 };
 
-export class TFHECrsError extends RelayerErrorBase {
+export class EncryptionError extends RelayerErrorBase {
   constructor({ message, cause }: { message: string; cause?: unknown }) {
     super({
       message,
-      name: 'TFHECrsError',
+      name: 'EncryptionError',
       ...(cause ? { cause: ensureError(cause) } : {}),
     });
   }
