@@ -10,6 +10,15 @@ export type Uint64 = UintNumber | UintBigInt;
 export type Uint128 = UintNumber | UintBigInt;
 export type Uint256 = UintNumber | UintBigInt;
 
+export type UintTypeName =
+  | 'Uint'
+  | 'Uint8'
+  | 'Uint16'
+  | 'Uint32'
+  | 'Uint64'
+  | 'Uint128'
+  | 'Uint256';
+
 export type Uint64BigInt = UintBigInt;
 
 // length is odd or even
@@ -32,6 +41,18 @@ export type Bytes32HexNo0x = string;
 
 export type Bytes65Hex = `0x${string}`;
 export type Bytes65HexNo0x = string;
+
+export type BytesTypeName = 'Bytes' | 'Bytes8' | 'Bytes32' | 'Bytes65';
+export type BytesHexTypeName =
+  | 'BytesHex'
+  | 'Bytes8Hex'
+  | 'Bytes32Hex'
+  | 'Bytes65Hex';
+export type BytesHexNo0xTypeName =
+  | 'BytesHexNo0x'
+  | 'Bytes8HexNo0x'
+  | 'Bytes32HexNo0x'
+  | 'Bytes65HexNo0x';
 
 export type ChecksummedAddress = `0x${string}`;
 
