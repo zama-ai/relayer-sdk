@@ -1611,7 +1611,9 @@ describe('toBytes32HexArray', () => {
 
   it('throws for invalid Bytes32Hex string', () => {
     expect(() => toBytes32HexArray(['0xdeadbeef'])).toThrow(InvalidTypeError);
-    expect(() => toBytes32HexArray(['not-hex' as any])).toThrow(InvalidTypeError);
+    expect(() => toBytes32HexArray(['not-hex' as any])).toThrow(
+      InvalidTypeError,
+    );
     expect(() => toBytes32HexArray([validBytes32Hex, '0xinvalid'])).toThrow(
       InvalidTypeError,
     );

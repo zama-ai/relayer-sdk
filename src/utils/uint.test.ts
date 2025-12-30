@@ -1324,7 +1324,10 @@ describe('uintToHex', () => {
     [BigInt(0), '0x0'],
     [BigInt(255), '0xff'],
     [MAX_UINT64, '0xffffffffffffffff'],
-    [MAX_UINT256, '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'],
+    [
+      MAX_UINT256,
+      '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+    ],
   ];
 
   it('converts uint to hex string with 0x prefix (no padding)', () => {

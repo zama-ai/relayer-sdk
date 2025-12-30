@@ -54,25 +54,22 @@ describe('CoprocessorSignersVerifier', () => {
 
   describe('fromAddresses', () => {
     it('creates instance with valid params', () => {
-      const verifier = CoprocessorSignersVerifier.fromAddresses(
-        createValidParams(),
-      );
+      const verifier =
+        CoprocessorSignersVerifier.fromAddresses(createValidParams());
 
       expect(verifier).toBeInstanceOf(CoprocessorSignersVerifier);
     });
 
     it('sets count correctly', () => {
-      const verifier = CoprocessorSignersVerifier.fromAddresses(
-        createValidParams(),
-      );
+      const verifier =
+        CoprocessorSignersVerifier.fromAddresses(createValidParams());
 
       expect(verifier.count).toBe(2);
     });
 
     it('returns addresses correctly', () => {
-      const verifier = CoprocessorSignersVerifier.fromAddresses(
-        createValidParams(),
-      );
+      const verifier =
+        CoprocessorSignersVerifier.fromAddresses(createValidParams());
 
       expect(verifier.addresses).toEqual([VALID_SIGNER_1, VALID_SIGNER_2]);
     });
@@ -85,17 +82,15 @@ describe('CoprocessorSignersVerifier', () => {
     });
 
     it('sets gatewayChainId correctly', () => {
-      const verifier = CoprocessorSignersVerifier.fromAddresses(
-        createValidParams(),
-      );
+      const verifier =
+        CoprocessorSignersVerifier.fromAddresses(createValidParams());
 
       expect(verifier.gatewayChainId).toBe(VALID_GATEWAY_CHAIN_ID);
     });
 
     it('sets verifyingContractAddressInputVerification correctly', () => {
-      const verifier = CoprocessorSignersVerifier.fromAddresses(
-        createValidParams(),
-      );
+      const verifier =
+        CoprocessorSignersVerifier.fromAddresses(createValidParams());
 
       expect(verifier.verifyingContractAddressInputVerification).toBe(
         VALID_VERIFYING_CONTRACT,
@@ -195,9 +190,8 @@ describe('CoprocessorSignersVerifier', () => {
     });
 
     it('returned addresses array is frozen', () => {
-      const verifier = CoprocessorSignersVerifier.fromAddresses(
-        createValidParams(),
-      );
+      const verifier =
+        CoprocessorSignersVerifier.fromAddresses(createValidParams());
 
       expect(Object.isFrozen(verifier.addresses)).toBe(true);
     });

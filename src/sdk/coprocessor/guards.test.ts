@@ -77,9 +77,9 @@ describe('assertCoprocessorEIP712DomainType', () => {
         verifyingContract: VALID_CHECKSUMMED_ADDRESS,
       };
 
-      expect(() =>
-        assertCoprocessorEIP712DomainType(domain, 'domain'),
-      ).toThrow(InvalidPropertyError);
+      expect(() => assertCoprocessorEIP712DomainType(domain, 'domain')).toThrow(
+        InvalidPropertyError,
+      );
     });
 
     it('throws for wrong name value', () => {
@@ -88,9 +88,9 @@ describe('assertCoprocessorEIP712DomainType', () => {
         name: 'WrongName',
       };
 
-      expect(() =>
-        assertCoprocessorEIP712DomainType(domain, 'domain'),
-      ).toThrow(InvalidPropertyError);
+      expect(() => assertCoprocessorEIP712DomainType(domain, 'domain')).toThrow(
+        InvalidPropertyError,
+      );
     });
 
     it('throws for non-string name', () => {
@@ -99,9 +99,9 @@ describe('assertCoprocessorEIP712DomainType', () => {
         name: 123,
       };
 
-      expect(() =>
-        assertCoprocessorEIP712DomainType(domain, 'domain'),
-      ).toThrow(InvalidPropertyError);
+      expect(() => assertCoprocessorEIP712DomainType(domain, 'domain')).toThrow(
+        InvalidPropertyError,
+      );
     });
 
     it('throws for null name', () => {
@@ -110,9 +110,9 @@ describe('assertCoprocessorEIP712DomainType', () => {
         name: null,
       };
 
-      expect(() =>
-        assertCoprocessorEIP712DomainType(domain, 'domain'),
-      ).toThrow(InvalidPropertyError);
+      expect(() => assertCoprocessorEIP712DomainType(domain, 'domain')).toThrow(
+        InvalidPropertyError,
+      );
     });
   });
 
@@ -128,9 +128,9 @@ describe('assertCoprocessorEIP712DomainType', () => {
         verifyingContract: VALID_CHECKSUMMED_ADDRESS,
       };
 
-      expect(() =>
-        assertCoprocessorEIP712DomainType(domain, 'domain'),
-      ).toThrow(InvalidPropertyError);
+      expect(() => assertCoprocessorEIP712DomainType(domain, 'domain')).toThrow(
+        InvalidPropertyError,
+      );
     });
 
     it('throws for wrong version value', () => {
@@ -139,9 +139,9 @@ describe('assertCoprocessorEIP712DomainType', () => {
         version: '2',
       };
 
-      expect(() =>
-        assertCoprocessorEIP712DomainType(domain, 'domain'),
-      ).toThrow(InvalidPropertyError);
+      expect(() => assertCoprocessorEIP712DomainType(domain, 'domain')).toThrow(
+        InvalidPropertyError,
+      );
     });
 
     it('throws for non-string version', () => {
@@ -150,9 +150,9 @@ describe('assertCoprocessorEIP712DomainType', () => {
         version: 1,
       };
 
-      expect(() =>
-        assertCoprocessorEIP712DomainType(domain, 'domain'),
-      ).toThrow(InvalidPropertyError);
+      expect(() => assertCoprocessorEIP712DomainType(domain, 'domain')).toThrow(
+        InvalidPropertyError,
+      );
     });
   });
 
@@ -168,9 +168,9 @@ describe('assertCoprocessorEIP712DomainType', () => {
         verifyingContract: VALID_CHECKSUMMED_ADDRESS,
       };
 
-      expect(() =>
-        assertCoprocessorEIP712DomainType(domain, 'domain'),
-      ).toThrow(InvalidPropertyError);
+      expect(() => assertCoprocessorEIP712DomainType(domain, 'domain')).toThrow(
+        InvalidPropertyError,
+      );
     });
 
     it('throws for negative chainId', () => {
@@ -179,9 +179,9 @@ describe('assertCoprocessorEIP712DomainType', () => {
         chainId: -1,
       };
 
-      expect(() =>
-        assertCoprocessorEIP712DomainType(domain, 'domain'),
-      ).toThrow(InvalidPropertyError);
+      expect(() => assertCoprocessorEIP712DomainType(domain, 'domain')).toThrow(
+        InvalidPropertyError,
+      );
     });
 
     it('throws for string chainId', () => {
@@ -190,9 +190,9 @@ describe('assertCoprocessorEIP712DomainType', () => {
         chainId: '11155111',
       };
 
-      expect(() =>
-        assertCoprocessorEIP712DomainType(domain, 'domain'),
-      ).toThrow(InvalidPropertyError);
+      expect(() => assertCoprocessorEIP712DomainType(domain, 'domain')).toThrow(
+        InvalidPropertyError,
+      );
     });
 
     it('throws for null chainId', () => {
@@ -201,9 +201,9 @@ describe('assertCoprocessorEIP712DomainType', () => {
         chainId: null,
       };
 
-      expect(() =>
-        assertCoprocessorEIP712DomainType(domain, 'domain'),
-      ).toThrow(InvalidPropertyError);
+      expect(() => assertCoprocessorEIP712DomainType(domain, 'domain')).toThrow(
+        InvalidPropertyError,
+      );
     });
   });
 
@@ -219,9 +219,9 @@ describe('assertCoprocessorEIP712DomainType', () => {
         chainId: 11155111,
       };
 
-      expect(() =>
-        assertCoprocessorEIP712DomainType(domain, 'domain'),
-      ).toThrow(InvalidPropertyError);
+      expect(() => assertCoprocessorEIP712DomainType(domain, 'domain')).toThrow(
+        InvalidPropertyError,
+      );
     });
 
     it('throws for invalid address format', () => {
@@ -230,9 +230,9 @@ describe('assertCoprocessorEIP712DomainType', () => {
         verifyingContract: '0xinvalid',
       };
 
-      expect(() =>
-        assertCoprocessorEIP712DomainType(domain, 'domain'),
-      ).toThrow(InvalidPropertyError);
+      expect(() => assertCoprocessorEIP712DomainType(domain, 'domain')).toThrow(
+        InvalidPropertyError,
+      );
     });
 
     it('throws for lowercase address (not checksummed)', () => {
@@ -241,9 +241,9 @@ describe('assertCoprocessorEIP712DomainType', () => {
         verifyingContract: '0xf0ffdc93b7e186bc2f8cb3daa75d86d1930a433d',
       };
 
-      expect(() =>
-        assertCoprocessorEIP712DomainType(domain, 'domain'),
-      ).toThrow(InvalidPropertyError);
+      expect(() => assertCoprocessorEIP712DomainType(domain, 'domain')).toThrow(
+        InvalidPropertyError,
+      );
     });
 
     it('throws for non-string verifyingContract', () => {
@@ -252,9 +252,9 @@ describe('assertCoprocessorEIP712DomainType', () => {
         verifyingContract: 12345,
       };
 
-      expect(() =>
-        assertCoprocessorEIP712DomainType(domain, 'domain'),
-      ).toThrow(InvalidPropertyError);
+      expect(() => assertCoprocessorEIP712DomainType(domain, 'domain')).toThrow(
+        InvalidPropertyError,
+      );
     });
   });
 
@@ -273,9 +273,9 @@ describe('assertCoprocessorEIP712DomainType', () => {
     ];
 
     it.each(invalidInputs)('throws for %s input', (_name, input) => {
-      expect(() =>
-        assertCoprocessorEIP712DomainType(input, 'domain'),
-      ).toThrow(InvalidPropertyError);
+      expect(() => assertCoprocessorEIP712DomainType(input, 'domain')).toThrow(
+        InvalidPropertyError,
+      );
     });
   });
 
