@@ -15,6 +15,7 @@ import { publicDecryptCommand } from './commands/public-decrypt.js';
 // npx . input-proof --contract-address 0xb2a8A265dD5A27026693Aa6cE87Fb21Ac197b6b9 --user-address 0x37AC010c1c566696326813b840319B58Bb5840E4 --values true:ebool
 // TODO: be able to pass a full configuration, or simply the chain-id/name, or relayer-url
 addCommonOptions(program.command('input-proof'))
+  .description('Generate an input proof for the given values')
   .requiredOption('--values <value:type-name...>', 'List of values')
   .action(async (options) => {
     await inputProofCommand(options);
@@ -25,6 +26,7 @@ addCommonOptions(program.command('input-proof'))
 ////////////////////////////////////////////////////////////////////////////////
 
 addCommonOptions(program.command('public-decrypt'))
+  .description('Execute a public decryption for the given handles')
   .requiredOption('--handles <handles...>', 'List of handles to decrypt')
   .action(async (options) => {
     await publicDecryptCommand(options);
@@ -35,6 +37,7 @@ addCommonOptions(program.command('public-decrypt'))
 ////////////////////////////////////////////////////////////////////////////////
 
 addCommonOptions(program.command('user-decrypt'))
+  .description('Execute a user decryption for the given handle')
   .requiredOption('--handle <handle>', 'The handle to decrypt')
   .action(async (options) => {
     if (!options.contractAddress) {
@@ -50,6 +53,7 @@ addCommonOptions(program.command('user-decrypt'))
 ////////////////////////////////////////////////////////////////////////////////
 
 addCommonOptions(program.command('handle'))
+  .description('Parse and display handle information')
   .argument('<handles...>', 'List of handles to parse')
   .action(async (handles, options) => {
     const mod = await import('./commands/handle.js');
@@ -61,9 +65,11 @@ addCommonOptions(program.command('handle'))
 ////////////////////////////////////////////////////////////////////////////////
 
 // npx . config --contract-address 0xb2a8A265dD5A27026693Aa6cE87Fb21Ac197b6b9 --user-address 0x37AC010c1c566696326813b840319B58Bb5840E4
-addCommonOptions(program.command('config')).action(async (options) => {
-  await configCommand(options);
-});
+addCommonOptions(program.command('config'))
+  .description('Display the selected network configuration')
+  .action(async (options) => {
+    await configCommand(options);
+  });
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -75,10 +81,9 @@ const pubkey = program.command('pubkey').description('Public key operations');
 ////////////////////////////////////////////////////////////////////////////////
 
 // npx . pubkey info --network testnet
-pubkey
-  .command('info')
-  .option('--network <network name>', 'testnet|devnet|mainnet')
+addCommonOptions(pubkey.command('info'))
   .description('Display public key information')
+  .option('--key-urls', 'Displays Relayer public key encryption urls.')
   .action(async (options) => {
     const mod = await import('./commands/pubkey-info.js');
     await mod.pubkeyInfoCommand(options);
@@ -146,7 +151,7 @@ addCommonOptions(acl.command('address'))
 
 // npx . acl is-publicly-decryptable --handle 0x...
 addCommonOptions(acl.command('is-publicly-decryptable'))
-  .description('Display ACL contract address')
+  .description('Check if a handle is publicly decryptable')
   .requiredOption('--handle <handle>', 'The handle as bytes 32 hex')
   .action(async (options) => {
     const mod = await import('./commands/acl-is-publicly-decryptable.js');
@@ -161,7 +166,7 @@ const test = program.command('test').description('Test operations');
 
 // npx . test address
 addCommonOptions(test.command('address'))
-  .description('Display FHETest contract address')
+  .description('Display FHETest.sol contract address')
   .action(async (options) => {
     const mod = await import('./commands/test/test-address.js');
     await mod.testFHETestAddressCommand(options);
@@ -169,7 +174,7 @@ addCommonOptions(test.command('address'))
 
 // npx . test get --type euint32
 addCommonOptions(test.command('get'))
-  .description('Call view function: FHETest.get<Type>')
+  .description('Call the view function: FHETest.get<Type>()')
   .requiredOption(
     '--type <ebool|euint8|euint16|euint32|euint64|euint128|euint256|eaddress>',
     'The encrypted type',
@@ -210,7 +215,7 @@ addCommonOptions(test.command('random'))
 // npx . test public-decrypt --type euint32 --network testnet
 addCommonOptions(test.command('public-decrypt'))
   .description(
-    'Performs a public decryption of the handle returned by FHETest.get<Type>()',
+    'Execute a public decryption of the handle returned by FHETest.get<Type>()',
   )
   .requiredOption(
     '--type <ebool|euint8|euint16|euint32|euint64|euint128|euint256|eaddress>',
@@ -224,7 +229,7 @@ addCommonOptions(test.command('public-decrypt'))
 // npx . test user-decrypt --type euint32 --network testnet
 addCommonOptions(test.command('user-decrypt'))
   .description(
-    'Performs a user decryption of the handle returned by FHETest.get<Type>()',
+    'Execute a user decryption of the handle returned by FHETest.get<Type>()',
   )
   .requiredOption(
     '--type <ebool|euint8|euint16|euint32|euint64|euint128|euint256|eaddress>',
@@ -238,7 +243,7 @@ addCommonOptions(test.command('user-decrypt'))
 // npx . test add --type euint32 --value 123 --network testnet
 addCommonOptions(test.command('add'))
   .description(
-    'Performs an input-proof then executes a transaction to call FHETest.add<Type>()',
+    'Generate an input proof and execute a transaction calling FHETest.add<Type>()',
   )
   .requiredOption(
     '--type <euint8|euint16|euint32|euint64|euint128>',
