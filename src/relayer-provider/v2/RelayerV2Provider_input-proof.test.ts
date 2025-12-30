@@ -42,6 +42,7 @@ import type { EncryptionBits } from '../../types/primitives';
 // Testnet:
 // ========
 //
+// npx jest --config jest.testnet.config.cjs --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_input-proof.test.ts
 // npx jest --config jest.testnet.config.cjs --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_input-proof.test.ts --testNamePattern=xxx
 //
 ////////////////////////////////////////////////////////////////////////////////

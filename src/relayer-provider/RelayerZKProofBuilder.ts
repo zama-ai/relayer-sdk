@@ -4,7 +4,7 @@ import type {
   Bytes32,
   ChecksummedAddress,
   EncryptionBits,
-  ZKProof,
+  ZKProofType,
 } from '../types/primitives';
 import { TFHEZKProofBuilder } from '../sdk/lowlevel/TFHEZKProofBuilder';
 import { TFHEPkeParams } from '../sdk/lowlevel/TFHEPkeParams';
@@ -63,7 +63,7 @@ export class RelayerZKProofBuilder {
   public getBits(): EncryptionBits[] {
     return this.#builder.getBits();
   }
-  public generateZKProof(): ZKProof {
+  public generateZKProof(): ZKProofType {
     return this.#builder.generateZKProof({
       contractAddress: this.#contractAddress,
       userAddress: this.#userAddress,

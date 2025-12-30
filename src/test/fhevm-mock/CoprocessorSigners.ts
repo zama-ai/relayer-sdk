@@ -1,5 +1,5 @@
 import type {
-  CoprocessorEIP712MessageType,
+  CoprocessorEIP712MessageHexType,
   CoprocessorEIP712Params,
   CoprocessorEIP712Type,
 } from '../../sdk/coprocessor/types';
@@ -113,11 +113,11 @@ export class CoprocessorSigners extends EIP712Signers<
   }
 
   public async computeSignatures(
-    params: CoprocessorEIP712MessageType,
+    params: CoprocessorEIP712MessageHexType,
     count?: number,
   ): Promise<{
-    handles: Bytes32Hex[];
-    signatures: Bytes65Hex[];
+    readonly handles: readonly Bytes32Hex[];
+    readonly signatures: readonly Bytes65Hex[];
   }> {
     // 1. Create the Coprocessor EIP712
     const eip712 = this._coprocessorEIP712.createEIP712(params);
@@ -132,11 +132,11 @@ export class CoprocessorSigners extends EIP712Signers<
   }
 
   public async computeSignaturesNo0x(
-    params: CoprocessorEIP712MessageType,
+    params: CoprocessorEIP712MessageHexType,
     count?: number,
   ): Promise<{
-    handles: Bytes32HexNo0x[];
-    signatures: Bytes65HexNo0x[];
+    readonly handles: readonly Bytes32HexNo0x[];
+    readonly signatures: readonly Bytes65HexNo0x[];
   }> {
     const res = await this.computeSignatures(params, count);
     return {

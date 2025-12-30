@@ -1,4 +1,5 @@
 import type { TFHEPkeUrlsType } from '../sdk/lowlevel/types';
+import type { BytesHex } from '../types/primitives';
 import type {
   FhevmInstanceOptions,
   RelayerGetOperation,
@@ -16,6 +17,7 @@ import {
   assertRecordBytesHexNo0xArrayProperty,
   assertRecordBytesHexNo0xProperty,
   assertRecordBytesHexProperty,
+  bytesToHexNo0x,
 } from '../utils/bytes';
 import { assertRecordStringProperty } from '../utils/string';
 import { ensureError } from '../errors/utils';
@@ -35,6 +37,8 @@ import {
   toRelayerGetResponseKeyUrlSnakeCase,
 } from './AbstractRelayerGetResponseKeyUrl';
 import { RelayerGetResponseKeyUrlSnakeCase } from './common-types';
+import { ZKProof } from '../sdk/ZKProof';
+import { uintToHex } from '../utils/uint';
 
 export type RelayerProviderFetchOptions<T> = {
   timeout?: number;
@@ -143,6 +147,24 @@ export abstract class AbstractRelayerProvider {
     }
 
     return responseSnakeCase;
+  }
+
+  public fetchPostInputProofWithZKProof(
+    params: { zkProof: ZKProof; extraData: BytesHex },
+    options?: FhevmInstanceOptions & RelayerProviderFetchOptions<any>,
+  ): Promise<RelayerInputProofResult> {
+    return this.fetchPostInputProof(
+      {
+        contractAddress: params.zkProof.contractAddress,
+        userAddress: params.zkProof.userAddress,
+        ciphertextWithInputVerification: bytesToHexNo0x(
+          params.zkProof.ciphertextWithZKProof,
+        ),
+        contractChainId: uintToHex(params.zkProof.chainId),
+        extraData: params.extraData,
+      },
+      options,
+    );
   }
 
   public abstract fetchPostInputProof(

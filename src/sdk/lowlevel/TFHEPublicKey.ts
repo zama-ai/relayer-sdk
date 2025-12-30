@@ -69,7 +69,7 @@ export class TFHEPublicKey {
         'bytesHex' satisfies keyof TFHEPublicKeyBytesHexType,
         'arg',
       );
-      bytes = hexToBytesFaster(params.bytesHex, true /* strict */);
+      bytes = hexToBytesFaster(params.bytesHex, { strict: true });
     } catch (e) {
       throw new TFHEError({
         message: 'Invalid public key (deserialization failed)',

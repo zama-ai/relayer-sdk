@@ -3,17 +3,19 @@ import path from 'path';
 import { homedir } from 'os';
 import { TFHEPkeCrs, TFHEPublicKey } from '../../lib/internal.js';
 import { logCLI } from '../utils.js';
+import { getFhevmPubKeyCacheInfo } from '../pubkeyCache.js';
 
 // npx . pubkey info
 export async function pubkeyInfoCommand(options) {
-  const cacheDir = path.join(homedir(), '.fhevm');
+  const info = getFhevmPubKeyCacheInfo(options.network ?? 'devnet');
 
-  const pubKeyFile = path.join(cacheDir, 'pubkey.json');
-  const pubKeyParams2048File = path.join(cacheDir, 'pubkey-params-2048.json');
+  const cacheDir = info.cacheDir;
+  const pubKeyFile = info.pubKeyFile;
+  const pkeCrs2048File = info.pubKeyParams2048File;
 
-  logCLI(`cache directory       : ${cacheDir}`, options);
-  logCLI(`pubKey file           : ${pubKeyFile}`, options);
-  logCLI(`pubKeyParams2048 file : ${pubKeyParams2048File}`, options);
+  logCLI(`cache directory : ${cacheDir}`, options);
+  logCLI(`pubKey file     : ${pubKeyFile}`, options);
+  logCLI(`pkeCrs2048 file : ${pkeCrs2048File}`, options);
 
   if (fs.existsSync(pubKeyFile)) {
     logCLI(
@@ -30,17 +32,12 @@ export async function pubkeyInfoCommand(options) {
     logCLI(`❌ pubKey file size : file does not exist`, options);
   }
 
-  if (fs.existsSync(pubKeyParams2048File)) {
+  if (fs.existsSync(pkeCrs2048File)) {
     logCLI(
-      `✅ pubKeyParams2048 file size : ${fs.statSync(pubKeyParams2048File).size} bytes`,
+      `✅ pkeCrs2048 file size : ${fs.statSync(pkeCrs2048File).size} bytes`,
       options,
     );
-    const crs = TFHEPkeCrs.fromJSON(
-      JSON.parse(fs.readFileSync(pubKeyParams2048File, 'utf-8')),
-    );
-    logCLI(`✅ pubKeyParams2048 bits : ${crs.bits}`, options);
-    logCLI(`✅ pubKeyParams2048 id   : ${crs.id}`, options);
   } else {
-    logCLI(`❌ pubKeyParams2048 file size : file does not exist`, options);
+    logCLI(`❌ pkeCrs2048 file size : file does not exist`, options);
   }
 }

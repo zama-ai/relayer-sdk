@@ -25,7 +25,8 @@ import { assertIsUint256 } from '../../utils/uint';
 
 export class CoprocessorEIP712 {
   public readonly domain: CoprocessorEIP712DomainType;
-  private static types: CoprocessorEIP712TypesType = {
+
+  static #types: CoprocessorEIP712TypesType = {
     CiphertextVerification: [
       { name: 'ctHandles', type: 'bytes32[]' },
       { name: 'userAddress', type: 'address' },
@@ -36,13 +37,13 @@ export class CoprocessorEIP712 {
   } as const;
 
   static {
-    Object.freeze(CoprocessorEIP712.types);
-    Object.freeze(CoprocessorEIP712.types.CiphertextVerification);
+    Object.freeze(CoprocessorEIP712.#types);
+    Object.freeze(CoprocessorEIP712.#types.CiphertextVerification);
   }
 
   constructor(params: {
-    gatewayChainId: number;
-    verifyingContractAddressInputVerification: string;
+    readonly gatewayChainId: number;
+    readonly verifyingContractAddressInputVerification: string;
   }) {
     // The coprocessor eip712 does not require a uint32 contrary to kms.
     assertIsUint256(params.gatewayChainId);
@@ -67,7 +68,7 @@ export class CoprocessorEIP712 {
   }
 
   public get types(): CoprocessorEIP712TypesType {
-    return CoprocessorEIP712.types;
+    return CoprocessorEIP712.#types;
   }
 
   public createEIP712({
@@ -127,8 +128,8 @@ export class CoprocessorEIP712 {
     signatures,
     message,
   }: {
-    signatures: Bytes65Hex[];
-    message: CoprocessorEIP712MessageType;
+    readonly signatures: readonly Bytes65Hex[];
+    readonly message: CoprocessorEIP712MessageType;
   }) {
     assertIsBytes65HexArray(signatures);
     const recoveredAddresses = signatures.map((signature: BytesHex) => {

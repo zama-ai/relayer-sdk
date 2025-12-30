@@ -6,7 +6,7 @@ import type {
   RelayerV2UserDecryptOptions,
 } from './relayer-provider/v2/types/types';
 import type { EIP712, EIP712Type } from './sdk/keypair';
-import type { BytesHex, ZKProof } from './types/primitives';
+import type { BytesHex, ZKProofType } from './types/primitives';
 import type {
   Auth,
   ApiKeyCookie,
@@ -37,6 +37,8 @@ import {
 import { publicDecryptRequest } from './relayer/publicDecrypt';
 import { createRelayerFhevm } from './relayer-provider/createRelayerFhevm';
 import { generateKeypair, createEIP712 } from './sdk/keypair';
+import { ZKProof } from './sdk/ZKProof';
+import { CoprocessorSignersVerifier } from './sdk/coprocessor/CoprocessorSignersVerifier';
 
 // Disable global use of fetch-retry
 // Make sure `workerHelpers.js` behaviour is consistant and tfhe WASM module is
@@ -64,7 +66,7 @@ export type {
   ClearValues,
   FhevmInstanceConfig,
   FhevmInstanceOptions,
-  ZKProof,
+  ZKProofType,
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -77,7 +79,7 @@ export type FhevmInstance = {
     userAddress: string,
   ) => RelayerEncryptedInput;
   requestZKProofVerification: (
-    zkProof: ZKProof,
+    zkProof: ZKProofType,
     options?: RelayerV2InputProofOptions,
   ) => Promise<{
     handles: Uint8Array[];
@@ -241,7 +243,7 @@ export const createInstance = async (
       defaultOptions: auth ? { auth } : undefined,
     }),
     requestZKProofVerification: (
-      zkProof: ZKProof,
+      zkProof: ZKProofType,
       options?: RelayerV2InputProofOptions,
     ) => {
       if (
@@ -251,19 +253,17 @@ export const createInstance = async (
         throw new Error('Invalid ZKProof');
       }
       return requestCiphertextWithZKProofVerification({
-        ciphertext: zkProof.ciphertextWithZkProof, // ZKProof
-        aclContractAddress: aclContractAddress, // ZKProof
-        contractAddress: zkProof.contractAddress, // ZKProof
-        userAddress: zkProof.userAddress, // ZKProof
-        chainId, // ZKProof
-        bits: zkProof.bits, // ZKProof
-        gatewayChainId,
-        coprocessorSigners,
-        extraData: '0x00' as BytesHex,
-        thresholdCoprocessorSigners,
-        relayerProvider: relayerFhevm.relayerProvider,
-        verifyingContractAddressInputVerification:
+        zkProof: ZKProof.fromComponents(zkProof, {
+          copy: false /* the ZKProof behaves as a validator and is not meant to be shared */,
+        }),
+        coprocessorSignersVerifier: CoprocessorSignersVerifier.fromAddresses({
+          coprocessorSignersAddresses: coprocessorSigners,
+          gatewayChainId,
+          threshold: thresholdCoprocessorSigners,
           verifyingContractAddressInputVerification,
+        }),
+        extraData: '0x00' as BytesHex,
+        relayerProvider: relayerFhevm.relayerProvider,
         options,
       });
     },

@@ -43,6 +43,7 @@ export class RelayerV1Provider extends AbstractRelayerProvider {
       }
     }
     */
+
     const json = await fetchRelayerV1Post(
       'INPUT_PROOF',
       this.inputProof,

@@ -10,17 +10,26 @@ export type Uint64 = UintNumber | UintBigInt;
 export type Uint128 = UintNumber | UintBigInt;
 export type Uint256 = UintNumber | UintBigInt;
 
+export type Uint64BigInt = UintBigInt;
+
+// length is odd or even
+export type Hex = `0x${string}`;
+
 export type Bytes = Uint8Array;
 export type Bytes8 = Uint8Array;
 export type Bytes32 = Uint8Array;
+export type Bytes65 = Uint8Array;
+
+// Bytes??Hex length is even
 export type BytesHex = `0x${string}`;
 export type BytesHexNo0x = string;
+
 export type Bytes21Hex = `0x${string}`;
+export type Bytes21HexNo0x = string;
+
 export type Bytes32Hex = `0x${string}`;
-export type Bytes = Uint8Array;
-export type Bytes32 = Uint8Array;
-export type Bytes65 = Uint8Array;
 export type Bytes32HexNo0x = string;
+
 export type Bytes65Hex = `0x${string}`;
 export type Bytes65HexNo0x = string;
 
@@ -97,16 +106,25 @@ export type FheTypeIdToEncryptionBitwidthMap = {
   [K in keyof FheTypeEncryptionBitwidthToIdMap as FheTypeEncryptionBitwidthToIdMap[K]]: K;
 };
 
-export type EncryptionBits = Prettify<keyof FheTypeEncryptionBitwidthToIdMap>;
+export type EncryptionBits = FheTypeEncryptionBitwidth;
 
-export type ZKProof = {
-  chainId: bigint;
-  aclContractAddress: ChecksummedAddress;
-  contractAddress: ChecksummedAddress;
-  userAddress: ChecksummedAddress;
-  ciphertextWithZkProof: Uint8Array;
-  bits: EncryptionBits[];
-};
+export interface ZKProofLike {
+  readonly chainId: bigint | number;
+  readonly aclContractAddress: string;
+  readonly contractAddress: string;
+  readonly userAddress: string;
+  readonly ciphertextWithZKProof: Uint8Array | string;
+  readonly encryptionBits: readonly number[];
+}
+
+export interface ZKProofType extends ZKProofLike {
+  readonly chainId: Uint64BigInt;
+  readonly aclContractAddress: ChecksummedAddress;
+  readonly contractAddress: ChecksummedAddress;
+  readonly userAddress: ChecksummedAddress;
+  readonly ciphertextWithZKProof: Bytes;
+  readonly encryptionBits: readonly EncryptionBits[];
+}
 
 export type FheTypedValue<T extends FheTypeName> = {
   value: T extends 'ebool'

@@ -1,10 +1,18 @@
-import type { Bytes32Hex, Bytes65Hex, BytesHex } from '../../types/primitives';
-import { MAX_UINT8, uintToHexNo0x } from '../../utils/uint';
+import type {
+  Bytes32,
+  Bytes32Hex,
+  Bytes65Hex,
+  BytesHex,
+} from '../../types/primitives';
+import { MAX_UINT8, uintToBytesHexNo0x } from '../../utils/uint';
 import {
-  assertIsBytes32HexArray,
   assertIsBytes65HexArray,
   assertIsBytesHex,
+  bytesEquals,
   bytesToHex,
+  hexToBytes,
+  hexToBytes32,
+  toBytes32HexArray,
 } from '../../utils/bytes';
 import { RelayerTooManyHandlesError } from '../../errors/RelayerTooManyHandlesError';
 import { assertRelayer } from '../../errors/InternalError';
@@ -53,17 +61,28 @@ export class InputProof {
     return this.#extraData;
   }
 
+  public toBytes(): {
+    handles: Uint8Array[];
+    inputProof: Uint8Array;
+  } {
+    return {
+      handles: this.#handles.map((h) => hexToBytes32(h)),
+      inputProof: hexToBytes(this.#proof),
+    };
+  }
+
   public static from({
     signatures,
     handles,
     extraData,
   }: {
-    signatures: Bytes65Hex[];
-    handles: Bytes32Hex[];
-    extraData: BytesHex;
+    readonly signatures: readonly Bytes65Hex[];
+    readonly handles: readonly Bytes32Hex[] | readonly Bytes32[];
+    readonly extraData: BytesHex;
   }): InputProof {
+    const handlesBytes32Hex: Bytes32Hex[] = toBytes32HexArray(handles);
+
     assertIsBytes65HexArray(signatures);
-    assertIsBytes32HexArray(handles);
     assertIsBytesHex(extraData);
 
     const numberOfHandles = handles.length;
@@ -75,8 +94,8 @@ export class InputProof {
 
     assertRelayer(numberOfSignatures <= MAX_UINT8);
 
-    const numHandlesHexByte1 = uintToHexNo0x(numberOfHandles);
-    const numSignaturesHexByte1 = uintToHexNo0x(numberOfHandles);
+    const numHandlesHexByte1 = uintToBytesHexNo0x(numberOfHandles);
+    const numSignaturesHexByte1 = uintToBytesHexNo0x(numberOfHandles);
 
     assertRelayer(numHandlesHexByte1.length === 2); // Byte1
     assertRelayer(numSignaturesHexByte1.length === 2); // Byte1
@@ -93,14 +112,14 @@ export class InputProof {
     let proof: string = '';
 
     // Add number of handles (uint8 | Byte1)
-    proof += uintToHexNo0x(handles.length);
+    proof += uintToBytesHexNo0x(handles.length);
 
     // Add number of signatures (uint8 | Byte1)
-    proof += uintToHexNo0x(signatures.length);
+    proof += uintToBytesHexNo0x(signatures.length);
 
     // Add handles: (uint256 | Byte32) x numHandles
-    handles.map(
-      (handlesBytes32Hex: Bytes32Hex) => (proof += remove0x(handlesBytes32Hex)),
+    handlesBytes32Hex.map(
+      (handleBytes32Hex: Bytes32Hex) => (proof += remove0x(handleBytes32Hex)),
     );
 
     // Add signatures: (uint256 | Byte32) x numSignatures
@@ -121,11 +140,36 @@ export class InputProof {
     const inputProof = new InputProof({
       proof: `0x${proof}`,
       signatures: [...signatures],
-      handles: [...handles],
+      handles: [...handlesBytes32Hex],
       extraData,
     });
 
     return inputProof;
+  }
+
+  /**
+   * Validates that the provided handles and inputProof bytes match this InputProof.
+   * Use this as a sanity check to ensure handles correspond to the proof data.
+   */
+  public equalsBytes({
+    handles,
+    inputProof,
+  }: {
+    handles: Uint8Array[];
+    inputProof: Uint8Array;
+  }): boolean {
+    const b = this.toBytes();
+    if (handles.length !== b.handles.length) {
+      return false;
+    }
+    for (let i = 0; i < handles.length; ++i) {
+      const b1 = b.handles[i];
+      const b2 = handles[i];
+      if (!bytesEquals(b1, b2)) {
+        return false;
+      }
+    }
+    return bytesEquals(b.inputProof, inputProof);
   }
 
   public static fromProofBytes(proofBytes: Uint8Array): InputProof {

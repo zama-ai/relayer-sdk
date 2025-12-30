@@ -2,7 +2,12 @@ import type {
   CoprocessorEIP712MessageType,
   CoprocessorEIP712Params,
 } from './types';
-import type { Bytes65Hex, ChecksummedAddress } from '../../types/primitives';
+import type {
+  Bytes32,
+  Bytes65Hex,
+  BytesHex,
+  ChecksummedAddress,
+} from '../../types/primitives';
 import type { Prettify } from '../../utils/types';
 import type { ethers as EthersT } from 'ethers';
 import { RelayerDuplicateCoprocessorSignerError } from '../../errors/RelayerDuplicateCoprocessorSignerError';
@@ -15,6 +20,8 @@ import { CoprocessorEIP712 } from './CoprocessorEIP712';
 import { RelayerThresholdCoprocessorSignerError } from '../../errors/RelayerThresholdCoprocessorSignerError';
 import { InputProof } from './InputProof';
 import { Contract } from 'ethers';
+import { ZKProof } from '../ZKProof';
+import { FhevmHandle } from '../FhevmHandle';
 
 ////////////////////////////////////////////////////////////////////////////////
 // CoprocessorSignersVerifier
@@ -22,26 +29,26 @@ import { Contract } from 'ethers';
 
 export type CoprocessorSignersVerifierParams = Prettify<
   {
-    coprocessorSignersAddresses: ChecksummedAddress[];
-    threshold: number;
+    readonly coprocessorSignersAddresses: readonly ChecksummedAddress[];
+    readonly threshold: number;
   } & CoprocessorEIP712Params
 >;
 
 export class CoprocessorSignersVerifier {
-  private readonly _coprocessorSignersAddresses: ChecksummedAddress[];
-  private readonly _coprocessorSignersAddressesSet: Set<string>;
-  private readonly _threshold: number;
-  private readonly _eip712: CoprocessorEIP712;
+  readonly #coprocessorSignersAddresses: readonly ChecksummedAddress[];
+  readonly #coprocessorSignersAddressesSet: Set<string>;
+  readonly #threshold: number;
+  readonly #eip712: CoprocessorEIP712;
 
   private constructor(params: CoprocessorSignersVerifierParams) {
     assertIsChecksummedAddressArray(params.coprocessorSignersAddresses);
-    this._coprocessorSignersAddresses = [...params.coprocessorSignersAddresses];
-    this._threshold = params.threshold;
-    Object.freeze(this._coprocessorSignersAddresses);
-    this._coprocessorSignersAddressesSet = new Set(
-      this._coprocessorSignersAddresses.map((addr) => addr.toLowerCase()),
+    this.#coprocessorSignersAddresses = [...params.coprocessorSignersAddresses];
+    this.#threshold = params.threshold;
+    Object.freeze(this.#coprocessorSignersAddresses);
+    this.#coprocessorSignersAddressesSet = new Set(
+      this.#coprocessorSignersAddresses.map((addr) => addr.toLowerCase()),
     );
-    this._eip712 = new CoprocessorEIP712(params);
+    this.#eip712 = new CoprocessorEIP712(params);
   }
 
   public static fromAddresses(params: CoprocessorSignersVerifierParams) {
@@ -51,8 +58,8 @@ export class CoprocessorSignersVerifier {
   public static async fromProvider(
     params: Prettify<
       {
-        inputVerifierContractAddress: ChecksummedAddress;
-        provider: EthersT.Provider;
+        readonly inputVerifierContractAddress: ChecksummedAddress;
+        readonly provider: EthersT.Provider;
       } & CoprocessorEIP712Params
     >,
   ) {
@@ -85,18 +92,26 @@ export class CoprocessorSignersVerifier {
   }
 
   public get count(): number {
-    return this._coprocessorSignersAddresses.length;
+    return this.#coprocessorSignersAddresses.length;
   }
 
-  public get addresses(): ChecksummedAddress[] {
-    return this._coprocessorSignersAddresses;
+  public get addresses(): readonly ChecksummedAddress[] {
+    return this.#coprocessorSignersAddresses;
   }
 
   public get threshold(): number {
-    return this._threshold;
+    return this.#threshold;
   }
 
-  private _isThresholdReached(addresses: string[]): boolean {
+  public get gatewayChainId(): number {
+    return this.#eip712.gatewayChainId;
+  }
+
+  public get verifyingContractAddressInputVerification(): ChecksummedAddress {
+    return this.#eip712.verifyingContractAddressInputVerification;
+  }
+
+  private _isThresholdReached(addresses: readonly string[]): boolean {
     const addressMap = new Set<string>();
     addresses.forEach((address) => {
       if (addressMap.has(address.toLowerCase())) {
@@ -108,22 +123,41 @@ export class CoprocessorSignersVerifier {
     });
 
     for (const address of addresses) {
-      if (!this._coprocessorSignersAddressesSet.has(address.toLowerCase())) {
+      if (!this.#coprocessorSignersAddressesSet.has(address.toLowerCase())) {
         throw new RelayerUnknownCoprocessorSignerError({
           unknownAddress: address,
         });
       }
     }
 
-    return addresses.length >= this._threshold;
+    return addresses.length >= this.#threshold;
   }
 
-  public verify(
-    signatures: Bytes65Hex[],
-    message: CoprocessorEIP712MessageType,
-  ) {
+  public verifyZKProof(params: {
+    readonly handles: readonly FhevmHandle[];
+    readonly zkProof: ZKProof;
+    readonly signatures: readonly Bytes65Hex[];
+    readonly extraData: BytesHex;
+  }) {
+    const handlesBytes32: Bytes32[] = params.handles.map((h) => h.toBytes32());
+
+    const message: CoprocessorEIP712MessageType = {
+      ctHandles: handlesBytes32,
+      userAddress: params.zkProof.userAddress,
+      contractAddress: params.zkProof.contractAddress,
+      contractChainId: Number(params.zkProof.chainId),
+      extraData: params.extraData,
+    };
+
+    return this._verify({ signatures: params.signatures, message });
+  }
+
+  private _verify(params: {
+    signatures: readonly Bytes65Hex[];
+    message: CoprocessorEIP712MessageType;
+  }) {
     // 1. Verify signatures
-    const recoveredAddresses = this._eip712.verify({ signatures, message });
+    const recoveredAddresses = this.#eip712.verify(params);
 
     // 2. Verify signature theshold is reached
     if (!this._isThresholdReached(recoveredAddresses)) {
@@ -131,17 +165,21 @@ export class CoprocessorSignersVerifier {
     }
   }
 
-  public computeInputProof(
-    signatures: Bytes65Hex[],
-    message: CoprocessorEIP712MessageType,
-  ): InputProof {
+  public verifyAndComputeInputProof(params: {
+    readonly handles: readonly FhevmHandle[];
+    readonly zkProof: ZKProof;
+    readonly signatures: readonly Bytes65Hex[];
+    readonly extraData: BytesHex;
+  }): InputProof {
     // Throws exception if message properties are invalid
-    this.verify(signatures, message);
+    this.verifyZKProof(params);
+
+    const handlesBytes32: Bytes32[] = params.handles.map((h) => h.toBytes32());
 
     return InputProof.from({
-      signatures,
-      handles: message.ctHandles,
-      extraData: message.extraData,
+      signatures: params.signatures,
+      handles: handlesBytes32,
+      extraData: params.extraData,
     });
   }
 }

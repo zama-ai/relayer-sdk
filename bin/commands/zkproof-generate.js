@@ -44,8 +44,8 @@ export async function zkProofGenerateCommand(options) {
 
     logCLI(`🎲 generating zkproof...`, options);
     const zkProof = builder.generateZKProof();
-    zkProof.ciphertextWithZkProof = bytesToHexLarge(
-      zkProof.ciphertextWithZkProof,
+    zkProof.ciphertextWithZKProof = bytesToHexLarge(
+      zkProof.ciphertextWithZKProof,
     );
 
     const o = {

@@ -1,7 +1,9 @@
 import type {
   Bytes32,
   Bytes8,
+  BytesHex,
   BytesHexNo0x,
+  Hex,
   Uint,
   Uint128,
   Uint16,
@@ -46,11 +48,6 @@ export const MAX_UINT256 = BigInt(
 );
 
 ////////////////////////////////////////////////////////////////////////////////
-
-export function numberToHexNo0x(num: number): BytesHexNo0x {
-  let hex = num.toString(16);
-  return hex.length % 2 ? '0' + hex : hex;
-}
 
 export function isUintNumber(value: unknown): value is UintNumber {
   if (typeof value === 'number') {
@@ -120,23 +117,17 @@ export function isUint256(value: unknown): value is Uint256 {
   return BigInt(value) <= MAX_UINT256;
 }
 
-export function uint256ToBytes32(value: unknown): Bytes32 {
-  if (!isUint256(value)) {
-    throw new InvalidTypeError({ expectedType: 'Uint256' });
-  }
+////////////////////////////////////////////////////////////////////////////////
+// Number Conversions
+////////////////////////////////////////////////////////////////////////////////
 
-  const buffer = new ArrayBuffer(32);
-  const view = new DataView(buffer);
+export function numberToBytesHexNo0x(num: number): BytesHexNo0x {
+  let hex = num.toString(16);
+  return hex.length % 2 ? '0' + hex : hex;
+}
 
-  let v = BigInt(value);
-
-  // Fill from right to left (big-endian), 8 bytes at a time
-  view.setBigUint64(24, v & 0xffffffffffffffffn, false);
-  view.setBigUint64(16, (v >> 64n) & 0xffffffffffffffffn, false);
-  view.setBigUint64(8, (v >> 128n) & 0xffffffffffffffffn, false);
-  view.setBigUint64(0, (v >> 192n) & 0xffffffffffffffffn, false);
-
-  return new Uint8Array(buffer);
+export function numberToBytesHex(num: number): BytesHex {
+  return `0x${numberToBytesHexNo0x(num)}`;
 }
 
 export function numberToBytes32(num: number): Bytes32 {
@@ -161,15 +152,61 @@ export function numberToBytes8(num: number): Bytes8 {
   return new Uint8Array(buffer);
 }
 
-export function uintToHex(uint: Uint): `0x${string}` {
+////////////////////////////////////////////////////////////////////////////////
+// Uint Conversions
+////////////////////////////////////////////////////////////////////////////////
+
+export function uintToHex(uint: Uint): Hex {
+  return `0x${uint.toString(16)}`;
+}
+
+export function uintToBytesHex(uint: Uint): BytesHex {
   let hex = uint.toString(16);
   return hex.length % 2 ? `0x0${hex}` : `0x${hex}`;
 }
 
-export function uintToHexNo0x(uint: Uint): BytesHexNo0x {
+export function uintToBytesHexNo0x(uint: Uint): BytesHexNo0x {
   let hex = uint.toString(16);
   return hex.length % 2 ? `0${hex}` : hex;
 }
+
+export function uint256ToBytes32(value: unknown): Bytes32 {
+  if (!isUint256(value)) {
+    throw new InvalidTypeError({ expectedType: 'Uint256' });
+  }
+
+  const buffer = new ArrayBuffer(32);
+  const view = new DataView(buffer);
+
+  const v = BigInt(value);
+
+  // Fill from right to left (big-endian), 8 bytes at a time
+  view.setBigUint64(24, v & 0xffffffffffffffffn, false);
+  view.setBigUint64(16, (v >> 64n) & 0xffffffffffffffffn, false);
+  view.setBigUint64(8, (v >> 128n) & 0xffffffffffffffffn, false);
+  view.setBigUint64(0, (v >> 192n) & 0xffffffffffffffffn, false);
+
+  return new Uint8Array(buffer);
+}
+
+export function uint64ToBytes32(value: unknown): Bytes32 {
+  if (!isUint64(value)) {
+    throw new InvalidTypeError({ expectedType: 'Uint64' });
+  }
+
+  const buffer = new ArrayBuffer(32);
+  const view = new DataView(buffer);
+
+  const v = BigInt(value);
+
+  view.setBigUint64(24, v, false);
+
+  return new Uint8Array(buffer);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Asserts
+////////////////////////////////////////////////////////////////////////////////
 
 export function assertIsUint(value: unknown): asserts value is Uint {
   if (!isUint(value)) {
@@ -215,6 +252,10 @@ export function assertIsUint256(value: unknown): asserts value is Uint256 {
     });
   }
 }
+
+////////////////////////////////////////////////////////////////////////////////
+// Record property testing
+////////////////////////////////////////////////////////////////////////////////
 
 export function isRecordUintProperty<K extends string>(
   o: unknown,

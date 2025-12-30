@@ -23,7 +23,8 @@ import { assertIsUint256, assertIsUint32 } from '../../utils/uint';
 
 export class KmsEIP712 {
   public readonly domain: KmsEIP712DomainType;
-  private static types: KmsEIP712TypesType = {
+
+  static #types: KmsEIP712TypesType = {
     EIP712Domain: [
       { name: 'name', type: 'string' },
       { name: 'version', type: 'string' },
@@ -38,7 +39,8 @@ export class KmsEIP712 {
       { name: 'extraData', type: 'bytes' },
     ] as const,
   } as const;
-  private static delegateTypes: KmsDelegateEIP712TypesType = {
+
+  static #delegateTypes: KmsDelegateEIP712TypesType = {
     EIP712Domain: [
       { name: 'name', type: 'string' },
       { name: 'version', type: 'string' },
@@ -56,14 +58,14 @@ export class KmsEIP712 {
   } as const;
 
   static {
-    Object.freeze(KmsEIP712.types);
-    Object.freeze(KmsEIP712.types.EIP712Domain);
-    Object.freeze(KmsEIP712.types.UserDecryptRequestVerification);
+    Object.freeze(KmsEIP712.#types);
+    Object.freeze(KmsEIP712.#types.EIP712Domain);
+    Object.freeze(KmsEIP712.#types.UserDecryptRequestVerification);
 
-    Object.freeze(KmsEIP712.delegateTypes);
-    Object.freeze(KmsEIP712.delegateTypes.EIP712Domain);
+    Object.freeze(KmsEIP712.#delegateTypes);
+    Object.freeze(KmsEIP712.#delegateTypes.EIP712Domain);
     Object.freeze(
-      KmsEIP712.delegateTypes.DelegatedUserDecryptRequestVerification,
+      KmsEIP712.#delegateTypes.DelegatedUserDecryptRequestVerification,
     );
   }
 
@@ -213,7 +215,7 @@ export class KmsEIP712 {
       const recoveredAddress = verifySignature({
         signature,
         domain: this.domain,
-        types: KmsEIP712.types as any as Record<
+        types: KmsEIP712.#types as any as Record<
           string,
           Array<EthersT.TypedDataField>
         >,
@@ -234,7 +236,7 @@ export class KmsEIP712 {
       const recoveredAddress = verifySignature({
         signature,
         domain: this.domain,
-        types: KmsEIP712.delegateTypes as any as Record<
+        types: KmsEIP712.#delegateTypes as any as Record<
           string,
           Array<EthersT.TypedDataField>
         >,

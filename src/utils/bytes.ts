@@ -596,14 +596,21 @@ export function hexToBytes(hexString: string): Uint8Array {
   return Uint8Array.from(arr.map((byte) => parseInt(byte, 16)));
 }
 
+/**
+ * Convert a hex string prefixed by 0x or not to a 32-bytes long Uint8Array
+ */
 export function hexToBytes32(hexString: string): Uint8Array {
   return hexToBytes('0x' + remove0x(hexString).padStart(64, '0'));
 }
 
+/**
+ * Convert a hex string prefixed by 0x or not to a Uint8Array
+ */
 export function hexToBytesFaster(
   hexString: string,
-  strict: boolean = false,
+  options?: { strict?: boolean },
 ): Uint8Array {
+  const strict = options?.strict === true;
   const offset = hexString[0] === '0' && hexString[1] === 'x' ? 2 : 0;
   const len = hexString.length - offset;
 
@@ -636,6 +643,41 @@ export function bytesToBigInt(byteArray: Uint8Array | undefined): bigint {
     result = (result << BigInt(8)) | BigInt(byteArray[i]);
   }
   return result;
+}
+
+/**
+ * Converts an array of Bytes32 or Bytes32Hex values to a uniform Bytes32Hex array.
+ * Accepts mixed input: both 32-byte Uint8Arrays and hex strings are normalized to Bytes32Hex.
+ *
+ * @param arr - Array of Bytes32 (Uint8Array) or Bytes32Hex (string) values.
+ * @returns Array of Bytes32Hex strings.
+ * @throws {InvalidTypeError} If any element is not a valid Bytes32 or Bytes32Hex.
+ */
+export function toBytes32HexArray(
+  arr: readonly (Bytes32 | Bytes32Hex)[],
+): Bytes32Hex[] {
+  if (!Array.isArray(arr)) {
+    throw new InvalidTypeError({ expectedType: 'Array' });
+  }
+
+  return arr.map((b) => {
+    if (typeof b === 'string') {
+      assertIsBytes32Hex(b);
+      return b;
+    } else {
+      assertIsBytes32(b);
+      const hex = bytesToHexLarge(b);
+      // This is defensive code that can't be triggered through normal usage.
+      // It's a safeguard that exists for type safety.
+      // Codecoverage cannot reach 100%
+      if (hex.length !== 66) {
+        throw new InvalidTypeError({
+          expectedType: 'Bytes32Hex',
+        });
+      }
+      return hex as Bytes32Hex;
+    }
+  });
 }
 
 export function concatBytes(...arrays: Uint8Array[]): Uint8Array {

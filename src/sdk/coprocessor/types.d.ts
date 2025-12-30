@@ -1,5 +1,6 @@
 import type { Prettify } from '../../utils/types';
 import type {
+  Bytes32,
   Bytes32Hex,
   BytesHex,
   ChecksummedAddress,
@@ -10,27 +11,35 @@ import type {
 ////////////////////////////////////////////////////////////////////////////////
 
 export type CoprocessorEIP712Params = {
-  gatewayChainId: number;
-  verifyingContractAddressInputVerification: ChecksummedAddress;
+  readonly gatewayChainId: number;
+  readonly verifyingContractAddressInputVerification: ChecksummedAddress;
 };
 
 export type CoprocessorEIP712DomainType = {
   readonly name: 'InputVerification';
   readonly version: '1';
-  chainId: number;
-  verifyingContract: ChecksummedAddress;
+  readonly chainId: number;
+  readonly verifyingContract: ChecksummedAddress;
 };
 
-export type CoprocessorEIP712MessageType = {
-  ctHandles: Bytes32Hex[];
+export type CoprocessorEIP712MessageType = Readonly<{
+  ctHandles: readonly Bytes32Hex[] | readonly Bytes32[];
   userAddress: ChecksummedAddress;
   contractAddress: ChecksummedAddress;
   contractChainId: number;
   extraData: BytesHex;
-};
+}>;
+
+export type CoprocessorEIP712MessageHexType = Readonly<{
+  ctHandles: readonly Bytes32Hex[];
+  userAddress: ChecksummedAddress;
+  contractAddress: ChecksummedAddress;
+  contractChainId: number;
+  extraData: BytesHex;
+}>;
 
 export type CoprocessorEIP712TypesType = {
-  CiphertextVerification: readonly [
+  readonly CiphertextVerification: readonly [
     { readonly name: 'ctHandles'; readonly type: 'bytes32[]' },
     { readonly name: 'userAddress'; readonly type: 'address' },
     { readonly name: 'contractAddress'; readonly type: 'address' },
@@ -40,7 +49,7 @@ export type CoprocessorEIP712TypesType = {
 };
 
 export type CoprocessorEIP712Type = Prettify<{
-  domain: CoprocessorEIP712DomainType;
-  types: CoprocessorEIP712TypesType;
-  message: CoprocessorEIP712MessageType;
+  readonly domain: CoprocessorEIP712DomainType;
+  readonly types: CoprocessorEIP712TypesType;
+  readonly message: CoprocessorEIP712MessageType;
 }>;

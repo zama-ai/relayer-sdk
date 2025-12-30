@@ -1,13 +1,4 @@
-import fetchMock from 'fetch-mock';
-import { hexToBytes } from '../utils/bytes';
-import { currentCiphertextVersion } from '../relayer/sendEncryption';
-import { CoprocessorSigners } from './fhevm-mock/CoprocessorSigners';
-import { getProvider as config_getProvider } from '../config';
-import { KmsSigners } from './fhevm-mock/KmsSigners';
-import { setupV1RoutesInputProof, setupV1RoutesKeyUrl } from './v1/mockRoutes';
-import { setupV2RoutesInputProof, setupV2RoutesKeyUrl } from './v2/mockRoutes';
-import { Contract, HDNodeWallet, Wallet } from 'ethers';
-import { FhevmHandle } from '../sdk/FhevmHandle';
+import type { ethers as EthersT } from 'ethers';
 import type {
   FhevmInstanceConfig,
   RelayerInputProofPayload,
@@ -20,7 +11,17 @@ import type {
   EncryptionBits,
   FheTypeName,
 } from '../types/primitives';
-import type { ethers as EthersT } from 'ethers';
+import fetchMock from 'fetch-mock';
+import { hexToBytes } from '../utils/bytes';
+import { currentCiphertextVersion } from '../relayer/sendEncryption';
+import { CoprocessorSigners } from './fhevm-mock/CoprocessorSigners';
+import { getProvider as config_getProvider } from '../config';
+import { KmsSigners } from './fhevm-mock/KmsSigners';
+import { setupV1RoutesInputProof, setupV1RoutesKeyUrl } from './v1/mockRoutes';
+import { setupV2RoutesInputProof, setupV2RoutesKeyUrl } from './v2/mockRoutes';
+import { Contract, HDNodeWallet, Wallet } from 'ethers';
+import { FhevmHandle } from '../sdk/FhevmHandle';
+import { ZKProof } from '../sdk/ZKProof';
 
 export function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -161,8 +162,8 @@ export async function fetchMockInputProof(
   },
   bitwidths: EncryptionBits[],
 ): Promise<{
-  handles: Bytes32Hex[];
-  signatures: Bytes65Hex[];
+  readonly handles: readonly Bytes32Hex[];
+  readonly signatures: readonly Bytes65Hex[];
 }> {
   const ciphertext = hexToBytes(args.ciphertextWithInputVerification);
 
@@ -173,14 +174,19 @@ export async function fetchMockInputProof(
   //   TEST_CONFIG.fhevmInstanceConfig.chainId!,
   //   currentCiphertextVersion(),
   // );
-  const handlesBytes32HexList = FhevmHandle.fromZKProof({
+  const zkProof = ZKProof.fromComponents({
     ciphertextWithZKProof: ciphertext,
-    aclAddress: TEST_CONFIG.fhevmInstanceConfig
+    aclContractAddress: TEST_CONFIG.fhevmInstanceConfig
       .aclContractAddress as `0x{string}`,
-    chainId: TEST_CONFIG.fhevmInstanceConfig.chainId!,
-    fheTypeEncryptionBitwidths: bitwidths,
-    ciphertextVersion: currentCiphertextVersion(),
-  }).map((handle: FhevmHandle) => handle.toBytes32Hex());
+    chainId: BigInt(TEST_CONFIG.fhevmInstanceConfig.chainId!),
+    encryptionBits: bitwidths,
+    userAddress: args.userAddress as ChecksummedAddress,
+    contractAddress: args.contractAddress as ChecksummedAddress,
+  });
+  const handlesBytes32HexList = FhevmHandle.fromZKProof(
+    zkProof,
+    currentCiphertextVersion(),
+  ).map((handle: FhevmHandle) => handle.toBytes32Hex());
 
   const params = {
     ctHandles: handlesBytes32HexList,

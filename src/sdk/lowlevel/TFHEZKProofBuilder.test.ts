@@ -51,7 +51,7 @@ describeIfFetchMock('encrypt', () => {
       contractAddress,
       userAddress,
     });
-    expect(ciphertext.ciphertextWithZkProof.length).toBe(20106);
+    expect(ciphertext.ciphertextWithZKProof.length).toBe(20106);
   }, 60000);
 
   it('encrypt one 0 value', async () => {
@@ -65,7 +65,7 @@ describeIfFetchMock('encrypt', () => {
       contractAddress,
       userAddress,
     });
-    expect(ciphertext.ciphertextWithZkProof.length).toBe(18922);
+    expect(ciphertext.ciphertextWithZKProof.length).toBe(18922);
   });
 
   it('throws errors', async () => {

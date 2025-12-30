@@ -74,9 +74,10 @@ const pubkey = program.command('pubkey').description('Public key operations');
 // pubkey info
 ////////////////////////////////////////////////////////////////////////////////
 
-// npx . pubkey info
+// npx . pubkey info --network testnet
 pubkey
   .command('info')
+  .option('--network <network name>', 'testnet|devnet|mainnet')
   .description('Display public key information')
   .action(async (options) => {
     const mod = await import('./commands/pubkey-info.js');
@@ -103,9 +104,10 @@ addCommonOptions(pubkey.command('fetch'))
 pubkey
   .command('delete')
   .description('Clear FHEVM public key cache')
-  .action(async () => {
+  .option('--network <network name>', 'testnet|devnet|mainnet')
+  .action(async (options) => {
     const mod = await import('./commands/pubkey-clear.js');
-    await mod.pubkeyClearCommand();
+    await mod.pubkeyClearCommand(options);
   });
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -231,6 +233,21 @@ addCommonOptions(test.command('user-decrypt'))
   .action(async (options) => {
     const mod = await import('./commands/test/test-user-decrypt.js');
     await mod.testFHETestUserDecryptCommand(options);
+  });
+
+// npx . test add --type euint32 --value 123 --network testnet
+addCommonOptions(test.command('add'))
+  .description(
+    'Performs an input-proof then executes a transaction to call FHETest.add<Type>()',
+  )
+  .requiredOption(
+    '--type <euint8|euint16|euint32|euint64|euint128>',
+    'The encrypted type',
+  )
+  .requiredOption('--value <unsigned integer value>', 'The uint value to add')
+  .action(async (options) => {
+    const mod = await import('./commands/test/test-add.js');
+    await mod.testFHETestAddCommand(options);
   });
 
 program.parseAsync();

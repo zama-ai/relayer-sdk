@@ -5,17 +5,17 @@ export type InvalidTypeErrorType = InvalidTypeError & {
 };
 
 export class InvalidTypeError extends RelayerErrorBase {
-  private readonly _objName?: string;
+  private readonly _varName?: string;
   private readonly _type?: string | undefined;
   private readonly _expectedType: string;
   private readonly _expectedCustomType?: string | undefined;
   constructor({
-    objName,
+    varName,
     type,
     expectedType,
     expectedCustomType,
   }: {
-    objName?: string;
+    varName?: string;
     type?: string;
     expectedType:
       | 'string'
@@ -42,21 +42,23 @@ export class InvalidTypeError extends RelayerErrorBase {
       | 'Bytes65HexArray'
       | 'Array'
       | 'BytesHex'
+      | 'EncryptionBits'
+      | 'EncryptionBitsArray'
       | 'Custom';
     expectedCustomType?: string;
   }) {
     super({
-      message: `InvalidTypeError ${objName} ${expectedType} ${type}`,
+      message: `InvalidTypeError ${varName} ${expectedType} ${type}`,
       name: 'InvalidTypeError',
     });
-    this._objName = objName;
+    this._varName = varName;
     this._type = type;
     this._expectedType = expectedType;
     this._expectedCustomType = expectedCustomType;
   }
 
-  public get objName() {
-    return this._objName;
+  public get varName() {
+    return this._varName;
   }
   public get type() {
     return this._type;

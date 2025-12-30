@@ -3,7 +3,6 @@ import {
   EncryptionBits,
   FheTypeName,
   Uint64,
-  ZKProof,
 } from '../../types/primitives';
 import { EncryptionError } from '../../errors/EncryptionError';
 import { assertRelayer } from '../../errors/InternalError';
@@ -28,6 +27,7 @@ import {
   TFHE_CRS_BITS_CAPACITY,
   TFHE_ZKPROOF_CIPHERTEXT_CAPACITY,
 } from './constants';
+import { ZKProof } from '../ZKProof';
 
 export class TFHEZKProofBuilder {
   #totalBits: number = 0;
@@ -244,14 +244,17 @@ export class TFHEZKProofBuilder {
         SERIALIZED_SIZE_LIMIT_CIPHERTEXT,
       );
 
-    return {
-      chainId: BigInt(chainId),
-      aclContractAddress,
-      contractAddress,
-      userAddress,
-      ciphertextWithZkProof: ciphertextWithZKProofBytes,
-      bits: [...this.#bits],
-    };
+    return ZKProof.fromComponents(
+      {
+        chainId: BigInt(chainId),
+        aclContractAddress,
+        contractAddress,
+        userAddress,
+        ciphertextWithZKProof: ciphertextWithZKProofBytes,
+        encryptionBits: this.#bits,
+      },
+      { copy: false }, // Take ownership
+    );
   }
 
   //////////////////////////////////////////////////////////////////////////////

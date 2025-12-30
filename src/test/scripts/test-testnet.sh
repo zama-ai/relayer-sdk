@@ -11,18 +11,33 @@ if [ ! -d ".github" ]; then
   exit 1
 fi
 
-STEPS=8
+STEPS=14
+STEP=0
 
 echo ""
 echo "=================================================="
-echo "= 1/${STEPS} Get Addresses ..."
+echo "= $((++STEP))/${STEPS} Run: test address --network testnet ..."
 echo "=================================================="
 
 npx . test address --network testnet
 
 echo ""
 echo "=================================================="
-echo "= 2/${STEPS} Get euint32 handle ..."
+echo "= $((++STEP))/${STEPS} Run: pubkey delete --network testnet ..."
+echo "=================================================="
+
+npx . pubkey delete --network testnet
+
+echo ""
+echo "=================================================="
+echo "= $((++STEP))/${STEPS} Run: pubkey fetch --network testnet ..."
+echo "=================================================="
+
+npx . pubkey fetch --network testnet
+
+echo ""
+echo "=================================================="
+echo "= $((++STEP))/${STEPS} Run: test get --type euint32 --network testnet --json ..."
 echo "=================================================="
 
 handle=$(npx . test get --type euint32 --network testnet --json | jq -r .handle)
@@ -30,39 +45,63 @@ echo "🥬 handle: ${handle}"
 
 echo ""
 echo "=================================================="
-echo "= 3/${STEPS} Run public-decrypt v1 ..."
+echo "= $((++STEP))/${STEPS} Run: test make-publicly-decryptable --type euint32 --network testnet --version 2 ..."
+echo "=================================================="
+npx . test make-publicly-decryptable --type euint32 --network testnet --version 2
+
+echo ""
+echo "=================================================="
+echo "= $((++STEP))/${STEPS} Run: public-decrypt --network testnet --handles $handle --version 1 ..."
 echo "=================================================="
 npx . public-decrypt --network testnet --handles $handle --version 1
 
 echo ""
 echo "=================================================="
-echo "= 4/${STEPS} Run public-decrypt v2 ..."
+echo "= $((++STEP))/${STEPS} Run: public-decrypt --network testnet --handles $handle --version 2 ..."
 echo "=================================================="
 npx . public-decrypt --network testnet --handles $handle --version 2
 
 echo ""
 echo "========================================================================="
-echo "= 5/${STEPS} Run test public-decrypt --type euint32 --version 1 ..."
+echo "= $((++STEP))/${STEPS} Run: test public-decrypt --network testnet --type euint32 --version 1 ..."
 echo "========================================================================="
 npx . test public-decrypt --network testnet --type euint32 --version 1
 
 echo ""
 echo "========================================================================="
-echo "= 6/${STEPS} Run test public-decrypt --type euint32 --version 2 ..."
+echo "= $((++STEP))/${STEPS} Run: test public-decrypt --network testnet --type euint32 --version 2 ..."
 echo "========================================================================="
 npx . test public-decrypt --network testnet --type euint32 --version 2
 
 echo ""
 echo "========================================================================="
-echo "= 7/${STEPS} Run test user-decrypt --type euint32 --version 1 ..."
+echo "= $((++STEP))/${STEPS} Run: test user-decrypt --network testnet --type euint32 --version 1 ..."
 echo "========================================================================="
 npx . test user-decrypt --network testnet --type euint32 --version 1
 
 echo ""
 echo "========================================================================="
-echo "= 8/${STEPS} Run test user-decrypt --type euint32 --version 2 ..."
+echo "= $((++STEP))/${STEPS} Run: user-decrypt --network testnet --type euint32 --version 2 ..."
 echo "========================================================================="
 npx . test user-decrypt --network testnet --type euint32 --version 2
+
+echo ""
+echo "========================================================================="
+echo "= $((++STEP))/${STEPS} Run: test add --network testnet --type euint32 --value 123 --version 1 ..."
+echo "========================================================================="
+npx . test add --network testnet --type euint32 --value 123 --version 1
+
+echo ""
+echo "========================================================================="
+echo "= $((++STEP))/${STEPS} Run: test add --network testnet --type euint32 --value 123 --version 2 ..."
+echo "========================================================================="
+npx . test add --network testnet --type euint32 --value 123 --version 2
+
+echo ""
+echo "=================================================="
+echo "= $((++STEP))/${STEPS} Run: test make-publicly-decryptable --type euint32 --network testnet --version 2 ..."
+echo "=================================================="
+npx . test make-publicly-decryptable --type euint32 --network testnet --version 2
 
 echo ""
 echo "=========================="

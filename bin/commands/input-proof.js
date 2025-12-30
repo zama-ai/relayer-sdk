@@ -5,6 +5,7 @@ import {
   bytesToHex,
   safeJSONstringify,
 } from '../../lib/internal.js';
+import { inputProof } from '../inputProof.js';
 import { getInstance } from '../instance.js';
 import { loadFhevmPublicKeyConfig } from '../pubkeyCache.js';
 import {
@@ -20,57 +21,18 @@ import {
 export async function inputProofCommand(options) {
   const { config } = parseCommonOptions(options);
 
-  const fheTypedValues = valueColumnTypeListToFheTypedValues(options.values);
-  const arr = fheTypedValuesToBuilderFunctionWithArg(fheTypedValues);
-
   const { publicKey, publicParams } = await loadFhevmPublicKeyConfig(
     config,
     options,
   );
 
-  try {
-    const instance = await getInstance(
-      {
-        ...config.fhevmInstanceConfig,
-        publicKey,
-        publicParams,
-      },
-      options,
-    );
-
-    const builder = instance.createEncryptedInput(
-      config.contractAddress,
-      config.userAddress,
-    );
-    for (let i = 0; i < arr.length; ++i) {
-      builder[arr[i].funcName](arr[i].arg);
-    }
-
-    logCLI(`🎲 generating zkproof...`, options);
-    const zkproof = builder.generateZKProof();
-
-    logCLI(`🎲 verifying zkproof...`, options);
-    const { handles, inputProof } = await instance.requestZKProofVerification(
-      zkproof,
-      {
-        onProgress: (args) => {
-          logCLI(`onProgress: ${args.type}`, options);
-        },
-      },
-    );
-
-    const o = {
-      values: fheTypedValues,
-      handles: handles.map((h) => FhevmHandle.fromBytes32(h).toBytes32Hex()),
-      inputProof: bytesToHex(inputProof),
-    };
-
-    console.log(safeJSONstringify(o, 2));
-  } catch (e) {
-    console.log(e.message);
-    console.log(e);
-    console.log(JSON.stringify(e.cause, null, 2));
-
-    process.exit(1);
-  }
+  const fheTypedValues = valueColumnTypeListToFheTypedValues(options.values);
+  const o = await inputProof(
+    fheTypedValues,
+    config,
+    publicKey,
+    publicParams,
+    options,
+  );
+  console.log(safeJSONstringify(o, 2));
 }

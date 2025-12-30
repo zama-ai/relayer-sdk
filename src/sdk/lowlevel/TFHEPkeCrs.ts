@@ -113,7 +113,7 @@ export class TFHEPkeCrs {
         'bytesHex' satisfies keyof TFHEPkeCrsBytesHexType,
         'arg',
       );
-      bytes = hexToBytesFaster(params.bytesHex, true /* strict */);
+      bytes = hexToBytesFaster(params.bytesHex, { strict: true });
     } catch (e) {
       throw new TFHEError({
         message: 'Invalid public key (deserialization failed)',

@@ -10,6 +10,7 @@ import { InvalidPropertyError } from '../errors/InvalidPropertyError';
 import { TEST_CONFIG } from '../test/config';
 import { FhevmHandle } from '../sdk/FhevmHandle';
 import { tfheCompactPkeCrsWasm, tfheCompactPublicKeyWasm } from '../test';
+import { ZKProof } from '../sdk/ZKProof';
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -76,18 +77,23 @@ const autoMock = (
       params: { ciphertextWithInputVerification },
     };
 
-    const handles = FhevmHandle.fromZKProof({
-      ciphertextWithZKProof: ciphertextWithInputVerification as `0x${string}`,
-      aclAddress: aclContractAddress as `0x{string}`,
+    const zkProof = ZKProof.fromComponents({
+      ciphertextWithZKProof: ciphertextWithInputVerification,
+      aclContractAddress,
       chainId,
-      fheTypeEncryptionBitwidths: input.getBits(),
-      ciphertextVersion: currentCiphertextVersion(),
-    }).map((handle: FhevmHandle) => handle.toBytes32Hex());
+      encryptionBits: input.getBits(),
+      userAddress: TEST_CONFIG.signerAddress,
+      contractAddress: TEST_CONFIG.testContracts.FHETestAddress,
+    });
+    const handlesBytes32Hex = FhevmHandle.fromZKProof(
+      zkProof,
+      currentCiphertextVersion(),
+    ).map((handle: FhevmHandle) => handle.toBytes32Hex());
 
     return {
       options: options,
       response: {
-        handles: handles,
+        handles: handlesBytes32Hex,
         signatures: [],
       },
     };

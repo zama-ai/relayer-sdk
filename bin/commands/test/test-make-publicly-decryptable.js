@@ -1,5 +1,6 @@
 'use strict';
 
+import { ACL } from '../../../lib/internal.js';
 import { logCLI, parseCommonOptions } from '../../utils.js';
 import { FHETestAddresses } from './fheTest.js';
 import { ethers } from 'ethers';
@@ -34,6 +35,13 @@ export async function testFHETestMakePubliclyDecryptableCommand(options) {
 
   const handle = await contract[getFuncName]();
   logCLI(`🏈 handle: ${handle}`);
+
+  const acl = new ACL(config.fhevmInstanceConfig.aclContractAddress, provider);
+  const ok = await acl.isAllowedForDecryption([handle]);
+  if (ok[0] === true) {
+    logCLI(`🚨 handle is already publicly decryptable.`);
+    return;
+  }
 
   /** @type {import('ethers').ContractTransactionResponse} */
   const tx = await contract[funcName]();
