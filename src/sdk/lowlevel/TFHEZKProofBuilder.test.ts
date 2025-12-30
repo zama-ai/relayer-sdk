@@ -32,7 +32,7 @@ const userAddress =
 
 ////////////////////////////////////////////////////////////////////////////////
 
-describeIfFetchMock('encrypt', () => {
+describeIfFetchMock('TFHEZKProofBuilder', () => {
   it('encrypt', async () => {
     const builder = new TFHEZKProofBuilder({
       pkeParams: pkeParamsAsset,

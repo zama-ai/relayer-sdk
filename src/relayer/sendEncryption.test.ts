@@ -111,7 +111,7 @@ const consoleLogSpy = jest
 
 ////////////////////////////////////////////////////////////////////////////////
 
-describeIfFetchMock('encrypt', () => {
+describeIfFetchMock('sendEncryption', () => {
   beforeEach(() => {
     fetchMock.removeRoutes();
   });
