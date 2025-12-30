@@ -1,3 +1,9 @@
+import {
+  BytesHexNo0xTypeName,
+  BytesHexTypeName,
+  BytesTypeName,
+  UintTypeName,
+} from '../types/primitives';
 import { RelayerErrorBase } from './RelayerErrorBase';
 
 export type InvalidPropertyErrorType = InvalidPropertyError & {
@@ -5,20 +11,19 @@ export type InvalidPropertyErrorType = InvalidPropertyError & {
 };
 
 type ExpectedPropertyType =
+  | 'non-nullable'
   | 'string'
   | 'boolean'
-  | 'non-nullable'
-  | 'Uint'
-  | 'Uint256'
+  | 'number'
   | 'Array'
-  | 'ChecksummedAddress'
-  | 'Bytes32Hex'
-  | 'Bytes65Hex'
-  | 'BytesHexNo0x'
   | 'Uint8Array'
-  | 'BytesHex'
   | 'Timestamp'
-  | 'unknown';
+  | 'unknown'
+  | 'ChecksummedAddress'
+  | BytesHexNo0xTypeName
+  | BytesHexTypeName
+  | BytesTypeName
+  | UintTypeName;
 
 export class InvalidPropertyError extends RelayerErrorBase {
   readonly _objName: string;
