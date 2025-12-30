@@ -10,7 +10,6 @@ import { InvalidTypeError } from '../../errors/InvalidTypeError';
 import { ChecksummedAddressError } from '../../errors/ChecksummedAddressError';
 import { ZKProof } from '../ZKProof';
 import { FhevmHandle } from '../FhevmHandle';
-//import { CoprocessorSignersVerifier } from './CoprocessorSignersVerifier';
 
 ////////////////////////////////////////////////////////////////////////////////
 //
