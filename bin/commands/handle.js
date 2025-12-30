@@ -1,5 +1,6 @@
 'use strict';
 
+import { safeJSONstringify } from '../../lib/internal.js';
 import { parseCommonOptions, parseHandles } from '../utils.js';
 
 /*
@@ -18,5 +19,5 @@ import { parseCommonOptions, parseHandles } from '../utils.js';
 export async function handleCommand(args, options) {
   const { config } = parseCommonOptions(options);
   const fhevmHandles = parseHandles(args);
-  console.log(JSON.stringify(fhevmHandles, null, 2));
+  console.log(safeJSONstringify(fhevmHandles, 2));
 }
