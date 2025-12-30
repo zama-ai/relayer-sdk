@@ -1,21 +1,40 @@
 import fs from 'fs';
-import path from 'path';
-import { homedir } from 'os';
-import { TFHEPkeCrs, TFHEPublicKey } from '../../lib/internal.js';
-import { logCLI } from '../utils.js';
+import { safeJSONstringify, TFHEPublicKey } from '../../lib/internal.js';
+import { logCLI, parseCommonOptions } from '../utils.js';
 import { getFhevmPubKeyCacheInfo } from '../pubkeyCache.js';
 
 // npx . pubkey info
 export async function pubkeyInfoCommand(options) {
-  const info = getFhevmPubKeyCacheInfo(options.network ?? 'devnet');
+  const { config } = parseCommonOptions(options);
+
+  const info = getFhevmPubKeyCacheInfo(config.name);
+
+  if (options.keyUrls === true) {
+    const keyUrls = await fetch(
+      `${config.fhevmInstanceConfig.relayerUrl}/keyurl`,
+    );
+    const json = await keyUrls.json();
+
+    logCLI(
+      `✅ Relayer url      : ${config.fhevmInstanceConfig.relayerUrl}`,
+      options,
+    );
+    logCLI(`✅ Relayer response :`, options);
+    logCLI('');
+    logCLI(safeJSONstringify(json.response, 2));
+    logCLI('');
+    logCLI('=======================================================');
+    logCLI('');
+  }
 
   const cacheDir = info.cacheDir;
   const pubKeyFile = info.pubKeyFile;
   const pkeCrs2048File = info.pubKeyParams2048File;
 
-  logCLI(`cache directory : ${cacheDir}`, options);
-  logCLI(`pubKey file     : ${pubKeyFile}`, options);
-  logCLI(`pkeCrs2048 file : ${pkeCrs2048File}`, options);
+  logCLI(`- cache directory : ${cacheDir}`, options);
+  logCLI(`- pubKey file     : ${pubKeyFile}`, options);
+  logCLI(`- pkeCrs2048 file : ${pkeCrs2048File}`, options);
+  logCLI('');
 
   if (fs.existsSync(pubKeyFile)) {
     logCLI(
