@@ -116,7 +116,7 @@ export const getKeysFromRelayer = async (
     keyurlCache[versionUrl] = result;
     return result;
   } catch (e) {
-    throw new Error('Impossible to fetch public key: wrong relayer url.', {
+    throw new Error('Failed to fetch or deserialize public key', {
       cause: e,
     });
   }
