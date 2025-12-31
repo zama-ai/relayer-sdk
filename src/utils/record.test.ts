@@ -1,25 +1,57 @@
 import { InvalidPropertyError } from '../errors/InvalidPropertyError';
 import {
-  assertNonNullableRecordProperty,
+  isRecordNonNullableProperty,
+  assertRecordNonNullableProperty,
+  isRecordArrayProperty,
   assertRecordArrayProperty,
+  isRecordBooleanProperty,
   assertRecordBooleanProperty,
   typeofProperty,
 } from './record';
 
+////////////////////////////////////////////////////////////////////////////////
+//
 // Jest Command line
 // =================
+//
+// npx jest --colors --passWithNoTests ./src/utils/record.test.ts
 // npx jest --colors --passWithNoTests --coverage ./src/utils/record.test.ts --collectCoverageFrom=./src/utils/record.ts --testNamePattern=xxx
 // npx jest --colors --passWithNoTests --coverage ./src/utils/record.test.ts --collectCoverageFrom=./src/utils/record.ts
+//
+////////////////////////////////////////////////////////////////////////////////
 
 describe('record', () => {
-  it('assertNonNullableRecordProperty', () => {
+  //////////////////////////////////////////////////////////////////////////////
+
+  it('isRecordNonNullableProperty', () => {
+    // True
+    expect(isRecordNonNullableProperty({ foo: 'bar' }, 'foo')).toBe(true);
+    expect(isRecordNonNullableProperty({ foo: 0 }, 'foo')).toBe(true);
+    expect(isRecordNonNullableProperty({ foo: false }, 'foo')).toBe(true);
+    expect(isRecordNonNullableProperty({ foo: [] }, 'foo')).toBe(true);
+    expect(isRecordNonNullableProperty({ foo: {} }, 'foo')).toBe(true);
+
+    // False
+    expect(isRecordNonNullableProperty({ foo: null }, 'foo')).toBe(false);
+    expect(isRecordNonNullableProperty({ foo: undefined }, 'foo')).toBe(false);
+    expect(isRecordNonNullableProperty({}, 'foo')).toBe(false);
+    expect(isRecordNonNullableProperty(null, 'foo')).toBe(false);
+    expect(isRecordNonNullableProperty(undefined, 'foo')).toBe(false);
+    expect(isRecordNonNullableProperty('string', 'foo')).toBe(false);
+    expect(isRecordNonNullableProperty(123, 'foo')).toBe(false);
+    expect(isRecordNonNullableProperty([], 'foo')).toBe(false);
+  });
+
+  //////////////////////////////////////////////////////////////////////////////
+
+  it('assertRecordNonNullableProperty', () => {
     // True
     expect(() =>
-      assertNonNullableRecordProperty({ foo: 'bar' }, 'foo', 'Foo'),
+      assertRecordNonNullableProperty({ foo: 'bar' }, 'foo', 'Foo'),
     ).not.toThrow();
 
     expect(() =>
-      assertNonNullableRecordProperty({ foo: 0 }, 'foo', 'Foo'),
+      assertRecordNonNullableProperty({ foo: 0 }, 'foo', 'Foo'),
     ).not.toThrow();
 
     const missing = () => {
@@ -32,45 +64,47 @@ describe('record', () => {
 
     // False
     expect(() =>
-      assertNonNullableRecordProperty({ foo: null }, 'foo', 'Foo'),
+      assertRecordNonNullableProperty({ foo: null }, 'foo', 'Foo'),
     ).toThrow(missing());
 
     expect(() =>
-      assertNonNullableRecordProperty({ foo: undefined }, 'foo', 'Foo'),
+      assertRecordNonNullableProperty({ foo: undefined }, 'foo', 'Foo'),
     ).toThrow(missing());
 
-    expect(() => assertNonNullableRecordProperty('', 'foo', 'Foo')).toThrow(
+    expect(() => assertRecordNonNullableProperty('', 'foo', 'Foo')).toThrow(
       missing(),
     );
 
-    expect(() => assertNonNullableRecordProperty('', 'foo', 'Foo')).toThrow(
+    expect(() => assertRecordNonNullableProperty('', 'foo', 'Foo')).toThrow(
       missing(),
     );
 
-    expect(() => assertNonNullableRecordProperty(null, 'foo', 'Foo')).toThrow(
-      missing(),
-    );
-
-    expect(() =>
-      assertNonNullableRecordProperty(undefined, 'foo', 'Foo'),
-    ).toThrow(missing());
-
-    expect(() => assertNonNullableRecordProperty({}, 'foo', 'Foo')).toThrow(
-      missing(),
-    );
-
-    expect(() => assertNonNullableRecordProperty([], 'foo', 'Foo')).toThrow(
+    expect(() => assertRecordNonNullableProperty(null, 'foo', 'Foo')).toThrow(
       missing(),
     );
 
     expect(() =>
-      assertNonNullableRecordProperty(['foo'], 'foo', 'Foo'),
+      assertRecordNonNullableProperty(undefined, 'foo', 'Foo'),
     ).toThrow(missing());
 
-    expect(() => assertNonNullableRecordProperty('foo', 'foo', 'Foo')).toThrow(
+    expect(() => assertRecordNonNullableProperty({}, 'foo', 'Foo')).toThrow(
+      missing(),
+    );
+
+    expect(() => assertRecordNonNullableProperty([], 'foo', 'Foo')).toThrow(
+      missing(),
+    );
+
+    expect(() =>
+      assertRecordNonNullableProperty(['foo'], 'foo', 'Foo'),
+    ).toThrow(missing());
+
+    expect(() => assertRecordNonNullableProperty('foo', 'foo', 'Foo')).toThrow(
       missing(),
     );
   });
+
+  //////////////////////////////////////////////////////////////////////////////
 
   it('typeofProperty', () => {
     expect(typeofProperty({ foo: [] }, 'foo')).toBe('object');
@@ -81,6 +115,26 @@ describe('record', () => {
     expect(typeofProperty(null, 'foo')).toBe('undefined');
     expect(typeofProperty(undefined, 'foo')).toBe('undefined');
   });
+
+  //////////////////////////////////////////////////////////////////////////////
+
+  it('isRecordArrayProperty', () => {
+    // True
+    expect(isRecordArrayProperty({ foo: [] }, 'foo')).toBe(true);
+    expect(isRecordArrayProperty({ foo: [1, 2, 3] }, 'foo')).toBe(true);
+    expect(isRecordArrayProperty({ foo: ['a', 'b'] }, 'foo')).toBe(true);
+
+    // False
+    expect(isRecordArrayProperty({ foo: null }, 'foo')).toBe(false);
+    expect(isRecordArrayProperty({ foo: undefined }, 'foo')).toBe(false);
+    expect(isRecordArrayProperty({ foo: {} }, 'foo')).toBe(false);
+    expect(isRecordArrayProperty({ foo: 'string' }, 'foo')).toBe(false);
+    expect(isRecordArrayProperty({ foo: 123 }, 'foo')).toBe(false);
+    expect(isRecordArrayProperty({}, 'foo')).toBe(false);
+    expect(isRecordArrayProperty(null, 'foo')).toBe(false);
+  });
+
+  //////////////////////////////////////////////////////////////////////////////
 
   it('assertRecordArrayProperty', () => {
     // True
@@ -136,6 +190,25 @@ describe('record', () => {
     );
   });
 
+  //////////////////////////////////////////////////////////////////////////////
+
+  it('isRecordBooleanProperty', () => {
+    // True
+    expect(isRecordBooleanProperty({ foo: true }, 'foo')).toBe(true);
+    expect(isRecordBooleanProperty({ foo: false }, 'foo')).toBe(true);
+
+    // False
+    expect(isRecordBooleanProperty({ foo: null }, 'foo')).toBe(false);
+    expect(isRecordBooleanProperty({ foo: undefined }, 'foo')).toBe(false);
+    expect(isRecordBooleanProperty({ foo: 'true' }, 'foo')).toBe(false);
+    expect(isRecordBooleanProperty({ foo: 1 }, 'foo')).toBe(false);
+    expect(isRecordBooleanProperty({ foo: 0 }, 'foo')).toBe(false);
+    expect(isRecordBooleanProperty({}, 'foo')).toBe(false);
+    expect(isRecordBooleanProperty(null, 'foo')).toBe(false);
+  });
+
+  //////////////////////////////////////////////////////////////////////////////
+
   it('assertRecordBooleanProperty', () => {
     // True
     expect(() =>
@@ -188,5 +261,45 @@ describe('record', () => {
     expect(() =>
       assertRecordBooleanProperty({ foo: 123 }, 'foo', 'Foo'),
     ).toThrow(e('boolean', 'number'));
+  });
+
+  //////////////////////////////////////////////////////////////////////////////
+
+  it('assertRecordBooleanProperty with expectedValue', () => {
+    // Valid with expectedValue
+    expect(() =>
+      assertRecordBooleanProperty({ foo: true }, 'foo', 'Foo', true),
+    ).not.toThrow();
+
+    expect(() =>
+      assertRecordBooleanProperty({ foo: false }, 'foo', 'Foo', false),
+    ).not.toThrow();
+
+    // Invalid: value doesn't match expectedValue
+    expect(() =>
+      assertRecordBooleanProperty({ foo: false }, 'foo', 'Foo', true),
+    ).toThrow(
+      new InvalidPropertyError({
+        objName: 'Foo',
+        property: 'foo',
+        expectedType: 'boolean',
+        expectedValue: 'true',
+        type: 'boolean',
+        value: 'false',
+      }),
+    );
+
+    expect(() =>
+      assertRecordBooleanProperty({ foo: true }, 'foo', 'Foo', false),
+    ).toThrow(
+      new InvalidPropertyError({
+        objName: 'Foo',
+        property: 'foo',
+        expectedType: 'boolean',
+        expectedValue: 'false',
+        type: 'boolean',
+        value: 'true',
+      }),
+    );
   });
 });

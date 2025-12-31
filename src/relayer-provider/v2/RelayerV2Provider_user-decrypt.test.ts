@@ -1,11 +1,11 @@
 import { AbstractRelayerProvider } from '../AbstractRelayerProvider';
-import { createRelayerProvider } from '../createRelayerFhevm';
+import { createRelayerProvider } from '../createRelayerProvider';
 import fetchMock from 'fetch-mock';
 import { InvalidPropertyError } from '../../errors/InvalidPropertyError';
 import { RelayerV2ResponseInvalidBodyError } from './errors/RelayerV2ResponseInvalidBodyError';
 import { RUNNING_REQ_STATE } from '../../test/v2/mockRoutes';
 import {
-  fheCounterGeCount,
+  fheTestGet,
   getTestProvider,
   removeAllFetchMockRoutes,
   setupAllFetchMockRoutes,
@@ -18,7 +18,11 @@ import { KmsEIP712 } from '../../sdk/kms/KmsEIP712';
 import { assertIsBytes65Hex, assertIsBytesHexNo0x } from '../../utils/bytes';
 import { ensure0x, safeJSONstringify } from '../../utils/string';
 import type { ethers as EthersT } from 'ethers';
-import type { Bytes65Hex, BytesHex } from '../../types/primitives';
+import type {
+  Bytes65Hex,
+  BytesHex,
+  ChecksummedAddress,
+} from '../../types/primitives';
 import type { RelayerUserDecryptPayload } from '../../types/relayer';
 import type { FhevmInstanceConfig } from '../../types/relayer';
 
@@ -33,12 +37,15 @@ import type { FhevmInstanceConfig } from '../../types/relayer';
 // npx jest --config jest.devnet.config.cjs --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_user-decrypt.test.ts
 // npx jest --config jest.devnet.config.cjs --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_user-decrypt.test.ts --testNamePattern=xxx
 //
+// Testnet:
+// =======
+// npx jest --config jest.testnet.config.cjs --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_user-decrypt.test.ts
 
 const payload: RelayerUserDecryptPayload = {
   handleContractPairs: [
     {
       handle: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
-      contractAddress: TEST_CONFIG.testContracts.FHECounterUserDecryptAddress,
+      contractAddress: TEST_CONFIG.testContracts.FHETestAddress,
     },
   ],
   requestValidity: {
@@ -46,8 +53,8 @@ const payload: RelayerUserDecryptPayload = {
     durationDays: '456',
   },
   contractsChainId: '1234',
-  contractAddresses: [TEST_CONFIG.testContracts.FHECounterUserDecryptAddress],
-  userAddress: TEST_CONFIG.testContracts.DeployerAddress,
+  contractAddresses: [TEST_CONFIG.testContracts.FHETestAddress],
+  userAddress: TEST_CONFIG.signerAddress,
   signature: 'deadbeef',
   publicKey: 'deadbeef',
   extraData: '0x00',
@@ -246,10 +253,12 @@ describeIfFetchMock('RelayerV2Provider', () => {
 
 describeIfFetch('FhevmInstance.userDecrypot:sepolia:', () => {
   let provider: EthersT.Provider;
+  let fromAddress: ChecksummedAddress;
 
   beforeEach(() => {
     removeAllFetchMockRoutes();
     provider = getTestProvider(TEST_CONFIG.fhevmInstanceConfig.network);
+    fromAddress = TEST_CONFIG.signerAddress;
   });
 
   afterAll(() => {
@@ -264,16 +273,17 @@ describeIfFetch('FhevmInstance.userDecrypot:sepolia:', () => {
 
     const userSigner = KmsSigner.fromMnemonic({ mnemonic });
 
-    const eCount = await fheCounterGeCount(
-      TEST_CONFIG.testContracts.FHECounterUserDecryptAddress,
+    const eCount = await fheTestGet(
+      'euint32',
+      TEST_CONFIG.testContracts.FHETestAddress,
       provider,
+      fromAddress,
     );
 
     const startTimestamp = timestampNow();
     const durationDays = 365;
     const extraData = '0x00';
-    const contractAddress =
-      TEST_CONFIG.testContracts.FHECounterUserDecryptAddress;
+    const contractAddress = TEST_CONFIG.testContracts.FHETestAddress;
     const contractAddresses = [contractAddress];
     const userAddress = userSigner.address;
 
@@ -373,8 +383,7 @@ describe('FhevmInstance.createEIP712', () => {
     const startTimestamp = timestampNow();
     const durationDays = 365;
     const extraData = '0x00';
-    const contractAddress =
-      TEST_CONFIG.testContracts.FHECounterUserDecryptAddress;
+    const contractAddress = TEST_CONFIG.testContracts.FHETestAddress;
     const contractAddresses = [contractAddress];
 
     const instance = await createInstance(config);
@@ -437,8 +446,7 @@ describe('FhevmInstance.createEIP712', () => {
     const startTimestamp = timestampNow();
     const durationDays = 365;
     const extraData = '0x00';
-    const contractAddress =
-      TEST_CONFIG.testContracts.FHECounterUserDecryptAddress;
+    const contractAddress = TEST_CONFIG.testContracts.FHETestAddress;
     const contractAddresses = [contractAddress];
     const delegatedAccount = '0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF';
 

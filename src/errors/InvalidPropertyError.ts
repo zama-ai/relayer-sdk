@@ -1,23 +1,29 @@
+import {
+  BytesHexNo0xTypeName,
+  BytesHexTypeName,
+  BytesTypeName,
+  UintTypeName,
+} from '../types/primitives';
 import { RelayerErrorBase } from './RelayerErrorBase';
 
 export type InvalidPropertyErrorType = InvalidPropertyError & {
   name: 'InvalidPropertyError';
 };
 
-type ExpectedType =
+type ExpectedPropertyType =
+  | 'non-nullable'
   | 'string'
   | 'boolean'
-  | 'non-nullable'
-  | 'Uint'
+  | 'number'
   | 'Array'
-  | 'ChecksummedAddress'
-  | 'Bytes32Hex'
-  | 'Bytes65Hex'
-  | 'BytesHexNo0x'
   | 'Uint8Array'
-  | 'BytesHex'
   | 'Timestamp'
-  | 'unknown';
+  | 'unknown'
+  | 'ChecksummedAddress'
+  | BytesHexNo0xTypeName
+  | BytesHexTypeName
+  | BytesTypeName
+  | UintTypeName;
 
 export class InvalidPropertyError extends RelayerErrorBase {
   readonly _objName: string;
@@ -42,7 +48,7 @@ export class InvalidPropertyError extends RelayerErrorBase {
     type?: string;
     value?: string;
     expectedValue?: string | string[];
-    expectedType: ExpectedType;
+    expectedType: ExpectedPropertyType;
   }) {
     let missing = type === 'undefined' && expectedValue !== undefined;
 
@@ -98,7 +104,7 @@ export class InvalidPropertyError extends RelayerErrorBase {
   }: {
     objName: string;
     property: string;
-    expectedType: ExpectedType;
+    expectedType: ExpectedPropertyType;
     expectedValue?: string | string[] | undefined;
   }): InvalidPropertyError {
     return new InvalidPropertyError({
@@ -130,7 +136,7 @@ export class InvalidPropertyError extends RelayerErrorBase {
     type,
   }: {
     objName: string;
-    expectedType: ExpectedType;
+    expectedType: ExpectedPropertyType;
     type?: string;
   }): InvalidPropertyError {
     return new InvalidPropertyError({

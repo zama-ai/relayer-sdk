@@ -1,5 +1,4 @@
 import type { BytesHex, BytesHexNo0x } from '../../types/primitives';
-import type { RelayerV1KeyUrlResponse } from './types';
 import type {
   FhevmInstanceOptions,
   RelayerInputProofPayload,
@@ -9,7 +8,7 @@ import type {
   RelayerUserDecryptPayload,
   RelayerUserDecryptResult,
 } from '../../types/relayer';
-import { fetchRelayerV1Get, fetchRelayerV1Post } from './fetchRelayerV1';
+import { fetchRelayerV1Post } from './fetchRelayerV1';
 import {
   AbstractRelayerProvider,
   assertIsRelayerInputProofResult,
@@ -24,11 +23,6 @@ export class RelayerV1Provider extends AbstractRelayerProvider {
 
   public get version(): number {
     return 1;
-  }
-
-  public async fetchGetKeyUrl(): Promise<RelayerV1KeyUrlResponse> {
-    const response = await fetchRelayerV1Get('KEY_URL', this.keyUrl);
-    return response;
   }
 
   public override async fetchPostInputProof(
@@ -49,6 +43,7 @@ export class RelayerV1Provider extends AbstractRelayerProvider {
       }
     }
     */
+
     const json = await fetchRelayerV1Post(
       'INPUT_PROOF',
       this.inputProof,

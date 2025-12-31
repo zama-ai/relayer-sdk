@@ -4,7 +4,9 @@
     "rootDir": "src",
     "outDir": "bundle",
     "declaration": false,
-    "target": "es5",
+    // Use `ES2021` for native `Node v16+` support.
+    "target": "es2021",
+    // Use ES2022 to access to the Error `.cause` property.
     "lib": ["es2022", "DOM", "WebWorker"],
     "module": "commonjs",
     // skipLibCheck is set to 'true' to skip typing errors due to DOM + WebWorker.

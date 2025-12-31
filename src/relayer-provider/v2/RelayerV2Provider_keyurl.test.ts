@@ -1,19 +1,28 @@
 import { SepoliaConfig } from '../..';
 import { getErrorCause } from '../../relayer/error';
-import { createRelayerProvider } from '../createRelayerFhevm';
+import { createRelayerProvider } from '../createRelayerProvider';
 import fetchMock from 'fetch-mock';
-import { RelayerV2GetKeyUrlInvalidResponseError } from './errors/RelayerV2GetKeyUrlError';
 import { InvalidPropertyError } from '../../errors/InvalidPropertyError';
+import { RelayerGetKeyUrlInvalidResponseError } from '../../errors/RelayerGetKeyUrlError';
 import { RelayerV2Provider } from './RelayerV2Provider';
 import { TEST_CONFIG } from '../../test/config';
 
+////////////////////////////////////////////////////////////////////////////////
+//
 // Jest Command line
 // =================
+//
 // npx jest --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_keyurl.test.ts
 // npx jest --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_keyurl.test.ts --testNamePattern=xxx
 // npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v2/RelayerV2Provider_keyurl.test.ts --collectCoverageFrom=./src/relayer-provider/v2/RelayerV2Provider.ts
-
+//
+// Curl Testnet:
+// =============
+//
 // curl https://relayer.testnet.zama.org/v2/keyurl
+//
+////////////////////////////////////////////////////////////////////////////////
+
 const relayerV2ResponseGetKeyUrl = {
   response: {
     fheKeyInfo: [
@@ -64,6 +73,8 @@ const relayerUrlV2 = `${SepoliaConfig.relayerUrl!}/v2`;
 
 const describeIfFetchMock =
   TEST_CONFIG.type === 'fetch-mock' ? describe : describe.skip;
+
+////////////////////////////////////////////////////////////////////////////////
 
 describeIfFetchMock('RelayerV2Provider', () => {
   let relayerProvider: RelayerV2Provider;
@@ -126,7 +137,7 @@ describeIfFetchMock('RelayerV2Provider', () => {
     fetchMock.get(`${relayerUrlV2}/keyurl`, { response: {} });
 
     await expect(() => relayerProvider.fetchGetKeyUrl()).rejects.toThrow(
-      new RelayerV2GetKeyUrlInvalidResponseError({
+      new RelayerGetKeyUrlInvalidResponseError({
         cause: InvalidPropertyError.missingProperty({
           objName: 'fetchGetKeyUrl().response',
           property: 'crs',
@@ -140,7 +151,7 @@ describeIfFetchMock('RelayerV2Provider', () => {
     fetchMock.get(`${relayerUrlV2}/keyurl`, { response: { crs: {} } });
 
     await expect(() => relayerProvider.fetchGetKeyUrl()).rejects.toThrow(
-      new RelayerV2GetKeyUrlInvalidResponseError({
+      new RelayerGetKeyUrlInvalidResponseError({
         cause: InvalidPropertyError.missingProperty({
           objName: 'fetchGetKeyUrl().response',
           property: 'fheKeyInfo',
@@ -156,7 +167,7 @@ describeIfFetchMock('RelayerV2Provider', () => {
     });
 
     await expect(() => relayerProvider.fetchGetKeyUrl()).rejects.toThrow(
-      new RelayerV2GetKeyUrlInvalidResponseError({
+      new RelayerGetKeyUrlInvalidResponseError({
         cause: new InvalidPropertyError({
           objName: 'fetchGetKeyUrl().response',
           property: 'fheKeyInfo',

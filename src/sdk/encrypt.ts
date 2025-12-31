@@ -1,10 +1,8 @@
 import type { TFHEType } from '../tfheType';
 import type { EncryptionBits } from '../types/primitives';
-
-import { isAddress } from 'ethers';
-
-import { SERIALIZED_SIZE_LIMIT_CIPHERTEXT } from '../constants';
+import { isChecksummedAddress } from '../utils/address';
 import { hexToBytes } from '../utils/bytes';
+import { SERIALIZED_SIZE_LIMIT_CIPHERTEXT } from './lowlevel/constants';
 
 export type EncryptedInput = {
   addBool: (value: boolean | number | bigint) => EncryptedInput;
@@ -38,37 +36,34 @@ const checkEncryptedValue = (value: number | bigint, bits: number) => {
   }
 };
 
-export type PublicParams<T = TFHEType['CompactPkeCrs']> = {
-  2048: { publicParams: T; publicParamsId: string };
-};
-
-export type EncryptInputParams = {
+type EncryptInputParams = {
   aclContractAddress: string;
   chainId: number;
   tfheCompactPublicKey: TFHEType['TfheCompactPublicKey'];
-  publicParams: PublicParams;
+  tfheCompactPkeCrs: TFHEType['CompactPkeCrs'];
   contractAddress: string;
   userAddress: string;
+  capacity: number;
 };
 
 export const createEncryptedInput = ({
   aclContractAddress,
   chainId,
   tfheCompactPublicKey,
-  publicParams,
+  tfheCompactPkeCrs,
   contractAddress,
   userAddress,
+  capacity,
 }: EncryptInputParams): EncryptedInput => {
-  if (!isAddress(contractAddress)) {
+  if (!isChecksummedAddress(contractAddress)) {
     throw new Error('Contract address is not a valid address.');
   }
 
-  if (!isAddress(userAddress)) {
+  if (!isChecksummedAddress(userAddress)) {
     throw new Error('User address is not a valid address.');
   }
-  const publicKey: TFHEType['TfheCompactPublicKey'] = tfheCompactPublicKey;
   const bits: EncryptionBits[] = [];
-  const builder = TFHE.CompactCiphertextList.builder(publicKey);
+  const builder = TFHE.CompactCiphertextList.builder(tfheCompactPublicKey);
   let ciphertextWithZKProof: Uint8Array = new Uint8Array(); // updated in `_prove`
   const checkLimit = (added: number) => {
     if (bits.reduce((acc, val) => acc + Math.max(2, val), 0) + added > 2048) {
@@ -134,7 +129,7 @@ export const createEncryptedInput = ({
       return this;
     },
     addAddress(value: string) {
-      if (!isAddress(value)) {
+      if (!isChecksummedAddress(value)) {
         throw new Error('The value must be a valid address.');
       }
       checkLimit(160);
@@ -153,43 +148,40 @@ export const createEncryptedInput = ({
       return bits;
     },
     encrypt() {
-      const getClosestPP = () => {
-        const getKeys = <T extends {}>(obj: T) =>
-          Object.keys(obj) as Array<keyof T>;
+      const totalBits = bits.reduce((total, v) => total + v, 0);
+      if (totalBits > capacity) {
+        throw new Error(`Too many bits in provided values. Maximum is 2048.`);
+      }
+      // Bytes20
+      const contractAddressBytes20 = hexToBytes(contractAddress);
+      // Bytes20
+      const userAddressBytes20 = hexToBytes(userAddress);
+      // Bytes20
+      const aclContractAddressBytes20 = hexToBytes(aclContractAddress);
+      // Bytes32
+      const chainIdBytes32 = hexToBytes(chainId.toString(16).padStart(64, '0'));
 
-        const totalBits = bits.reduce((total, v) => total + v, 0);
-        const ppTypes = getKeys(publicParams);
-        const closestPP = ppTypes.find((k) => Number(k) >= totalBits);
-        if (!closestPP) {
-          throw new Error(
-            `Too many bits in provided values. Maximum is ${
-              ppTypes[ppTypes.length - 1]
-            }.`,
-          );
-        }
-        return closestPP;
-      };
-      const closestPP = getClosestPP();
-      const pp = publicParams[closestPP]!.publicParams;
-      const buffContract = hexToBytes(contractAddress);
-      const buffUser = hexToBytes(userAddress);
-      const buffAcl = hexToBytes(aclContractAddress);
-      const buffChainId = hexToBytes(chainId.toString(16).padStart(64, '0'));
-      const auxData = new Uint8Array(
-        buffContract.length + buffUser.length + buffAcl.length + 32, // buffChainId.length,
+      const metaData = new Uint8Array(
+        contractAddressBytes20.length +
+          userAddressBytes20.length +
+          aclContractAddressBytes20.length +
+          32, // buffChainId.length,
       );
-      auxData.set(buffContract, 0);
-      auxData.set(buffUser, 20);
-      auxData.set(buffAcl, 40);
-      auxData.set(buffChainId, auxData.length - buffChainId.length);
+      metaData.set(contractAddressBytes20, 0);
+      metaData.set(userAddressBytes20, 20);
+      metaData.set(aclContractAddressBytes20, 40);
+      metaData.set(chainIdBytes32, metaData.length - chainIdBytes32.length);
+
       const encrypted = builder.build_with_proof_packed(
-        pp,
-        auxData,
+        tfheCompactPkeCrs,
+        metaData,
         TFHE.ZkComputeLoad.Verify,
       );
+
       ciphertextWithZKProof = encrypted.safe_serialize(
         SERIALIZED_SIZE_LIMIT_CIPHERTEXT,
       );
+
       return ciphertextWithZKProof;
     },
   };

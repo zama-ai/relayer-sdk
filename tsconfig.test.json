@@ -4,7 +4,7 @@
     "rootDir": "src",
     "outDir": "bundle",
     "declaration": false,
-    "target": "es5",
+    "target": "es2021",
     "lib": ["es2022", "DOM", "WebWorker"],
     "module": "commonjs",
     // skipLibCheck is set to 'true' to skip typing errors due to DOM + WebWorker.

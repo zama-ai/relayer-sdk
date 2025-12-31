@@ -1,5 +1,6 @@
 import { InvalidPropertyError } from '../errors/InvalidPropertyError';
 import { InvalidTypeError } from '../errors/InvalidTypeError';
+import { hexToBytes } from './bytes';
 import {
   assertIsUint,
   assertIsUint8,
@@ -7,27 +8,49 @@ import {
   assertIsUint64,
   assertIsUint256,
   assertRecordUintProperty,
+  assertRecordUint256Property,
+  isRecordUintProperty,
+  isRecordUint256Property,
   isUint,
   isUint8,
+  isUint16,
   isUint32,
   isUint64,
+  isUint128,
+  isUint256,
+  isUintBigInt,
+  isUintNumber,
   MAX_UINT8,
+  MAX_UINT16,
   MAX_UINT32,
   MAX_UINT64,
+  MAX_UINT128,
   MAX_UINT256,
   numberToBytes32,
   numberToBytes8,
-  numberToHexNo0x,
+  numberToBytesHex,
+  numberToBytesHexNo0x,
+  uint64ToBytes32,
+  uint256ToBytes32,
   uintToHex,
-  uintToHexNo0x,
+  uintToBytesHex,
+  uintToBytesHexNo0x,
 } from './uint';
 
+////////////////////////////////////////////////////////////////////////////////
+//
 // Jest Command line
 // =================
-// npx jest --colors --passWithNoTests --coverage ./src/utils/uint.test.ts --collectCoverageFrom=./src/utils/uint.ts --testNamePattern=BBB
+//
+// npx jest --colors --passWithNoTests ./src/utils/uint.test.ts
 // npx jest --colors --passWithNoTests --coverage ./src/utils/uint.test.ts --collectCoverageFrom=./src/utils/uint.ts
+// npx jest --colors --passWithNoTests --coverage ./src/utils/uint.test.ts --collectCoverageFrom=./src/utils/uint.ts --testNamePattern=xxx
+//
+////////////////////////////////////////////////////////////////////////////////
 
 describe('uint', () => {
+  //////////////////////////////////////////////////////////////////////////////
+
   it('isUint', () => {
     expect(isUint('hello')).toEqual(false);
     expect(isUint(null)).toEqual(false);
@@ -44,6 +67,8 @@ describe('uint', () => {
     expect(isUint([])).toEqual(false);
     expect(isUint([123])).toEqual(false);
   });
+
+  //////////////////////////////////////////////////////////////////////////////
 
   it('assertIsUint', () => {
     // True
@@ -70,6 +95,8 @@ describe('uint', () => {
     expect(() => assertIsUint([])).toThrow(e('object'));
     expect(() => assertIsUint([123])).toThrow(e('object'));
   });
+
+  //////////////////////////////////////////////////////////////////////////////
 
   it('assertRecordUintProperty', () => {
     // True
@@ -141,6 +168,24 @@ describe('uint', () => {
     expect(() =>
       assertRecordUintProperty({ foo: [123] }, 'foo', 'Foo'),
     ).toThrow(e('Uint', 'object'));
+  });
+
+  //////////////////////////////////////////////////////////////////////////////
+
+  it('isRecordUintProperty', () => {
+    // True
+    expect(isRecordUintProperty({ foo: 123 }, 'foo')).toBe(true);
+    expect(isRecordUintProperty({ foo: 0 }, 'foo')).toBe(true);
+    expect(isRecordUintProperty({ foo: BigInt(123) }, 'foo')).toBe(true);
+
+    // False
+    expect(isRecordUintProperty({ foo: null }, 'foo')).toBe(false);
+    expect(isRecordUintProperty({ foo: undefined }, 'foo')).toBe(false);
+    expect(isRecordUintProperty({}, 'foo')).toBe(false);
+    expect(isRecordUintProperty(null, 'foo')).toBe(false);
+    expect(isRecordUintProperty({ foo: 'hello' }, 'foo')).toBe(false);
+    expect(isRecordUintProperty({ foo: 123.1 }, 'foo')).toBe(false);
+    expect(isRecordUintProperty({ foo: -123 }, 'foo')).toBe(false);
   });
 });
 
@@ -326,6 +371,55 @@ describe('numberToBytes8', () => {
   });
 });
 
+describe('isUintNumber', () => {
+  it('returns true for positive integers', () => {
+    expect(isUintNumber(0)).toBe(true);
+    expect(isUintNumber(1)).toBe(true);
+    expect(isUintNumber(255)).toBe(true);
+    expect(isUintNumber(Number.MAX_SAFE_INTEGER)).toBe(true);
+  });
+
+  it('returns false for negative numbers', () => {
+    expect(isUintNumber(-1)).toBe(false);
+    expect(isUintNumber(-100)).toBe(false);
+  });
+
+  it('returns false for non-integer numbers', () => {
+    expect(isUintNumber(1.5)).toBe(false);
+    expect(isUintNumber(0.1)).toBe(false);
+  });
+
+  it('returns false for non-number types', () => {
+    expect(isUintNumber(BigInt(123))).toBe(false);
+    expect(isUintNumber('123')).toBe(false);
+    expect(isUintNumber(null)).toBe(false);
+    expect(isUintNumber(undefined)).toBe(false);
+    expect(isUintNumber({})).toBe(false);
+  });
+});
+
+describe('isUintBigInt', () => {
+  it('returns true for non-negative bigints', () => {
+    expect(isUintBigInt(BigInt(0))).toBe(true);
+    expect(isUintBigInt(1n)).toBe(true);
+    expect(isUintBigInt(BigInt(255))).toBe(true);
+    expect(isUintBigInt(MAX_UINT256)).toBe(true);
+  });
+
+  it('returns false for negative bigints', () => {
+    expect(isUintBigInt(BigInt(-1))).toBe(false);
+    expect(isUintBigInt(BigInt(-100))).toBe(false);
+  });
+
+  it('returns false for non-bigint types', () => {
+    expect(isUintBigInt(123)).toBe(false);
+    expect(isUintBigInt('123')).toBe(false);
+    expect(isUintBigInt(null)).toBe(false);
+    expect(isUintBigInt(undefined)).toBe(false);
+    expect(isUintBigInt({})).toBe(false);
+  });
+});
+
 describe('isUint8', () => {
   // Valid uint8 values
   it('returns true for 0', () => {
@@ -369,6 +463,56 @@ describe('isUint8', () => {
     expect(isUint8(1000)).toBe(false);
     expect(isUint8(MAX_UINT32)).toBe(false);
     expect(isUint8(MAX_UINT64)).toBe(false);
+  });
+});
+
+describe('isUint16', () => {
+  // Valid uint16 values
+  it('returns true for 0', () => {
+    expect(isUint16(0)).toBe(true);
+  });
+
+  it('returns true for 1', () => {
+    expect(isUint16(1)).toBe(true);
+  });
+
+  it('returns true for MAX_UINT8 (255)', () => {
+    expect(isUint16(255)).toBe(true);
+  });
+
+  it('returns true for MAX_UINT16 (65535)', () => {
+    expect(isUint16(MAX_UINT16)).toBe(true);
+    expect(isUint16(65535)).toBe(true);
+  });
+
+  it('returns true for BigInt values within range', () => {
+    expect(isUint16(BigInt(0))).toBe(true);
+    expect(isUint16(BigInt(65535))).toBe(true);
+    expect(isUint16(BigInt(32768))).toBe(true);
+  });
+
+  // Boundary: just over MAX_UINT16
+  it('returns false for 65536 (MAX_UINT16 + 1)', () => {
+    expect(isUint16(65536)).toBe(false);
+    expect(isUint16(BigInt(65536))).toBe(false);
+  });
+
+  // Invalid types
+  it('returns false for non-uint values', () => {
+    expect(isUint16(-1)).toBe(false);
+    expect(isUint16(-32768)).toBe(false);
+    expect(isUint16(1.5)).toBe(false);
+    expect(isUint16('65535')).toBe(false);
+    expect(isUint16(null)).toBe(false);
+    expect(isUint16(undefined)).toBe(false);
+    expect(isUint16({})).toBe(false);
+  });
+
+  // Large values
+  it('returns false for values larger than MAX_UINT16', () => {
+    expect(isUint16(100000)).toBe(false);
+    expect(isUint16(MAX_UINT32)).toBe(false);
+    expect(isUint16(MAX_UINT64)).toBe(false);
   });
 });
 
@@ -451,12 +595,12 @@ describe('isUint64', () => {
     expect(isUint64(BigInt(0))).toBe(true);
     expect(isUint64(BigInt(MAX_UINT32))).toBe(true);
     expect(isUint64(MAX_UINT64)).toBe(true);
-    expect(isUint64(BigInt('9223372036854775807'))).toBe(true); // 2^63 - 1
+    expect(isUint64(9223372036854775807n)).toBe(true); // 2^63 - 1
   });
 
   // Boundary: just over MAX_UINT64
   it('returns false for MAX_UINT64 + 1', () => {
-    expect(isUint64(MAX_UINT64 + BigInt(1))).toBe(false);
+    expect(isUint64(MAX_UINT64 + 1n)).toBe(false);
   });
 
   // Invalid types
@@ -472,10 +616,56 @@ describe('isUint64', () => {
 
   // Very large values (beyond uint64)
   it('returns false for values larger than MAX_UINT64', () => {
-    expect(isUint64(MAX_UINT64 + BigInt(1))).toBe(false); // 2^64
-    expect(isUint64(BigInt('340282366920938463463374607431768211455'))).toBe(
-      false,
-    ); // 2^128 - 1
+    expect(isUint64(MAX_UINT64 + 1n)).toBe(false); // 2^64
+    expect(isUint64(340282366920938463463374607431768211455n)).toBe(false); // 2^128 - 1
+  });
+});
+
+describe('isUint128', () => {
+  // Valid uint128 values
+  it('returns true for 0', () => {
+    expect(isUint128(0)).toBe(true);
+  });
+
+  it('returns true for 1', () => {
+    expect(isUint128(1)).toBe(true);
+  });
+
+  it('returns true for MAX_UINT64', () => {
+    expect(isUint128(MAX_UINT64)).toBe(true);
+  });
+
+  it('returns true for MAX_UINT128 (2^128 - 1)', () => {
+    expect(isUint128(MAX_UINT128)).toBe(true);
+  });
+
+  it('returns true for BigInt values within range', () => {
+    expect(isUint128(BigInt(0))).toBe(true);
+    expect(isUint128(BigInt(MAX_UINT32))).toBe(true);
+    expect(isUint128(MAX_UINT64)).toBe(true);
+    expect(isUint128(MAX_UINT128)).toBe(true);
+  });
+
+  // Boundary: just over MAX_UINT128
+  it('returns false for MAX_UINT128 + 1', () => {
+    expect(isUint128(MAX_UINT128 + 1n)).toBe(false);
+  });
+
+  // Invalid types
+  it('returns false for non-uint values', () => {
+    expect(isUint128(-1)).toBe(false);
+    expect(isUint128(BigInt(-1))).toBe(false);
+    expect(isUint128(1.5)).toBe(false);
+    expect(isUint128('123')).toBe(false);
+    expect(isUint128(null)).toBe(false);
+    expect(isUint128(undefined)).toBe(false);
+    expect(isUint128({})).toBe(false);
+  });
+
+  // Very large values (beyond uint128)
+  it('returns false for values larger than MAX_UINT128', () => {
+    expect(isUint128(MAX_UINT128 + 1n)).toBe(false);
+    expect(isUint128(MAX_UINT256)).toBe(false);
   });
 });
 
@@ -608,14 +798,12 @@ describe('assertIsUint64', () => {
     expect(() => assertIsUint64(BigInt(0))).not.toThrow();
     expect(() => assertIsUint64(BigInt(MAX_UINT32))).not.toThrow();
     expect(() => assertIsUint64(MAX_UINT64)).not.toThrow();
-    expect(() => assertIsUint64(BigInt('9223372036854775807'))).not.toThrow(); // 2^63 - 1
+    expect(() => assertIsUint64(9223372036854775807n)).not.toThrow(); // 2^63 - 1
   });
 
   // Boundary: just over MAX_UINT64 - should throw
   it('throws for MAX_UINT64 + 1', () => {
-    expect(() => assertIsUint64(MAX_UINT64 + BigInt(1))).toThrow(
-      InvalidTypeError,
-    );
+    expect(() => assertIsUint64(MAX_UINT64 + 1n)).toThrow(InvalidTypeError);
   });
 
   // Invalid types - should throw
@@ -634,11 +822,9 @@ describe('assertIsUint64', () => {
 
   // Very large values (beyond uint64) - should throw
   it('throws for values larger than MAX_UINT64', () => {
-    expect(() => assertIsUint64(MAX_UINT64 + BigInt(1))).toThrow(
-      InvalidTypeError,
-    ); // 2^64
+    expect(() => assertIsUint64(MAX_UINT64 + 1n)).toThrow(InvalidTypeError); // 2^64
     expect(() =>
-      assertIsUint64(BigInt('340282366920938463463374607431768211455')),
+      assertIsUint64(340282366920938463463374607431768211455n),
     ).toThrow(InvalidTypeError); // 2^128 - 1
   });
 });
@@ -680,15 +866,13 @@ describe('assertIsUint256', () => {
     expect(() => assertIsUint256(MAX_UINT256)).not.toThrow();
     // 2^128 - 1
     expect(() =>
-      assertIsUint256(BigInt('340282366920938463463374607431768211455')),
+      assertIsUint256(340282366920938463463374607431768211455n),
     ).not.toThrow();
   });
 
   // Boundary: just over MAX_UINT256 - should throw
   it('throws for MAX_UINT256 + 1', () => {
-    expect(() => assertIsUint256(MAX_UINT256 + BigInt(1))).toThrow(
-      InvalidTypeError,
-    );
+    expect(() => assertIsUint256(MAX_UINT256 + 1n)).toThrow(InvalidTypeError);
   });
 
   // Invalid types - should throw
@@ -706,9 +890,7 @@ describe('assertIsUint256', () => {
   // Very large values (beyond uint256) - should throw
   it('throws for values larger than MAX_UINT256', () => {
     // 2^256
-    expect(() => assertIsUint256(MAX_UINT256 + BigInt(1))).toThrow(
-      InvalidTypeError,
-    );
+    expect(() => assertIsUint256(MAX_UINT256 + 1n)).toThrow(InvalidTypeError);
     // 2^257
     expect(() => assertIsUint256(MAX_UINT256 * BigInt(2))).toThrow(
       InvalidTypeError,
@@ -716,55 +898,55 @@ describe('assertIsUint256', () => {
   });
 });
 
-describe('uintToHex', () => {
+describe('uintToBytesHex', () => {
   // Basic conversions
   it('converts 0 to "0x00"', () => {
-    expect(uintToHex(0)).toBe('0x00');
+    expect(uintToBytesHex(0)).toBe('0x00');
   });
 
   it('converts 1 to "0x01"', () => {
-    expect(uintToHex(1)).toBe('0x01');
+    expect(uintToBytesHex(1)).toBe('0x01');
   });
 
   it('converts 15 to "0x0f"', () => {
-    expect(uintToHex(15)).toBe('0x0f');
+    expect(uintToBytesHex(15)).toBe('0x0f');
   });
 
   it('converts 16 to "0x10"', () => {
-    expect(uintToHex(16)).toBe('0x10');
+    expect(uintToBytesHex(16)).toBe('0x10');
   });
 
   it('converts 255 to "0xff"', () => {
-    expect(uintToHex(255)).toBe('0xff');
+    expect(uintToBytesHex(255)).toBe('0xff');
   });
 
   it('converts 256 to "0x0100"', () => {
-    expect(uintToHex(256)).toBe('0x0100');
+    expect(uintToBytesHex(256)).toBe('0x0100');
   });
 
   it('converts 65535 to "0xffff"', () => {
-    expect(uintToHex(65535)).toBe('0xffff');
+    expect(uintToBytesHex(65535)).toBe('0xffff');
   });
 
   it('converts 65536 to "0x010000"', () => {
-    expect(uintToHex(65536)).toBe('0x010000');
+    expect(uintToBytesHex(65536)).toBe('0x010000');
   });
 
   // BigInt values
   it('converts BigInt(0) to "0x00"', () => {
-    expect(uintToHex(BigInt(0))).toBe('0x00');
+    expect(uintToBytesHex(BigInt(0))).toBe('0x00');
   });
 
   it('converts BigInt(255) to "0xff"', () => {
-    expect(uintToHex(BigInt(255))).toBe('0xff');
+    expect(uintToBytesHex(BigInt(255))).toBe('0xff');
   });
 
   it('converts MAX_UINT64 correctly', () => {
-    expect(uintToHex(MAX_UINT64)).toBe('0xffffffffffffffff');
+    expect(uintToBytesHex(MAX_UINT64)).toBe('0xffffffffffffffff');
   });
 
   it('converts MAX_UINT256 correctly', () => {
-    expect(uintToHex(MAX_UINT256)).toBe(
+    expect(uintToBytesHex(MAX_UINT256)).toBe(
       '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
     );
   });
@@ -772,63 +954,63 @@ describe('uintToHex', () => {
   // Ensure even-length padding
   it('pads odd-length hex to even length', () => {
     // 0x1 -> 0x01
-    expect(uintToHex(1)).toBe('0x01');
+    expect(uintToBytesHex(1)).toBe('0x01');
     // 0xfff -> 0x0fff
-    expect(uintToHex(0xfff)).toBe('0x0fff');
+    expect(uintToBytesHex(0xfff)).toBe('0x0fff');
     // 0xfffff -> 0x0fffff
-    expect(uintToHex(0xfffff)).toBe('0x0fffff');
+    expect(uintToBytesHex(0xfffff)).toBe('0x0fffff');
   });
 });
 
-describe('uintToHexNo0x', () => {
+describe('uintToBytesHexNo0x', () => {
   // Basic conversions
   it('converts 0 to "00"', () => {
-    expect(uintToHexNo0x(0)).toBe('00');
+    expect(uintToBytesHexNo0x(0)).toBe('00');
   });
 
   it('converts 1 to "01"', () => {
-    expect(uintToHexNo0x(1)).toBe('01');
+    expect(uintToBytesHexNo0x(1)).toBe('01');
   });
 
   it('converts 15 to "0f"', () => {
-    expect(uintToHexNo0x(15)).toBe('0f');
+    expect(uintToBytesHexNo0x(15)).toBe('0f');
   });
 
   it('converts 16 to "10"', () => {
-    expect(uintToHexNo0x(16)).toBe('10');
+    expect(uintToBytesHexNo0x(16)).toBe('10');
   });
 
   it('converts 255 to "ff"', () => {
-    expect(uintToHexNo0x(255)).toBe('ff');
+    expect(uintToBytesHexNo0x(255)).toBe('ff');
   });
 
   it('converts 256 to "0100"', () => {
-    expect(uintToHexNo0x(256)).toBe('0100');
+    expect(uintToBytesHexNo0x(256)).toBe('0100');
   });
 
   it('converts 65535 to "ffff"', () => {
-    expect(uintToHexNo0x(65535)).toBe('ffff');
+    expect(uintToBytesHexNo0x(65535)).toBe('ffff');
   });
 
   it('converts 65536 to "010000"', () => {
-    expect(uintToHexNo0x(65536)).toBe('010000');
+    expect(uintToBytesHexNo0x(65536)).toBe('010000');
   });
 
   // BigInt values
   it('converts BigInt(0) to "00"', () => {
-    expect(uintToHexNo0x(BigInt(0))).toBe('00');
+    expect(uintToBytesHexNo0x(BigInt(0))).toBe('00');
   });
 
   it('converts BigInt(255) to "ff"', () => {
-    expect(uintToHexNo0x(BigInt(255))).toBe('ff');
+    expect(uintToBytesHexNo0x(BigInt(255))).toBe('ff');
   });
 
   it('converts MAX_UINT64 correctly', () => {
-    expect(uintToHexNo0x(MAX_UINT64)).toBe('ffffffffffffffff');
+    expect(uintToBytesHexNo0x(MAX_UINT64)).toBe('ffffffffffffffff');
   });
 
   it('converts MAX_UINT256 correctly', () => {
-    expect(uintToHexNo0x(MAX_UINT256)).toBe(
+    expect(uintToBytesHexNo0x(MAX_UINT256)).toBe(
       'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
     );
   });
@@ -836,15 +1018,233 @@ describe('uintToHexNo0x', () => {
   // Ensure even-length padding
   it('pads odd-length hex to even length', () => {
     // 0x1 -> 01
-    expect(uintToHexNo0x(1)).toBe('01');
+    expect(uintToBytesHexNo0x(1)).toBe('01');
     // 0xfff -> 0fff
-    expect(uintToHexNo0x(0xfff)).toBe('0fff');
+    expect(uintToBytesHexNo0x(0xfff)).toBe('0fff');
     // 0xfffff -> 0fffff
-    expect(uintToHexNo0x(0xfffff)).toBe('0fffff');
+    expect(uintToBytesHexNo0x(0xfffff)).toBe('0fffff');
   });
 });
 
-describe('numberToHexNo0x', () => {
+describe('uint256ToBytes32', () => {
+  // Basic cases
+  it('converts 0 to 32 zero bytes', () => {
+    const result = uint256ToBytes32(0);
+    expect(result).toBeInstanceOf(Uint8Array);
+    expect(result.length).toBe(32);
+    expect(result.every((b) => b === 0)).toBe(true);
+  });
+
+  it('converts 1 to bytes32 with last byte = 1', () => {
+    const result = uint256ToBytes32(1);
+    expect(result.length).toBe(32);
+    expect(result[31]).toBe(1);
+    expect(result.slice(0, 31).every((b) => b === 0)).toBe(true);
+  });
+
+  it('converts 1n to bytes32 with last byte = 1', () => {
+    const result = uint256ToBytes32(1n);
+    expect(result.length).toBe(32);
+    expect(result[31]).toBe(1);
+    expect(result.slice(0, 31).every((b) => b === 0)).toBe(true);
+  });
+
+  // Small values
+  it('converts 255 (0xff) correctly', () => {
+    const result = uint256ToBytes32(255);
+    expect(result.length).toBe(32);
+    expect(result[31]).toBe(255);
+    expect(result.slice(0, 31).every((b) => b === 0)).toBe(true);
+  });
+
+  it('converts 256 (0x100) correctly', () => {
+    const result = uint256ToBytes32(256);
+    expect(result.length).toBe(32);
+    expect(result[30]).toBe(1);
+    expect(result[31]).toBe(0);
+  });
+
+  it('converts 0x01020304 correctly (big-endian)', () => {
+    const result = uint256ToBytes32(0x01020304);
+    expect(result.length).toBe(32);
+    expect(result[28]).toBe(1);
+    expect(result[29]).toBe(2);
+    expect(result[30]).toBe(3);
+    expect(result[31]).toBe(4);
+  });
+
+  // Boundary values for different uint sizes
+  it('converts MAX_UINT8 correctly', () => {
+    const result = uint256ToBytes32(MAX_UINT8);
+    expect(result.length).toBe(32);
+    expect(result[31]).toBe(255);
+    expect(result.slice(0, 31).every((b) => b === 0)).toBe(true);
+  });
+
+  it('converts MAX_UINT32 correctly', () => {
+    const result = uint256ToBytes32(MAX_UINT32);
+    expect(result.length).toBe(32);
+    expect(result[28]).toBe(255);
+    expect(result[29]).toBe(255);
+    expect(result[30]).toBe(255);
+    expect(result[31]).toBe(255);
+    expect(result.slice(0, 28).every((b) => b === 0)).toBe(true);
+  });
+
+  it('converts MAX_UINT64 correctly', () => {
+    const result = uint256ToBytes32(MAX_UINT64);
+    expect(result.length).toBe(32);
+    // Last 8 bytes should all be 0xff
+    for (let i = 24; i < 32; i++) {
+      expect(result[i]).toBe(255);
+    }
+    expect(result.slice(0, 24).every((b) => b === 0)).toBe(true);
+  });
+
+  it('converts MAX_UINT128 correctly', () => {
+    const result = uint256ToBytes32(MAX_UINT128);
+    expect(result.length).toBe(32);
+    // Last 16 bytes should all be 0xff
+    for (let i = 16; i < 32; i++) {
+      expect(result[i]).toBe(255);
+    }
+    expect(result.slice(0, 16).every((b) => b === 0)).toBe(true);
+  });
+
+  it('converts MAX_UINT256 correctly (all bytes 0xff)', () => {
+    const result = uint256ToBytes32(MAX_UINT256);
+    expect(result.length).toBe(32);
+    expect(result.every((b) => b === 255)).toBe(true);
+  });
+
+  // Values that span multiple 64-bit chunks
+  it('converts 2^64 correctly (first byte of third chunk)', () => {
+    const value = BigInt(2) ** BigInt(64);
+    const result = uint256ToBytes32(value);
+    expect(result.length).toBe(32);
+    expect(result[23]).toBe(1); // byte at position 23 (start of third 8-byte chunk from right)
+    expect(result.slice(24, 32).every((b) => b === 0)).toBe(true);
+    expect(result.slice(0, 23).every((b) => b === 0)).toBe(true);
+  });
+
+  it('converts 2^128 correctly (first byte of second chunk)', () => {
+    const value = BigInt(2) ** BigInt(128);
+    const result = uint256ToBytes32(value);
+    expect(result.length).toBe(32);
+    expect(result[15]).toBe(1); // byte at position 15 (start of second 8-byte chunk from right)
+    expect(result.slice(16, 32).every((b) => b === 0)).toBe(true);
+    expect(result.slice(0, 15).every((b) => b === 0)).toBe(true);
+  });
+
+  it('converts 2^192 correctly (first byte of first chunk)', () => {
+    const value = BigInt(2) ** BigInt(192);
+    const result = uint256ToBytes32(value);
+    expect(result.length).toBe(32);
+    expect(result[7]).toBe(1); // byte at position 7 (start of first 8-byte chunk from right)
+    expect(result.slice(8, 32).every((b) => b === 0)).toBe(true);
+    expect(result.slice(0, 7).every((b) => b === 0)).toBe(true);
+  });
+
+  it('converts 2^248 correctly (second byte)', () => {
+    const value = BigInt(2) ** BigInt(248);
+    const result = uint256ToBytes32(value);
+    expect(result.length).toBe(32);
+    expect(result[0]).toBe(1);
+    expect(result.slice(1, 32).every((b) => b === 0)).toBe(true);
+  });
+
+  // Mixed value across all chunks
+  it('converts a value spanning all four 64-bit chunks correctly', () => {
+    // 0x0102030405060708_1112131415161718_2122232425262728_3132333435363738
+    const value = BigInt(
+      '0x0102030405060708111213141516171821222324252627283132333435363738',
+    );
+    const result = uint256ToBytes32(value);
+    expect(result.length).toBe(32);
+    // Verify first chunk (bytes 0-7)
+    expect(result[0]).toBe(0x01);
+    expect(result[7]).toBe(0x08);
+    // Verify last chunk (bytes 24-31)
+    expect(result[24]).toBe(0x31);
+    expect(result[31]).toBe(0x38);
+  });
+
+  // Error cases
+  it('throws for negative numbers', () => {
+    expect(() => uint256ToBytes32(-1)).toThrow(InvalidTypeError);
+    expect(() => uint256ToBytes32(-100)).toThrow(InvalidTypeError);
+    expect(() => uint256ToBytes32(BigInt(-1))).toThrow(InvalidTypeError);
+  });
+
+  it('throws for non-integer numbers', () => {
+    expect(() => uint256ToBytes32(1.5)).toThrow(InvalidTypeError);
+    expect(() => uint256ToBytes32(0.1)).toThrow(InvalidTypeError);
+  });
+
+  it('throws for values exceeding MAX_UINT256', () => {
+    expect(() => uint256ToBytes32(MAX_UINT256 + 1n)).toThrow(InvalidTypeError);
+  });
+
+  it('throws for invalid types', () => {
+    expect(() => uint256ToBytes32('123')).toThrow(InvalidTypeError);
+    expect(() => uint256ToBytes32(null)).toThrow(InvalidTypeError);
+    expect(() => uint256ToBytes32(undefined)).toThrow(InvalidTypeError);
+    expect(() => uint256ToBytes32({})).toThrow(InvalidTypeError);
+    expect(() => uint256ToBytes32([])).toThrow(InvalidTypeError);
+  });
+
+  it('throws for NaN', () => {
+    expect(() => uint256ToBytes32(NaN)).toThrow(InvalidTypeError);
+  });
+
+  it('throws for Infinity', () => {
+    expect(() => uint256ToBytes32(Infinity)).toThrow(InvalidTypeError);
+    expect(() => uint256ToBytes32(-Infinity)).toThrow(InvalidTypeError);
+  });
+
+  // Round-trip verification using DataView
+  it('can be read back correctly using DataView for small values', () => {
+    const value = 0x0102030405060708n;
+    const result = uint256ToBytes32(value);
+    const view = new DataView(result.buffer);
+    expect(view.getBigUint64(24, false)).toBe(value);
+  });
+
+  it('can be read back correctly using DataView for MAX_UINT64', () => {
+    const result = uint256ToBytes32(MAX_UINT64);
+    const view = new DataView(result.buffer);
+    expect(view.getBigUint64(24, false)).toBe(MAX_UINT64);
+    expect(view.getBigUint64(16, false)).toBe(BigInt(0));
+    expect(view.getBigUint64(8, false)).toBe(BigInt(0));
+    expect(view.getBigUint64(0, false)).toBe(BigInt(0));
+  });
+
+  it('equivalent to hexToBytes(num.toString(16).padStart(64, "0"))', () => {
+    const arr = [
+      0,
+      1,
+      255,
+      256,
+      31337,
+      11155111,
+      MAX_UINT8,
+      MAX_UINT32,
+      MAX_UINT64,
+      MAX_UINT128,
+      MAX_UINT256,
+      BigInt(2) ** BigInt(64),
+      BigInt(2) ** BigInt(128),
+      BigInt(2) ** BigInt(192),
+    ];
+    for (let i = 0; i < arr.length; ++i) {
+      const b1 = hexToBytes(arr[i].toString(16).padStart(64, '0'));
+      const b2 = uint256ToBytes32(arr[i]);
+      expect(b2).toEqual(b1);
+    }
+  });
+});
+
+describe('numberToBytesHexNo0x', () => {
   const testCases: [number, string][] = [
     [0, '00'],
     [1, '01'],
@@ -865,7 +1265,246 @@ describe('numberToHexNo0x', () => {
 
   it('converts numbers to hex strings without 0x prefix', () => {
     for (const [input, expected] of testCases) {
-      expect(numberToHexNo0x(input)).toBe(expected);
+      expect(numberToBytesHexNo0x(input)).toBe(expected);
     }
+  });
+});
+
+describe('numberToBytesHex', () => {
+  const testCases: [number, string][] = [
+    [0, '0x00'],
+    [1, '0x01'],
+    [15, '0x0f'],
+    [16, '0x10'],
+    [255, '0xff'],
+    [256, '0x0100'],
+    [4095, '0x0fff'],
+    [4096, '0x1000'],
+    [65535, '0xffff'],
+    [65536, '0x010000'],
+    [0x1234567, '0x01234567'],
+    [0x0102030, '0x102030'],
+    [0x01020304, '0x01020304'],
+    [0xdeadbeef, '0xdeadbeef'],
+    [Number.MAX_SAFE_INTEGER, '0x1fffffffffffff'],
+  ];
+
+  it('converts numbers to hex strings with 0x prefix', () => {
+    for (const [input, expected] of testCases) {
+      expect(numberToBytesHex(input)).toBe(expected);
+    }
+  });
+});
+
+describe('uintToHex', () => {
+  const testCases: [number | bigint, string][] = [
+    [0, '0x0'],
+    [1, '0x1'],
+    [15, '0xf'],
+    [16, '0x10'],
+    [255, '0xff'],
+    [256, '0x100'],
+    [4095, '0xfff'],
+    [4096, '0x1000'],
+    [65535, '0xffff'],
+    [65536, '0x10000'],
+    [0xdeadbeef, '0xdeadbeef'],
+    [BigInt(0), '0x0'],
+    [BigInt(255), '0xff'],
+    [MAX_UINT64, '0xffffffffffffffff'],
+    [
+      MAX_UINT256,
+      '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+    ],
+  ];
+
+  it('converts uint to hex string with 0x prefix (no padding)', () => {
+    for (const [input, expected] of testCases) {
+      expect(uintToHex(input)).toBe(expected);
+    }
+  });
+});
+
+describe('isUint256', () => {
+  const validCases: (number | bigint)[] = [
+    0,
+    1,
+    255,
+    MAX_UINT8,
+    MAX_UINT16,
+    MAX_UINT32,
+    MAX_UINT64,
+    MAX_UINT128,
+    MAX_UINT256,
+    BigInt(0),
+    1n,
+    BigInt(MAX_UINT32),
+    Number.MAX_SAFE_INTEGER,
+  ];
+
+  const invalidCases: unknown[] = [
+    -1,
+    -100,
+    BigInt(-1),
+    1.5,
+    0.1,
+    MAX_UINT256 + 1n,
+    '123',
+    null,
+    undefined,
+    {},
+    [],
+  ];
+
+  it('returns true for valid uint256 values', () => {
+    for (const input of validCases) {
+      expect(isUint256(input)).toBe(true);
+    }
+  });
+
+  it('returns false for invalid uint256 values', () => {
+    for (const input of invalidCases) {
+      expect(isUint256(input)).toBe(false);
+    }
+  });
+});
+
+describe('uint64ToBytes32', () => {
+  const validCases: [number | bigint, number[]][] = [
+    // [input, expected last 8 bytes (indices 24-31)]
+    [0, [0, 0, 0, 0, 0, 0, 0, 0]],
+    [1, [0, 0, 0, 0, 0, 0, 0, 1]],
+    [255, [0, 0, 0, 0, 0, 0, 0, 255]],
+    [256, [0, 0, 0, 0, 0, 0, 1, 0]],
+    [0x01020304, [0, 0, 0, 0, 1, 2, 3, 4]],
+    [BigInt(0), [0, 0, 0, 0, 0, 0, 0, 0]],
+    [1n, [0, 0, 0, 0, 0, 0, 0, 1]],
+    [MAX_UINT64, [255, 255, 255, 255, 255, 255, 255, 255]],
+  ];
+
+  it('converts uint64 to 32 bytes (big-endian, right-aligned)', () => {
+    for (const [input, expectedLastBytes] of validCases) {
+      const result = uint64ToBytes32(input);
+      expect(result).toBeInstanceOf(Uint8Array);
+      expect(result.length).toBe(32);
+      // First 24 bytes should be zero
+      expect(result.slice(0, 24).every((b) => b === 0)).toBe(true);
+      // Last 8 bytes should match expected
+      expect(Array.from(result.slice(24))).toEqual(expectedLastBytes);
+    }
+  });
+
+  it('throws for values exceeding MAX_UINT64', () => {
+    expect(() => uint64ToBytes32(MAX_UINT64 + 1n)).toThrow(InvalidTypeError);
+    expect(() => uint64ToBytes32(MAX_UINT128)).toThrow(InvalidTypeError);
+    expect(() => uint64ToBytes32(MAX_UINT256)).toThrow(InvalidTypeError);
+  });
+
+  it('throws for negative numbers', () => {
+    expect(() => uint64ToBytes32(-1)).toThrow(InvalidTypeError);
+    expect(() => uint64ToBytes32(BigInt(-1))).toThrow(InvalidTypeError);
+  });
+
+  it('throws for non-integer numbers', () => {
+    expect(() => uint64ToBytes32(1.5)).toThrow(InvalidTypeError);
+  });
+
+  it('throws for invalid types', () => {
+    expect(() => uint64ToBytes32('123')).toThrow(InvalidTypeError);
+    expect(() => uint64ToBytes32(null)).toThrow(InvalidTypeError);
+    expect(() => uint64ToBytes32(undefined)).toThrow(InvalidTypeError);
+  });
+});
+
+describe('isRecordUint256Property', () => {
+  const validCases: Record<string, unknown>[] = [
+    { foo: 0 },
+    { foo: 1 },
+    { foo: 255 },
+    { foo: MAX_UINT256 },
+    { foo: BigInt(0) },
+    { foo: BigInt(MAX_UINT32) },
+  ];
+
+  const invalidCases: [unknown, string][] = [
+    [{ foo: null }, 'null'],
+    [{ foo: undefined }, 'undefined'],
+    [{}, 'missing property'],
+    [null, 'null object'],
+    [{ foo: 'hello' }, 'string'],
+    [{ foo: -1 }, 'negative'],
+    [{ foo: 1.5 }, 'float'],
+    [{ foo: MAX_UINT256 + 1n }, 'exceeds MAX_UINT256'],
+  ];
+
+  it('returns true for valid uint256 properties', () => {
+    for (const input of validCases) {
+      expect(isRecordUint256Property(input, 'foo')).toBe(true);
+    }
+  });
+
+  it('returns false for invalid uint256 properties', () => {
+    for (const [input] of invalidCases) {
+      expect(isRecordUint256Property(input, 'foo')).toBe(false);
+    }
+  });
+});
+
+describe('assertRecordUint256Property', () => {
+  const validCases: Record<string, unknown>[] = [
+    { foo: 0 },
+    { foo: 1 },
+    { foo: MAX_UINT256 },
+    { foo: BigInt(123) },
+  ];
+
+  it('does not throw for valid uint256 properties', () => {
+    for (const input of validCases) {
+      expect(() =>
+        assertRecordUint256Property(input, 'foo', 'TestObj'),
+      ).not.toThrow();
+    }
+  });
+
+  it('throws for null property', () => {
+    expect(() =>
+      assertRecordUint256Property({ foo: null }, 'foo', 'TestObj'),
+    ).toThrow(InvalidPropertyError);
+  });
+
+  it('throws for undefined property', () => {
+    expect(() =>
+      assertRecordUint256Property({ foo: undefined }, 'foo', 'TestObj'),
+    ).toThrow(InvalidPropertyError);
+  });
+
+  it('throws for missing property', () => {
+    expect(() => assertRecordUint256Property({}, 'foo', 'TestObj')).toThrow(
+      InvalidPropertyError,
+    );
+  });
+
+  it('throws for string property', () => {
+    expect(() =>
+      assertRecordUint256Property({ foo: '123' }, 'foo', 'TestObj'),
+    ).toThrow(InvalidPropertyError);
+  });
+
+  it('throws for negative number', () => {
+    expect(() =>
+      assertRecordUint256Property({ foo: -1 }, 'foo', 'TestObj'),
+    ).toThrow(InvalidPropertyError);
+  });
+
+  it('throws for float', () => {
+    expect(() =>
+      assertRecordUint256Property({ foo: 1.5 }, 'foo', 'TestObj'),
+    ).toThrow(InvalidPropertyError);
+  });
+
+  it('throws for value exceeding MAX_UINT256', () => {
+    expect(() =>
+      assertRecordUint256Property({ foo: MAX_UINT256 + 1n }, 'foo', 'TestObj'),
+    ).toThrow(InvalidPropertyError);
   });
 });

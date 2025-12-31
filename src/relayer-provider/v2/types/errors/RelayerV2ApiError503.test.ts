@@ -1,6 +1,7 @@
 import { InvalidPropertyError } from '../../../../errors/InvalidPropertyError';
 import { assertIsRelayerV2ApiError503 } from './RelayerV2ApiError503';
 
+// npx jest --colors --passWithNoTests ./src/relayer-provider/v2/types/errors/RelayerV2ApiError503.test.ts
 // npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v2/types/errors/RelayerV2ApiError503.test.ts --collectCoverageFrom=./src/relayer-provider/v2/types/errors/RelayerV2ApiError503.ts
 
 describe('RelayerV2ApiError503', () => {
@@ -33,7 +34,12 @@ describe('RelayerV2ApiError503', () => {
         objName: 'Foo',
         property: 'label',
         expectedType: 'string',
-        expectedValue: ['protocol_paused', 'gateway_not_reachable'],
+        expectedValue: [
+          'protocol_paused',
+          'gateway_not_reachable',
+          'readiness_check_timedout',
+          'response_timedout',
+        ],
       }),
     );
 
@@ -50,7 +56,12 @@ describe('RelayerV2ApiError503', () => {
         property: 'label',
         expectedType: 'string',
         type: 'string',
-        expectedValue: ['protocol_paused', 'gateway_not_reachable'],
+        expectedValue: [
+          'readiness_check_timedout',
+          'response_timedout',
+          'protocol_paused',
+          'gateway_not_reachable',
+        ],
         value: 'foo',
       }),
     );
@@ -89,6 +100,115 @@ describe('RelayerV2ApiError503', () => {
       assertIsRelayerV2ApiError503(
         {
           label: 'gateway_not_reachable',
+          message: 123,
+        },
+        'Foo',
+      ),
+    ).toThrow(
+      new InvalidPropertyError({
+        objName: 'Foo',
+        property: 'message',
+        expectedType: 'string',
+        type: 'number',
+      }),
+    );
+  });
+
+  it('assertIsRelayerV2ApiError503', () => {
+    // Success
+    expect(() =>
+      assertIsRelayerV2ApiError503(
+        {
+          label: 'readiness_check_timedout',
+          message: 'hello',
+        },
+        'Foo',
+      ),
+    ).not.toThrow();
+
+    // Success
+    expect(() =>
+      assertIsRelayerV2ApiError503(
+        {
+          label: 'response_timedout',
+          message: 'hello',
+        },
+        'Foo',
+      ),
+    ).not.toThrow();
+
+    // Failure
+    expect(() => assertIsRelayerV2ApiError503({}, 'Foo')).toThrow(
+      InvalidPropertyError.missingProperty({
+        objName: 'Foo',
+        property: 'label',
+        expectedType: 'string',
+        expectedValue: [
+          'protocol_paused',
+          'gateway_not_reachable',
+          'readiness_check_timedout',
+          'response_timedout',
+        ],
+      }),
+    );
+
+    expect(() =>
+      assertIsRelayerV2ApiError503(
+        {
+          label: 'foo',
+        },
+        'Foo',
+      ),
+    ).toThrow(
+      new InvalidPropertyError({
+        objName: 'Foo',
+        property: 'label',
+        expectedType: 'string',
+        type: 'string',
+        expectedValue: [
+          'readiness_check_timedout',
+          'response_timedout',
+          'protocol_paused',
+          'gateway_not_reachable',
+        ],
+        value: 'foo',
+      }),
+    );
+
+    expect(() =>
+      assertIsRelayerV2ApiError503(
+        {
+          label: 'readiness_check_timedout',
+        },
+        'Foo',
+      ),
+    ).toThrow(
+      InvalidPropertyError.missingProperty({
+        objName: 'Foo',
+        property: 'message',
+        expectedType: 'string',
+      }),
+    );
+
+    expect(() =>
+      assertIsRelayerV2ApiError503(
+        {
+          label: 'response_timedout',
+        },
+        'Foo',
+      ),
+    ).toThrow(
+      InvalidPropertyError.missingProperty({
+        objName: 'Foo',
+        property: 'message',
+        expectedType: 'string',
+      }),
+    );
+
+    expect(() =>
+      assertIsRelayerV2ApiError503(
+        {
+          label: 'readiness_check_timedout',
           message: 123,
         },
         'Foo',

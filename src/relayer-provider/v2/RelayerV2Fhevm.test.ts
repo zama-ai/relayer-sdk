@@ -1,55 +1,24 @@
 import { SepoliaConfig } from '../..';
 import { createRelayerFhevm } from '../createRelayerFhevm';
 import fetchMock from 'fetch-mock';
-import {
-  publicKey as assetPublicKey,
-  publicParams as assetPublicParams,
-} from '../../test';
-import {
-  SERIALIZED_SIZE_LIMIT_CRS,
-  SERIALIZED_SIZE_LIMIT_PK,
-} from '../../constants';
 import { RelayerV2Fhevm } from './RelayerV2Fhevm';
 import { TEST_CONFIG } from '../../test/config';
+import { TFHEError } from '../../errors/TFHEError';
+import { tfheCompactPkeCrsBytes, tfheCompactPublicKeyBytes } from '../../test';
+import { setupV2RoutesKeyUrl } from '../../test/v2/mockRoutes';
 
+////////////////////////////////////////////////////////////////////////////////
+//
 // Jest Command line
 // =================
+//
 // npx jest --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Fhevm.test.ts
 // npx jest --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Fhevm.test.ts --testNamePattern=xxx
 // npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v2/RelayerV2Fhevm.test.ts --collectCoverageFrom=./src/relayer-provider/v2/RelayerV2Fhevm.ts
-
-// curl https://relayer.testnet.zama.org/v2/keyurl
-const relayerV2ResponseGetKeyUrl = {
-  response: {
-    fheKeyInfo: [
-      {
-        fhePublicKey: {
-          dataId: 'fhe-public-key-data-id',
-          urls: [
-            'https://zama-mpc-testnet-public-efd88e2b.s3.eu-west-1.amazonaws.com/PUB-p1/PublicKey/0400000000000000000000000000000000000000000000000000000000000003',
-          ],
-        },
-      },
-    ],
-    crs: {
-      '2048': {
-        dataId: 'crs-data-id',
-        urls: [
-          'https://zama-mpc-testnet-public-efd88e2b.s3.eu-west-1.amazonaws.com/PUB-p1/CRS/0500000000000000000000000000000000000000000000000000000000000004',
-        ],
-      },
-    },
-  },
-};
+//
+////////////////////////////////////////////////////////////////////////////////
 
 const relayerUrlV2 = `${SepoliaConfig.relayerUrl!}/v2`;
-const assetPublicKeyBytes = assetPublicKey.safe_serialize(
-  SERIALIZED_SIZE_LIMIT_PK,
-);
-const assetPublicParams2048Bytes =
-  assetPublicParams[2048].publicParams.safe_serialize(
-    SERIALIZED_SIZE_LIMIT_CRS,
-  );
 
 const describeIfFetchMock =
   TEST_CONFIG.type === 'fetch-mock' ? describe : describe.skip;
@@ -57,18 +26,10 @@ const describeIfFetchMock =
 describeIfFetchMock('RelayerV2Fhevm', () => {
   beforeEach(async () => {
     fetchMock.removeRoutes();
-    fetchMock.get(`${relayerUrlV2}/keyurl`, relayerV2ResponseGetKeyUrl);
-
-    fetchMock.get(
-      relayerV2ResponseGetKeyUrl.response.fheKeyInfo[0].fhePublicKey.urls[0],
-      assetPublicKeyBytes,
-    );
-
-    fetchMock.get(
-      relayerV2ResponseGetKeyUrl.response.crs[2048].urls[0],
-      assetPublicParams2048Bytes,
-    );
+    setupV2RoutesKeyUrl();
   });
+
+  //////////////////////////////////////////////////////////////////////////////
 
   it('v2: createRelayerFhevm', async () => {
     const SepoliaConfigRelayerUrl = SepoliaConfig.relayerUrl!;
@@ -79,6 +40,8 @@ describeIfFetchMock('RelayerV2Fhevm', () => {
     expect(relayerFhevm.version).toBe(2);
   });
 
+  //////////////////////////////////////////////////////////////////////////////
+
   it('v2: getPublicKey().publicKeyId', async () => {
     const SepoliaConfigRelayerUrl = SepoliaConfig.relayerUrl!;
     const relayerFhevm = await createRelayerFhevm({
@@ -86,8 +49,10 @@ describeIfFetchMock('RelayerV2Fhevm', () => {
       defaultRelayerVersion: 1,
     });
     const pub_key = relayerFhevm.getPublicKeyBytes();
-    expect(pub_key.publicKeyId).toBe('fhe-public-key-data-id');
+    expect(pub_key.id).toBe('fhe-public-key-data-id');
   });
+
+  //////////////////////////////////////////////////////////////////////////////
 
   it('v2: getPublicKey().publicKey', async () => {
     const SepoliaConfigRelayerUrl = SepoliaConfig.relayerUrl!;
@@ -96,8 +61,10 @@ describeIfFetchMock('RelayerV2Fhevm', () => {
       defaultRelayerVersion: 1,
     });
     const pub_key = relayerFhevm.getPublicKeyBytes();
-    expect(pub_key.publicKey).toStrictEqual(assetPublicKeyBytes);
+    expect(pub_key.bytes).toStrictEqual(tfheCompactPublicKeyBytes);
   });
+
+  //////////////////////////////////////////////////////////////////////////////
 
   it('v2: getPublicParams().publicParamsId', async () => {
     const SepoliaConfigRelayerUrl = SepoliaConfig.relayerUrl!;
@@ -105,9 +72,11 @@ describeIfFetchMock('RelayerV2Fhevm', () => {
       relayerUrl: `${SepoliaConfigRelayerUrl}/v2`,
       defaultRelayerVersion: 1,
     });
-    const pub_params = relayerFhevm.getPublicParamsBytesForBits(2048);
-    expect(pub_params.publicParamsId).toBe('crs-data-id');
+    const pub_params = relayerFhevm.getPkeCrsBytesForCapacity(2048);
+    expect(pub_params.id).toBe('crs-data-id');
   });
+
+  //////////////////////////////////////////////////////////////////////////////
 
   it('v2: getPublicParams().publicParams', async () => {
     const SepoliaConfigRelayerUrl = SepoliaConfig.relayerUrl!;
@@ -115,9 +84,11 @@ describeIfFetchMock('RelayerV2Fhevm', () => {
       relayerUrl: `${SepoliaConfigRelayerUrl}/v2`,
       defaultRelayerVersion: 1,
     });
-    const pub_params = relayerFhevm.getPublicParamsBytesForBits(2048);
-    expect(pub_params.publicParams).toStrictEqual(assetPublicParams2048Bytes);
+    const pub_params = relayerFhevm.getPkeCrsBytesForCapacity(2048);
+    expect(pub_params.bytes).toStrictEqual(tfheCompactPkeCrsBytes);
   });
+
+  //////////////////////////////////////////////////////////////////////////////
 
   it('v2: getPublicParams(123).publicParams', async () => {
     const SepoliaConfigeRelayerUrl = SepoliaConfig.relayerUrl!;
@@ -125,10 +96,14 @@ describeIfFetchMock('RelayerV2Fhevm', () => {
       relayerUrl: `${SepoliaConfigeRelayerUrl}/v2`,
       defaultRelayerVersion: 1,
     });
-    expect(() => relayerFhevm.getPublicParamsBytesForBits(123)).toThrow(
-      "Unsupported PublicParams bits format '123'",
+    expect(() => relayerFhevm.getPkeCrsBytesForCapacity(123)).toThrow(
+      new TFHEError({
+        message: `Unsupported FHEVM PkeCrs capacity: 123`,
+      }),
     );
   });
+
+  //////////////////////////////////////////////////////////////////////////////
 
   it('v2: relayerProvider()', async () => {
     const SepoliaConfigeRelayerUrl = SepoliaConfig.relayerUrl!;
@@ -142,6 +117,8 @@ describeIfFetchMock('RelayerV2Fhevm', () => {
     expect(relayerFhevmV2.relayerProvider.version).toEqual(2);
   });
 
+  //////////////////////////////////////////////////////////////////////////////
+
   it('v2: createRelayerFhevm from publicKey and publicParams', async () => {
     const SepoliaConfigRelayerUrl = SepoliaConfig.relayerUrl!;
     const relayerFhevm1 = await createRelayerFhevm({
@@ -150,16 +127,19 @@ describeIfFetchMock('RelayerV2Fhevm', () => {
     });
 
     const pub_key = relayerFhevm1.getPublicKeyBytes();
-    const pub_params = relayerFhevm1.getPublicParamsBytesForBits(2048);
+    const pub_params = relayerFhevm1.getPkeCrsBytesForCapacity(2048);
 
     const relayerFhevm2 = await createRelayerFhevm({
       relayerUrl: `${SepoliaConfigRelayerUrl}/v2`,
       publicKey: {
-        data: pub_key.publicKey,
-        id: pub_key.publicKeyId,
+        data: pub_key.bytes,
+        id: pub_key.id,
       },
       publicParams: {
-        2048: pub_params,
+        2048: {
+          publicParams: pub_params.bytes,
+          publicParamsId: pub_params.id,
+        },
       },
       defaultRelayerVersion: 1,
     });
@@ -167,8 +147,8 @@ describeIfFetchMock('RelayerV2Fhevm', () => {
     expect(relayerFhevm2.getPublicKeyBytes()).toStrictEqual(
       relayerFhevm1.getPublicKeyBytes(),
     );
-    expect(relayerFhevm2.getPublicParamsBytesForBits(2048)).toStrictEqual(
-      relayerFhevm1.getPublicParamsBytesForBits(2048),
+    expect(relayerFhevm2.getPkeCrsBytesForCapacity(2048)).toStrictEqual(
+      relayerFhevm1.getPkeCrsBytesForCapacity(2048),
     );
   });
 });

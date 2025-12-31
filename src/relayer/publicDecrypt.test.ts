@@ -1,10 +1,10 @@
+import type { RelayerPublicDecryptPayload } from '../types/relayer';
 import { publicDecryptRequest } from './publicDecrypt';
 import fetchMock from 'fetch-mock';
 import { ethers } from 'ethers';
 import { getErrorCause, getErrorCauseErrorMessage } from './error';
-import { createRelayerProvider } from '../relayer-provider/createRelayerFhevm';
+import { createRelayerProvider } from '../relayer-provider/createRelayerProvider';
 import { TEST_CONFIG } from '../test/config';
-import { RelayerPublicDecryptPayload } from '../types/relayer';
 import { fetchRelayerV1Post } from '../relayer-provider/v1/fetchRelayerV1';
 
 // Jest Command line

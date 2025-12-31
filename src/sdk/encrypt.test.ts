@@ -1,39 +1,54 @@
 import { createEncryptedInput } from './encrypt';
-import { publicKey, publicParams } from '../test';
 import { TEST_CONFIG } from '../test/config';
+import { tfheCompactPkeCrsWasm, tfheCompactPublicKeyWasm } from '../test';
+
+////////////////////////////////////////////////////////////////////////////////
+//
+// Jest Command line
+// =================
+//
+// npx jest --colors --passWithNoTests ./src/sdk/encrypt.test.ts
+//
+////////////////////////////////////////////////////////////////////////////////
 
 const describeIfFetchMock =
   TEST_CONFIG.type === 'fetch-mock' ? describe : describe.skip;
+
+////////////////////////////////////////////////////////////////////////////////
 
 describeIfFetchMock('encrypt', () => {
   it('encrypt', async () => {
     const input = createEncryptedInput({
       aclContractAddress: '0x325ea1b59F28e9e1C51d3B5b47b7D3965CC5D8C8',
       chainId: 1234,
-      tfheCompactPublicKey: publicKey,
-      publicParams,
-      userAddress: '0x8ba1f109551bd432803012645ac136ddd64dba72',
+      tfheCompactPublicKey: tfheCompactPublicKeyWasm,
+      tfheCompactPkeCrs: tfheCompactPkeCrsWasm,
+      capacity: 2048,
+      userAddress: '0x8ba1f109551bD432803012645Ac136ddd64DBA72',
       contractAddress: '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
     });
     input.addBool(false);
-    input.add8(BigInt(43));
-    input.add16(BigInt(87));
-    input.add32(BigInt(2339389323));
-    input.add64(BigInt(23393893233));
-    input.add128(BigInt(233938932390));
+    input.add8(43n);
+    input.add16(87n);
+    input.add32(2339389323n);
+    input.add64(23393893233n);
+    input.add128(233938932390n);
     input.addAddress('0xa5e1defb98EFe38EBb2D958CEe052410247F4c80');
-    input.add256(BigInt('2339389323922393930'));
+    input.add256(2339389323922393930n);
     const ciphertext = input.encrypt();
     expect(ciphertext.length).toBe(20106);
   }, 60000);
+
+  //////////////////////////////////////////////////////////////////////////////
 
   it('encrypt one 0 value', async () => {
     const input = createEncryptedInput({
       aclContractAddress: '0x325ea1b59F28e9e1C51d3B5b47b7D3965CC5D8C8',
       chainId: 1234,
-      tfheCompactPublicKey: publicKey,
-      publicParams,
-      userAddress: '0x8ba1f109551bd432803012645ac136ddd64dba72',
+      tfheCompactPublicKey: tfheCompactPublicKeyWasm,
+      tfheCompactPkeCrs: tfheCompactPkeCrsWasm,
+      capacity: 2048,
+      userAddress: '0x8ba1f109551bD432803012645Ac136ddd64DBA72',
       contractAddress: '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
     });
     input.add128(BigInt(0));
@@ -41,24 +56,29 @@ describeIfFetchMock('encrypt', () => {
     expect(ciphertext.length).toBe(18922);
   });
 
+  //////////////////////////////////////////////////////////////////////////////
+
   it('throws errors', async () => {
     expect(() =>
       createEncryptedInput({
         aclContractAddress: '0x325ea1b59F28e9e1C51d3B5b47b7D3965CC5D8C8',
         chainId: 1234,
-        tfheCompactPublicKey: publicKey,
-        publicParams,
+        tfheCompactPublicKey: tfheCompactPublicKeyWasm,
+        tfheCompactPkeCrs: tfheCompactPkeCrsWasm,
+        capacity: 2048,
         userAddress: '0',
         contractAddress: '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
       }),
     ).toThrow('User address is not a valid address.');
+
     expect(() =>
       createEncryptedInput({
         aclContractAddress: '0x325ea1b59F28e9e1C51d3B5b47b7D3965CC5D8C8',
         chainId: 1234,
-        tfheCompactPublicKey: publicKey,
-        publicParams,
-        userAddress: '0x8ba1f109551bd432803012645ac136ddd64dba72',
+        tfheCompactPublicKey: tfheCompactPublicKeyWasm,
+        tfheCompactPkeCrs: tfheCompactPkeCrsWasm,
+        capacity: 2048,
+        userAddress: '0x8ba1f109551bD432803012645Ac136ddd64DBA72',
         contractAddress: '0',
       }),
     ).toThrow('Contract address is not a valid address.');
@@ -67,8 +87,9 @@ describeIfFetchMock('encrypt', () => {
       createEncryptedInput({
         aclContractAddress: '0x325ea1b59F28e9e1C51d3B5b47b7D3965CC5D8C8',
         chainId: 1234,
-        tfheCompactPublicKey: publicKey,
-        publicParams,
+        tfheCompactPublicKey: tfheCompactPublicKeyWasm,
+        tfheCompactPkeCrs: tfheCompactPkeCrsWasm,
+        capacity: 2048,
         userAddress: '0x8ba1f109551bd432803012645ac136ddd64d',
         contractAddress: '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
       }),
@@ -77,9 +98,10 @@ describeIfFetchMock('encrypt', () => {
     const input = createEncryptedInput({
       aclContractAddress: '0x325ea1b59F28e9e1C51d3B5b47b7D3965CC5D8C8',
       chainId: 1234,
-      tfheCompactPublicKey: publicKey,
-      publicParams,
-      userAddress: '0x8ba1f109551bd432803012645ac136ddd64dba72',
+      tfheCompactPublicKey: tfheCompactPublicKeyWasm,
+      tfheCompactPkeCrs: tfheCompactPkeCrsWasm,
+      capacity: 2048,
+      userAddress: '0x8ba1f109551bD432803012645Ac136ddd64DBA72',
       contractAddress: '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
     });
     expect(() => input.addBool('hello' as any)).toThrow(
@@ -100,27 +122,29 @@ describeIfFetchMock('encrypt', () => {
     expect(() => input.add32(2 ** 32)).toThrow(
       'The value exceeds the limit for 32bits integer (4294967295).',
     );
-    expect(() => input.add64(BigInt('0xffffffffffffffff') + BigInt(1))).toThrow(
+    expect(() => input.add64(0xffffffffffffffffn + 1n)).toThrow(
       'The value exceeds the limit for 64bits integer (18446744073709551615).',
     );
     expect(() =>
-      input.add128(BigInt('0xffffffffffffffffffffffffffffffff') + BigInt(1)),
+      input.add128(0xffffffffffffffffffffffffffffffffn + 1n),
     ).toThrow(
       'The value exceeds the limit for 128bits integer (340282366920938463463374607431768211455).',
     );
-
     expect(() => input.addAddress('0x00')).toThrow(
       'The value must be a valid address.',
     );
   });
 
+  //////////////////////////////////////////////////////////////////////////////
+
   it('throws if total bits is above 2048', async () => {
     const input = createEncryptedInput({
       aclContractAddress: '0x325ea1b59F28e9e1C51d3B5b47b7D3965CC5D8C8',
       chainId: 1234,
-      tfheCompactPublicKey: publicKey,
-      publicParams,
-      userAddress: '0x8ba1f109551bd432803012645ac136ddd64dba72',
+      tfheCompactPublicKey: tfheCompactPublicKeyWasm,
+      tfheCompactPkeCrs: tfheCompactPkeCrsWasm,
+      capacity: 2048,
+      userAddress: '0x8ba1f109551bD432803012645Ac136ddd64DBA72',
       contractAddress: '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
     });
     for (let i = 0; i < 8; ++i) {

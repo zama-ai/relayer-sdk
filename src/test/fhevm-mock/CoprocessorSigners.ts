@@ -1,21 +1,21 @@
-import { ethers } from 'ethers';
-import { CoprocessorSigner } from './CoprocessorSigner';
-import { EIP712Signers } from './EIP712Signers';
 import type {
-  CoprocessorEIP712MessageType,
+  CoprocessorEIP712MessageHexType,
   CoprocessorEIP712Params,
   CoprocessorEIP712Type,
-} from '../../sdk/coprocessor/CoprocessorEIP712';
-import { CoprocessorEIP712 } from '../../sdk/coprocessor/CoprocessorEIP712';
+} from '../../sdk/coprocessor/types';
 import type { Prettify } from '../../utils/types';
-import { remove0x } from '../../utils/string';
-import {
+import type {
   Bytes32Hex,
   Bytes32HexNo0x,
   Bytes65Hex,
   Bytes65HexNo0x,
   BytesHex,
 } from '../../types/primitives';
+import { ethers } from 'ethers';
+import { CoprocessorSigner } from './CoprocessorSigner';
+import { EIP712Signers } from './EIP712Signers';
+import { CoprocessorEIP712 } from '../../sdk/coprocessor/CoprocessorEIP712';
+import { remove0x } from '../../utils/string';
 
 ////////////////////////////////////////////////////////////////////////////////
 // CoprocessorSigners (Multi-sig for Coprocessor)
@@ -113,11 +113,11 @@ export class CoprocessorSigners extends EIP712Signers<
   }
 
   public async computeSignatures(
-    params: CoprocessorEIP712MessageType,
+    params: CoprocessorEIP712MessageHexType,
     count?: number,
   ): Promise<{
-    handles: Bytes32Hex[];
-    signatures: Bytes65Hex[];
+    readonly handles: readonly Bytes32Hex[];
+    readonly signatures: readonly Bytes65Hex[];
   }> {
     // 1. Create the Coprocessor EIP712
     const eip712 = this._coprocessorEIP712.createEIP712(params);
@@ -132,11 +132,11 @@ export class CoprocessorSigners extends EIP712Signers<
   }
 
   public async computeSignaturesNo0x(
-    params: CoprocessorEIP712MessageType,
+    params: CoprocessorEIP712MessageHexType,
     count?: number,
   ): Promise<{
-    handles: Bytes32HexNo0x[];
-    signatures: Bytes65HexNo0x[];
+    readonly handles: readonly Bytes32HexNo0x[];
+    readonly signatures: readonly Bytes65HexNo0x[];
   }> {
     const res = await this.computeSignatures(params, count);
     return {

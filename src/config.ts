@@ -1,20 +1,14 @@
-import {
-  BrowserProvider,
-  Contract,
-  Eip1193Provider,
-  JsonRpcProvider,
-  Provider,
-} from 'ethers';
-import type { PublicParams } from './sdk/encrypt';
+import type { Eip1193Provider, Provider } from 'ethers';
+import type { TFHEType } from './tfheType';
+import type { ChecksummedAddress } from './types/primitives';
+import type { FhevmInstanceConfig, PublicParams } from './types/relayer';
+import { BrowserProvider, Contract, JsonRpcProvider } from 'ethers';
+import { removeSuffix } from './utils/string';
 import { getKeysFromRelayer } from './relayer/network';
 import {
   SERIALIZED_SIZE_LIMIT_PK,
   SERIALIZED_SIZE_LIMIT_CRS,
-} from './constants';
-import type { TFHEType } from './tfheType';
-import { removeSuffix } from './utils/string';
-import type { FhevmInstanceConfig } from './types/relayer';
-import { ChecksummedAddress } from './types/primitives';
+} from './sdk/lowlevel/constants';
 
 const abiKmsVerifier = [
   'function getKmsSigners() view returns (address[])',
@@ -89,7 +83,7 @@ export const getTfheCompactPublicKey = async (config: {
 export const getPublicParams = async (config: {
   relayerVersionUrl?: string;
   publicParams?: PublicParams<Uint8Array> | null;
-}): Promise<PublicParams> => {
+}): Promise<PublicParams<TFHEType['CompactPkeCrs']>> => {
   if (config.relayerVersionUrl && !config.publicParams) {
     const inputs = await getKeysFromRelayer(
       removeSuffix(config.relayerVersionUrl, '/'),

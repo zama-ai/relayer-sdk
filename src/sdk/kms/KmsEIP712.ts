@@ -1,108 +1,21 @@
-import { assertIsUint256, assertIsUint32 } from '../../utils/uint';
+import type { ethers as EthersT } from 'ethers';
+import type { Bytes65Hex, ChecksummedAddress } from '../../types/primitives';
+import type {
+  KmsDelegateEIP712Type,
+  KmsDelegateEIP712TypesType,
+  KmsDelegateEIP712UserArgsType,
+  KmsEIP712DomainType,
+  KmsEIP712Type,
+  KmsEIP712TypesType,
+  KmsEIP712UserArgsType,
+} from './types';
 import {
   assertIsChecksummedAddress,
   assertIsChecksummedAddressArray,
 } from '../../utils/address';
 import { assertIsBytes65HexArray, assertIsBytesHex } from '../../utils/bytes';
-import { Prettify } from '../../utils/types';
-import type { ethers as EthersT } from 'ethers';
 import { verifySignature } from '../../utils/signature';
-import {
-  Bytes65Hex,
-  BytesHex,
-  ChecksummedAddress,
-} from '../../types/primitives';
-
-////////////////////////////////////////////////////////////////////////////////
-// KmsEIP712 Types
-////////////////////////////////////////////////////////////////////////////////
-
-export type KmsEIP712Params = {
-  chainId: number;
-  verifyingContractAddressDecryption: ChecksummedAddress;
-};
-
-export type KmsEIP712DomainType = {
-  readonly name: 'Decryption';
-  readonly version: '1';
-  chainId: number;
-  verifyingContract: ChecksummedAddress;
-};
-
-export type KmsEIP712UserArgsType = {
-  publicKey: BytesHex;
-  contractAddresses: ChecksummedAddress[];
-  startTimestamp: number | bigint;
-  durationDays: number | bigint;
-  extraData: BytesHex;
-};
-
-export type KmsEIP712MessageType = {
-  publicKey: BytesHex;
-  contractAddresses: ChecksummedAddress[];
-  startTimestamp: string;
-  durationDays: string;
-  extraData: BytesHex;
-};
-
-export type KmsDelegateEIP712UserArgsType = Prettify<
-  KmsEIP712UserArgsType & {
-    delegatedAccount: ChecksummedAddress;
-  }
->;
-
-export type KmsDelegateEIP712MessageType = Prettify<
-  KmsEIP712MessageType & {
-    delegatedAccount: ChecksummedAddress;
-  }
->;
-
-export type KmsDelegateEIP712TypesType = {
-  EIP712Domain: readonly [
-    { readonly name: 'name'; readonly type: 'string' },
-    { readonly name: 'version'; readonly type: 'string' },
-    { readonly name: 'chainId'; readonly type: 'uint256' },
-    { readonly name: 'verifyingContract'; readonly type: 'address' },
-  ];
-  DelegatedUserDecryptRequestVerification: readonly [
-    { readonly name: 'publicKey'; readonly type: 'bytes' },
-    { readonly name: 'contractAddresses'; readonly type: 'address[]' },
-    { readonly name: 'startTimestamp'; readonly type: 'uint256' },
-    { readonly name: 'durationDays'; readonly type: 'uint256' },
-    { readonly name: 'extraData'; readonly type: 'bytes' },
-    { readonly name: 'delegatedAccount'; readonly type: 'address' },
-  ];
-};
-
-export type KmsEIP712TypesType = {
-  EIP712Domain: readonly [
-    { readonly name: 'name'; readonly type: 'string' },
-    { readonly name: 'version'; readonly type: 'string' },
-    { readonly name: 'chainId'; readonly type: 'uint256' },
-    { readonly name: 'verifyingContract'; readonly type: 'address' },
-  ];
-  UserDecryptRequestVerification: readonly [
-    { readonly name: 'publicKey'; readonly type: 'bytes' },
-    { readonly name: 'contractAddresses'; readonly type: 'address[]' },
-    { readonly name: 'startTimestamp'; readonly type: 'uint256' },
-    { readonly name: 'durationDays'; readonly type: 'uint256' },
-    { readonly name: 'extraData'; readonly type: 'bytes' },
-  ];
-};
-
-export type KmsDelegateEIP712Type = {
-  types: KmsDelegateEIP712TypesType;
-  primaryType: 'DelegatedUserDecryptRequestVerification';
-  domain: KmsEIP712DomainType;
-  message: KmsDelegateEIP712MessageType;
-};
-
-export type KmsEIP712Type = {
-  types: KmsEIP712TypesType;
-  primaryType: 'UserDecryptRequestVerification';
-  domain: KmsEIP712DomainType;
-  message: KmsEIP712MessageType;
-};
+import { assertIsUint256, assertIsUint32 } from '../../utils/uint';
 
 ////////////////////////////////////////////////////////////////////////////////
 // KmsEIP712 Class
@@ -110,7 +23,8 @@ export type KmsEIP712Type = {
 
 export class KmsEIP712 {
   public readonly domain: KmsEIP712DomainType;
-  private static types: KmsEIP712TypesType = {
+
+  static #types: KmsEIP712TypesType = {
     EIP712Domain: [
       { name: 'name', type: 'string' },
       { name: 'version', type: 'string' },
@@ -125,7 +39,8 @@ export class KmsEIP712 {
       { name: 'extraData', type: 'bytes' },
     ] as const,
   } as const;
-  private static delegateTypes: KmsDelegateEIP712TypesType = {
+
+  static #delegateTypes: KmsDelegateEIP712TypesType = {
     EIP712Domain: [
       { name: 'name', type: 'string' },
       { name: 'version', type: 'string' },
@@ -143,14 +58,14 @@ export class KmsEIP712 {
   } as const;
 
   static {
-    Object.freeze(KmsEIP712.types);
-    Object.freeze(KmsEIP712.types.EIP712Domain);
-    Object.freeze(KmsEIP712.types.UserDecryptRequestVerification);
+    Object.freeze(KmsEIP712.#types);
+    Object.freeze(KmsEIP712.#types.EIP712Domain);
+    Object.freeze(KmsEIP712.#types.UserDecryptRequestVerification);
 
-    Object.freeze(KmsEIP712.delegateTypes);
-    Object.freeze(KmsEIP712.delegateTypes.EIP712Domain);
+    Object.freeze(KmsEIP712.#delegateTypes);
+    Object.freeze(KmsEIP712.#delegateTypes.EIP712Domain);
     Object.freeze(
-      KmsEIP712.delegateTypes.DelegatedUserDecryptRequestVerification,
+      KmsEIP712.#delegateTypes.DelegatedUserDecryptRequestVerification,
     );
   }
 
@@ -300,7 +215,7 @@ export class KmsEIP712 {
       const recoveredAddress = verifySignature({
         signature,
         domain: this.domain,
-        types: KmsEIP712.types as any as Record<
+        types: KmsEIP712.#types as any as Record<
           string,
           Array<EthersT.TypedDataField>
         >,
@@ -321,7 +236,7 @@ export class KmsEIP712 {
       const recoveredAddress = verifySignature({
         signature,
         domain: this.domain,
-        types: KmsEIP712.delegateTypes as any as Record<
+        types: KmsEIP712.#delegateTypes as any as Record<
           string,
           Array<EthersT.TypedDataField>
         >,

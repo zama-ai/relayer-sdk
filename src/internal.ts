@@ -15,7 +15,7 @@ export {
   bytesToHex,
   bytesToHexLarge,
   hexToBytes,
-  hexToBytesFaster,
+  hexToBytesFaster as hexToBytesFaster,
   isBytes32Hex,
   isBytes32,
   concatBytes,
@@ -27,9 +27,11 @@ export * from './sdk/FhevmHandle';
 export * from './sdk/FheType';
 
 export { ACL } from './sdk/ACL';
+export { InputVerifier } from './sdk/InputVerifier';
+export { KMSVerifier } from './sdk/KMSVerifier';
 
-export { TFHECrs } from './relayer-provider/v2/TFHECrs';
-export { TFHEPublicKey } from './relayer-provider/v2/TFHEPublicKey';
+export { TFHEPkeCrs } from './sdk/lowlevel/TFHEPkeCrs';
+export { TFHEPublicKey } from './sdk/lowlevel/TFHEPublicKey';
 
 export { RelayerV1Fhevm } from './relayer-provider/v1/RelayerV1Fhevm';
 export { RelayerV1Provider } from './relayer-provider/v1/RelayerV1Provider';

@@ -1,6 +1,6 @@
 import { SepoliaConfig } from '../index';
 import { TEST_CONFIG } from '../test/config';
-import { createRelayerProvider } from './createRelayerFhevm';
+import { createRelayerProvider } from './createRelayerProvider';
 
 // Jest Command line
 // =================

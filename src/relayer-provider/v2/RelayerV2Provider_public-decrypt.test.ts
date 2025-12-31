@@ -1,13 +1,14 @@
 import type { ethers as EthersT } from 'ethers';
+import type { ChecksummedAddress } from '../../types/primitives';
 import { createInstance } from '../..';
 import type { RelayerPublicDecryptPayload } from '../../types/relayer';
 import { AbstractRelayerProvider } from '../AbstractRelayerProvider';
-import { createRelayerProvider } from '../createRelayerFhevm';
+import { createRelayerProvider } from '../createRelayerProvider';
 import fetchMock from 'fetch-mock';
 import { InvalidPropertyError } from '../../errors/InvalidPropertyError';
 import { RelayerV2ResponseInvalidBodyError } from './errors/RelayerV2ResponseInvalidBodyError';
 import {
-  fheCounterGeCount,
+  fheTestGet,
   getTestProvider,
   removeAllFetchMockRoutes,
   setupAllFetchMockRoutes,
@@ -16,17 +17,28 @@ import {
 import { RUNNING_REQ_STATE } from '../../test/v2/mockRoutes';
 import { safeJSONstringify } from '../../utils/string';
 
+////////////////////////////////////////////////////////////////////////////////
+//
 // Jest Command line
 // =================
-// npx jest --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_public-decrypt.test.ts --testNamePattern=xxx
+//
 // npx jest --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_public-decrypt.test.ts
+// npx jest --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_public-decrypt.test.ts --testNamePattern=xxx
 // npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v2/RelayerV2Provider_public-decrypt.test.ts --collectCoverageFrom=./src/relayer-provider/v2/RelayerV2Provider.ts
+//
 //
 // Devnet:
 // =======
+//
 // npx jest --config jest.devnet.config.cjs --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_public-decrypt.test.ts --testNamePattern=xxx
 //
-// curl https://relayer.dev.zama.cloud/v2/public-decrypt/ab385343-ca64-4c58-beb0-bce684c856cf
+//
+// Curl Devnet:
+// ============
+//
+// curl https://relayer.dev.zama.cloud/v2/public-decrypt/<jobId>
+//
+////////////////////////////////////////////////////////////////////////////////
 
 const ciphertextHandles: `0x${string}`[] = [
   '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
@@ -231,10 +243,12 @@ describeIfFetchMock('RelayerV2Provider:public-decrypt:mock:', () => {
 
 describeIfFetch('RelayerV2Provider:public-decrypt:sepolia:', () => {
   let provider: EthersT.Provider;
+  let fromAddress: ChecksummedAddress;
 
   beforeEach(() => {
     removeAllFetchMockRoutes();
     provider = getTestProvider(TEST_CONFIG.fhevmInstanceConfig.network);
+    fromAddress = TEST_CONFIG.signerAddress;
   });
 
   afterAll(() => {
@@ -245,25 +259,29 @@ describeIfFetch('RelayerV2Provider:public-decrypt:sepolia:', () => {
     setupAllFetchMockRoutes({});
 
     const config = TEST_CONFIG.v2.fhevmInstanceConfig;
-    const eCount = await fheCounterGeCount(
-      TEST_CONFIG.testContracts.FHECounterPublicDecryptAddress,
+    const handle = await fheTestGet(
+      'euint32',
+      TEST_CONFIG.testContracts.FHETestAddress,
       provider,
+      fromAddress,
     );
 
     const instance = await createInstance(config);
-    await instance.publicDecrypt([eCount]);
+    await instance.publicDecrypt([handle]);
   }, 60000);
 
   it('v1: succeeded', async () => {
     setupAllFetchMockRoutes({});
 
     const config = TEST_CONFIG.v1.fhevmInstanceConfig;
-    const eCount = await fheCounterGeCount(
-      TEST_CONFIG.testContracts.FHECounterPublicDecryptAddress,
+    const handle = await fheTestGet(
+      'euint32',
+      TEST_CONFIG.testContracts.FHETestAddress,
       provider,
+      fromAddress,
     );
 
     const instance = await createInstance(config);
-    await instance.publicDecrypt([eCount]);
+    await instance.publicDecrypt([handle]);
   }, 60000);
 });

@@ -5,7 +5,6 @@ import {
   assertIsRelayerV2ResponseFailedWithError400,
   assertIsRelayerV2ResponseFailedWithError429,
   assertIsRelayerV2ResponseFailedWithError503,
-  assertIsRelayerV2ResponseFailedWithError504,
   assertIsRelayerV2ResponseFailedWithError404,
 } from './types/RelayerV2ResponseFailed';
 import type {
@@ -625,7 +624,7 @@ export class RelayerV2AsyncRequest {
   // Get Loop
   //////////////////////////////////////////////////////////////////////////////
 
-  // GET: 200 | 202 | 404 | 500 | 503 | 504
+  // GET: 200 | 202 | 404 | 500 | 503
   // GET is not rate-limited, therefore there is not 429 error
   private async _runGetLoop(): Promise<
     | RelayerV2ResultPublicDecrypt
@@ -869,32 +868,6 @@ export class RelayerV2AsyncRequest {
 
           try {
             assertIsRelayerV2ResponseFailedWithError503(bodyJson, 'body');
-          } catch (cause) {
-            this._throwResponseInvalidBodyError({
-              fetchMethod: 'GET',
-              status: responseStatus,
-              elapsed,
-              cause: cause as InvalidPropertyError,
-              bodyJson: safeJSONstringify(bodyJson),
-            });
-          }
-
-          this._throwRelayerV2ResponseApiError({
-            fetchMethod: 'GET',
-            status: responseStatus,
-            relayerApiError: bodyJson.error,
-            elapsed,
-          });
-        }
-        // RelayerV2ResponseFailed
-        // RelayerV2ApiError504
-        case 504: {
-          // Abort
-          // Possible Reasons: Gateway has not responded in time (gateway timeout)
-          const bodyJson = await this._getResponseJson(response);
-
-          try {
-            assertIsRelayerV2ResponseFailedWithError504(bodyJson, 'body');
           } catch (cause) {
             this._throwResponseInvalidBodyError({
               fetchMethod: 'GET',
@@ -1378,8 +1351,6 @@ export class RelayerV2AsyncRequest {
   }
 
   private _handleGlobalRequestTimeout() {
-    this._state.timeout = true;
-
     // Debug state-check guards:
     this._assert(
       this instanceof RelayerV2AsyncRequest,
@@ -1387,6 +1358,8 @@ export class RelayerV2AsyncRequest {
     );
     this._assert(!this._state.terminated, `!this._state.terminated`);
     this._assert(!this._state.timeout, '!this._state.timeout');
+
+    this._state.timeout = true;
 
     this._postAsyncOnProgressCallback({
       type: 'timeout',

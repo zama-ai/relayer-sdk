@@ -6,22 +6,26 @@ import {
   assertRecordChecksummedAddressProperty,
   assertIsAddress,
   assertIsChecksummedAddress,
+  assertIsChecksummedAddressArray,
   checksummedAddressToBytes20,
   isAddress,
   isChecksummedAddress,
+  isRecordChecksummedAddressProperty,
   ZERO_ADDRESS,
 } from './address';
 import { InvalidTypeError } from '../errors/InvalidTypeError';
 
+////////////////////////////////////////////////////////////////////////////////
+//
 // Jest Command line
 // =================
 //
 // npx jest --colors --passWithNoTests ./src/utils/address.test.ts
 // npx jest --colors --passWithNoTests ./src/utils/address.test.ts --testNamePattern=xxx
-// npx jest --colors --passWithNoTests ./src/utils/address.test.ts --testNamePattern=xxx
 // npx jest --colors --passWithNoTests --coverage ./src/utils/address.test.ts --collectCoverageFrom=./src/utils/address.ts
 // npx jest --colors --passWithNoTests --coverage ./src/utils/address.test.ts --collectCoverageFrom=./src/utils/address.ts --testNamePattern=xxx
 //
+////////////////////////////////////////////////////////////////////////////////
 
 describe('address', () => {
   it('isAddress', () => {
@@ -321,5 +325,97 @@ describe('address', () => {
         '0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDzzzz' as `0x${string}`,
       ),
     ).toThrow(new InvalidTypeError({ expectedType: 'ChecksummedAddress' }));
+  });
+
+  //////////////////////////////////////////////////////////////////////////////
+
+  it('assertIsChecksummedAddressArray', () => {
+    const validAddress = '0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF';
+
+    // Valid arrays
+    expect(() => assertIsChecksummedAddressArray([])).not.toThrow();
+    expect(() => assertIsChecksummedAddressArray([validAddress])).not.toThrow();
+    expect(() =>
+      assertIsChecksummedAddressArray([validAddress, ZERO_ADDRESS]),
+    ).not.toThrow();
+
+    // Invalid: not an array
+    expect(() => assertIsChecksummedAddressArray(null)).toThrow(
+      new InvalidTypeError({
+        type: 'object',
+        expectedType: 'ChecksummedAddressArray',
+      }),
+    );
+    expect(() => assertIsChecksummedAddressArray(undefined)).toThrow(
+      new InvalidTypeError({
+        type: 'undefined',
+        expectedType: 'ChecksummedAddressArray',
+      }),
+    );
+    expect(() => assertIsChecksummedAddressArray('string')).toThrow(
+      new InvalidTypeError({
+        type: 'string',
+        expectedType: 'ChecksummedAddressArray',
+      }),
+    );
+    expect(() => assertIsChecksummedAddressArray(validAddress)).toThrow(
+      InvalidTypeError,
+    );
+
+    // Invalid: array with invalid elements
+    expect(() =>
+      assertIsChecksummedAddressArray([
+        '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+      ]),
+    ).toThrow(ChecksummedAddressError);
+
+    expect(() =>
+      assertIsChecksummedAddressArray([validAddress, '0xinvalid']),
+    ).toThrow(ChecksummedAddressError);
+
+    expect(() => assertIsChecksummedAddressArray(['not-an-address'])).toThrow(
+      ChecksummedAddressError,
+    );
+  });
+
+  //////////////////////////////////////////////////////////////////////////////
+
+  it('isRecordChecksummedAddressProperty', () => {
+    const validAddress = '0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF';
+
+    // True
+    expect(
+      isRecordChecksummedAddressProperty({ foo: validAddress }, 'foo'),
+    ).toBe(true);
+    expect(
+      isRecordChecksummedAddressProperty({ foo: ZERO_ADDRESS }, 'foo'),
+    ).toBe(true);
+
+    // False - not checksummed
+    expect(
+      isRecordChecksummedAddressProperty(
+        { foo: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef' },
+        'foo',
+      ),
+    ).toBe(false);
+
+    // False - missing property
+    expect(isRecordChecksummedAddressProperty({}, 'foo')).toBe(false);
+
+    // False - null/undefined
+    expect(isRecordChecksummedAddressProperty({ foo: null }, 'foo')).toBe(
+      false,
+    );
+    expect(isRecordChecksummedAddressProperty({ foo: undefined }, 'foo')).toBe(
+      false,
+    );
+
+    // False - not an object
+    expect(isRecordChecksummedAddressProperty(null, 'foo')).toBe(false);
+    expect(isRecordChecksummedAddressProperty(undefined, 'foo')).toBe(false);
+
+    // False - wrong type
+    expect(isRecordChecksummedAddressProperty({ foo: 123 }, 'foo')).toBe(false);
+    expect(isRecordChecksummedAddressProperty({ foo: [] }, 'foo')).toBe(false);
   });
 });

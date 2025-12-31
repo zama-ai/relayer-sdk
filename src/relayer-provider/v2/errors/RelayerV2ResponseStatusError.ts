@@ -1,10 +1,8 @@
-import { RelayerErrorBaseParams } from '../../../errors/RelayerErrorBase';
-import {
-  RelayerV2ResponseErrorBase,
-  RelayerV2ResponseErrorBaseParams,
-} from './RelayerV2ResponseErrorBase';
-import { Prettify } from '../../../utils/types';
+import type { RelayerV2ResponseErrorBaseParams } from './RelayerV2ResponseErrorBase';
 import type { RelayerV2AsyncRequestState } from '../RelayerV2AsyncRequest';
+import type { RelayerErrorBaseParams } from '../../../errors/RelayerErrorBase';
+import type { Prettify } from '../../../utils/types';
+import { RelayerV2ResponseErrorBase } from './RelayerV2ResponseErrorBase';
 
 ////////////////////////////////////////////////////////////////////////////////
 // RelayerV2ResponseStatusError

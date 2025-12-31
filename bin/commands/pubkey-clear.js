@@ -1,11 +1,12 @@
 import fs from 'fs';
-import path from 'path';
-import { homedir } from 'os';
-import { logCLI } from '../utils';
+import { logCLI } from '../utils.js';
+import { getFhevmPubKeyCacheInfo } from '../pubkeyCache.js';
 
 // npx . pubkey clear
 export async function pubkeyClearCommand(options) {
-  const cacheDir = path.join(homedir(), '.fhevm');
+  const info = getFhevmPubKeyCacheInfo(options.network ?? 'devnet');
+
+  const cacheDir = info.cacheDir;
 
   logCLI(`🎃 FHEVM pubKey cache directory: ${cacheDir}`, options);
 

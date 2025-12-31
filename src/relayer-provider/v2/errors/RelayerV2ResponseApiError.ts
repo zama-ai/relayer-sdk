@@ -1,10 +1,10 @@
+import type { RelayerV2ResponseApiErrorCode } from '../types/types';
+import type { Prettify } from '../../../utils/types';
+import { RelayerErrorBaseParams } from '../../../errors/RelayerErrorBase';
 import {
   RelayerV2ResponseErrorBase,
   RelayerV2ResponseErrorBaseParams,
 } from './RelayerV2ResponseErrorBase';
-import { Prettify } from '../../../utils/types';
-import { RelayerV2ResponseApiErrorCode } from '../types/types';
-import { RelayerErrorBaseParams } from '../../../errors/RelayerErrorBase';
 
 ////////////////////////////////////////////////////////////////////////////////
 // RelayerV2GetResponseApiError

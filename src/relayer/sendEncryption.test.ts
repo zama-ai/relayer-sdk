@@ -1,20 +1,24 @@
+import type { FhevmInstanceOptions } from '../types/relayer';
+import type { RelayerEncryptedInput } from './sendEncryption';
 import {
   createRelayerEncryptedInput,
   currentCiphertextVersion,
-  RelayerEncryptedInput,
 } from './sendEncryption';
-import { publicKey, publicParams } from '../test';
 import fetchMock from 'fetch-mock';
-import { createRelayerProvider } from '../relayer-provider/createRelayerFhevm';
+import { createRelayerProvider } from '../relayer-provider/createRelayerProvider';
 import { InvalidPropertyError } from '../errors/InvalidPropertyError';
 import { TEST_CONFIG } from '../test/config';
 import { FhevmHandle } from '../sdk/FhevmHandle';
-import { FhevmInstanceOptions } from '../types/relayer';
+import { tfheCompactPkeCrsWasm, tfheCompactPublicKeyWasm } from '../test';
+import { ZKProof } from '../sdk/ZKProof';
 
+////////////////////////////////////////////////////////////////////////////////
+//
 // Jest Command line
 // =================
-// npx jest --colors --passWithNoTests ./src/relayer/sendEncryption.test.ts --testNamePattern=xxx
+//
 // npx jest --colors --passWithNoTests ./src/relayer/sendEncryption.test.ts
+// npx jest --colors --passWithNoTests ./src/relayer/sendEncryption.test.ts --testNamePattern=xxx
 // npx jest --colors --passWithNoTests --coverage ./src/relayer/sendEncryption.test.ts --collectCoverageFrom=./src/relayer/sendEncryption.ts --testNamePattern=xxx
 // npx jest --colors --passWithNoTests --coverage ./src/relayer/sendEncryption.test.ts --collectCoverageFrom=./src/relayer/sendEncryption.ts
 //
@@ -22,6 +26,7 @@ import { FhevmInstanceOptions } from '../types/relayer';
 // =======
 // npx jest --config jest.devnet.config.cjs --colors --passWithNoTests ./src/relayer/sendEncryption.test.ts
 //
+////////////////////////////////////////////////////////////////////////////////
 
 const aclContractAddress = TEST_CONFIG.fhevmInstanceConfig.aclContractAddress;
 const verifyingContractAddressInputVerification =
@@ -72,18 +77,23 @@ const autoMock = (
       params: { ciphertextWithInputVerification },
     };
 
-    const handles = FhevmHandle.fromZKProof({
-      ciphertextWithZKProof: ciphertextWithInputVerification as `0x${string}`,
-      aclAddress: aclContractAddress as `0x{string}`,
+    const zkProof = ZKProof.fromComponents({
+      ciphertextWithZKProof: ciphertextWithInputVerification,
+      aclContractAddress,
       chainId,
-      fheTypeEncryptionBitwidths: input.getBits(),
-      ciphertextVersion: currentCiphertextVersion(),
-    }).map((handle: FhevmHandle) => handle.toBytes32Hex());
+      encryptionBits: input.getBits(),
+      userAddress: TEST_CONFIG.signerAddress,
+      contractAddress: TEST_CONFIG.testContracts.FHETestAddress,
+    });
+    const handlesBytes32Hex = FhevmHandle.fromZKProof(
+      zkProof,
+      currentCiphertextVersion(),
+    ).map((handle: FhevmHandle) => handle.toBytes32Hex());
 
     return {
       options: options,
       response: {
-        handles: handles,
+        handles: handlesBytes32Hex,
         signatures: [],
       },
     };
@@ -99,7 +109,9 @@ const consoleLogSpy = jest
     process.stdout.write(`${message}\n`);
   });
 
-describeIfFetchMock('encrypt', () => {
+////////////////////////////////////////////////////////////////////////////////
+
+describeIfFetchMock('sendEncryption', () => {
   beforeEach(() => {
     fetchMock.removeRoutes();
   });
@@ -108,48 +120,54 @@ describeIfFetchMock('encrypt', () => {
     consoleLogSpy.mockRestore();
   });
 
+  //////////////////////////////////////////////////////////////////////////////
+
   it('encrypt', async () => {
-    const input = createRelayerEncryptedInput(
+    const input = createRelayerEncryptedInput({
       aclContractAddress,
       verifyingContractAddressInputVerification,
       chainId,
       gatewayChainId,
       relayerProvider,
-      publicKey,
-      publicParams,
-      [],
-      0,
-    )(
-      '0x8ba1f109551bd432803012645ac136ddd64dba72',
+      tfheCompactPublicKey: tfheCompactPublicKeyWasm,
+      tfheCompactPkeCrs: tfheCompactPkeCrsWasm,
+      capacity: 2048,
+      coprocessorSigners: [],
+      thresholdCoprocessorSigners: 0,
+    })(
+      '0x8ba1f109551bD432803012645Ac136ddd64DBA72',
       '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
     );
     input.addBool(false);
-    input.add8(BigInt(43));
-    input.add16(BigInt(87));
-    input.add32(BigInt(2339389323));
-    input.add64(BigInt(23393893233));
-    input.add128(BigInt(233938932390));
+    input.add8(43n);
+    input.add16(87n);
+    input.add32(2339389323n);
+    input.add64(23393893233n);
+    input.add128(233938932390n);
     input.addAddress('0xa5e1defb98EFe38EBb2D958CEe052410247F4c80');
-    input.add256(BigInt('2339389323922393930'));
+    input.add256(2339389323922393930n);
     autoMock(input);
     const { inputProof, handles } = await input.encrypt();
     expect(inputProof).toBeDefined();
     expect(handles.length).toBe(8);
   }, 60000);
 
+  //////////////////////////////////////////////////////////////////////////////
+
   it('encrypt one 0 value', async () => {
-    const input = createRelayerEncryptedInput(
+    const input = createRelayerEncryptedInput({
       aclContractAddress,
       verifyingContractAddressInputVerification,
       chainId,
       gatewayChainId,
       relayerProvider,
-      publicKey,
-      publicParams,
-      [],
-      0,
-    )(
-      '0x8ba1f109551bd432803012645ac136ddd64dba72',
+      tfheCompactPublicKey: tfheCompactPublicKeyWasm,
+      tfheCompactPkeCrs: tfheCompactPkeCrsWasm,
+      capacity: 2048,
+      coprocessorSigners: [],
+      thresholdCoprocessorSigners: 0,
+    })(
+      '0x8ba1f109551bD432803012645Ac136ddd64DBA72',
       '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
     );
     input.add128(BigInt(0));
@@ -159,88 +177,103 @@ describeIfFetchMock('encrypt', () => {
     expect(handles.length).toBe(1);
   });
 
+  //////////////////////////////////////////////////////////////////////////////
+
   it('throws errors', async () => {
     expect(() =>
-      createRelayerEncryptedInput(
+      createRelayerEncryptedInput({
         aclContractAddress,
         verifyingContractAddressInputVerification,
         chainId,
         gatewayChainId,
         relayerProvider,
-        publicKey,
-        publicParams,
-        [],
-        0,
-      )('0xa5e1defb98EFe38EBb2D958CEe052410247F4c80', '0'),
+        tfheCompactPublicKey: tfheCompactPublicKeyWasm,
+        tfheCompactPkeCrs: tfheCompactPkeCrsWasm,
+        capacity: 2048,
+        coprocessorSigners: [],
+        thresholdCoprocessorSigners: 0,
+      })('0xa5e1defb98EFe38EBb2D958CEe052410247F4c80', '0'),
     ).toThrow('User address is not a valid address.');
+
     expect(() =>
-      createRelayerEncryptedInput(
+      createRelayerEncryptedInput({
         aclContractAddress,
         verifyingContractAddressInputVerification,
         chainId,
         gatewayChainId,
         relayerProvider,
-        publicKey,
-        publicParams,
-        [],
-        0,
-      )('0x0', '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80'),
+        tfheCompactPublicKey: tfheCompactPublicKeyWasm,
+        tfheCompactPkeCrs: tfheCompactPkeCrsWasm,
+        capacity: 2048,
+        coprocessorSigners: [],
+        thresholdCoprocessorSigners: 0,
+      })('0x0', '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80'),
     ).toThrow('Contract address is not a valid address.');
 
     expect(() =>
-      createRelayerEncryptedInput(
+      createRelayerEncryptedInput({
         aclContractAddress,
         verifyingContractAddressInputVerification,
         chainId,
         gatewayChainId,
         relayerProvider,
-        publicKey,
-        publicParams,
-        [],
-        0,
-      )(
-        '0x8ba1f109551bd432803012645ac136ddd64dba72',
+        tfheCompactPublicKey: tfheCompactPublicKeyWasm,
+        tfheCompactPkeCrs: tfheCompactPkeCrsWasm,
+        capacity: 2048,
+        coprocessorSigners: [],
+        thresholdCoprocessorSigners: 0,
+      })(
+        '0x8ba1f109551bD432803012645Ac136ddd64DBA72',
         '0xa5e1defb98EFe38EBb2D958CEe052410247F4c',
       ),
     ).toThrow('User address is not a valid address.');
 
-    const input = createRelayerEncryptedInput(
+    const input = createRelayerEncryptedInput({
       aclContractAddress,
       verifyingContractAddressInputVerification,
       chainId,
       gatewayChainId,
       relayerProvider,
-      publicKey,
-      publicParams,
-      [],
-      0,
-    )(
-      '0x8ba1f109551bd432803012645ac136ddd64dba72',
+      tfheCompactPublicKey: tfheCompactPublicKeyWasm,
+      tfheCompactPkeCrs: tfheCompactPkeCrsWasm,
+      capacity: 2048,
+      coprocessorSigners: [],
+      thresholdCoprocessorSigners: 0,
+    })(
+      '0x8ba1f109551bD432803012645Ac136ddd64DBA72',
       '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
     );
+
     expect(() => input.addBool('hello' as any)).toThrow(
       'The value must be a boolean, a number or a bigint.',
     );
+
     expect(() => input.addBool({} as any)).toThrow(
       'The value must be a boolean, a number or a bigint.',
     );
+
     expect(() => input.addBool(29393 as any)).toThrow(
       'The value must be 1 or 0.',
     );
+
     expect(() => input.add8(2 ** 8)).toThrow(
       'The value exceeds the limit for 8bits integer (255)',
     );
+
     expect(() => input.add16(2 ** 16)).toThrow(
       `The value exceeds the limit for 16bits integer (65535).`,
     );
+
     expect(() => input.add32(2 ** 32)).toThrow(
       'The value exceeds the limit for 32bits integer (4294967295).',
     );
-    expect(() => input.add64(BigInt('0xffffffffffffffff') + BigInt(1))).toThrow(
+
+    expect(() => input.add64(0xffffffffffffffffn + 1n)).toThrow(
       'The value exceeds the limit for 64bits integer (18446744073709551615).',
     );
+
     expect(() =>
-      input.add128(BigInt('0xffffffffffffffffffffffffffffffff') + BigInt(1)),
+      input.add128(0xffffffffffffffffffffffffffffffffn + 1n),
     ).toThrow(
       'The value exceeds the limit for 128bits integer (340282366920938463463374607431768211455).',
     );
@@ -250,19 +283,22 @@ describeIfFetchMock('encrypt', () => {
     );
   });
 
+  //////////////////////////////////////////////////////////////////////////////
+
   it('throws if total bits is above 2048', async () => {
-    const input2 = createRelayerEncryptedInput(
+    const input2 = createRelayerEncryptedInput({
       aclContractAddress,
       verifyingContractAddressInputVerification,
       chainId,
       gatewayChainId,
       relayerProvider,
-      publicKey,
-      publicParams,
-      [],
-      0,
-    )(
-      '0x8ba1f109551bd432803012645ac136ddd64dba72',
+      tfheCompactPublicKey: tfheCompactPublicKeyWasm,
+      tfheCompactPkeCrs: tfheCompactPkeCrsWasm,
+      capacity: 2048,
+      coprocessorSigners: [],
+      thresholdCoprocessorSigners: 0,
+    })(
+      '0x8ba1f109551bD432803012645Ac136ddd64DBA72',
       '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
     );
     input2.add256(242);
@@ -278,35 +314,39 @@ describeIfFetchMock('encrypt', () => {
     );
   });
 
+  //////////////////////////////////////////////////////////////////////////////
+
   it('throws if incorrect handles list size', async () => {
-    const input = createRelayerEncryptedInput(
+    const input = createRelayerEncryptedInput({
       aclContractAddress,
       verifyingContractAddressInputVerification,
       chainId,
       gatewayChainId,
       relayerProvider,
-      publicKey,
-      publicParams,
-      [],
-      0,
-    )(
-      '0x8ba1f109551bd432803012645ac136ddd64dba72',
+      tfheCompactPublicKey: tfheCompactPublicKeyWasm,
+      tfheCompactPkeCrs: tfheCompactPkeCrsWasm,
+      capacity: 2048,
+      coprocessorSigners: [],
+      thresholdCoprocessorSigners: 0,
+    })(
+      '0x8ba1f109551bD432803012645Ac136ddd64DBA72',
       '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
     );
     input.add128(BigInt(0));
     autoMock(input);
-    const input2 = createRelayerEncryptedInput(
+    const input2 = createRelayerEncryptedInput({
       aclContractAddress,
       verifyingContractAddressInputVerification,
       chainId,
       gatewayChainId,
       relayerProvider,
-      publicKey,
-      publicParams,
-      [],
-      0,
-    )(
-      '0x8ba1f109551bd432803012645ac136ddd64dba72',
+      tfheCompactPublicKey: tfheCompactPublicKeyWasm,
+      tfheCompactPkeCrs: tfheCompactPkeCrsWasm,
+      capacity: 2048,
+      coprocessorSigners: [],
+      thresholdCoprocessorSigners: 0,
+    })(
+      '0x8ba1f109551bD432803012645Ac136ddd64DBA72',
       '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
     );
     input2.add128(BigInt(0));
@@ -316,19 +356,22 @@ describeIfFetchMock('encrypt', () => {
     );
   });
 
+  //////////////////////////////////////////////////////////////////////////////
+
   it('throws if incorrect handle', async () => {
-    const input = createRelayerEncryptedInput(
+    const input = createRelayerEncryptedInput({
       aclContractAddress,
       verifyingContractAddressInputVerification,
       chainId,
       gatewayChainId,
       relayerProvider,
-      publicKey,
-      publicParams,
-      [],
-      0,
-    )(
-      '0x8ba1f109551bd432803012645ac136ddd64dba72',
+      tfheCompactPublicKey: tfheCompactPublicKeyWasm,
+      tfheCompactPkeCrs: tfheCompactPkeCrsWasm,
+      capacity: 2048,
+      coprocessorSigners: [],
+      thresholdCoprocessorSigners: 0,
+    })(
+      '0x8ba1f109551bD432803012645Ac136ddd64DBA72',
       '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
     );
     input.add128(BigInt(1));
@@ -360,20 +403,23 @@ describeIfFetchMock('encrypt', () => {
     );
   });
 
+  //////////////////////////////////////////////////////////////////////////////
+
   describe('when api keys are enabled', () => {
     it('returns Unauthorized if api key is invalid', async () => {
-      const input = createRelayerEncryptedInput(
+      const input = createRelayerEncryptedInput({
         aclContractAddress,
         verifyingContractAddressInputVerification,
         chainId,
         gatewayChainId,
         relayerProvider,
-        publicKey,
-        publicParams,
-        [],
-        0,
-      )(
-        '0x8ba1f109551bd432803012645ac136ddd64dba72',
+        tfheCompactPublicKey: tfheCompactPublicKeyWasm,
+        tfheCompactPkeCrs: tfheCompactPkeCrsWasm,
+        capacity: 2048,
+        coprocessorSigners: [],
+        thresholdCoprocessorSigners: 0,
+      })(
+        '0x8ba1f109551bD432803012645Ac136ddd64DBA72',
         '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
       );
       autoMock(input, {
@@ -386,19 +432,22 @@ describeIfFetchMock('encrypt', () => {
       ).rejects.toThrow(/Unauthorized/);
     });
 
+    ////////////////////////////////////////////////////////////////////////////
+
     it('returns Unauthorized if the api key is missing', async () => {
-      const input = createRelayerEncryptedInput(
+      const input = createRelayerEncryptedInput({
         aclContractAddress,
         verifyingContractAddressInputVerification,
         chainId,
         gatewayChainId,
         relayerProvider,
-        publicKey,
-        publicParams,
-        [],
-        0,
-      )(
-        '0x8ba1f109551bd432803012645ac136ddd64dba72',
+        tfheCompactPublicKey: tfheCompactPublicKeyWasm,
+        tfheCompactPkeCrs: tfheCompactPkeCrsWasm,
+        capacity: 2048,
+        coprocessorSigners: [],
+        thresholdCoprocessorSigners: 0,
+      })(
+        '0x8ba1f109551bD432803012645Ac136ddd64DBA72',
         '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
       );
       autoMock(input, {
@@ -407,19 +456,22 @@ describeIfFetchMock('encrypt', () => {
       expect(input.encrypt()).rejects.toThrow(/Unauthorized/);
     });
 
+    ////////////////////////////////////////////////////////////////////////////
+
     it('returns ok if the api key is valid', async () => {
-      const input = createRelayerEncryptedInput(
+      const input = createRelayerEncryptedInput({
         aclContractAddress,
         verifyingContractAddressInputVerification,
         chainId,
         gatewayChainId,
         relayerProvider,
-        publicKey,
-        publicParams,
-        [],
-        0,
-      )(
-        '0x8ba1f109551bd432803012645ac136ddd64dba72',
+        tfheCompactPublicKey: tfheCompactPublicKeyWasm,
+        tfheCompactPkeCrs: tfheCompactPkeCrsWasm,
+        capacity: 2048,
+        coprocessorSigners: [],
+        thresholdCoprocessorSigners: 0,
+      })(
+        '0x8ba1f109551bD432803012645Ac136ddd64DBA72',
         '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
       );
       autoMock(input, {

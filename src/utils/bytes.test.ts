@@ -14,15 +14,50 @@ import {
   bytesToBigInt,
   bytesToHex,
   bytesToHexLarge,
+  isBytes,
+  isBytes32,
+  isBytes65,
+  isBytes32HexNo0x,
+  isBytes65Hex,
+  isBytes65HexNo0x,
+  assertIsBytes32,
+  assertIsBytes65,
+  assertIsBytes65Hex,
+  assertIsBytes32HexArray,
+  assertIsBytesHexArray,
+  assertIsBytes65HexArray,
+  isRecordBytesHexNo0xProperty,
+  assertRecordBytesHexNo0xProperty,
+  assertRecordBytes65HexArrayProperty,
+  assertRecordBytesHexNo0xArrayProperty,
+  isRecordUint8ArrayProperty,
+  assertRecordUint8ArrayProperty,
+  bytesToHexNo0x,
+  hexToBytes32,
+  concatBytes,
+  bytesEquals,
+  isRecordBytesHexProperty,
+  isRecordBytes32HexProperty,
+  toBytes32HexArray,
 } from './bytes';
 import { InvalidTypeError } from '../errors/InvalidTypeError';
 import { InvalidPropertyError } from '../errors/InvalidPropertyError';
 import { MAX_UINT256 } from './uint';
 
+////////////////////////////////////////////////////////////////////////////////
+//
+// Jest Command line
+// =================
+//
+// npx jest --colors --passWithNoTests ./src/utils/bytes.test.ts
 // npx jest --colors --passWithNoTests --coverage ./src/utils/bytes.test.ts --collectCoverageFrom=./src/utils/bytes.ts
 // npx jest --colors --passWithNoTests --coverage ./src/utils/bytes.test.ts --collectCoverageFrom=./src/utils/bytes.ts --testNamePattern=xxx
+//
+////////////////////////////////////////////////////////////////////////////////
 
 describe('bytes', () => {
+  //////////////////////////////////////////////////////////////////////////////
+
   it('hexToBytes', () => {
     let arr = hexToBytes('0x');
     expect(arr instanceof Uint8Array).toBe(true);
@@ -73,6 +108,8 @@ describe('bytes', () => {
     expect(arr[1]).toBe(255);
   });
 
+  //////////////////////////////////////////////////////////////////////////////
+
   it('isBytesHex', () => {
     // True
     expect(isBytesHex('0x')).toEqual(true);
@@ -109,6 +146,8 @@ describe('bytes', () => {
     expect(isBytesHex([])).toEqual(false);
     expect(isBytesHex([123])).toEqual(false);
   });
+
+  //////////////////////////////////////////////////////////////////////////////
 
   it('assertIsBytesHex', () => {
     // True
@@ -569,6 +608,16 @@ describe('bytesToBigInt', () => {
 });
 
 describe('bytesToHex - hexToBytes', () => {
+  it('converts a hex zero address to bytes', async () => {
+    const value = '0x0000000000000000000000000000000000000000';
+    const bytes20 = hexToBytes(value);
+    expect(bytes20).toEqual(
+      new Uint8Array([
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      ]),
+    );
+  });
+
   it('converts a hex to bytes', async () => {
     const value = '0xff';
     const bytes1 = hexToBytes(value);
@@ -802,6 +851,16 @@ describe('hexToBytesFaster', () => {
     expect(hexToBytesFaster('0x')).toEqual(new Uint8Array([]));
   });
 
+  it('converts a hex zero address to bytes', async () => {
+    const value = '0x0000000000000000000000000000000000000000';
+    const bytes20 = hexToBytesFaster(value);
+    expect(bytes20).toEqual(
+      new Uint8Array([
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      ]),
+    );
+  });
+
   // Basic conversions
   it('converts single byte hex', () => {
     expect(hexToBytesFaster('0xff')).toEqual(new Uint8Array([255]));
@@ -877,28 +936,28 @@ describe('hexToBytesFaster', () => {
 
   // Invalid characters - strict mode
   it('throws for invalid hex chars in strict mode', () => {
-    expect(() => hexToBytesFaster('zz', true)).toThrow(
+    expect(() => hexToBytesFaster('zz', { strict: true })).toThrow(
       'Invalid hex character at position 0',
     );
-    expect(() => hexToBytesFaster('0xzz', true)).toThrow(
+    expect(() => hexToBytesFaster('0xzz', { strict: true })).toThrow(
       'Invalid hex character at position 2',
     );
-    expect(() => hexToBytesFaster('0xffzz', true)).toThrow(
+    expect(() => hexToBytesFaster('0xffzz', { strict: true })).toThrow(
       'Invalid hex character at position 4',
     );
-    expect(() => hexToBytesFaster('0xghij', true)).toThrow(
+    expect(() => hexToBytesFaster('0xghij', { strict: true })).toThrow(
       'Invalid hex character at position 2',
     );
   });
 
   it('does not throw for valid hex in strict mode', () => {
-    expect(hexToBytesFaster('0xdeadbeef', true)).toEqual(
+    expect(hexToBytesFaster('0xdeadbeef', { strict: true })).toEqual(
       new Uint8Array([0xde, 0xad, 0xbe, 0xef]),
     );
-    expect(hexToBytesFaster('0xABCDEF', true)).toEqual(
+    expect(hexToBytesFaster('0xABCDEF', { strict: true })).toEqual(
       new Uint8Array([0xab, 0xcd, 0xef]),
     );
-    expect(hexToBytesFaster('0x0123456789abcdef', true)).toEqual(
+    expect(hexToBytesFaster('0x0123456789abcdef', { strict: true })).toEqual(
       new Uint8Array([0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef]),
     );
   });
@@ -973,5 +1032,603 @@ describe('hexToBytesFaster', () => {
     for (const hex of testCases) {
       expect(hexToBytesFaster(hex)).toEqual(hexToBytes(hex));
     }
+  });
+});
+
+describe('isBytes', () => {
+  it('returns true for Uint8Array', () => {
+    expect(isBytes(new Uint8Array([]))).toBe(true);
+    expect(isBytes(new Uint8Array([1, 2, 3]))).toBe(true);
+    expect(isBytes(new Uint8Array(32))).toBe(true);
+  });
+
+  it('returns false for non-Uint8Array', () => {
+    expect(isBytes(null)).toBe(false);
+    expect(isBytes(undefined)).toBe(false);
+    expect(isBytes([])).toBe(false);
+    expect(isBytes([1, 2, 3])).toBe(false);
+    expect(isBytes('0x1234')).toBe(false);
+    expect(isBytes(123)).toBe(false);
+    expect(isBytes({})).toBe(false);
+  });
+
+  it('validates bytewidth when provided', () => {
+    const bytes32 = new Uint8Array(32);
+    const bytes65 = new Uint8Array(65);
+    const bytes20 = new Uint8Array(20);
+
+    expect(isBytes(bytes32, 32)).toBe(true);
+    expect(isBytes(bytes65, 65)).toBe(true);
+    expect(isBytes(bytes32, 65)).toBe(false);
+    expect(isBytes(bytes65, 32)).toBe(false);
+    expect(isBytes(bytes20, 32)).toBe(false);
+  });
+});
+
+describe('isBytes32', () => {
+  it('returns true for 32-byte Uint8Array', () => {
+    expect(isBytes32(new Uint8Array(32))).toBe(true);
+    expect(isBytes32(new Uint8Array(32).fill(0xff))).toBe(true);
+  });
+
+  it('returns false for non-32-byte values', () => {
+    expect(isBytes32(new Uint8Array(31))).toBe(false);
+    expect(isBytes32(new Uint8Array(33))).toBe(false);
+    expect(isBytes32(new Uint8Array(0))).toBe(false);
+    expect(isBytes32(new Uint8Array(65))).toBe(false);
+    expect(isBytes32(null)).toBe(false);
+    expect(isBytes32('0x' + 'de'.repeat(32))).toBe(false);
+  });
+});
+
+describe('isBytes65', () => {
+  it('returns true for 65-byte Uint8Array', () => {
+    expect(isBytes65(new Uint8Array(65))).toBe(true);
+    expect(isBytes65(new Uint8Array(65).fill(0xff))).toBe(true);
+  });
+
+  it('returns false for non-65-byte values', () => {
+    expect(isBytes65(new Uint8Array(64))).toBe(false);
+    expect(isBytes65(new Uint8Array(66))).toBe(false);
+    expect(isBytes65(new Uint8Array(32))).toBe(false);
+    expect(isBytes65(new Uint8Array(0))).toBe(false);
+    expect(isBytes65(null)).toBe(false);
+    expect(isBytes65('0x' + 'de'.repeat(65))).toBe(false);
+  });
+});
+
+describe('isBytes32HexNo0x', () => {
+  const valid32HexNo0x = 'de'.repeat(32);
+
+  it('returns true for valid 32-byte hex without 0x', () => {
+    expect(isBytes32HexNo0x(valid32HexNo0x)).toBe(true);
+    expect(isBytes32HexNo0x('00'.repeat(32))).toBe(true);
+    expect(isBytes32HexNo0x('ff'.repeat(32))).toBe(true);
+  });
+
+  it('returns false for invalid values', () => {
+    expect(isBytes32HexNo0x('0x' + valid32HexNo0x)).toBe(false);
+    expect(isBytes32HexNo0x('de'.repeat(31))).toBe(false);
+    expect(isBytes32HexNo0x('de'.repeat(33))).toBe(false);
+    expect(isBytes32HexNo0x('')).toBe(false);
+    expect(isBytes32HexNo0x(null)).toBe(false);
+    expect(isBytes32HexNo0x(undefined)).toBe(false);
+  });
+});
+
+describe('isBytes65Hex', () => {
+  const valid65Hex = '0x' + 'de'.repeat(65);
+
+  it('returns true for valid 65-byte hex with 0x', () => {
+    expect(isBytes65Hex(valid65Hex)).toBe(true);
+    expect(isBytes65Hex('0x' + '00'.repeat(65))).toBe(true);
+    expect(isBytes65Hex('0x' + 'ff'.repeat(65))).toBe(true);
+  });
+
+  it('returns false for invalid values', () => {
+    expect(isBytes65Hex('de'.repeat(65))).toBe(false);
+    expect(isBytes65Hex('0x' + 'de'.repeat(64))).toBe(false);
+    expect(isBytes65Hex('0x' + 'de'.repeat(66))).toBe(false);
+    expect(isBytes65Hex('0x' + 'de'.repeat(32))).toBe(false);
+    expect(isBytes65Hex('0x')).toBe(false);
+    expect(isBytes65Hex(null)).toBe(false);
+  });
+});
+
+describe('isBytes65HexNo0x', () => {
+  const valid65HexNo0x = 'de'.repeat(65);
+
+  it('returns true for valid 65-byte hex without 0x', () => {
+    expect(isBytes65HexNo0x(valid65HexNo0x)).toBe(true);
+    expect(isBytes65HexNo0x('00'.repeat(65))).toBe(true);
+    expect(isBytes65HexNo0x('ff'.repeat(65))).toBe(true);
+  });
+
+  it('returns false for invalid values', () => {
+    expect(isBytes65HexNo0x('0x' + valid65HexNo0x)).toBe(false);
+    expect(isBytes65HexNo0x('de'.repeat(64))).toBe(false);
+    expect(isBytes65HexNo0x('de'.repeat(66))).toBe(false);
+    expect(isBytes65HexNo0x('')).toBe(false);
+    expect(isBytes65HexNo0x(null)).toBe(false);
+  });
+});
+
+describe('assertIsBytes32', () => {
+  it('does not throw for valid 32-byte Uint8Array', () => {
+    expect(() => assertIsBytes32(new Uint8Array(32))).not.toThrow();
+  });
+
+  it('throws for invalid values', () => {
+    expect(() => assertIsBytes32(new Uint8Array(31))).toThrow(
+      new InvalidTypeError({ type: 'object', expectedType: 'Bytes32' }),
+    );
+    expect(() => assertIsBytes32(new Uint8Array(33))).toThrow(InvalidTypeError);
+    expect(() => assertIsBytes32(null)).toThrow(InvalidTypeError);
+    expect(() => assertIsBytes32('0x' + 'de'.repeat(32))).toThrow(
+      InvalidTypeError,
+    );
+  });
+});
+
+describe('assertIsBytes65', () => {
+  it('does not throw for valid 65-byte Uint8Array', () => {
+    expect(() => assertIsBytes65(new Uint8Array(65))).not.toThrow();
+  });
+
+  it('throws for invalid values', () => {
+    expect(() => assertIsBytes65(new Uint8Array(64))).toThrow(
+      new InvalidTypeError({ type: 'object', expectedType: 'Bytes65' }),
+    );
+    expect(() => assertIsBytes65(new Uint8Array(66))).toThrow(InvalidTypeError);
+    expect(() => assertIsBytes65(null)).toThrow(InvalidTypeError);
+  });
+});
+
+describe('assertIsBytes65Hex', () => {
+  const valid65Hex = '0x' + 'de'.repeat(65);
+
+  it('does not throw for valid 65-byte hex', () => {
+    expect(() => assertIsBytes65Hex(valid65Hex)).not.toThrow();
+  });
+
+  it('throws for invalid values', () => {
+    expect(() => assertIsBytes65Hex('0x' + 'de'.repeat(64))).toThrow(
+      new InvalidTypeError({ type: 'string', expectedType: 'Bytes65Hex' }),
+    );
+    expect(() => assertIsBytes65Hex('de'.repeat(65))).toThrow(InvalidTypeError);
+    expect(() => assertIsBytes65Hex(null)).toThrow(InvalidTypeError);
+  });
+});
+
+describe('assertIsBytes32HexArray', () => {
+  const valid32Hex =
+    '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef';
+
+  it('does not throw for valid array', () => {
+    expect(() => assertIsBytes32HexArray([])).not.toThrow();
+    expect(() => assertIsBytes32HexArray([valid32Hex])).not.toThrow();
+    expect(() =>
+      assertIsBytes32HexArray([valid32Hex, valid32Hex]),
+    ).not.toThrow();
+  });
+
+  it('throws for non-array', () => {
+    expect(() => assertIsBytes32HexArray(null)).toThrow(
+      new InvalidTypeError({ type: 'object', expectedType: 'Bytes32HexArray' }),
+    );
+    expect(() => assertIsBytes32HexArray('string')).toThrow(InvalidTypeError);
+  });
+
+  it('throws for array with invalid elements', () => {
+    expect(() => assertIsBytes32HexArray(['0xdeadbeef'])).toThrow(
+      new InvalidTypeError({ type: 'string', expectedType: 'Bytes32Hex' }),
+    );
+    expect(() => assertIsBytes32HexArray([valid32Hex, '0xinvalid'])).toThrow(
+      InvalidTypeError,
+    );
+  });
+});
+
+describe('assertIsBytesHexArray', () => {
+  it('does not throw for valid array', () => {
+    expect(() => assertIsBytesHexArray([])).not.toThrow();
+    expect(() => assertIsBytesHexArray(['0xdeadbeef'])).not.toThrow();
+    expect(() => assertIsBytesHexArray(['0x', '0xdeadbeef'])).not.toThrow();
+  });
+
+  it('throws for non-array', () => {
+    expect(() => assertIsBytesHexArray(null)).toThrow(
+      new InvalidTypeError({ type: 'object', expectedType: 'BytesHexArray' }),
+    );
+    expect(() => assertIsBytesHexArray('string')).toThrow(InvalidTypeError);
+  });
+
+  it('throws for array with invalid elements', () => {
+    expect(() => assertIsBytesHexArray(['deadbeef'])).toThrow(
+      new InvalidTypeError({ type: 'string', expectedType: 'BytesHex' }),
+    );
+    expect(() => assertIsBytesHexArray(['0xdeadbeef', '0xdeadbee'])).toThrow(
+      InvalidTypeError,
+    );
+  });
+});
+
+describe('assertIsBytes65HexArray', () => {
+  const valid65Hex = '0x' + 'de'.repeat(65);
+
+  it('does not throw for valid array', () => {
+    expect(() => assertIsBytes65HexArray([])).not.toThrow();
+    expect(() => assertIsBytes65HexArray([valid65Hex])).not.toThrow();
+    expect(() =>
+      assertIsBytes65HexArray([valid65Hex, valid65Hex]),
+    ).not.toThrow();
+  });
+
+  it('throws for non-array', () => {
+    expect(() => assertIsBytes65HexArray(null)).toThrow(
+      new InvalidTypeError({ type: 'object', expectedType: 'Bytes65HexArray' }),
+    );
+  });
+
+  it('throws for array with invalid elements', () => {
+    expect(() => assertIsBytes65HexArray(['0xdeadbeef'])).toThrow(
+      new InvalidTypeError({ type: 'string', expectedType: 'Bytes65Hex' }),
+    );
+  });
+});
+
+describe('isRecordBytesHexProperty', () => {
+  it('returns true for valid BytesHex property', () => {
+    expect(isRecordBytesHexProperty({ foo: '0xdeadbeef' }, 'foo')).toBe(true);
+    expect(isRecordBytesHexProperty({ foo: '0x' }, 'foo')).toBe(true);
+  });
+
+  it('returns false for invalid values', () => {
+    expect(isRecordBytesHexProperty({ foo: 'deadbeef' }, 'foo')).toBe(false);
+    expect(isRecordBytesHexProperty({ foo: null }, 'foo')).toBe(false);
+    expect(isRecordBytesHexProperty({}, 'foo')).toBe(false);
+    expect(isRecordBytesHexProperty(null, 'foo')).toBe(false);
+  });
+});
+
+describe('isRecordBytes32HexProperty', () => {
+  const valid32Hex =
+    '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef';
+
+  it('returns true for valid Bytes32Hex property', () => {
+    expect(isRecordBytes32HexProperty({ foo: valid32Hex }, 'foo')).toBe(true);
+  });
+
+  it('returns false for invalid values', () => {
+    expect(isRecordBytes32HexProperty({ foo: '0xdeadbeef' }, 'foo')).toBe(
+      false,
+    );
+    expect(isRecordBytes32HexProperty({ foo: null }, 'foo')).toBe(false);
+    expect(isRecordBytes32HexProperty({}, 'foo')).toBe(false);
+    expect(isRecordBytes32HexProperty(null, 'foo')).toBe(false);
+  });
+});
+
+describe('isRecordBytesHexNo0xProperty', () => {
+  it('returns true for valid BytesHexNo0x property', () => {
+    expect(isRecordBytesHexNo0xProperty({ foo: 'deadbeef' }, 'foo')).toBe(true);
+    expect(isRecordBytesHexNo0xProperty({ foo: '' }, 'foo')).toBe(true);
+  });
+
+  it('returns false for invalid values', () => {
+    expect(isRecordBytesHexNo0xProperty({ foo: '0xdeadbeef' }, 'foo')).toBe(
+      false,
+    );
+    expect(isRecordBytesHexNo0xProperty({ foo: 'deadbee' }, 'foo')).toBe(false);
+    expect(isRecordBytesHexNo0xProperty({ foo: null }, 'foo')).toBe(false);
+    expect(isRecordBytesHexNo0xProperty({}, 'foo')).toBe(false);
+    expect(isRecordBytesHexNo0xProperty(null, 'foo')).toBe(false);
+  });
+});
+
+describe('assertRecordBytesHexNo0xProperty', () => {
+  it('does not throw for valid BytesHexNo0x property', () => {
+    expect(() =>
+      assertRecordBytesHexNo0xProperty({ foo: 'deadbeef' }, 'foo', 'Obj'),
+    ).not.toThrow();
+    expect(() =>
+      assertRecordBytesHexNo0xProperty({ foo: '' }, 'foo', 'Obj'),
+    ).not.toThrow();
+  });
+
+  it('throws for invalid values', () => {
+    expect(() =>
+      assertRecordBytesHexNo0xProperty({ foo: '0xdeadbeef' }, 'foo', 'Obj'),
+    ).toThrow(
+      new InvalidPropertyError({
+        objName: 'Obj',
+        property: 'foo',
+        expectedType: 'BytesHexNo0x',
+        type: 'string',
+      }),
+    );
+    expect(() => assertRecordBytesHexNo0xProperty({}, 'foo', 'Obj')).toThrow(
+      InvalidPropertyError,
+    );
+  });
+});
+
+describe('assertRecordBytes65HexArrayProperty', () => {
+  const valid65Hex = '0x' + 'de'.repeat(65);
+
+  it('does not throw for valid array property', () => {
+    expect(() =>
+      assertRecordBytes65HexArrayProperty({ foo: [] }, 'foo', 'Obj'),
+    ).not.toThrow();
+    expect(() =>
+      assertRecordBytes65HexArrayProperty({ foo: [valid65Hex] }, 'foo', 'Obj'),
+    ).not.toThrow();
+  });
+
+  it('throws for invalid values', () => {
+    expect(() =>
+      assertRecordBytes65HexArrayProperty({ foo: null }, 'foo', 'Obj'),
+    ).toThrow(InvalidPropertyError);
+    expect(() =>
+      assertRecordBytes65HexArrayProperty(
+        { foo: ['0xdeadbeef'] },
+        'foo',
+        'Obj',
+      ),
+    ).toThrow(
+      new InvalidPropertyError({
+        objName: 'Obj',
+        property: 'foo[0]',
+        expectedType: 'Bytes65Hex',
+        type: 'string',
+      }),
+    );
+  });
+});
+
+describe('assertRecordBytesHexNo0xArrayProperty', () => {
+  it('does not throw for valid array property', () => {
+    expect(() =>
+      assertRecordBytesHexNo0xArrayProperty({ foo: [] }, 'foo', 'Obj'),
+    ).not.toThrow();
+    expect(() =>
+      assertRecordBytesHexNo0xArrayProperty(
+        { foo: ['deadbeef', 'abcd'] },
+        'foo',
+        'Obj',
+      ),
+    ).not.toThrow();
+  });
+
+  it('throws for invalid values', () => {
+    expect(() =>
+      assertRecordBytesHexNo0xArrayProperty({ foo: null }, 'foo', 'Obj'),
+    ).toThrow(InvalidPropertyError);
+    expect(() =>
+      assertRecordBytesHexNo0xArrayProperty(
+        { foo: ['0xdeadbeef'] },
+        'foo',
+        'Obj',
+      ),
+    ).toThrow(
+      new InvalidPropertyError({
+        objName: 'Obj',
+        property: 'foo[0]',
+        expectedType: 'BytesHexNo0x',
+        type: 'string',
+      }),
+    );
+  });
+});
+
+describe('isRecordUint8ArrayProperty', () => {
+  it('returns true for valid Uint8Array property', () => {
+    expect(
+      isRecordUint8ArrayProperty({ foo: new Uint8Array([1, 2, 3]) }, 'foo'),
+    ).toBe(true);
+    expect(isRecordUint8ArrayProperty({ foo: new Uint8Array() }, 'foo')).toBe(
+      true,
+    );
+  });
+
+  it('returns false for invalid values', () => {
+    expect(isRecordUint8ArrayProperty({ foo: [1, 2, 3] }, 'foo')).toBe(false);
+    expect(isRecordUint8ArrayProperty({ foo: null }, 'foo')).toBe(false);
+    expect(isRecordUint8ArrayProperty({}, 'foo')).toBe(false);
+    expect(isRecordUint8ArrayProperty(null, 'foo')).toBe(false);
+  });
+});
+
+describe('assertRecordUint8ArrayProperty', () => {
+  it('does not throw for valid Uint8Array property', () => {
+    expect(() =>
+      assertRecordUint8ArrayProperty(
+        { foo: new Uint8Array([1, 2, 3]) },
+        'foo',
+        'Obj',
+      ),
+    ).not.toThrow();
+  });
+
+  it('throws for invalid values', () => {
+    expect(() =>
+      assertRecordUint8ArrayProperty({ foo: [1, 2, 3] }, 'foo', 'Obj'),
+    ).toThrow(
+      new InvalidPropertyError({
+        objName: 'Obj',
+        property: 'foo',
+        expectedType: 'Uint8Array',
+        type: 'object',
+      }),
+    );
+    expect(() => assertRecordUint8ArrayProperty({}, 'foo', 'Obj')).toThrow(
+      InvalidPropertyError,
+    );
+  });
+});
+
+describe('bytesToHexNo0x', () => {
+  it('converts bytes to hex without 0x prefix', () => {
+    expect(bytesToHexNo0x(new Uint8Array([255]))).toBe('ff');
+    expect(bytesToHexNo0x(new Uint8Array([0xde, 0xad, 0xbe, 0xef]))).toBe(
+      'deadbeef',
+    );
+    expect(bytesToHexNo0x(new Uint8Array([0, 1, 255]))).toBe('0001ff');
+  });
+
+  it('handles empty and undefined', () => {
+    expect(bytesToHexNo0x(new Uint8Array())).toBe('');
+    expect(bytesToHexNo0x(undefined)).toBe('');
+  });
+});
+
+describe('hexToBytes32', () => {
+  it('pads hex to 32 bytes', () => {
+    const result = hexToBytes32('0x1234');
+    expect(result.length).toBe(32);
+    expect(result[30]).toBe(0x12);
+    expect(result[31]).toBe(0x34);
+    // Leading bytes should be 0
+    for (let i = 0; i < 30; i++) {
+      expect(result[i]).toBe(0);
+    }
+  });
+
+  it('handles full 32-byte hex', () => {
+    const hex = '0x' + 'ab'.repeat(32);
+    const result = hexToBytes32(hex);
+    expect(result.length).toBe(32);
+    for (let i = 0; i < 32; i++) {
+      expect(result[i]).toBe(0xab);
+    }
+  });
+
+  it('handles hex without 0x prefix', () => {
+    const result = hexToBytes32('ff');
+    expect(result.length).toBe(32);
+    expect(result[31]).toBe(0xff);
+  });
+});
+
+describe('concatBytes', () => {
+  it('concatenates multiple Uint8Arrays', () => {
+    const a = new Uint8Array([1, 2]);
+    const b = new Uint8Array([3, 4, 5]);
+    const c = new Uint8Array([6]);
+    const result = concatBytes(a, b, c);
+    expect(result).toEqual(new Uint8Array([1, 2, 3, 4, 5, 6]));
+  });
+
+  it('handles empty arrays', () => {
+    const a = new Uint8Array([1, 2]);
+    const b = new Uint8Array([]);
+    const c = new Uint8Array([3]);
+    expect(concatBytes(a, b, c)).toEqual(new Uint8Array([1, 2, 3]));
+    expect(concatBytes()).toEqual(new Uint8Array([]));
+  });
+
+  it('handles single array', () => {
+    const a = new Uint8Array([1, 2, 3]);
+    expect(concatBytes(a)).toEqual(new Uint8Array([1, 2, 3]));
+  });
+});
+
+describe('bytesEquals', () => {
+  it('returns true for equal byte arrays', () => {
+    expect(
+      bytesEquals(new Uint8Array([1, 2, 3]), new Uint8Array([1, 2, 3])),
+    ).toBe(true);
+    expect(bytesEquals(new Uint8Array([]), new Uint8Array([]))).toBe(true);
+    expect(bytesEquals(new Uint8Array([0xff]), new Uint8Array([0xff]))).toBe(
+      true,
+    );
+  });
+
+  it('returns false for different byte arrays', () => {
+    expect(
+      bytesEquals(new Uint8Array([1, 2, 3]), new Uint8Array([1, 2, 4])),
+    ).toBe(false);
+    expect(bytesEquals(new Uint8Array([1, 2, 3]), new Uint8Array([1, 2]))).toBe(
+      false,
+    );
+    expect(bytesEquals(new Uint8Array([1]), new Uint8Array([1, 2]))).toBe(
+      false,
+    );
+  });
+
+  it('returns false for non-Uint8Array values', () => {
+    expect(bytesEquals(null as unknown as Uint8Array, new Uint8Array([]))).toBe(
+      false,
+    );
+    expect(bytesEquals(new Uint8Array([]), null as unknown as Uint8Array)).toBe(
+      false,
+    );
+    expect(
+      bytesEquals(
+        [1, 2, 3] as unknown as Uint8Array,
+        new Uint8Array([1, 2, 3]),
+      ),
+    ).toBe(false);
+  });
+});
+
+describe('toBytes32HexArray', () => {
+  const validBytes32Hex =
+    '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef';
+  const validBytes32Hex2 =
+    '0x1234567812345678123456781234567812345678123456781234567812345678';
+
+  it('converts array of Bytes32Hex strings', () => {
+    const result = toBytes32HexArray([validBytes32Hex, validBytes32Hex2]);
+    expect(result).toEqual([validBytes32Hex, validBytes32Hex2]);
+  });
+
+  it('converts array of Bytes32 Uint8Arrays', () => {
+    const bytes32 = new Uint8Array(32).fill(0xde);
+    const result = toBytes32HexArray([bytes32]);
+    expect(result.length).toBe(1);
+    expect(result[0]).toBe('0x' + 'de'.repeat(32));
+  });
+
+  it('converts mixed array of Bytes32 and Bytes32Hex', () => {
+    const bytes32 = new Uint8Array(32).fill(0xab);
+    const result = toBytes32HexArray([validBytes32Hex, bytes32]);
+    expect(result.length).toBe(2);
+    expect(result[0]).toBe(validBytes32Hex);
+    expect(result[1]).toBe('0x' + 'ab'.repeat(32));
+  });
+
+  it('returns empty array for empty input', () => {
+    expect(toBytes32HexArray([])).toEqual([]);
+  });
+
+  it('throws for non-array input', () => {
+    expect(() => toBytes32HexArray(null as any)).toThrow(InvalidTypeError);
+    expect(() => toBytes32HexArray(undefined as any)).toThrow(InvalidTypeError);
+    expect(() => toBytes32HexArray('string' as any)).toThrow(InvalidTypeError);
+    expect(() => toBytes32HexArray(123 as any)).toThrow(InvalidTypeError);
+  });
+
+  it('throws for invalid Bytes32Hex string', () => {
+    expect(() => toBytes32HexArray(['0xdeadbeef'])).toThrow(InvalidTypeError);
+    expect(() => toBytes32HexArray(['not-hex' as any])).toThrow(
+      InvalidTypeError,
+    );
+    expect(() => toBytes32HexArray([validBytes32Hex, '0xinvalid'])).toThrow(
+      InvalidTypeError,
+    );
+  });
+
+  it('throws for invalid Bytes32 Uint8Array (wrong length)', () => {
+    const bytes31 = new Uint8Array(31).fill(0xde);
+    const bytes33 = new Uint8Array(33).fill(0xde);
+    expect(() => toBytes32HexArray([bytes31])).toThrow(InvalidTypeError);
+    expect(() => toBytes32HexArray([bytes33])).toThrow(InvalidTypeError);
+  });
+
+  it('throws for invalid element types', () => {
+    expect(() => toBytes32HexArray([123 as any])).toThrow(InvalidTypeError);
+    expect(() => toBytes32HexArray([null as any])).toThrow(InvalidTypeError);
+    expect(() => toBytes32HexArray([{} as any])).toThrow(InvalidTypeError);
   });
 });

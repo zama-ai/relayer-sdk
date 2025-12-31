@@ -1,31 +1,132 @@
+import type {
+  FhevmPkeConfigType,
+  FhevmPkeCrsByCapacityType,
+  FhevmPublicKeyType,
+} from '../types/relayer';
+import type {
+  TFHEPksCrsBytesType,
+  TFHEPublicKeyBytesType,
+} from '../sdk/lowlevel/types';
 import { CompactPkeCrs, TfheClientKey, TfheCompactPublicKey } from 'node-tfhe';
 import fs from 'fs';
 import {
   SERIALIZED_SIZE_LIMIT_CRS,
   SERIALIZED_SIZE_LIMIT_PK,
-} from '../constants';
-import { PublicParams } from '../sdk/encrypt';
+} from '../sdk/lowlevel/constants';
+import { TFHEPkeParams } from '../sdk/lowlevel/TFHEPkeParams';
 
-const privKey = fs.readFileSync(`${__dirname}/keys/privateKey.bin`);
-const pubKey = fs.readFileSync(`${__dirname}/keys/publicKey.bin`);
-const params2048 = fs.readFileSync(`${__dirname}/keys/crs2048.bin`);
+////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Warning!
+ *
+ * These binary files were serialized using an older version of TFHE-rs.
+ * The serialization format may differ from the current version, so they need
+ * to be deserialized and re-serialized using the current TFHE WASM library
+ * to ensure byte-for-byte consistency in tests.
+ */
+const _oldVersionPrivateKeyBytesBuffer = fs.readFileSync(
+  `${__dirname}/keys/privateKey.bin`,
+);
+const _oldVersionPubKeyBytesBuffer = fs.readFileSync(
+  `${__dirname}/keys/publicKey.bin`,
+);
+const _oldVersionPkeCrs2048BytesBuffer = fs.readFileSync(
+  `${__dirname}/keys/crs2048.bin`,
+);
+
+////////////////////////////////////////////////////////////////////////////////
 
 export const publicKeyId = '408d8cbaa51dece7f782fe04ba0b1c1d017b1088';
-const publicParamsId = 'd8d94eb3a23d22d3eb6b5e7b694e8afcd571d906';
-export const privateKey = TfheClientKey.safe_deserialize(
-  privKey,
+export const publicParamsId = 'd8d94eb3a23d22d3eb6b5e7b694e8afcd571d906';
+
+////////////////////////////////////////////////////////////////////////////////
+// Wasm objects
+////////////////////////////////////////////////////////////////////////////////
+
+// TfheClientKey can be deserialized using old format
+export const tfheClientKeyWasm = TfheClientKey.safe_deserialize(
+  _oldVersionPrivateKeyBytesBuffer,
   SERIALIZED_SIZE_LIMIT_PK,
 );
-export const publicKey = TfheCompactPublicKey.safe_deserialize(
-  pubKey,
+
+// TfheCompactPublicKey can be deserialized using old format
+export const tfheCompactPublicKeyWasm = TfheCompactPublicKey.safe_deserialize(
+  _oldVersionPubKeyBytesBuffer,
   SERIALIZED_SIZE_LIMIT_PK,
 );
-export const publicParams: PublicParams = {
+
+// CompactPkeCrs can be deserialized using old format
+export const tfheCompactPkeCrsWasm = CompactPkeCrs.safe_deserialize(
+  _oldVersionPkeCrs2048BytesBuffer,
+  SERIALIZED_SIZE_LIMIT_CRS,
+);
+
+////////////////////////////////////////////////////////////////////////////////
+// Bytes data
+////////////////////////////////////////////////////////////////////////////////
+
+export const tfheCompactPublicKeyBytes =
+  tfheCompactPublicKeyWasm.safe_serialize(SERIALIZED_SIZE_LIMIT_PK);
+
+export const tfheCompactPkeCrsBytes = tfheCompactPkeCrsWasm.safe_serialize(
+  SERIALIZED_SIZE_LIMIT_CRS,
+);
+
+////////////////////////////////////////////////////////////////////////////////
+// High level structures
+////////////////////////////////////////////////////////////////////////////////
+
+export const fhevmPkeCrsByCapacity: FhevmPkeCrsByCapacityType = {
   2048: {
-    publicParams: CompactPkeCrs.safe_deserialize(
-      params2048,
-      SERIALIZED_SIZE_LIMIT_CRS,
-    ),
+    publicParams: tfheCompactPkeCrsBytes,
     publicParamsId,
   },
 };
+Object.freeze(fhevmPkeCrsByCapacity['2048']);
+Object.freeze(fhevmPkeCrsByCapacity);
+
+export const fhevmPublicKey: FhevmPublicKeyType = {
+  data: tfheCompactPublicKeyBytes,
+  id: publicKeyId,
+};
+Object.freeze(fhevmPublicKey);
+
+export const fhevmPkeConfig: FhevmPkeConfigType = {
+  publicKey: fhevmPublicKey,
+  publicParams: fhevmPkeCrsByCapacity,
+};
+Object.freeze(fhevmPkeConfig);
+
+export const pkeParams: TFHEPkeParams =
+  TFHEPkeParams.fromFhevmPkeConfig(fhevmPkeConfig);
+
+////////////////////////////////////////////////////////////////////////////////
+
+export const tfhePublicKeyBytes: TFHEPublicKeyBytesType = {
+  id: publicKeyId,
+  bytes: tfheCompactPublicKeyBytes,
+};
+Object.freeze(tfhePublicKeyBytes);
+
+export const tfhePublicKeyBytesWithSrcUrl: TFHEPublicKeyBytesType = {
+  id: publicKeyId,
+  bytes: tfheCompactPublicKeyBytes,
+  srcUrl: 'https://example.com/publicKey.bin',
+};
+Object.freeze(tfhePublicKeyBytes);
+
+export const tfhePksCrsBytes: TFHEPksCrsBytesType = {
+  id: publicParamsId,
+  bytes: tfheCompactPkeCrsBytes,
+  capacity: 2048,
+};
+Object.freeze(tfhePksCrsBytes);
+
+export const tfhePksCrsBytesWithSrcUrl: TFHEPksCrsBytesType = {
+  ...tfhePksCrsBytes,
+  srcUrl: 'https://example.com/crs2048.bin',
+};
+Object.freeze(tfhePksCrsBytesWithSrcUrl);
+
+////////////////////////////////////////////////////////////////////////////////

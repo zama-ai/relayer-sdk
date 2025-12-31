@@ -1,4 +1,3 @@
-import { FheTypeError } from '../errors/FheTypeError';
 import type {
   EncryptionBits,
   FheTypeEncryptionBitwidthToIdMap,
@@ -9,6 +8,14 @@ import type {
   FheTypeNameToIdMap,
   SolidityPrimitiveTypeName,
 } from '../types/primitives';
+import { InvalidTypeError } from '../errors/InvalidTypeError';
+import { FheTypeError } from '../errors/FheTypeError';
+
+////////////////////////////////////////////////////////////////////////////////
+
+// TFHE encryption requires a minimum of 2 bits per value.
+// Booleans use 2 bits despite only needing 1 bit for the value itself.
+const MINIMUM_ENCRYPTION_BIT_WIDTH = 2;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Lookup Maps
@@ -38,6 +45,8 @@ const FheTypeIdToName: FheTypeIdToNameMap = {
   8: 'euint256',
 } as const;
 
+// TFHE encryption requires a minimum of 2 bits per value.
+// Booleans use 2 bits despite only needing 1 bit for the value itself.
 const FheTypeIdToEncryptionBitwidth: FheTypeIdToEncryptionBitwidthMap = {
   0: 2,
   //1:?, euint4 has been deprecated
@@ -132,17 +141,64 @@ export function isEncryptionBits(value: unknown): value is EncryptionBits {
   return value in EncryptionBitwidthToFheTypeId;
 }
 
+/**
+ * Asserts that a value is a valid encryption bit width.
+ * @throws {InvalidTypeError} If value is not a valid encryption bit width.
+ * @example assertIsEncryptionBits(8) // passes
+ * @example assertIsEncryptionBits(4) // throws (euint4 is deprecated)
+ */
+export function assertIsEncryptionBits(
+  value: unknown,
+  varName?: string,
+): asserts value is EncryptionBits {
+  if (!isEncryptionBits(value)) {
+    throw new InvalidTypeError({
+      varName,
+      type: typeof value,
+      expectedType: 'EncryptionBits',
+    });
+  }
+}
+
+/**
+ * Asserts that a value is a valid encryption bit width.
+ * @throws {InvalidTypeError} If value is not a valid encryption bit width.
+ * @example assertIsEncryptionBits(8) // passes
+ * @example assertIsEncryptionBits(4) // throws (euint4 is deprecated)
+ */
+export function assertIsEncryptionBitsArray(
+  value: unknown,
+  varName?: string,
+): asserts value is Array<EncryptionBits> {
+  if (!Array.isArray(value)) {
+    throw new InvalidTypeError({
+      type: typeof value,
+      expectedType: 'EncryptionBitsArray',
+    });
+  }
+  for (let i = 0; i < value.length; ++i) {
+    if (!isEncryptionBits(value[i])) {
+      throw new InvalidTypeError({
+        varName: `${varName}[${i}]`,
+        type: typeof value[i],
+        expectedType: 'EncryptionBits',
+      });
+    }
+  }
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // FheTypeId extractors
 ////////////////////////////////////////////////////////////////////////////////
 
 /**
  * Converts an encryption bit width to its corresponding FheTypeId.
+ * Accepts loose `number` input; validates internally via `isEncryptionBits`.
  * @throws {FheTypeError} If bitwidth is not a valid encryption bit width.
  * @example fheTypeIdFromEncryptionBits(8) // 2 (euint8)
  */
 export function fheTypeIdFromEncryptionBits(
-  bitwidth: EncryptionBits,
+  bitwidth: number | EncryptionBits,
 ): FheTypeId {
   if (!isEncryptionBits(bitwidth)) {
     throw new FheTypeError({
@@ -154,10 +210,11 @@ export function fheTypeIdFromEncryptionBits(
 
 /**
  * Converts an FheTypeName to its corresponding FheTypeId.
+ * Accepts loose `string` input; validates internally via `isFheTypeName`.
  * @throws {FheTypeError} If name is not a valid FheTypeName.
  * @example fheTypeIdFromName('euint8') // 2
  */
-export function fheTypeIdFromName(name: FheTypeName): FheTypeId {
+export function fheTypeIdFromName(name: string | FheTypeName): FheTypeId {
   if (!isFheTypeName(name)) {
     throw new FheTypeError({
       message: `Invalid FheType name '${name}'`,
@@ -168,10 +225,11 @@ export function fheTypeIdFromName(name: FheTypeName): FheTypeId {
 
 /**
  * Converts an FheTypeId to its corresponding FheTypeName.
+ * Accepts loose `number` input; validates internally via `isFheTypeId`.
  * @throws {FheTypeError} If id is not a valid FheTypeId.
  * @example fheTypeNameFromId(2) // 'euint8'
  */
-export function fheTypeNameFromId(id: FheTypeId): FheTypeName {
+export function fheTypeNameFromId(id: number | FheTypeId): FheTypeName {
   if (!isFheTypeId(id)) {
     throw new FheTypeError({
       message: `Invalid FheType id '${id}'`,
@@ -186,12 +244,13 @@ export function fheTypeNameFromId(id: FheTypeId): FheTypeName {
 
 /**
  * Returns the Solidity primitive type name for an FheTypeId.
+ * Accepts loose `number` input; validates internally via `isFheTypeId`.
  * @example solidityPrimitiveTypeNameFromFheTypeId(0) // 'bool'
  * @example solidityPrimitiveTypeNameFromFheTypeId(7) // 'address'
  * @example solidityPrimitiveTypeNameFromFheTypeId(2) // 'uint256'
  */
 export function solidityPrimitiveTypeNameFromFheTypeId(
-  typeId: FheTypeId,
+  typeId: number | FheTypeId,
 ): SolidityPrimitiveTypeName {
   if (!isFheTypeId(typeId)) {
     throw new FheTypeError({
@@ -207,6 +266,8 @@ export function solidityPrimitiveTypeNameFromFheTypeId(
 
 /**
  * Returns the encryption bit width for an FheTypeId.
+ * @param typeId - The FHE type Id
+ * @returns The encryption bit width (always >= 2)
  * @example encryptionBitsFromFheTypeId(2) // 8 (euint8)
  * @example encryptionBitsFromFheTypeId(7) // 160 (eaddress)
  */
@@ -216,11 +277,19 @@ export function encryptionBitsFromFheTypeId(typeId: FheTypeId): EncryptionBits {
       message: `Invalid FheType id '${typeId}'`,
     });
   }
-  return FheTypeIdToEncryptionBitwidth[typeId];
+
+  const bw = FheTypeIdToEncryptionBitwidth[typeId];
+
+  // Invariant: bit width must be >= 2 (TFHE minimum encryption granularity)
+  _assertMinimumEncryptionBitWidth(bw);
+
+  return bw;
 }
 
 /**
  * Returns the encryption bit width for an FheType name.
+ * @param name - The FHE type name (e.g., 'ebool', 'euint32', 'eaddress')
+ * @returns The encryption bit width (always >= 2)
  * @example encryptionBitsFromFheTypeName('ebool') // 2
  * @example encryptionBitsFromFheTypeName('euint32') // 32
  * @example encryptionBitsFromFheTypeName('eaddress') // 160
@@ -233,5 +302,19 @@ export function encryptionBitsFromFheTypeName(
       message: `Invalid FheType name '${name}'`,
     });
   }
-  return FheTypeIdToEncryptionBitwidth[FheTypeNameToId[name]];
+
+  const bw = FheTypeIdToEncryptionBitwidth[FheTypeNameToId[name]];
+
+  // Invariant: bit width must be >= 2 (TFHE minimum encryption granularity)
+  _assertMinimumEncryptionBitWidth(bw);
+
+  return bw;
+}
+
+function _assertMinimumEncryptionBitWidth(bw: number) {
+  if (bw < MINIMUM_ENCRYPTION_BIT_WIDTH) {
+    throw new FheTypeError({
+      message: `Invalid FheType encryption bit width: ${bw}. Minimum encryption bit width is ${MINIMUM_ENCRYPTION_BIT_WIDTH} bits.`,
+    });
+  }
 }

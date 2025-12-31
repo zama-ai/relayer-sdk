@@ -1,11 +1,15 @@
 import fs from 'fs';
 import path from 'path';
 import { homedir } from 'os';
-import { createRelayerFhevm, TFHECrs, TFHEPublicKey } from '../lib/internal.js';
+import {
+  createRelayerFhevm,
+  TFHEPkeCrs,
+  TFHEPublicKey,
+} from '../lib/internal.js';
 import { logCLI } from './utils.js';
 
-export function getFhevmPubKeyCacheInfo() {
-  const cacheDir = path.join(homedir(), '.fhevm');
+export function getFhevmPubKeyCacheInfo(name) {
+  const cacheDir = path.join(homedir(), '.fhevm', name);
   const pubKeyFile = path.join(cacheDir, 'pubkey.json');
   const pubKeyParams2048File = path.join(cacheDir, 'pubkey-params-2048.json');
   return {
@@ -15,12 +19,22 @@ export function getFhevmPubKeyCacheInfo() {
   };
 }
 
-export async function loadFhevmPubKey(config, options) {
-  const res = loadFhevmPubKeyFromCache(options);
+export async function loadFhevmPublicKeyConfig(config, options) {
+  const res = loadFhevmPubKeyFromCache({ ...options, name: config.name });
   if (res) {
+    const pk = res.pk.toBytes();
+    const crs = res.crs.toBytes();
     return {
-      publicKey: res.pk.toBytes(),
-      publicParams: res.crs.toPublicParams2048Bytes(),
+      publicKey: {
+        data: pk.bytes,
+        id: pk.id,
+      },
+      publicParams: {
+        2048: {
+          publicParams: crs.bytes,
+          publicParamsId: crs.id,
+        },
+      },
     };
   }
 
@@ -39,21 +53,32 @@ export async function loadFhevmPubKey(config, options) {
   logCLI(`Relayer url: ${fhevm.relayerVersionUrl}`, options);
 
   const pubKeyBytes = fhevm.getPublicKeyBytes();
-  const publicParams2048Bytes = fhevm.getPublicParamsBytesForBits(2048);
+  const pkeCrs2048Bytes = fhevm.getPkeCrsBytesForCapacity(2048);
 
-  const pk = TFHEPublicKey.fromPublicKeyBytes(pubKeyBytes);
-  const crs = TFHECrs.fromBitsPublicParamsBytes(2048, publicParams2048Bytes);
+  const pk = TFHEPublicKey.fromBytes(pubKeyBytes);
+  const crs = TFHEPkeCrs.fromBytes(pkeCrs2048Bytes);
 
-  saveFhevmPubKeyToCache({ startTime, pk, crs });
+  saveFhevmPubKeyToCache({ name: config.name, startTime, pk, crs });
+
+  const pkBytes = pk.toBytes();
+  const crsBytes = crs.toBytes();
 
   return {
-    publicKey: pk.toBytes(),
-    publicParams: crs.toPublicParams2048Bytes(),
+    publicKey: {
+      data: pkBytes.bytes,
+      id: pkBytes.id,
+    },
+    publicParams: {
+      2048: {
+        publicParams: crsBytes.bytes,
+        publicParamsId: crsBytes.id,
+      },
+    },
   };
 }
 
-export function loadFhevmPubKeyFromCache({ clearCache, json, verbose }) {
-  const { pubKeyFile, pubKeyParams2048File } = getFhevmPubKeyCacheInfo();
+export function loadFhevmPubKeyFromCache({ name, clearCache, json, verbose }) {
+  const { pubKeyFile, pubKeyParams2048File } = getFhevmPubKeyCacheInfo(name);
 
   const pubKeyFileExists = fs.existsSync(pubKeyFile);
   const pubKeyParams2048FileExists = fs.existsSync(pubKeyParams2048File);
@@ -88,16 +113,23 @@ export function loadFhevmPubKeyFromCache({ clearCache, json, verbose }) {
   );
 
   logCLI(`✅ load pubKeyParams2048 from cache...`, { json, verbose });
-  const crs = TFHECrs.fromJSON(
+  const crs = TFHEPkeCrs.fromJSON(
     JSON.parse(fs.readFileSync(pubKeyParams2048File, 'utf-8')),
   );
 
   return { pk, crs };
 }
 
-export function saveFhevmPubKeyToCache({ startTime, pk, crs, json, verbose }) {
+export function saveFhevmPubKeyToCache({
+  name,
+  startTime,
+  pk,
+  crs,
+  json,
+  verbose,
+}) {
   const { cacheDir, pubKeyFile, pubKeyParams2048File } =
-    getFhevmPubKeyCacheInfo();
+    getFhevmPubKeyCacheInfo(name);
 
   const pkJson = pk.toJSON();
   const crsJson = crs.toJSON();
@@ -106,7 +138,7 @@ export function saveFhevmPubKeyToCache({ startTime, pk, crs, json, verbose }) {
 
   if (!fs.existsSync(cacheDir)) {
     logCLI(`create directory ${cacheDir}...`, { json, verbose });
-    fs.mkdirSync(cacheDir);
+    fs.mkdirSync(cacheDir, { recursive: true });
   }
 
   fs.writeFileSync(pubKeyFile, JSON.stringify(pkJson), 'utf-8');
@@ -120,7 +152,7 @@ export function saveFhevmPubKeyToCache({ startTime, pk, crs, json, verbose }) {
 
   fs.writeFileSync(pubKeyParams2048File, JSON.stringify(crsJson), 'utf-8');
   logCLI(
-    `🥬 TFHECrs saved at ${pubKeyParams2048File} (${Date.now() - startTime}ms)`,
+    `🥬 TFHEPkeCrs saved at ${pubKeyParams2048File} (${Date.now() - startTime}ms)`,
     { json, verbose },
   );
 }

@@ -14,13 +14,16 @@ export function assertIsRelayerV2ResultInputProof(
   value: unknown,
   name: string,
 ): asserts value is RelayerV2ResultInputProof {
-  assertRecordBooleanProperty(value, 'accepted', name);
+  type T = RelayerV2ResultInputProof;
+
+  assertRecordBooleanProperty(value, 'accepted' satisfies keyof T, name);
   if (value.accepted) {
     assertIsRelayerV2ResultInputProofAccepted(value, name);
   } else {
     assertIsRelayerV2ResultInputProofRejected(value, name);
   }
 }
+
 /*
     type RelayerV2ResultInputProofAccepted = {
         accepted: true;
@@ -33,10 +36,16 @@ export function assertIsRelayerV2ResultInputProofAccepted(
   value: unknown,
   name: string,
 ): asserts value is RelayerV2ResultInputProofAcceped {
-  assertRecordBooleanProperty(value, 'accepted', name, true);
-  assertRecordBytes32HexArrayProperty(value, 'handles', name);
-  assertRecordBytesHexArrayProperty(value, 'signatures', name);
-  assertRecordBytesHexProperty(value, 'extraData', name);
+  type T = RelayerV2ResultInputProofAcceped;
+
+  assertRecordBooleanProperty(value, 'accepted' satisfies keyof T, name, true);
+  assertRecordBytes32HexArrayProperty(value, 'handles' satisfies keyof T, name);
+  assertRecordBytesHexArrayProperty(
+    value,
+    'signatures' satisfies keyof T,
+    name,
+  );
+  assertRecordBytesHexProperty(value, 'extraData' satisfies keyof T, name);
 }
 
 /*
@@ -49,6 +58,8 @@ export function assertIsRelayerV2ResultInputProofRejected(
   value: unknown,
   name: string,
 ): asserts value is RelayerV2ResultInputProofRejected {
-  assertRecordBooleanProperty(value, 'accepted', name, false);
-  assertRecordBytesHexProperty(value, 'extraData', name);
+  type T = RelayerV2ResultInputProofRejected;
+
+  assertRecordBooleanProperty(value, 'accepted' satisfies keyof T, name, false);
+  assertRecordBytesHexProperty(value, 'extraData' satisfies keyof T, name);
 }

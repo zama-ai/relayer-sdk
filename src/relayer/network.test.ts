@@ -1,19 +1,27 @@
+import type { RelayerGetResponseKeyUrlSnakeCase } from '../relayer-provider/common-types';
 import { getKeysFromRelayer } from './network';
-import { publicKey, publicParams } from '../test';
-import {
-  SERIALIZED_SIZE_LIMIT_CRS,
-  SERIALIZED_SIZE_LIMIT_PK,
-} from '../constants';
+import { tfheCompactPkeCrsBytes, tfheCompactPublicKeyBytes } from '../test';
+import { SERIALIZED_SIZE_LIMIT_PK } from '../sdk/lowlevel/constants';
 import fetchMock from 'fetch-mock';
 import { TEST_CONFIG } from '../test/config';
-import { RelayerV1KeyUrlResponse } from '../relayer-provider/v1/types';
 
+////////////////////////////////////////////////////////////////////////////////
+//
 // Jest Command line
 // =================
+//
+// npx jest --colors --passWithNoTests ./src/relayer/network.test.ts
 // npx jest --colors --passWithNoTests --coverage ./src/relayer/network.test.ts --collectCoverageFrom=./src/relayer/network.ts --testNamePattern=xxx
 // npx jest --colors --passWithNoTests --coverage ./src/relayer/network.test.ts --collectCoverageFrom=./src/relayer/network.ts
+//
+////////////////////////////////////////////////////////////////////////////////
 
-// const oldPayload = {
+////////////////////////////////////////////////////////////////////////////////
+//
+// Old Payload Format:
+// ===================
+//
+// const payload = {
 //   response: {
 //     crs: {
 //       '2048': {
@@ -91,8 +99,10 @@ import { RelayerV1KeyUrlResponse } from '../relayer-provider/v1/types';
 //   },
 //   status: 'success',
 // };
+//
+////////////////////////////////////////////////////////////////////////////////
 
-const payload: RelayerV1KeyUrlResponse = {
+const payload: RelayerGetResponseKeyUrlSnakeCase = {
   response: {
     crs: {
       '2048': {
@@ -124,24 +134,26 @@ const payload: RelayerV1KeyUrlResponse = {
 const describeIfFetchMock =
   TEST_CONFIG.type === 'fetch-mock' ? describe : describe.skip;
 
+////////////////////////////////////////////////////////////////////////////////
+
 describeIfFetchMock('network', () => {
-  it('getInputsFromRelayer', async () => {
+  it('getKeysFromRelayer', async () => {
     fetchMock.get('https://test-relayer.net/v1/keyurl', payload);
 
     fetchMock.get(
       'https://s3.amazonaws.com/bucket-name-1/PUB-p1/PublicKey/408d8cbaa51dece7f782fe04ba0b1c1d017b1088',
-      publicKey.safe_serialize(SERIALIZED_SIZE_LIMIT_PK),
+      tfheCompactPublicKeyBytes,
     );
 
     fetchMock.get(
       'https://s3.amazonaws.com/bucket-name-1/PUB-p1/CRS/d8d94eb3a23d22d3eb6b5e7b694e8afcd571d906',
-      publicParams[2048].publicParams.safe_serialize(SERIALIZED_SIZE_LIMIT_CRS),
+      tfheCompactPkeCrsBytes,
     );
 
     const material = await getKeysFromRelayer('https://test-relayer.net/v1');
 
     expect(
       material.publicKey.safe_serialize(SERIALIZED_SIZE_LIMIT_PK),
-    ).toStrictEqual(publicKey.safe_serialize(SERIALIZED_SIZE_LIMIT_PK));
+    ).toStrictEqual(tfheCompactPublicKeyBytes);
   });
 });

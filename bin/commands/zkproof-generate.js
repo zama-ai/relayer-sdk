@@ -1,15 +1,8 @@
 'use strict';
 
-import {
-  isFheTypeName,
-  encryptionBitsFromFheTypeName,
-  FhevmHandle,
-  bytesToHex,
-  safeJSONstringify,
-  bytesToHexLarge,
-} from '../../lib/internal.js';
+import { safeJSONstringify, bytesToHexLarge } from '../../lib/internal.js';
 import { getInstance } from '../instance.js';
-import { loadFhevmPubKey } from '../pubkeyCache.js';
+import { loadFhevmPublicKeyConfig } from '../pubkeyCache.js';
 import {
   fheTypedValuesToBuilderFunctionWithArg,
   logCLI,
@@ -26,7 +19,10 @@ export async function zkProofGenerateCommand(options) {
   const fheTypedValues = valueColumnTypeListToFheTypedValues(options.values);
   const arr = fheTypedValuesToBuilderFunctionWithArg(fheTypedValues);
 
-  const { publicKey, publicParams } = await loadFhevmPubKey(config, options);
+  const { publicKey, publicParams } = await loadFhevmPublicKeyConfig(
+    config,
+    options,
+  );
 
   try {
     const instance = await getInstance(
@@ -48,9 +44,6 @@ export async function zkProofGenerateCommand(options) {
 
     logCLI(`🎲 generating zkproof...`, options);
     const zkProof = builder.generateZKProof();
-    zkProof.ciphertextWithZkProof = bytesToHexLarge(
-      zkProof.ciphertextWithZkProof,
-    );
 
     const o = {
       values: fheTypedValues,
