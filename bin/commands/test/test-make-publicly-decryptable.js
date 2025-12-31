@@ -5,7 +5,9 @@ import { logCLI, parseCommonOptions } from '../../utils.js';
 import { FHETestAddresses } from './fheTest.js';
 import { ethers } from 'ethers';
 
+// npx . test make-publicly-decryptable --type euint32 --network devnet
 // npx . test make-publicly-decryptable --type euint32 --network testnet
+// npx . test make-publicly-decryptable --type euint32 --network mainnet
 export async function testFHETestMakePubliclyDecryptableCommand(options) {
   const { config, provider, signer } = parseCommonOptions(options);
 

@@ -6,7 +6,8 @@ import type {
   RelayerV2ResponseFailed,
   RelayerV2ResponseApiError404,
   RelayerV2ResponseApiError503,
-  RelayerV2ResponseApiError504,
+  RelayerV2ApiError400NoDetails,
+  RelayerV2ApiError400WithDetails,
 } from './types';
 import { InvalidPropertyError } from '../../../errors/InvalidPropertyError';
 import { assertRecordNonNullableProperty } from '../../../utils/record';
@@ -17,7 +18,6 @@ import { assertIsRelayerV2ApiError429 } from './errors/RelayerV2ApiError429';
 import { assertIsRelayerV2ApiError500 } from './errors/RelayerV2ApiError500';
 import { assertIsRelayerV2ApiError404 } from './errors/RelayerV2ApiError404';
 import { assertIsRelayerV2ApiError503 } from './errors/RelayerV2ApiError503';
-import { assertIsRelayerV2ApiError504 } from './errors/RelayerV2ApiError504';
 
 export function assertIsRelayerV2ResponseFailed(
   value: unknown,
@@ -41,44 +41,57 @@ export function assertIsRelayerV2ApiError(
   assertRecordStringProperty(value, 'label', name);
   // 400
   if (
-    value.label === 'malformed_json' ||
-    value.label === 'request_error' ||
-    value.label === 'not_ready_for_decryption'
+    value.label ===
+      ('malformed_json' satisfies RelayerV2ApiError400NoDetails['label']) ||
+    value.label ===
+      ('request_error' satisfies RelayerV2ApiError400NoDetails['label']) ||
+    value.label ===
+      ('not_ready_for_decryption' satisfies RelayerV2ApiError400NoDetails['label'])
   ) {
     assertIsRelayerV2ApiError400NoDetails(value, name);
   }
   // 400 (with details)
   else if (
-    value.label === 'missing_fields' ||
-    value.label === 'validation_failed'
+    value.label ===
+      ('missing_fields' satisfies RelayerV2ApiError400WithDetails['label']) ||
+    value.label ===
+      ('validation_failed' satisfies RelayerV2ApiError400WithDetails['label'])
   ) {
     assertIsRelayerV2ApiError400WithDetails(value, name);
   }
   // 404
-  else if (value.label === 'not_found') {
+  else if (
+    value.label ===
+    ('not_found' satisfies RelayerV2ResponseApiError404['label'])
+  ) {
     assertIsRelayerV2ApiError404(value, name);
   }
   // 429
-  else if (value.label === 'rate_limited') {
+  else if (
+    value.label ===
+    ('rate_limited' satisfies RelayerV2ResponseApiError429['label'])
+  ) {
     assertIsRelayerV2ApiError429(value, name);
   }
   // 500
-  else if (value.label === 'internal_server_error') {
+  else if (
+    value.label ===
+    ('internal_server_error' satisfies RelayerV2ResponseApiError500['label'])
+  ) {
     assertIsRelayerV2ApiError500(value, name);
   }
   // 503
   else if (
-    value.label === 'protocol_paused' ||
-    value.label === 'gateway_not_reachable'
+    value.label ===
+      ('readiness_check_timedout' satisfies RelayerV2ResponseApiError503['label']) ||
+    value.label ===
+      ('response_timedout' satisfies RelayerV2ResponseApiError503['label']) ||
+    value.label ===
+      ('protocol_paused' satisfies RelayerV2ResponseApiError503['label']) ||
+    value.label ===
+      ('gateway_not_reachable' satisfies RelayerV2ResponseApiError503['label'])
   ) {
     assertIsRelayerV2ApiError503(value, name);
-  }
-  // 504
-  else if (
-    value.label === 'readiness_check_timedout' ||
-    value.label === 'response_timedout'
-  ) {
-    assertIsRelayerV2ApiError504(value, name);
   }
   // Unsupported
   else {
@@ -118,14 +131,19 @@ export function assertIsRelayerV2ResponseFailedWithError400(
 } {
   assertIsRelayerV2ResponseFailed(value, name);
   if (
-    value.error.label === 'malformed_json' ||
-    value.error.label === 'request_error' ||
-    value.error.label === 'not_ready_for_decryption'
+    value.error.label ===
+      ('malformed_json' satisfies RelayerV2ApiError400NoDetails['label']) ||
+    value.error.label ===
+      ('request_error' satisfies RelayerV2ApiError400NoDetails['label']) ||
+    value.error.label ===
+      ('not_ready_for_decryption' satisfies RelayerV2ApiError400NoDetails['label'])
   ) {
     assertIsRelayerV2ApiError400NoDetails(value.error, `${name}.error`);
   } else if (
-    value.error.label === 'missing_fields' ||
-    value.error.label === 'validation_failed'
+    value.error.label ===
+      ('missing_fields' satisfies RelayerV2ApiError400WithDetails['label']) ||
+    value.error.label ===
+      ('validation_failed' satisfies RelayerV2ApiError400WithDetails['label'])
   ) {
     assertIsRelayerV2ApiError400WithDetails(value.error, `${name}.error`);
   } else {
@@ -204,19 +222,4 @@ export function assertIsRelayerV2ResponseFailedWithError503(
 } {
   assertIsRelayerV2ResponseFailed(value, name);
   assertIsRelayerV2ApiError503(value.error, `${name}.error`);
-}
-
-////////////////////////////////////////////////////////////////////////////////
-// 504
-////////////////////////////////////////////////////////////////////////////////
-
-export function assertIsRelayerV2ResponseFailedWithError504(
-  value: unknown,
-  name: string,
-): asserts value is {
-  status: 'failed';
-  error: RelayerV2ResponseApiError504;
-} {
-  assertIsRelayerV2ResponseFailed(value, name);
-  assertIsRelayerV2ApiError504(value.error, `${name}.error`);
 }

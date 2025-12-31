@@ -5,6 +5,7 @@ import { FHETestAddresses } from './fheTest.js';
 import { ethers } from 'ethers';
 
 // npx . test random --type euint32 --network testnet
+// npx . test random --type euint32 --network devnet
 export async function testFHETestRandomCommand(options) {
   const { config, provider, signer } = parseCommonOptions(options);
 

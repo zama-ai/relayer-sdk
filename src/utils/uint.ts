@@ -37,15 +37,14 @@ export const MAX_UINT16 = 0xffff;
 export const MAX_UINT32 = 0xffffffff;
 
 // 2^64 - 1 = 18446744073709551615
-export const MAX_UINT64 = BigInt('0xffffffffffffffff');
+export const MAX_UINT64 = 0xffffffffffffffffn;
 
 // 2^128 - 1 = 340282366920938463463374607431768211455
-export const MAX_UINT128 = BigInt('0xffffffffffffffffffffffffffffffff');
+export const MAX_UINT128 = 0xffffffffffffffffffffffffffffffffn;
 
 // 2^256 - 1 = 115792089237316195423570985008687907853269984665640564039457584007913129639935
-export const MAX_UINT256 = BigInt(
-  '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
-);
+export const MAX_UINT256 =
+  0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffn;
 
 ////////////////////////////////////////////////////////////////////////////////
 

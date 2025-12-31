@@ -57,7 +57,7 @@ describe('handles', () => {
       ciphertextWithZKProof: hexToBytes('0xdeadbeef'),
       aclContractAddress:
         '0xBBC1fFCdc7C316aAAd72E807D9b0272BE8F84DA0' as `0x${string}`,
-      chainId: BigInt(12345),
+      chainId: 12345n,
       encryptionBits: [256 satisfies EncryptionBits] as EncryptionBits[],
       contractAddress: DATA.contractAddress,
       userAddress: DATA.userAddress,

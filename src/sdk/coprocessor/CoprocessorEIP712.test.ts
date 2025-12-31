@@ -25,7 +25,7 @@ import { FhevmHandle } from '../FhevmHandle';
 // Test Constants
 ////////////////////////////////////////////////////////////////////////////////
 
-const VALID_GATEWAY_CHAIN_ID = 11155111;
+const VALID_GATEWAY_CHAIN_ID = 10901;
 const VALID_VERIFYING_CONTRACT =
   '0xf0Ffdc93b7E186bC2f8CB3dAA75D86d1930A433D' as ChecksummedAddress;
 const VALID_USER_ADDRESS =

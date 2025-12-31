@@ -3,7 +3,7 @@ import { getInstance } from './instance.js';
 import { loadFhevmPublicKeyConfig } from './pubkeyCache.js';
 import { logCLI } from './utils.js';
 
-export async function publicDecrypt(handles, config, options) {
+export async function publicDecrypt(handles, config, zamaFhevmApiKey, options) {
   const { publicKey, publicParams } = await loadFhevmPublicKeyConfig(
     config,
     options,
@@ -34,9 +34,12 @@ export async function publicDecrypt(handles, config, options) {
       onProgress: (args) => {
         logCLI('progress=' + args.type, options);
       },
+      ...(zamaFhevmApiKey
+        ? { auth: { __type: 'ApiKeyHeader', value: zamaFhevmApiKey } }
+        : {}),
     });
 
-    console.log(safeJSONstringify(res, 2));
+    return res;
   } catch (e) {
     console.log('');
     console.log('===================== ❌ ERROR ❌ ========================');

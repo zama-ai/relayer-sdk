@@ -307,26 +307,5 @@ export const createInstance = async (
         return null;
       }
     },
-
-    // getPublicKey: () =>
-    //   publicKeyData.publicKey
-    //     ? {
-    //         publicKey: publicKeyData.publicKey.safe_serialize(
-    //           SERIALIZED_SIZE_LIMIT_PK,
-    //         ),
-    //         publicKeyId: publicKeyData.publicKeyId,
-    //       }
-    //     : null,
-    // getPublicParams: (bits: keyof PublicParams) => {
-    //   if (publicParamsData[bits]) {
-    //     return {
-    //       publicParams: publicParamsData[bits]!.publicParams.safe_serialize(
-    //         SERIALIZED_SIZE_LIMIT_CRS,
-    //       ),
-    //       publicParamsId: publicParamsData[bits]!.publicParamsId,
-    //     };
-    //   }
-    //   return null;
-    // },
   };
 };

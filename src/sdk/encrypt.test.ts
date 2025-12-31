@@ -28,13 +28,13 @@ describeIfFetchMock('encrypt', () => {
       contractAddress: '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
     });
     input.addBool(false);
-    input.add8(BigInt(43));
-    input.add16(BigInt(87));
-    input.add32(BigInt(2339389323));
-    input.add64(BigInt(23393893233));
-    input.add128(BigInt(233938932390));
+    input.add8(43n);
+    input.add16(87n);
+    input.add32(2339389323n);
+    input.add64(23393893233n);
+    input.add128(233938932390n);
     input.addAddress('0xa5e1defb98EFe38EBb2D958CEe052410247F4c80');
-    input.add256(BigInt('2339389323922393930'));
+    input.add256(2339389323922393930n);
     const ciphertext = input.encrypt();
     expect(ciphertext.length).toBe(20106);
   }, 60000);
@@ -122,11 +122,11 @@ describeIfFetchMock('encrypt', () => {
     expect(() => input.add32(2 ** 32)).toThrow(
       'The value exceeds the limit for 32bits integer (4294967295).',
     );
-    expect(() => input.add64(BigInt('0xffffffffffffffff') + BigInt(1))).toThrow(
+    expect(() => input.add64(0xffffffffffffffffn + 1n)).toThrow(
       'The value exceeds the limit for 64bits integer (18446744073709551615).',
     );
     expect(() =>
-      input.add128(BigInt('0xffffffffffffffffffffffffffffffff') + BigInt(1)),
+      input.add128(0xffffffffffffffffffffffffffffffffn + 1n),
     ).toThrow(
       'The value exceeds the limit for 128bits integer (340282366920938463463374607431768211455).',
     );

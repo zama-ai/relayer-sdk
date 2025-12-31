@@ -7,8 +7,10 @@ import { publicDecrypt } from '../../publicDecrypt.js';
 
 // npx . test public-decrypt --type euint32 --network testnet --version 1
 // npx . test public-decrypt --type euint32 --network testnet --version 2
+// npx . test public-decrypt --type euint32 --network mainnet --version 2
 export async function testFHETestPublicDecryptCommand(options) {
-  const { config, provider, signer } = parseCommonOptions(options);
+  const { config, provider, signer, zamaFhevmApiKey } =
+    parseCommonOptions(options);
 
   logCLI('🚚 network: ' + config.name, options);
   logCLI(`🍔 signer: ${signer.address}`);
@@ -33,5 +35,7 @@ export async function testFHETestPublicDecryptCommand(options) {
   const handle = await contract[getFuncName]();
   logCLI(`🏈 handle: ${handle}`);
 
-  await publicDecrypt([handle], config, options);
+  const res = await publicDecrypt([handle], config, zamaFhevmApiKey, options);
+
+  console.log(safeJSONstringify(res, 2));
 }

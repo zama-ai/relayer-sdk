@@ -48,10 +48,6 @@ export type FhevmInstanceOptions = {
   auth?: Auth;
 };
 
-// export type PublicParams<T = TFHEType['CompactPkeCrs']> = {
-//   2048: { publicParams: T; publicParamsId: string };
-// };
-
 export type PublicParams<T> = {
   2048: { publicParams: T; publicParamsId: string };
 };

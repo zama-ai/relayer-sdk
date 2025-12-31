@@ -45,15 +45,8 @@ export type RelayerV2PostResponse =
   | RelayerV2ResponseFailed
   | RelayerV2PostResponseQueued;
 
-// GET:  200 | 202 | 400 | 404 | 500 | 503 | 504
-export type RelayerV2GetResponseStatus =
-  | 200
-  | 202
-  | 400
-  | 404
-  | 500
-  | 503
-  | 504;
+// GET:  200 | 202 | 400 | 404 | 500 | 503
+export type RelayerV2GetResponseStatus = 200 | 202 | 400 | 404 | 500 | 503;
 export type RelayerV2GetResponse =
   | RelayerV2ResponseFailed
   | RelayerV2GetResponseQueued
@@ -74,8 +67,7 @@ export type RelayerV2ResponseApiErrorCode =
   | RelayerV2ResponseApiError404
   | RelayerV2ResponseApiError429
   | RelayerV2ResponseApiError500
-  | RelayerV2ResponseApiError503
-  | RelayerV2ResponseApiError504;
+  | RelayerV2ResponseApiError503;
 
 export type RelayerV2ResponseApiError500 = {
   label: 'internal_server_error';
@@ -83,13 +75,11 @@ export type RelayerV2ResponseApiError500 = {
 };
 
 export type RelayerV2ResponseApiError503 = {
-  label: 'protocol_paused' | 'gateway_not_reachable';
-  message: string;
-};
-
-// 'readiness_check_timedout' is only for decrypt endpoints (user-decrypt, public-decrypt).
-export type RelayerV2ResponseApiError504 = {
-  label: 'readiness_check_timedout' | 'response_timedout';
+  label:
+    | 'protocol_paused'
+    | 'gateway_not_reachable'
+    | 'readiness_check_timedout'
+    | 'response_timedout';
   message: string;
 };
 

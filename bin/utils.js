@@ -29,7 +29,7 @@ export const throwError = (error, cause) => {
 };
 
 export function getEnv(envName, envFile) {
-  if (envName === 'MNEMONIC') {
+  if (envName === 'MNEMONIC' || envName === 'ZAMA_FHEVM_API_KEY') {
     envFile = '.env';
   }
   if (!envFile) {
@@ -265,6 +265,8 @@ export function parseCommonOptions(options) {
   }
 
   const mnemonic = options?.mnemonic ?? getEnv('MNEMONIC');
+  const zamaFhevmApiKey =
+    options?.zamaFhevmApiKey ?? getEnv('ZAMA_FHEVM_API_KEY');
   const provider = new ethers.JsonRpcProvider(rpcUrl);
   const walletResult = mnemonic ? createWallet({ mnemonic }) : undefined;
   const wallet = walletResult?.wallet;
@@ -289,7 +291,7 @@ export function parseCommonOptions(options) {
     },
   };
 
-  return { config, provider, wallet, signer };
+  return { config, provider, wallet, signer, zamaFhevmApiKey };
 }
 
 export function valueColumnTypeListToFheTypedValues(list) {

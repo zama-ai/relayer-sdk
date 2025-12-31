@@ -7,6 +7,7 @@ export async function inputProof(
   config,
   publicKey,
   publicParams,
+  zamaFhevmApiKey,
   options,
 ) {
   const arr = fheTypedValuesToBuilderFunctionWithArg(fheTypedValues);
@@ -39,6 +40,7 @@ export async function inputProof(
         onProgress: (args) => {
           logCLI(`onProgress: ${args.type}`, options);
         },
+        auth: { __type: 'ApiKeyHeader', value: zamaFhevmApiKey },
       },
     );
 

@@ -401,7 +401,7 @@ describe('isUintNumber', () => {
 describe('isUintBigInt', () => {
   it('returns true for non-negative bigints', () => {
     expect(isUintBigInt(BigInt(0))).toBe(true);
-    expect(isUintBigInt(BigInt(1))).toBe(true);
+    expect(isUintBigInt(1n)).toBe(true);
     expect(isUintBigInt(BigInt(255))).toBe(true);
     expect(isUintBigInt(MAX_UINT256)).toBe(true);
   });
@@ -595,12 +595,12 @@ describe('isUint64', () => {
     expect(isUint64(BigInt(0))).toBe(true);
     expect(isUint64(BigInt(MAX_UINT32))).toBe(true);
     expect(isUint64(MAX_UINT64)).toBe(true);
-    expect(isUint64(BigInt('9223372036854775807'))).toBe(true); // 2^63 - 1
+    expect(isUint64(9223372036854775807n)).toBe(true); // 2^63 - 1
   });
 
   // Boundary: just over MAX_UINT64
   it('returns false for MAX_UINT64 + 1', () => {
-    expect(isUint64(MAX_UINT64 + BigInt(1))).toBe(false);
+    expect(isUint64(MAX_UINT64 + 1n)).toBe(false);
   });
 
   // Invalid types
@@ -616,10 +616,8 @@ describe('isUint64', () => {
 
   // Very large values (beyond uint64)
   it('returns false for values larger than MAX_UINT64', () => {
-    expect(isUint64(MAX_UINT64 + BigInt(1))).toBe(false); // 2^64
-    expect(isUint64(BigInt('340282366920938463463374607431768211455'))).toBe(
-      false,
-    ); // 2^128 - 1
+    expect(isUint64(MAX_UINT64 + 1n)).toBe(false); // 2^64
+    expect(isUint64(340282366920938463463374607431768211455n)).toBe(false); // 2^128 - 1
   });
 });
 
@@ -650,7 +648,7 @@ describe('isUint128', () => {
 
   // Boundary: just over MAX_UINT128
   it('returns false for MAX_UINT128 + 1', () => {
-    expect(isUint128(MAX_UINT128 + BigInt(1))).toBe(false);
+    expect(isUint128(MAX_UINT128 + 1n)).toBe(false);
   });
 
   // Invalid types
@@ -666,7 +664,7 @@ describe('isUint128', () => {
 
   // Very large values (beyond uint128)
   it('returns false for values larger than MAX_UINT128', () => {
-    expect(isUint128(MAX_UINT128 + BigInt(1))).toBe(false);
+    expect(isUint128(MAX_UINT128 + 1n)).toBe(false);
     expect(isUint128(MAX_UINT256)).toBe(false);
   });
 });
@@ -800,14 +798,12 @@ describe('assertIsUint64', () => {
     expect(() => assertIsUint64(BigInt(0))).not.toThrow();
     expect(() => assertIsUint64(BigInt(MAX_UINT32))).not.toThrow();
     expect(() => assertIsUint64(MAX_UINT64)).not.toThrow();
-    expect(() => assertIsUint64(BigInt('9223372036854775807'))).not.toThrow(); // 2^63 - 1
+    expect(() => assertIsUint64(9223372036854775807n)).not.toThrow(); // 2^63 - 1
   });
 
   // Boundary: just over MAX_UINT64 - should throw
   it('throws for MAX_UINT64 + 1', () => {
-    expect(() => assertIsUint64(MAX_UINT64 + BigInt(1))).toThrow(
-      InvalidTypeError,
-    );
+    expect(() => assertIsUint64(MAX_UINT64 + 1n)).toThrow(InvalidTypeError);
   });
 
   // Invalid types - should throw
@@ -826,11 +822,9 @@ describe('assertIsUint64', () => {
 
   // Very large values (beyond uint64) - should throw
   it('throws for values larger than MAX_UINT64', () => {
-    expect(() => assertIsUint64(MAX_UINT64 + BigInt(1))).toThrow(
-      InvalidTypeError,
-    ); // 2^64
+    expect(() => assertIsUint64(MAX_UINT64 + 1n)).toThrow(InvalidTypeError); // 2^64
     expect(() =>
-      assertIsUint64(BigInt('340282366920938463463374607431768211455')),
+      assertIsUint64(340282366920938463463374607431768211455n),
     ).toThrow(InvalidTypeError); // 2^128 - 1
   });
 });
@@ -872,15 +866,13 @@ describe('assertIsUint256', () => {
     expect(() => assertIsUint256(MAX_UINT256)).not.toThrow();
     // 2^128 - 1
     expect(() =>
-      assertIsUint256(BigInt('340282366920938463463374607431768211455')),
+      assertIsUint256(340282366920938463463374607431768211455n),
     ).not.toThrow();
   });
 
   // Boundary: just over MAX_UINT256 - should throw
   it('throws for MAX_UINT256 + 1', () => {
-    expect(() => assertIsUint256(MAX_UINT256 + BigInt(1))).toThrow(
-      InvalidTypeError,
-    );
+    expect(() => assertIsUint256(MAX_UINT256 + 1n)).toThrow(InvalidTypeError);
   });
 
   // Invalid types - should throw
@@ -898,9 +890,7 @@ describe('assertIsUint256', () => {
   // Very large values (beyond uint256) - should throw
   it('throws for values larger than MAX_UINT256', () => {
     // 2^256
-    expect(() => assertIsUint256(MAX_UINT256 + BigInt(1))).toThrow(
-      InvalidTypeError,
-    );
+    expect(() => assertIsUint256(MAX_UINT256 + 1n)).toThrow(InvalidTypeError);
     // 2^257
     expect(() => assertIsUint256(MAX_UINT256 * BigInt(2))).toThrow(
       InvalidTypeError,
@@ -1052,8 +1042,8 @@ describe('uint256ToBytes32', () => {
     expect(result.slice(0, 31).every((b) => b === 0)).toBe(true);
   });
 
-  it('converts BigInt(1) to bytes32 with last byte = 1', () => {
-    const result = uint256ToBytes32(BigInt(1));
+  it('converts 1n to bytes32 with last byte = 1', () => {
+    const result = uint256ToBytes32(1n);
     expect(result.length).toBe(32);
     expect(result[31]).toBe(1);
     expect(result.slice(0, 31).every((b) => b === 0)).toBe(true);
@@ -1192,9 +1182,7 @@ describe('uint256ToBytes32', () => {
   });
 
   it('throws for values exceeding MAX_UINT256', () => {
-    expect(() => uint256ToBytes32(MAX_UINT256 + BigInt(1))).toThrow(
-      InvalidTypeError,
-    );
+    expect(() => uint256ToBytes32(MAX_UINT256 + 1n)).toThrow(InvalidTypeError);
   });
 
   it('throws for invalid types', () => {
@@ -1349,7 +1337,7 @@ describe('isUint256', () => {
     MAX_UINT128,
     MAX_UINT256,
     BigInt(0),
-    BigInt(1),
+    1n,
     BigInt(MAX_UINT32),
     Number.MAX_SAFE_INTEGER,
   ];
@@ -1360,7 +1348,7 @@ describe('isUint256', () => {
     BigInt(-1),
     1.5,
     0.1,
-    MAX_UINT256 + BigInt(1),
+    MAX_UINT256 + 1n,
     '123',
     null,
     undefined,
@@ -1390,7 +1378,7 @@ describe('uint64ToBytes32', () => {
     [256, [0, 0, 0, 0, 0, 0, 1, 0]],
     [0x01020304, [0, 0, 0, 0, 1, 2, 3, 4]],
     [BigInt(0), [0, 0, 0, 0, 0, 0, 0, 0]],
-    [BigInt(1), [0, 0, 0, 0, 0, 0, 0, 1]],
+    [1n, [0, 0, 0, 0, 0, 0, 0, 1]],
     [MAX_UINT64, [255, 255, 255, 255, 255, 255, 255, 255]],
   ];
 
@@ -1407,9 +1395,7 @@ describe('uint64ToBytes32', () => {
   });
 
   it('throws for values exceeding MAX_UINT64', () => {
-    expect(() => uint64ToBytes32(MAX_UINT64 + BigInt(1))).toThrow(
-      InvalidTypeError,
-    );
+    expect(() => uint64ToBytes32(MAX_UINT64 + 1n)).toThrow(InvalidTypeError);
     expect(() => uint64ToBytes32(MAX_UINT128)).toThrow(InvalidTypeError);
     expect(() => uint64ToBytes32(MAX_UINT256)).toThrow(InvalidTypeError);
   });
@@ -1448,7 +1434,7 @@ describe('isRecordUint256Property', () => {
     [{ foo: 'hello' }, 'string'],
     [{ foo: -1 }, 'negative'],
     [{ foo: 1.5 }, 'float'],
-    [{ foo: MAX_UINT256 + BigInt(1) }, 'exceeds MAX_UINT256'],
+    [{ foo: MAX_UINT256 + 1n }, 'exceeds MAX_UINT256'],
   ];
 
   it('returns true for valid uint256 properties', () => {
@@ -1518,11 +1504,7 @@ describe('assertRecordUint256Property', () => {
 
   it('throws for value exceeding MAX_UINT256', () => {
     expect(() =>
-      assertRecordUint256Property(
-        { foo: MAX_UINT256 + BigInt(1) },
-        'foo',
-        'TestObj',
-      ),
+      assertRecordUint256Property({ foo: MAX_UINT256 + 1n }, 'foo', 'TestObj'),
     ).toThrow(InvalidPropertyError);
   });
 });

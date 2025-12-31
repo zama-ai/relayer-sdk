@@ -9,6 +9,7 @@ import { FHETestAddresses } from './fheTest.js';
 import { ethers } from 'ethers';
 
 // npx . test add --type euint32 --value 123 --network testnet
+// npx . test add --type euint32 --value 123 --network devnet
 export async function testFHETestAddCommand(options) {
   const { config, provider, signer } = parseCommonOptions(options);
 

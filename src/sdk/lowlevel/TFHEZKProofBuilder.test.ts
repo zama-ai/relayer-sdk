@@ -38,13 +38,13 @@ describeIfFetchMock('TFHEZKProofBuilder', () => {
       pkeParams: pkeParamsAsset,
     });
     builder.addBool(false);
-    builder.addUint8(BigInt(43));
-    builder.addUint16(BigInt(87));
-    builder.addUint32(BigInt(2339389323));
-    builder.addUint64(BigInt(23393893233));
-    builder.addUint128(BigInt(233938932390));
+    builder.addUint8(43n);
+    builder.addUint16(87n);
+    builder.addUint32(2339389323n);
+    builder.addUint64(23393893233n);
+    builder.addUint128(233938932390n);
     builder.addAddress('0xa5e1defb98EFe38EBb2D958CEe052410247F4c80');
-    builder.addUint256(BigInt('2339389323922393930'));
+    builder.addUint256(2339389323922393930n);
     const ciphertext = builder.generateZKProof({
       aclContractAddress,
       chainId,
@@ -152,19 +152,16 @@ describeIfFetchMock('TFHEZKProofBuilder', () => {
     expect(() => builder.addUint32(2 ** 32)).toThrow(
       'The value must be a number or bigint in uint32 range (0-4294967295).',
     );
+    expect(() => builder.addUint64(0xffffffffffffffffn + 1n)).toThrow(
+      'The value must be a number or bigint in uint64 range.',
+    );
     expect(() =>
-      builder.addUint64(BigInt('0xffffffffffffffff') + BigInt(1)),
-    ).toThrow('The value must be a number or bigint in uint64 range.');
-    expect(() =>
-      builder.addUint128(
-        BigInt('0xffffffffffffffffffffffffffffffff') + BigInt(1),
-      ),
+      builder.addUint128(0xffffffffffffffffffffffffffffffffn + 1n),
     ).toThrow('The value must be a number or bigint in uint128 range.');
     expect(() =>
       builder.addUint256(
-        BigInt(
-          '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
-        ) + BigInt(1),
+        0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffn +
+          1n,
       ),
     ).toThrow('The value must be a number or bigint in uint256 range.');
     expect(() => builder.addAddress('0x00')).toThrow(

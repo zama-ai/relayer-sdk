@@ -8,6 +8,7 @@ export async function userDecrypt({
   contractAddresses,
   signer,
   config,
+  zamaFhevmApiKey,
   options,
 }) {
   const { publicKey, publicParams } = await loadFhevmPublicKeyConfig(
@@ -68,52 +69,11 @@ export async function userDecrypt({
         onProgress: (args) => {
           logCLI('progress=' + args.type, options);
         },
+        auth: { __type: 'ApiKeyHeader', value: zamaFhevmApiKey },
       },
     );
 
     console.log(safeJSONstringify(res, 2));
-
-    /*
-const keypair = instance.generateKeypair();
-// userDecrypt can take a batch of handles (with their corresponding contract addresses).
-// In this example we only pass one handle.
-const handleContractPairs = [
-  {
-    handle: ciphertextHandle,
-    contractAddress: contractAddress,
-  },
-];
-const startTimeStamp = Math.floor(Date.now() / 1000).toString();
-const durationDays = '10'; // String for consistency
-const contractAddresses = [contractAddress];
-
-const eip712 = instance.createEIP712(
-  keypair.publicKey,
-  contractAddresses,
-  startTimeStamp,
-  durationDays,
-);
-
-const signature = await signer.signTypedData(
-  eip712.domain,
-  {
-    UserDecryptRequestVerification: eip712.types.UserDecryptRequestVerification,
-  },
-  eip712.message,
-);
-
-const result = await instance.userDecrypt(
-  handleContractPairs,
-  keypair.privateKey,
-  keypair.publicKey,
-  signature.replace('0x', ''),
-  contractAddresses,
-  signer.address,
-  startTimeStamp,
-  durationDays,
-);
-
-*/
   } catch (e) {
     console.log('');
     console.log('===================== ❌ ERROR ❌ ========================');

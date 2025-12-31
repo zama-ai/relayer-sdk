@@ -5,6 +5,7 @@ import { FHETestAddresses } from './fheTest.js';
 import { ethers } from 'ethers';
 
 // npx . test get --type euint32 --network testnet --json
+// npx . test get --type euint32 --network mainnet --json
 export async function testFHETestGetCommand(options) {
   const { config, provider, signer } = parseCommonOptions(options);
 
