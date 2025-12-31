@@ -87,7 +87,7 @@ export class RelayerV2PublicKey {
 
       return new RelayerV2PublicKey({ publicKey, crs2048: crs });
     } catch (e) {
-      throw new Error('Impossible to fetch public key: wrong relayer url.', {
+      throw new Error('Failed to initialize public key from relayer response', {
         cause: e,
       });
     }

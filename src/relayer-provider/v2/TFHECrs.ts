@@ -318,7 +318,7 @@ export class TFHECrs {
       return TFHECrs._fromUrl(params);
     } catch (e) {
       throw new TFHECrsError({
-        message: 'Impossible to fetch public key: wrong relayer url.',
+        message: 'Failed to fetch or deserialize CRS from URL',
         cause: e,
       });
     }

@@ -193,7 +193,8 @@ export class TFHEPublicKey {
       TFHEPublicKey.assertKeyUrlType(params, 'arg');
       return TFHEPublicKey._fromUrl(params);
     } catch (e) {
-      throw new Error('Impossible to fetch public key: wrong relayer url.', {
+      throw new TFHEPublicKeyError({
+        message: 'Failed to fetch or deserialize public key from URL',
         cause: e,
       });
     }
