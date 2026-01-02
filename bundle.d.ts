@@ -22,4 +22,11 @@ export {
   BearerToken,
   ApiKeyCookie,
   ApiKeyHeader,
+  ZKProofType,
+  RelayerUserDecryptOptions,
+  RelayerPublicDecryptOptions,
+  RelayerInputProofOptions,
+  RelayerInputProofProgressArgs,
+  RelayerUserDecryptProgressArgs,
+  RelayerPublicDecryptProgressArgs,
 } from './lib/web';
