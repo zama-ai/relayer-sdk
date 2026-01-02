@@ -3,7 +3,7 @@ import {
   BytesHexTypeName,
   BytesTypeName,
   UintTypeName,
-} from '../types/primitives';
+} from '@base/types/primitives';
 import { RelayerErrorBase } from './RelayerErrorBase';
 
 export type InvalidPropertyErrorType = InvalidPropertyError & {
@@ -44,10 +44,10 @@ export class InvalidPropertyError extends RelayerErrorBase {
   }: {
     objName: string;
     property: string;
-    index?: number;
-    type?: string;
-    value?: string;
-    expectedValue?: string | string[];
+    index?: number | undefined;
+    type?: string | undefined;
+    value?: string | undefined;
+    expectedValue?: string | string[] | undefined;
     expectedType: ExpectedPropertyType;
   }) {
     let missing = type === 'undefined' && expectedValue !== undefined;

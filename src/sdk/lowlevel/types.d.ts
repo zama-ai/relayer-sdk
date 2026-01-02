@@ -1,4 +1,30 @@
-import type { BytesHex } from '../../types/primitives';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+import type { BytesHex } from '@base/types/primitives';
+
+export type TFHEType = {
+  default?: any;
+  TFHEInput?: any;
+  TfheCompactPublicKey: any;
+  CompactPkeCrs: any;
+  initThreadPool?: any;
+  init_panic_hook: any;
+  CompactCiphertextList: any;
+  ZkComputeLoad: any;
+};
+
+export type TKMSType = {
+  default?: any;
+  u8vec_to_ml_kem_pke_pk: any;
+  u8vec_to_ml_kem_pke_sk: any;
+  new_client: any;
+  new_server_id_addr: any;
+  process_user_decryption_resp_from_js: any;
+  ml_kem_pke_keygen: any;
+  ml_kem_pke_pk_to_u8vec: any;
+  ml_kem_pke_sk_to_u8vec: any;
+  ml_kem_pke_get_pk: any;
+};
 
 /**
  * TFHE Public Key Encryption (PKE) Common Reference String (CRS) compact data with
@@ -13,7 +39,7 @@ export type TFHEPksCrsBytesType = {
   id: string;
   capacity: number;
   bytes: Uint8Array;
-  srcUrl?: string;
+  srcUrl?: string | undefined;
 };
 
 /**
@@ -29,7 +55,7 @@ export type TFHEPkeCrsBytesHexType = {
   id: string;
   capacity: number;
   bytesHex: BytesHex;
-  srcUrl?: string;
+  srcUrl?: string | undefined;
 };
 
 /**
@@ -59,7 +85,7 @@ export type TFHEPkeCrsUrlType = {
 export type TFHEPublicKeyBytesType = {
   id: string;
   bytes: Uint8Array;
-  srcUrl?: string;
+  srcUrl?: string | undefined;
 };
 
 /**
@@ -72,7 +98,7 @@ export type TFHEPublicKeyBytesType = {
 export type TFHEPublicKeyBytesHexType = {
   id: string;
   bytesHex: BytesHex;
-  srcUrl?: string;
+  srcUrl?: string | undefined;
 };
 
 /**

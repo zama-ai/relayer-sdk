@@ -4,9 +4,9 @@ import type {
   TFHEPksCrsBytesType,
 } from './types';
 import { SERIALIZED_SIZE_LIMIT_CRS } from './constants';
-import { assertRecordStringProperty } from '../../utils/string';
-import { bytesToHexLarge, hexToBytesFaster } from '../../utils/bytes';
-import { fetchBytes } from '../../utils/fetch';
+import { assertRecordStringProperty } from '@base/string';
+import { bytesToHexLarge, hexToBytesFaster } from '@base/bytes';
+import { fetchBytes } from '@base/fetch';
 import { TFHEError } from '../../errors/TFHEError';
 import {
   assertIsTFHEPkeCrsUrlType,
@@ -17,7 +17,10 @@ import {
 // Public/Private types
 ////////////////////////////////////////////////////////////////////////////////
 
-type CompactPkeCrsWasmType = object;
+interface CompactPkeCrsWasmType {
+  constructor: { name: string };
+  safe_serialize(sizeLimit: bigint): Uint8Array;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // TFHEPkeCrs
@@ -28,17 +31,19 @@ type CompactPkeCrsWasmType = object;
 
 export class TFHEPkeCrs {
   #id: string = '';
-  #tfheCompactPkeCrsWasm: CompactPkeCrsWasmType = {};
+  #tfheCompactPkeCrsWasm!: CompactPkeCrsWasmType;
   #capacity: number = -1;
-  #srcUrl?: string;
+  #srcUrl?: string | undefined;
 
-  private constructor() {}
+  private constructor() {
+    /* empty */
+  }
 
-  public get srcUrl() {
+  public get srcUrl(): string | undefined {
     return this.#srcUrl;
   }
   public get wasmClassName(): string {
-    return (this.#tfheCompactPkeCrsWasm as any)?.constructor?.name;
+    return this.#tfheCompactPkeCrsWasm.constructor.name;
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -58,7 +63,7 @@ export class TFHEPkeCrs {
   } {
     if (this.#capacity !== capacity) {
       throw new TFHEError({
-        message: `Unsupported FHEVM PkeCrs capacity: ${capacity}`,
+        message: `Unsupported FHEVM PkeCrs capacity: ${capacity.toString()}`,
       });
     }
 
@@ -78,7 +83,7 @@ export class TFHEPkeCrs {
   } {
     if (this.#capacity !== capacity) {
       throw new TFHEError({
-        message: `Unsupported FHEVM PkeCrs capacity: ${capacity}`,
+        message: `Unsupported FHEVM PkeCrs capacity: ${capacity.toString()}`,
       });
     }
 
@@ -121,16 +126,17 @@ export class TFHEPkeCrs {
       });
     }
     return TFHEPkeCrs.fromBytes({
-      id: params?.id,
-      capacity: params?.capacity,
-      srcUrl: params?.srcUrl,
+      id: params.id,
+      capacity: params.capacity,
+      srcUrl: params.srcUrl,
       bytes,
     });
   }
 
-  private static _fromBytes(params: TFHEPksCrsBytesType) {
+  private static _fromBytes(params: TFHEPksCrsBytesType): TFHEPkeCrs {
     const crs = new TFHEPkeCrs();
     crs.#id = params.id;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     crs.#tfheCompactPkeCrsWasm = TFHE.CompactPkeCrs.safe_deserialize(
       params.bytes,
       SERIALIZED_SIZE_LIMIT_CRS,
@@ -148,7 +154,7 @@ export class TFHEPkeCrs {
   public static async fetch(params: TFHEPkeCrsUrlType): Promise<TFHEPkeCrs> {
     try {
       assertIsTFHEPkeCrsUrlType(params, 'arg');
-      return TFHEPkeCrs._fetch(params);
+      return await TFHEPkeCrs._fetch(params);
     } catch (e) {
       throw new TFHEError({
         message: 'Impossible to fetch public key: wrong relayer url.',
@@ -176,25 +182,23 @@ export class TFHEPkeCrs {
 
   public toBytes(): TFHEPksCrsBytesType {
     return {
-      bytes: (this.#tfheCompactPkeCrsWasm as any).safe_serialize(
+      bytes: this.#tfheCompactPkeCrsWasm.safe_serialize(
         SERIALIZED_SIZE_LIMIT_CRS,
       ),
       id: this.#id,
       capacity: this.#capacity,
-      ...(this.#srcUrl ? { srcUrl: this.#srcUrl } : {}),
+      ...(this.#srcUrl !== undefined ? { srcUrl: this.#srcUrl } : {}),
     };
   }
 
   private _toBytesHex(): TFHEPkeCrsBytesHexType {
     return {
       bytesHex: bytesToHexLarge(
-        (this.#tfheCompactPkeCrsWasm as any).safe_serialize(
-          SERIALIZED_SIZE_LIMIT_CRS,
-        ),
+        this.#tfheCompactPkeCrsWasm.safe_serialize(SERIALIZED_SIZE_LIMIT_CRS),
       ),
       id: this.#id,
       capacity: this.#capacity,
-      ...(this.#srcUrl ? { srcUrl: this.#srcUrl } : {}),
+      ...(this.#srcUrl !== undefined ? { srcUrl: this.#srcUrl } : {}),
     };
   }
 
@@ -221,9 +225,10 @@ export class TFHEPkeCrs {
   }
 
   public static fromJSON(json: unknown): TFHEPkeCrs {
-    if ((json as any).__type !== 'TFHEPkeCrs') {
+    const record = json as Record<string, unknown>;
+    if (record.__type !== 'TFHEPkeCrs') {
       throw new TFHEError({ message: 'Invalid TFHEPkeCrs JSON.' });
     }
-    return TFHEPkeCrs._fromBytesHex(json as any);
+    return TFHEPkeCrs._fromBytesHex(json as TFHEPkeCrsBytesHexType);
   }
 }

@@ -1,11 +1,11 @@
-import { assertIsUint, uintToBytesHexNo0x } from '../utils/uint';
-import { assertIsChecksummedAddress } from '../utils/address';
+import { assertIsUint, uintToBytesHexNo0x } from '../base/uint';
+import { assertIsChecksummedAddress } from '../base/address';
 import {
   assertIsBytes32HexArray,
   assertIsBytes65HexArray,
   assertIsBytesHex,
-} from '../utils/bytes';
-import { remove0x } from '../utils/string';
+} from '../base/bytes';
+import { remove0x } from '../base/string';
 import { assertRelayer } from '../errors/InternalError';
 import { Wallet, concat } from 'ethers';
 import { multiSignEIP712 } from './eip712';
@@ -17,7 +17,7 @@ import type {
   BytesHex,
   BytesHexNo0x,
   ChecksummedAddress,
-} from '../types/primitives';
+} from '../base/types/primitives';
 
 // cast wallet address 0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef
 // 0xC96aAa54E2d44c299564da76e1cD3184A2386B8D

@@ -1,5 +1,11 @@
-import type { Prettify } from '../utils/types';
-import type { Bytes32Hex, BytesHex, ChecksummedAddress } from './primitives';
+import type { Prettify } from '@base/types/utils';
+import type {
+  Bytes32Hex,
+  BytesHex,
+  BytesHexNo0x,
+  ChecksummedAddress,
+} from '@base/types/primitives';
+import type { Eip1193Provider } from 'ethers';
 
 /**
  * Bearer Token Authentication
@@ -67,107 +73,6 @@ export type FhevmInstanceConfig = Prettify<
     FhevmInstanceOptions
 >;
 
-export type RelayerOperation =
-  | 'INPUT_PROOF'
-  | 'PUBLIC_DECRYPT'
-  | 'USER_DECRYPT'
-  | 'KEY_URL';
-
-export type RelayerGetOperation = 'KEY_URL';
-export type RelayerPostOperation = Exclude<
-  RelayerOperation,
-  RelayerGetOperation
->;
-
-// https://github.com/zama-ai/fhevm-relayer/blob/96151ef300f787658c5fbaf1b4471263160032d5/src/http/public_decrypt_http_listener.rs#L19
-export type RelayerPublicDecryptPayload = {
-  ciphertextHandles: `0x${string}`[];
-  // Hex encoded bytes with 0x prefix. Default: 0x00
-  extraData: `0x${string}`;
-};
-
-// https://github.com/zama-ai/fhevm-relayer/blob/96151ef300f787658c5fbaf1b4471263160032d5/src/http/input_http_listener.rs#L17
-export type RelayerInputProofPayload = {
-  // Hex encoded uint256 string without prefix
-  contractChainId: `0x${string}`;
-  // Hex encoded address with 0x prefix.
-  contractAddress: `0x${string}`;
-  // Hex encoded address with 0x prefix.
-  userAddress: `0x${string}`;
-  // List of hex encoded binary proof without 0x prefix
-  ciphertextWithInputVerification: string;
-  // Hex encoded bytes with 0x prefix. Default: 0x00
-  extraData: `0x${string}`;
-};
-
-// https://github.com/zama-ai/fhevm-relayer/blob/96151ef300f787658c5fbaf1b4471263160032d5/src/http/userdecrypt_http_listener.rs#L33
-export type HandleContractPairRelayer = {
-  // Hex encoded bytes32 with 0x prefix.
-  handle: `0x${string}`;
-  // Hex encoded address with 0x prefix.
-  contractAddress: `0x${string}`;
-};
-
-// https://github.com/zama-ai/fhevm-relayer/blob/96151ef300f787658c5fbaf1b4471263160032d5/src/http/userdecrypt_http_listener.rs#L20
-export type RelayerUserDecryptPayload = {
-  handleContractPairs: HandleContractPairRelayer[];
-  requestValidity: {
-    // Number as a string
-    startTimestamp: string;
-    // Number as a string
-    durationDays: string;
-  };
-  // Number as a string
-  contractsChainId: string;
-  // List of hex encoded addresses with 0x prefix
-  contractAddresses: `0x${string}`[];
-  // Hex encoded address with 0x prefix.
-  userAddress: `0x${string}`;
-  // Hex encoded signature without 0x prefix.
-  signature: string;
-  // Hex encoded key without 0x prefix.
-  publicKey: string;
-  // Hex encoded bytes with 0x prefix. Default: 0x00
-  extraData: `0x${string}`;
-};
-
-export type RelayerPublicDecryptResult = {
-  signatures: BytesHexNo0x[];
-  decryptedValue: BytesHexNo0x;
-  extraData: BytesHex;
-};
-
-/*
- * [
- *   {
- *     signature: '69e7e040cab157aa819015b321c012dccb1545ffefd325b359b492653f0347517e28e66c572cdc299e259024329859ff9fcb0096e1ce072af0b6e1ca1fe25ec6',
- *     payload: '0100000029...',
- *     extra_data: '01234...',
- *   }
- * ]
- */
-export type RelayerUserDecryptResult = {
-  payload: BytesHexNo0x;
-  signature: BytesHexNo0x;
-  //extraData: BytesHex;
-}[];
-
-export type RelayerInputProofResult = {
-  // Ordered List of hex encoded handles with 0x prefix.
-  handles: Bytes32Hex[];
-  // Attestation signatures for Input verification for the ordered list of handles with 0x prefix.
-  signatures: BytesHex[];
-};
-
-export type ClearValueType = bigint | boolean | ChecksummedAddress;
-export type ClearValues = Record<Bytes32Hex, ClearValueType>;
-export type UserDecryptResults = ClearValues;
-export type PublicDecryptResults = {
-  clearValues: ClearValues;
-  abiEncodedClearValues: BytesHex;
-  decryptionProof: BytesHex;
-};
-
 /**
  * The FHEVM TFHE Compact public key.
  * @property data - The TFHE compact public key as raw bytes.
@@ -218,4 +123,22 @@ export type FhevmPkeCrsByCapacityType = {
 export type FhevmPkeConfigType = {
   publicKey: FhevmPublicKeyType;
   publicParams: FhevmPkeCrsByCapacityType;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+// ClearValues
+////////////////////////////////////////////////////////////////////////////////
+
+export type ClearValueType = bigint | boolean | ChecksummedAddress;
+export type ClearValues = Record<Bytes32Hex, ClearValueType>;
+export type UserDecryptResults = ClearValues;
+export type PublicDecryptResults = {
+  clearValues: ClearValues;
+  abiEncodedClearValues: BytesHex;
+  decryptionProof: BytesHex;
+};
+
+export type HandleContractPair = {
+  handle: Uint8Array | string;
+  contractAddress: string;
 };

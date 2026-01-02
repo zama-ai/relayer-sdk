@@ -4,19 +4,24 @@ module.exports = {
     '^.+\\.ts$': [
       'ts-jest',
       {
-        tsconfig: 'tsconfig.json',
+        tsconfig: 'tsconfig.test.json',
       },
     ],
     '^.+\\.js$': [
       'ts-jest',
       {
-        tsconfig: 'tsconfig.json',
+        tsconfig: 'tsconfig.test.json',
       },
     ],
     '^.+\\.bin$': ['<rootDir>config/rawLoader.cjs'],
   },
   testEnvironment: 'node',
   moduleFileExtensions: ['ts', 'js', 'json', 'node'],
+  moduleNameMapper: {
+    '^@base/(.*)$': '<rootDir>/src/base/$1',
+    '^@sdk/(.*)$': '<rootDir>/src/sdk/$1',
+    '^@relayer-provider/(.*)$': '<rootDir>/src/relayer-provider/$1',
+  },
   collectCoverageFrom: [
     'src/**/*.ts',
     '!src/test/*',

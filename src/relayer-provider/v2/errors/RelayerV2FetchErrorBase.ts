@@ -1,10 +1,8 @@
-import type { RelayerOperation } from '../../../types/relayer';
-import {
-  RelayerErrorBase,
-  RelayerErrorBaseParams,
-} from '../../../errors/RelayerErrorBase';
-import type { Prettify } from '../../../utils/types';
+import type { RelayerErrorBaseParams } from '../../../errors/RelayerErrorBase';
 import type { RelayerV2AsyncRequestState } from '../RelayerV2AsyncRequest';
+import type { RelayerOperation } from '../../types/public-api';
+import type { Prettify } from '@base/types/utils';
+import { RelayerErrorBase } from '../../../errors/RelayerErrorBase';
 
 ////////////////////////////////////////////////////////////////////////////////
 // RelayerV2FetchErrorBase
@@ -22,18 +20,18 @@ export type RelayerV2FetchErrorBaseParams = Prettify<
     retryCount: number;
     elapsed: number;
     state: RelayerV2AsyncRequestState;
-    jobId?: string;
+    jobId?: string | undefined;
   }
 >;
 
 export abstract class RelayerV2FetchErrorBase extends RelayerErrorBase {
-  private _fetchMethod: 'POST' | 'GET';
-  private _url: string;
-  private _jobId: string | undefined;
-  private _operation: RelayerOperation;
-  private _retryCount: number;
-  private _elapsed: number;
-  private _state: RelayerV2AsyncRequestState;
+  private readonly _fetchMethod: 'POST' | 'GET';
+  private readonly _url: string;
+  private readonly _jobId: string | undefined;
+  private readonly _operation: RelayerOperation;
+  private readonly _retryCount: number;
+  private readonly _elapsed: number;
+  private readonly _state: RelayerV2AsyncRequestState;
 
   constructor(params: RelayerV2FetchErrorBaseParams) {
     super({

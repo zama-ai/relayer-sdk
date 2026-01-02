@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "skipLibCheck": false,
+    "strict": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitOverride": true,
+    "exactOptionalPropertyTypes": true,
+    "forceConsistentCasingInFileNames": true,
+    "verbatimModuleSyntax": false,
+    "allowUnusedLabels": false,
+    "allowUnreachableCode": false
+  }
+}

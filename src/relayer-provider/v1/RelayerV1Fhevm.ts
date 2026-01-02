@@ -1,4 +1,4 @@
-import type { TFHEType } from '../../tfheType';
+import type { TFHEType } from '@sdk/lowlevel/types';
 import type { PublicParams } from '../../types/relayer';
 import { getPublicParams, getTfheCompactPublicKey } from '../../config';
 import { AbstractRelayerFhevm } from '../AbstractRelayerFhevm';
@@ -6,7 +6,7 @@ import { RelayerV1Provider } from './RelayerV1Provider';
 import {
   SERIALIZED_SIZE_LIMIT_CRS,
   SERIALIZED_SIZE_LIMIT_PK,
-} from '../../sdk/lowlevel/constants';
+} from '@sdk/lowlevel/constants';
 
 type RelayerV1PublicKeyDataType = {
   publicKey: TFHEType['TfheCompactPublicKey'];
@@ -41,11 +41,13 @@ export class RelayerV1Fhevm extends AbstractRelayerFhevm {
 
   public static async fromConfig(config: {
     relayerVersionUrl: string;
-    publicKey?: {
-      data: Uint8Array | null;
-      id: string | null;
-    };
-    publicParams?: PublicParams<Uint8Array> | null;
+    publicKey?:
+      | {
+          data: Uint8Array | null;
+          id: string | null;
+        }
+      | undefined;
+    publicParams?: PublicParams<Uint8Array> | null | undefined;
   }) {
     const relayerProvider = new RelayerV1Provider(config.relayerVersionUrl);
     const publicKeyData = await getTfheCompactPublicKey(config);

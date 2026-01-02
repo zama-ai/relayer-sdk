@@ -25,6 +25,13 @@ export type {
   ApiKeyHeader,
   FhevmInstanceConfig,
   FhevmInstanceOptions,
+  ZKProofType,
+  RelayerUserDecryptOptions,
+  RelayerPublicDecryptOptions,
+  RelayerInputProofOptions,
+  RelayerInputProofProgressArgs,
+  RelayerUserDecryptProgressArgs,
+  RelayerPublicDecryptProgressArgs,
 } from './index';
 
 export {

@@ -1,5 +1,5 @@
 import { isAddress } from 'ethers';
-import { bytesToHexNo0x } from '../utils/bytes';
+import { bytesToHexNo0x } from '@base/bytes';
 
 export type EIP712Type = { name: string; type: string };
 

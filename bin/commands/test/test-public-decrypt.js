@@ -4,6 +4,7 @@ import { logCLI, parseCommonOptions } from '../../utils.js';
 import { FHETestAddresses } from './fheTest.js';
 import { ethers } from 'ethers';
 import { publicDecrypt } from '../../publicDecrypt.js';
+import { safeJSONstringify } from '../../../lib/internal.js';
 
 // npx . test public-decrypt --type euint32 --network testnet --version 1
 // npx . test public-decrypt --type euint32 --network testnet --version 2

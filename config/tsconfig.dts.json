@@ -15,7 +15,17 @@
     "baseUrl": ".",
     "resolveJsonModule": true,
     "paths": {
-      "*": ["*"]
+      "@base/*": ["../src/base/*"],
+      "@sdk/*": ["../src/sdk/*"],
+      "@relayer-provider/*": ["../src/relayer-provider/*"]
+    }
+  },
+  "tsc-alias": {
+    "resolveFullPaths": false,
+    "replacers": {
+      "pathAlias": {
+        "enabled": true
+      }
     }
   },
   "include": ["../src"],

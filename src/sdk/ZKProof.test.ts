@@ -1,9 +1,12 @@
-import type { ChecksummedAddress, EncryptionBits } from '../types/primitives';
+import type {
+  ChecksummedAddress,
+  EncryptionBits,
+} from '../base/types/primitives';
 import { ZKProof } from './ZKProof';
 import { ZKProofError } from '../errors/ZKProofError';
 import { InvalidTypeError } from '../errors/InvalidTypeError';
 import { ChecksummedAddressError } from '../errors/ChecksummedAddressError';
-import { hexToBytes } from '../utils/bytes';
+import { hexToBytes } from '../base/bytes';
 
 ////////////////////////////////////////////////////////////////////////////////
 //

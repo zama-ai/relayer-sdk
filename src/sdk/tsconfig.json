@@ -1,0 +1,23 @@
+{
+  "extends": "../../tsconfig.strict.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "target": "es2021",
+    "lib": ["es2022"],
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "allowJs": true,
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "@base/*": ["../base/*"]
+    }
+  },
+  "include": [
+    "./**/*.ts",
+    "./**/*.d.ts",
+    "./../base/**/*.ts",
+    "./../base/**/*.d.ts"
+  ],
+  "exclude": ["**/*.test.ts", "./../base/**/*.test.ts"]
+}

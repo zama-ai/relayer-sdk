@@ -26,7 +26,7 @@ export class RelayerV2StateError extends RelayerErrorBase {
     Object.freeze(this._state);
   }
 
-  public get state() {
+  public get state(): RelayerV2AsyncRequestState {
     return this._state;
   }
 }

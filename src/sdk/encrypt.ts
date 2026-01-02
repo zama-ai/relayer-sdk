@@ -1,7 +1,7 @@
 import type { TFHEType } from '../tfheType';
-import type { EncryptionBits } from '../types/primitives';
-import { isChecksummedAddress } from '../utils/address';
-import { hexToBytes } from '../utils/bytes';
+import type { EncryptionBits } from '@base/types/primitives';
+import { isChecksummedAddress } from '@base/address';
+import { hexToBytes } from '@base/bytes';
 import { SERIALIZED_SIZE_LIMIT_CIPHERTEXT } from './lowlevel/constants';
 
 export type EncryptedInput = {

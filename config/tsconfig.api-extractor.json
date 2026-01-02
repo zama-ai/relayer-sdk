@@ -8,7 +8,13 @@
     "skipLibCheck": true,
     "esModuleInterop": true,
     "strict": true,
-    "baseUrl": "../dist.tmp"
+    "baseUrl": ".",
+    "paths": {
+      "@base/*": ["../dist.tmp/base/*"],
+      "@sdk/*": ["../dist.tmp/sdk/*"],
+      "@relayer-provider/*": ["../dist.tmp/relayer-provider/*"],
+      "*": ["*"]
+    }
   },
   "include": ["../dist.tmp/**/*.d.ts"],
   "exclude": ["../node_modules"]

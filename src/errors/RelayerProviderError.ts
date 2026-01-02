@@ -1,5 +1,6 @@
-import type { RelayerOperation } from '../types/relayer';
-import { RelayerErrorBase, RelayerErrorBaseParams } from './RelayerErrorBase';
+import type { RelayerOperation } from '@relayer-provider/types/public-api';
+import type { RelayerErrorBaseParams } from './RelayerErrorBase';
+import { RelayerErrorBase } from './RelayerErrorBase';
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -8,11 +9,11 @@ export type RelayerProviderErrorType = RelayerProviderError & {
 };
 
 type RelayerProviderErrorParams = RelayerErrorBaseParams & {
-  operation?: RelayerOperation;
+  operation?: RelayerOperation | undefined;
 };
 
 export class RelayerProviderError extends RelayerErrorBase {
-  private _operation?: RelayerOperation;
+  private _operation?: RelayerOperation | undefined;
 
   constructor(params: RelayerProviderErrorParams) {
     super({ ...params, name: 'RelayerProviderError' });

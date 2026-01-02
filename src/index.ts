@@ -1,12 +1,14 @@
-import type { HandleContractPair } from './relayer/userDecrypt';
 import type { RelayerEncryptedInput } from './relayer/sendEncryption';
 import type {
-  RelayerV2InputProofOptions,
-  RelayerV2PublicDecryptOptions,
-  RelayerV2UserDecryptOptions,
-} from './relayer-provider/v2/types/types';
+  RelayerInputProofOptions,
+  RelayerPublicDecryptOptions,
+  RelayerUserDecryptOptions,
+  RelayerInputProofProgressArgs,
+  RelayerUserDecryptProgressArgs,
+  RelayerPublicDecryptProgressArgs,
+} from '@relayer-provider/types/public-api';
 import type { EIP712, EIP712Type } from './sdk/keypair';
-import type { BytesHex, ZKProofType } from './types/primitives';
+import type { BytesHex, ZKProofType } from './base/types/primitives';
 import type {
   Auth,
   ApiKeyCookie,
@@ -19,8 +21,9 @@ import type {
   PublicDecryptResults,
   PublicParams,
   UserDecryptResults,
+  HandleContractPair,
 } from './types/relayer';
-import { isChecksummedAddress } from './utils/address';
+import { isChecksummedAddress } from './base/address';
 import {
   getChainId,
   getCoprocessorSigners,
@@ -35,7 +38,7 @@ import {
   requestCiphertextWithZKProofVerification,
 } from './relayer/sendEncryption';
 import { publicDecryptRequest } from './relayer/publicDecrypt';
-import { createRelayerFhevm } from './relayer-provider/createRelayerFhevm';
+import { createRelayerFhevm } from '@relayer-provider/createRelayerFhevm';
 import { generateKeypair, createEIP712 } from './sdk/keypair';
 import { ZKProof } from './sdk/ZKProof';
 import { CoprocessorSignersVerifier } from './sdk/coprocessor/CoprocessorSignersVerifier';
@@ -47,7 +50,7 @@ import { CoprocessorSignersVerifier } from './sdk/coprocessor/CoprocessorSigners
 
 export { generateKeypair, createEIP712 };
 export { getErrorCauseStatus, getErrorCauseCode } from './relayer/error';
-export type { EncryptionBits } from './types/primitives';
+export type { EncryptionBits } from './base/types/primitives';
 export type {
   EIP712,
   EIP712Type,
@@ -68,6 +71,14 @@ export type {
   FhevmInstanceOptions,
   ZKProofType,
 };
+export type {
+  RelayerInputProofOptions,
+  RelayerPublicDecryptOptions,
+  RelayerUserDecryptOptions,
+  RelayerInputProofProgressArgs,
+  RelayerUserDecryptProgressArgs,
+  RelayerPublicDecryptProgressArgs,
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 // FhevmInstance
@@ -80,7 +91,7 @@ export type FhevmInstance = {
   ) => RelayerEncryptedInput;
   requestZKProofVerification: (
     zkProof: ZKProofType,
-    options?: RelayerV2InputProofOptions,
+    options?: RelayerInputProofOptions,
   ) => Promise<{
     handles: Uint8Array[];
     inputProof: Uint8Array;
@@ -94,7 +105,7 @@ export type FhevmInstance = {
   ) => EIP712;
   publicDecrypt: (
     handles: (string | Uint8Array)[],
-    options?: RelayerV2PublicDecryptOptions,
+    options?: RelayerPublicDecryptOptions,
   ) => Promise<PublicDecryptResults>;
   userDecrypt: (
     handles: HandleContractPair[],
@@ -105,7 +116,7 @@ export type FhevmInstance = {
     userAddress: string,
     startTimestamp: string | number,
     durationDays: string | number,
-    options?: RelayerV2UserDecryptOptions,
+    options?: RelayerUserDecryptOptions,
   ) => Promise<UserDecryptResults>;
   getPublicKey: () => { publicKeyId: string; publicKey: Uint8Array } | null;
   getPublicParams: (bits: keyof PublicParams<Uint8Array>) => {
@@ -244,7 +255,7 @@ export const createInstance = async (
     }),
     requestZKProofVerification: (
       zkProof: ZKProofType,
-      options?: RelayerV2InputProofOptions,
+      options?: RelayerInputProofOptions,
     ) => {
       if (
         zkProof.chainId !== BigInt(chainId) ||

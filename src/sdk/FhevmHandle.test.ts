@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { bytesToHex, hexToBytes } from '../utils/bytes';
+import { bytesToHex, hexToBytes } from '../base/bytes';
 import { FhevmHandle } from './FhevmHandle';
 import { ZKProof } from './ZKProof';
 

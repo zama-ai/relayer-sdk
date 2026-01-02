@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "baseUrl": "../dist.tmp",
+    "outDir": "../dist.tmp",
+    "paths": {
+      "@base/*": ["./base/*"],
+      "@sdk/*": ["./sdk/*"],
+      "@relayer-provider/*": ["./relayer-provider/*"]
+    }
+  },
+  "tsc-alias": {
+    "resolveFullPaths": false,
+    "replacers": {
+      "base-url": {
+        "enabled": false
+      }
+    }
+  }
+}

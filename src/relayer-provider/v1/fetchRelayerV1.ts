@@ -7,11 +7,8 @@ import {
 } from '../../relayer/error';
 import { setAuth } from '../../auth';
 import type { RelayerV1FetchResponseJson } from './types';
-import type {
-  FhevmInstanceOptions,
-  RelayerGetOperation,
-  RelayerPostOperation,
-} from '../../types/relayer';
+import type { FhevmInstanceOptions } from '../../types/relayer';
+import { RelayerGetOperation, RelayerPostOperation } from '../types/public-api';
 
 function assertIsRelayerV1FetchResponseJson(
   json: any,

@@ -1,9 +1,9 @@
-import type { RelayerGetResponseKeyUrlSnakeCase } from '../relayer-provider/common-types';
+import type { RelayerGetResponseKeyUrlSnakeCase } from '@relayer-provider/types/private';
 import {
   SERIALIZED_SIZE_LIMIT_PK,
   SERIALIZED_SIZE_LIMIT_CRS,
-} from '../sdk/lowlevel/constants';
-import { fetchRelayerV1Get } from '../relayer-provider/v1/fetchRelayerV1';
+} from '@sdk/lowlevel/constants';
+import { fetchRelayerV1Get } from '@relayer-provider/v1/fetchRelayerV1';
 
 const keyurlCache: { [key: string]: any } = {};
 export const getKeysFromRelayer = async (

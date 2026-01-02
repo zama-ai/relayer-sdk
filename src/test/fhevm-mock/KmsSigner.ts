@@ -1,7 +1,7 @@
 import type { ethers as EthersT } from 'ethers';
 import type { KmsDelegateEIP712Type, KmsEIP712Type } from '../../sdk/kms/types';
+import type { ChecksummedAddress } from '../../base/types/primitives';
 import { EIP712Signer } from './EIP712Signer';
-import { ChecksummedAddress } from '../../types/primitives';
 
 ////////////////////////////////////////////////////////////////////////////////
 // KmsSigner

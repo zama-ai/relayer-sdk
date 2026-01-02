@@ -1,19 +1,22 @@
-import type { RelayerV2PublicDecryptOptions } from '../relayer-provider/v2/types/types';
-import type { Bytes32Hex, FheTypeId } from '../types/primitives';
+import type {
+  RelayerPublicDecryptOptions,
+  RelayerPublicDecryptPayload,
+  RelayerPublicDecryptResult,
+} from '@relayer-provider/types/public-api';
+import type { Bytes32Hex, FheTypeId } from '@base/types/primitives';
 import type {
   ClearValues,
   ClearValueType,
   FhevmInstanceOptions,
   PublicDecryptResults,
-  RelayerPublicDecryptPayload,
 } from '../types/relayer';
 import { ethers, AbiCoder } from 'ethers';
-import { bytesToHex, hexToBytes } from '../utils/bytes';
-import { ensure0x } from '../utils/string';
+import { bytesToHex, hexToBytes } from '@base/bytes';
+import { ensure0x } from '@base/string';
 import { assertNever } from '../errors/utils';
-import { AbstractRelayerProvider } from '../relayer-provider/AbstractRelayerProvider';
-import { solidityPrimitiveTypeNameFromFheTypeId } from '../sdk/FheType';
-import { FhevmHandle } from '../sdk/FhevmHandle';
+import { AbstractRelayerProvider } from '@relayer-provider/AbstractRelayerProvider';
+import { solidityPrimitiveTypeNameFromFheTypeId } from '@sdk/FheType';
+import { FhevmHandle } from '@sdk/FhevmHandle';
 import { check2048EncryptedBits } from './decryptUtils';
 
 const aclABI = [
@@ -55,7 +58,7 @@ function abiEncodeClearValues(clearValues: ClearValues) {
 
   for (let i = 0; i < handlesBytes32Hex.length; ++i) {
     const handle = handlesBytes32Hex[i];
-    const handleType = FhevmHandle.parse(handle).fheTypeId;
+    const handleType: FheTypeId = FhevmHandle.parse(handle).fheTypeId;
 
     let clearTextValue: ClearValueType =
       clearValues[handle as keyof typeof clearValues];
@@ -197,7 +200,7 @@ export const publicDecryptRequest =
   ) =>
   async (
     _handles: (Uint8Array | string)[],
-    options?: RelayerV2PublicDecryptOptions,
+    options?: RelayerPublicDecryptOptions,
   ): Promise<PublicDecryptResults> => {
     const extraData: `0x${string}` = '0x00';
     const acl = new ethers.Contract(aclContractAddress, aclABI, provider);
@@ -234,13 +237,11 @@ export const publicDecryptRequest =
       extraData,
     };
 
-    const json = await relayerProvider.fetchPostPublicDecrypt(
-      payloadForRequest,
-      {
+    const json: RelayerPublicDecryptResult =
+      await relayerProvider.fetchPostPublicDecrypt(payloadForRequest, {
         ...defaultOptions,
         ...options,
-      },
-    );
+      });
 
     // verify signatures on decryption:
     const domain = {

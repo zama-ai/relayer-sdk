@@ -318,7 +318,7 @@ describe('TFHEPublicKey', () => {
           id: tfhePublicKeyBytes.id,
           srcUrl: testUrl,
         }),
-      ).rejects.toThrow('Invalid public key (deserialization failed)');
+      ).rejects.toThrow('Impossible to fetch public key: wrong relayer url.');
     });
   });
 

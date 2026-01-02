@@ -1,4 +1,4 @@
-import type { ChecksummedAddress } from '../../types/primitives';
+import type { ChecksummedAddress } from '../../base/types/primitives';
 import { assertCoprocessorEIP712DomainType } from './guards';
 import { InvalidPropertyError } from '../../errors/InvalidPropertyError';
 

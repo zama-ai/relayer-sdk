@@ -1,4 +1,8 @@
 import { createRelayerProvider } from '../createRelayerProvider';
+import type {
+  RelayerInputProofOptions,
+  RelayerInputProofProgressArgs,
+} from '../../relayer-provider/types/public-api';
 import { createInstance } from '../..';
 import fetchMock from 'fetch-mock';
 import { InvalidPropertyError } from '../../errors/InvalidPropertyError';
@@ -18,10 +22,10 @@ import {
 import { getProvider } from '../../config';
 import { InputProof } from '../../sdk/coprocessor/InputProof';
 import { RelayerV2ResponseInputProofRejectedError } from './errors/RelayerV2ResponseInputProofRejectedError';
-import { assertIsBytes32Hex, assertIsBytes65Hex } from '../../utils/bytes';
-import { safeJSONstringify } from '../../utils/string';
+import { assertIsBytes32Hex, assertIsBytes65Hex } from '../../base/bytes';
+import { safeJSONstringify } from '../../base/string';
 import type { FhevmInstanceConfig } from '../../types/relayer';
-import type { EncryptionBits } from '../../types/primitives';
+import type { EncryptionBits } from '../../base/types/primitives';
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -318,10 +322,10 @@ describeIfFetchMock('RelayerV2Provider', () => {
     const res = await relayerProvider.fetchPostInputProof(
       DEADBEEF_INPUT_PROOF_PAYLOAD,
       {
-        onProgress: (args) => {
+        onProgress: (args: RelayerInputProofProgressArgs) => {
           console.log('onProgress: ' + JSON.stringify(args));
         },
-      },
+      } as RelayerInputProofOptions,
     );
 
     expect(res.handles.length).toBe(1);

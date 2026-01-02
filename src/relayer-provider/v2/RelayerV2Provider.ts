@@ -1,19 +1,14 @@
 import type {
-  RelayerV2ProgressArgs,
-  RelayerV2ResultInputProof,
-  RelayerV2ResultUserDecrypt,
-} from './types/types';
-import type { Prettify } from '../../utils/types';
-import type {
-  FhevmInstanceOptions,
+  RelayerInputProofOptions,
+  RelayerPublicDecryptOptions,
+  RelayerUserDecryptOptions,
   RelayerInputProofPayload,
   RelayerInputProofResult,
   RelayerPublicDecryptPayload,
   RelayerPublicDecryptResult,
   RelayerUserDecryptPayload,
   RelayerUserDecryptResult,
-} from '../../types/relayer';
-import type { RelayerProviderFetchOptions } from '../AbstractRelayerProvider';
+} from '../types/public-api';
 import {
   AbstractRelayerProvider,
   assertIsRelayerInputProofResult,
@@ -33,9 +28,7 @@ export class RelayerV2Provider extends AbstractRelayerProvider {
 
   public override async fetchPostInputProof(
     payload: RelayerInputProofPayload,
-    options?: Prettify<
-      FhevmInstanceOptions & RelayerProviderFetchOptions<RelayerV2ProgressArgs>
-    >,
+    options?: RelayerInputProofOptions,
   ): Promise<RelayerInputProofResult> {
     const request = new RelayerV2AsyncRequest({
       relayerOperation: 'INPUT_PROOF',
@@ -43,16 +36,14 @@ export class RelayerV2Provider extends AbstractRelayerProvider {
       payload,
       options,
     });
-    const result = (await request.run()) as RelayerV2ResultInputProof;
+    const result = await request.run();
     assertIsRelayerInputProofResult(result, 'fetchPostInputProof()');
     return result as RelayerInputProofResult;
   }
 
   public override async fetchPostPublicDecrypt(
     payload: RelayerPublicDecryptPayload,
-    options?: Prettify<
-      FhevmInstanceOptions & RelayerProviderFetchOptions<RelayerV2ProgressArgs>
-    >,
+    options?: RelayerPublicDecryptOptions,
   ): Promise<RelayerPublicDecryptResult> {
     const request = new RelayerV2AsyncRequest({
       relayerOperation: 'PUBLIC_DECRYPT',
@@ -60,16 +51,14 @@ export class RelayerV2Provider extends AbstractRelayerProvider {
       payload,
       options,
     });
-    const result = await request.run();
+    const result = (await request.run()) as RelayerPublicDecryptResult;
     assertIsRelayerPublicDecryptResult(result, 'fetchPostPublicDecrypt()');
     return result;
   }
 
   public override async fetchPostUserDecrypt(
     payload: RelayerUserDecryptPayload,
-    options?: Prettify<
-      FhevmInstanceOptions & RelayerProviderFetchOptions<RelayerV2ProgressArgs>
-    >,
+    options?: RelayerUserDecryptOptions,
   ): Promise<RelayerUserDecryptResult> {
     const request = new RelayerV2AsyncRequest({
       relayerOperation: 'USER_DECRYPT',
@@ -77,8 +66,8 @@ export class RelayerV2Provider extends AbstractRelayerProvider {
       payload,
       options,
     });
-    const result = (await request.run()) as RelayerV2ResultUserDecrypt;
-    assertIsRelayerUserDecryptResult(result.result, 'fetchPostUserDecrypt()');
-    return result.result;
+    const result = (await request.run()) as RelayerUserDecryptResult;
+    assertIsRelayerUserDecryptResult(result, 'fetchPostUserDecrypt()');
+    return result;
   }
 }

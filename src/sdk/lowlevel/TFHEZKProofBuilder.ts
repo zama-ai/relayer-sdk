@@ -1,9 +1,9 @@
-import {
+import type {
   ChecksummedAddress,
   EncryptionBits,
   FheTypeName,
   Uint64,
-} from '../../types/primitives';
+} from '@base/types/primitives';
 import { EncryptionError } from '../../errors/EncryptionError';
 import { assertRelayer } from '../../errors/InternalError';
 import {
@@ -17,11 +17,11 @@ import {
   MAX_UINT32,
   MAX_UINT8,
   uint256ToBytes32,
-} from '../../utils/uint';
+} from '@base/uint';
 import { encryptionBitsFromFheTypeName } from '../FheType';
-import { isChecksummedAddress } from '../../utils/address';
-import { TFHEPkeParams } from './TFHEPkeParams';
-import { hexToBytes } from '../../utils/bytes';
+import { isChecksummedAddress } from '@base/address';
+import type { TFHEPkeParams } from './TFHEPkeParams';
+import { hexToBytes } from '@base/bytes';
 import {
   SERIALIZED_SIZE_LIMIT_CIPHERTEXT,
   TFHE_CRS_BITS_CAPACITY,
@@ -29,17 +29,47 @@ import {
 } from './constants';
 import { ZKProof } from '../ZKProof';
 
+////////////////////////////////////////////////////////////////////////////////
+// Private types
+////////////////////////////////////////////////////////////////////////////////
+
+interface TheCompactCiphertextListBuilderType {
+  push_boolean(value: boolean): void;
+  push_u8(value: number): void;
+  push_u16(value: number): void;
+  push_u32(value: number): void;
+  push_u64(value: bigint): void;
+  push_u128(value: bigint): void;
+  push_u160(value: bigint): void;
+  push_u256(value: bigint): void;
+  build_with_proof_packed(
+    crs: unknown,
+    metadata: Uint8Array,
+    computeLoad: unknown,
+  ): TfheProvenCompactCiphertextListType;
+}
+
+interface TfheProvenCompactCiphertextListType {
+  safe_serialize(sizeLimit: bigint): Uint8Array;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// TFHEZKProofBuilder
+////////////////////////////////////////////////////////////////////////////////
+
 export class TFHEZKProofBuilder {
   #totalBits: number = 0;
-  #bits: EncryptionBits[] = [];
-  #bitsCapacity: number = TFHE_CRS_BITS_CAPACITY;
-  #ciphertextCapacity: number = TFHE_ZKPROOF_CIPHERTEXT_CAPACITY;
-  #fheCompactCiphertextListBuilderWasm: any;
-  #pkeParams: TFHEPkeParams;
+  readonly #bits: EncryptionBits[] = [];
+  readonly #bitsCapacity: number = TFHE_CRS_BITS_CAPACITY;
+  readonly #ciphertextCapacity: number = TFHE_ZKPROOF_CIPHERTEXT_CAPACITY;
+  readonly #fheCompactCiphertextListBuilderWasm: TheCompactCiphertextListBuilderType;
+  readonly #pkeParams: TFHEPkeParams;
 
   constructor(params: { pkeParams: TFHEPkeParams }) {
     this.#pkeParams = params.pkeParams;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     this.#fheCompactCiphertextListBuilderWasm =
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       TFHE.CompactCiphertextList.builder(
         this.#pkeParams.getTFHEPublicKey().tfheCompactPublicKeyWasm,
       );
@@ -52,11 +82,11 @@ export class TFHEZKProofBuilder {
   // Public API
   //////////////////////////////////////////////////////////////////////////////
 
-  public get count() {
+  public get count(): number {
     return this.#bits.length;
   }
 
-  public get totalBits() {
+  public get totalBits(): number {
     return this.#totalBits;
   }
 
@@ -64,7 +94,7 @@ export class TFHEZKProofBuilder {
     return [...this.#bits];
   }
 
-  public addBool(value: boolean | number | bigint): this {
+  public addBool(value: unknown): this {
     if (value === null || value === undefined) {
       throw new EncryptionError({ message: 'Missing value' });
     }
@@ -84,14 +114,14 @@ export class TFHEZKProofBuilder {
       });
     }
     this.#addType('ebool');
-    this.#fheCompactCiphertextListBuilderWasm.push_boolean(!!value);
+    this.#fheCompactCiphertextListBuilderWasm.push_boolean(num === 1);
     return this;
   }
 
   public addUint8(value: unknown): this {
     if (!isUint8(value)) {
       throw new EncryptionError({
-        message: `The value must be a number or bigint in uint8 range (0-${MAX_UINT8}).`,
+        message: `The value must be a number or bigint in uint8 range (0-${MAX_UINT8.toString()}).`,
       });
     }
     this.#addType('euint8');
@@ -102,7 +132,7 @@ export class TFHEZKProofBuilder {
   public addUint16(value: unknown): this {
     if (!isUint16(value)) {
       throw new EncryptionError({
-        message: `The value must be a number or bigint in uint16 range (0-${MAX_UINT16}).`,
+        message: `The value must be a number or bigint in uint16 range (0-${MAX_UINT16.toString()}).`,
       });
     }
     this.#addType('euint16');
@@ -113,7 +143,7 @@ export class TFHEZKProofBuilder {
   public addUint32(value: unknown): this {
     if (!isUint32(value)) {
       throw new EncryptionError({
-        message: `The value must be a number or bigint in uint32 range (0-${MAX_UINT32}).`,
+        message: `The value must be a number or bigint in uint32 range (0-${MAX_UINT32.toString()}).`,
       });
     }
     this.#addType('euint32');
@@ -236,6 +266,7 @@ export class TFHEZKProofBuilder {
         this.#pkeParams.getTFHEPkeCrs().getWasmForCapacity(this.#bitsCapacity)
           .wasm,
         metaData,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         TFHE.ZkComputeLoad.Verify,
       );
 
@@ -261,20 +292,20 @@ export class TFHEZKProofBuilder {
   // Private helpers
   //////////////////////////////////////////////////////////////////////////////
 
-  #checkLimit(encryptionBits: EncryptionBits) {
+  #checkLimit(encryptionBits: EncryptionBits): void {
     if (this.#totalBits + encryptionBits > this.#bitsCapacity) {
       throw new EncryptionError({
-        message: `Packing more than ${this.#bitsCapacity} bits in a single input ciphertext is unsupported`,
+        message: `Packing more than ${this.#bitsCapacity.toString()} bits in a single input ciphertext is unsupported`,
       });
     }
     if (this.#bits.length >= this.#ciphertextCapacity) {
       throw new EncryptionError({
-        message: `Packing more than ${this.#ciphertextCapacity} variables in a single input ciphertext is unsupported`,
+        message: `Packing more than ${this.#ciphertextCapacity.toString()} variables in a single input ciphertext is unsupported`,
       });
     }
   }
 
-  #addType(fheTypeName: FheTypeName) {
+  #addType(fheTypeName: FheTypeName): void {
     // encryptionBits is guaranteed to be >= 2
     const encryptionBits = encryptionBitsFromFheTypeName(fheTypeName);
     this.#checkLimit(encryptionBits);

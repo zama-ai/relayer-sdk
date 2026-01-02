@@ -1,4 +1,7 @@
-import { Bytes65Hex, ChecksummedAddress } from '../../types/primitives';
+import type {
+  Bytes65Hex,
+  ChecksummedAddress,
+} from '../../base/types/primitives';
 import { EIP712Signer, type EIP712SignableType } from './EIP712Signer';
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -1,13 +1,13 @@
-import type { BytesHex, BytesHexNo0x } from '../../types/primitives';
+import type { BytesHex, BytesHexNo0x } from '@base/types/primitives';
+import type { FhevmInstanceOptions } from '../../types/relayer';
 import type {
-  FhevmInstanceOptions,
   RelayerInputProofPayload,
   RelayerInputProofResult,
   RelayerPublicDecryptPayload,
   RelayerPublicDecryptResult,
   RelayerUserDecryptPayload,
   RelayerUserDecryptResult,
-} from '../../types/relayer';
+} from '../types/public-api';
 import { fetchRelayerV1Post } from './fetchRelayerV1';
 import {
   AbstractRelayerProvider,

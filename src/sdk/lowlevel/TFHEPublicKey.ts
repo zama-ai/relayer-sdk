@@ -3,9 +3,9 @@ import type {
   TFHEPublicKeyBytesType,
   TFHEPublicKeyUrlType,
 } from './types';
-import { bytesToHexLarge, hexToBytesFaster } from '../../utils/bytes';
-import { fetchBytes } from '../../utils/fetch';
-import { assertRecordStringProperty } from '../../utils/string';
+import { bytesToHexLarge, hexToBytesFaster } from '@base/bytes';
+import { fetchBytes } from '@base/fetch';
+import { assertRecordStringProperty } from '@base/string';
 import { TFHEError } from '../../errors/TFHEError';
 import {
   assertIsTFHEPublicKeyBytesType,
@@ -17,7 +17,10 @@ import { SERIALIZED_SIZE_LIMIT_PK } from './constants';
 // Private types
 ////////////////////////////////////////////////////////////////////////////////
 
-type TfheCompactPublicKeyType = object;
+interface TfheCompactPublicKeyType {
+  constructor: { name: string };
+  safe_serialize(sizeLimit: bigint): Uint8Array;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // TFHEPublicKey
@@ -25,22 +28,26 @@ type TfheCompactPublicKeyType = object;
 
 export class TFHEPublicKey {
   #id: string = '';
-  #tfheCompactPublicKeyWasm: TfheCompactPublicKeyType = {};
-  #srcUrl?: string;
+  #tfheCompactPublicKeyWasm!: TfheCompactPublicKeyType;
+  #srcUrl?: string | undefined;
 
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
   private constructor() {}
 
-  public get id() {
+  public get id(): string {
     return this.#id;
   }
-  public get srcUrl() {
+
+  public get srcUrl(): string | undefined {
     return this.#srcUrl;
   }
-  public get tfheCompactPublicKeyWasm() {
+
+  public get tfheCompactPublicKeyWasm(): TfheCompactPublicKeyType {
     return this.#tfheCompactPublicKeyWasm;
   }
+
   public get wasmClassName(): string {
-    return (this.#tfheCompactPublicKeyWasm as any)?.constructor?.name;
+    return this.#tfheCompactPublicKeyWasm.constructor.name;
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -77,8 +84,8 @@ export class TFHEPublicKey {
       });
     }
     return TFHEPublicKey.fromBytes({
-      id: params?.id,
-      srcUrl: params?.srcUrl,
+      id: params.id,
+      srcUrl: params.srcUrl,
       bytes,
     });
   }
@@ -87,6 +94,7 @@ export class TFHEPublicKey {
     const pk = new TFHEPublicKey();
 
     pk.#id = params.id;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     pk.#tfheCompactPublicKeyWasm = TFHE.TfheCompactPublicKey.safe_deserialize(
       params.bytes,
       SERIALIZED_SIZE_LIMIT_PK,
@@ -105,7 +113,7 @@ export class TFHEPublicKey {
   ): Promise<TFHEPublicKey> {
     try {
       assertIsTFHEPublicKeyUrlType(params, 'arg');
-      return TFHEPublicKey._fetch(params);
+      return await TFHEPublicKey._fetch(params);
     } catch (e) {
       throw new TFHEError({
         message: 'Impossible to fetch public key: wrong relayer url.',
@@ -134,23 +142,21 @@ export class TFHEPublicKey {
 
   public toBytes(): TFHEPublicKeyBytesType {
     return {
-      bytes: (this.#tfheCompactPublicKeyWasm as any).safe_serialize(
+      bytes: this.#tfheCompactPublicKeyWasm.safe_serialize(
         SERIALIZED_SIZE_LIMIT_PK,
       ),
       id: this.#id,
-      ...(this.#srcUrl ? { srcUrl: this.#srcUrl } : {}),
+      ...(this.#srcUrl !== undefined ? { srcUrl: this.#srcUrl } : {}),
     };
   }
 
   private _toBytesHex(): TFHEPublicKeyBytesHexType {
     return {
       bytesHex: bytesToHexLarge(
-        (this.#tfheCompactPublicKeyWasm as any).safe_serialize(
-          SERIALIZED_SIZE_LIMIT_PK,
-        ),
+        this.#tfheCompactPublicKeyWasm.safe_serialize(SERIALIZED_SIZE_LIMIT_PK),
       ),
       id: this.#id,
-      ...(this.#srcUrl ? { srcUrl: this.#srcUrl } : {}),
+      ...(this.#srcUrl !== undefined ? { srcUrl: this.#srcUrl } : {}),
     };
   }
 
@@ -176,9 +182,10 @@ export class TFHEPublicKey {
   }
 
   public static fromJSON(json: unknown): TFHEPublicKey {
-    if ((json as any).__type !== 'TFHEPublicKey') {
+    const record = json as Record<string, unknown>;
+    if (record.__type !== 'TFHEPublicKey') {
       throw new TFHEError({ message: 'Invalid TFHEPublicKey JSON.' });
     }
-    return TFHEPublicKey._fromBytesHex(json as any);
+    return TFHEPublicKey._fromBytesHex(json as TFHEPublicKeyBytesHexType);
   }
 }

@@ -1,18 +1,18 @@
 import {
   assertRecordNonNullableProperty,
   assertRecordArrayProperty,
-} from '../utils/record';
+} from '@base/record';
 import {
   assertRecordStringArrayProperty,
   assertRecordStringProperty,
-} from '../utils/string';
+} from '@base/string';
 import {
   RelayerGetResponseKeyUrlCamelCase,
   RelayerGetResponseKeyUrlSnakeCase,
   RelayerKeyDataCamelCase,
   RelayerKeyDataSnakeCase,
   RelayerKeyInfoSnakeCase,
-} from './common-types';
+} from './types/private';
 
 export function isRelayerGetResponseKeyUrlCamelCase(
   value: unknown,

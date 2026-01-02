@@ -1,10 +1,10 @@
 import type { ethers as EthersT } from 'ethers';
-import type { Bytes32Hex, ChecksummedAddress } from '../types/primitives';
+import type { Bytes32Hex, ChecksummedAddress } from '@base/types/primitives';
 import { Contract } from 'ethers';
 import {
   assertIsChecksummedAddress,
   isChecksummedAddress,
-} from '../utils/address';
+} from '@base/address';
 import {
   ACLPublicDecryptionError,
   ACLUserDecryptionError,
@@ -18,8 +18,8 @@ import { FhevmHandle } from './FhevmHandle';
 ////////////////////////////////////////////////////////////////////////////////
 
 export class ACL {
-  #aclAddress: ChecksummedAddress;
-  #contract: Contract;
+  readonly #aclAddress: ChecksummedAddress;
+  readonly #contract: Contract;
 
   static readonly #abi = [
     'function persistAllowed(bytes32 handle, address account) view returns (bool)',
@@ -87,7 +87,7 @@ export class ACL {
     }
 
     const results = await Promise.all(
-      handlesArray.map((h) => this.#contract.isAllowedForDecryption(h)),
+      handlesArray.map((h) => this.#contract['isAllowedForDecryption']!(h)),
     );
 
     return isArray ? results : results[0];
@@ -165,7 +165,7 @@ export class ACL {
 
     const results = await Promise.all(
       handleAddressPairsArray.map((p) =>
-        this.#contract.persistAllowed(p.handle, p.address),
+        this.#contract['persistAllowed']!(p.handle, p.address),
       ),
     );
 

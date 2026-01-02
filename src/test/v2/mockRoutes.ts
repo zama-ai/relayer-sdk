@@ -1,5 +1,5 @@
 import type { RelayerV2AsyncRequestState } from '../../relayer-provider/v2/RelayerV2AsyncRequest';
-import type { EncryptionBits } from '../../types/primitives';
+import type { EncryptionBits } from '../../base/types/primitives';
 import fetchMock, { CallLog } from 'fetch-mock';
 import { fetchMockInputProof, TEST_CONFIG } from '../config';
 import { tfheCompactPublicKeyBytes, tfheCompactPkeCrsBytes } from '..';

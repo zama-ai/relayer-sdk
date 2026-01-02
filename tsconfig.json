@@ -17,6 +17,9 @@
     "baseUrl": ".",
     "resolveJsonModule": true,
     "paths": {
+      "@base/*": ["./src/base/*"],
+      "@sdk/*": ["./src/sdk/*"],
+      "@relayer-provider/*": ["./src/relayer-provider/*"],
       "*": ["*"]
     },
     // Add a bit of extra testing
@@ -28,5 +31,5 @@
     "noUnusedLocals": true
   },
   "include": ["src", "types"],
-  "exclude": ["node_modules", "src/**/*.test.ts", "src/**/*.test-dom.ts"]
+  "exclude": ["node_modules"]
 }

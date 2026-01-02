@@ -9,12 +9,13 @@ import type {
   SolidityPrimitiveTypeName,
   Uint64,
   Uint64BigInt,
-} from '../types/primitives';
+} from '@base/types/primitives';
+import type { ZKProof } from './ZKProof';
 import { keccak256 } from 'ethers';
 import {
   assertIsChecksummedAddress,
   checksummedAddressToBytes20,
-} from '../utils/address';
+} from '@base/address';
 import {
   assertIsBytes32,
   bytesToHex,
@@ -24,13 +25,13 @@ import {
   isBytes32,
   isBytes32Hex,
   isBytesHex,
-} from '../utils/bytes';
+} from '@base/bytes';
 import {
   assertIsUint64,
   assertIsUint8,
   isUint64,
   uint64ToBytes32,
-} from '../utils/uint';
+} from '@base/uint';
 import { assertRelayer } from '../errors/InternalError';
 import { FhevmHandleError } from '../errors/FhevmHandleError';
 import {
@@ -40,7 +41,6 @@ import {
   isFheTypeId,
   solidityPrimitiveTypeNameFromFheTypeId,
 } from './FheType';
-import { ZKProof } from './ZKProof';
 
 ////////////////////////////////////////////////////////////////////////////////
 // FhevmHandle
@@ -87,7 +87,7 @@ export class FhevmHandle {
     fheTypeId: FheTypeId;
     version: number;
     computed: boolean;
-    index?: number;
+    index?: number | undefined;
     handleBytes32?: Bytes32 | undefined;
     handleBytes32Hex?: Bytes32Hex | undefined;
   }) {
@@ -152,6 +152,7 @@ export class FhevmHandle {
     return solidityPrimitiveTypeNameFromFheTypeId(this.#fheTypeId);
   }
 
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types
   public toJSON() {
     return {
       handle: this.toBytes32Hex(),
@@ -209,7 +210,7 @@ export class FhevmHandle {
 
   public toBytes32Hex(): Bytes32Hex {
     if (this.#handleBytes32Hex === undefined) {
-      this.#handleBytes32Hex = bytesToHex(this.toBytes32()) as Bytes32Hex;
+      this.#handleBytes32Hex = bytesToHex(this.toBytes32());
     }
     return this.#handleBytes32Hex;
   }

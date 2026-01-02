@@ -1,3 +1,5 @@
+import type { RelayerOperation } from '../types/public-api';
+
 export type RelayerV1FetchResponseJson = { response: any };
 
 ////////////////////////////////////////////////////////////////////////////////

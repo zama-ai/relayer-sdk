@@ -1,8 +1,9 @@
 import type { TFHEPkeUrlsType } from './types';
 import type { FhevmPkeConfigType } from '../../types/relayer';
+import type { PartialWithUndefined } from '@base/types/utils';
 import { TFHEPkeCrs } from './TFHEPkeCrs';
 import { TFHEPublicKey } from './TFHEPublicKey';
-import { isRecordNonNullableProperty } from '../../utils/record';
+import { isRecordNonNullableProperty } from '@base/record';
 import {
   assertIsFhevmPkeCrsByCapacityType,
   assertIsFhevmPublicKeyType,
@@ -16,8 +17,8 @@ import { TFHEError } from '../../errors/TFHEError';
 ////////////////////////////////////////////////////////////////////////////////
 
 export class TFHEPkeParams {
-  #pkeCrs2048: TFHEPkeCrs;
-  #publicKey: TFHEPublicKey;
+  readonly #pkeCrs2048: TFHEPkeCrs;
+  readonly #publicKey: TFHEPublicKey;
 
   private constructor(params: {
     publicKey: TFHEPublicKey;
@@ -55,7 +56,7 @@ export class TFHEPkeParams {
    * @throws {TFHEError} If the config contains invalid data
    */
   public static tryFromFhevmPkeConfig(
-    fhevmPkeConfig: Partial<FhevmPkeConfigType>,
+    fhevmPkeConfig: PartialWithUndefined<FhevmPkeConfigType>,
   ): TFHEPkeParams | undefined {
     if (!isRecordNonNullableProperty(fhevmPkeConfig, 'publicParams')) {
       return undefined;
@@ -130,7 +131,7 @@ export class TFHEPkeParams {
   static async fetch(urls: TFHEPkeUrlsType): Promise<TFHEPkeParams> {
     if (urls.pkeCrsUrl.capacity !== 2048) {
       throw new TFHEError({
-        message: `Invalid pke crs capacity ${urls.pkeCrsUrl.capacity}. Expecting 2048.`,
+        message: `Invalid pke crs capacity ${urls.pkeCrsUrl.capacity.toString()}. Expecting 2048.`,
       });
     }
 

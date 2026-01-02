@@ -1,7 +1,7 @@
 import type { ethers as EthersT } from 'ethers';
-import type { ChecksummedAddress } from '../../types/primitives';
+import type { ChecksummedAddress } from '../../base/types/primitives';
 import { createInstance } from '../..';
-import type { RelayerPublicDecryptPayload } from '../../types/relayer';
+import type { RelayerPublicDecryptPayload } from '../../relayer-provider/types/public-api';
 import { AbstractRelayerProvider } from '../AbstractRelayerProvider';
 import { createRelayerProvider } from '../createRelayerProvider';
 import fetchMock from 'fetch-mock';
@@ -15,7 +15,7 @@ import {
   TEST_CONFIG,
 } from '../../test/config';
 import { RUNNING_REQ_STATE } from '../../test/v2/mockRoutes';
-import { safeJSONstringify } from '../../utils/string';
+import { safeJSONstringify } from '../../base/string';
 
 ////////////////////////////////////////////////////////////////////////////////
 //

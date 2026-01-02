@@ -1,6 +1,6 @@
-import type { Prettify } from '../../../utils/types';
-import type { RelayerOperation } from '../../../types/relayer';
 import type { RelayerErrorBaseParams } from '../../../errors/RelayerErrorBase';
+import type { RelayerOperation } from '../../types/public-api';
+import type { Prettify } from '@base/types/utils';
 import { RelayerErrorBase } from '../../../errors/RelayerErrorBase';
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -15,14 +15,14 @@ export type RelayerV2RequestErrorBaseParams = Prettify<
   RelayerErrorBaseParams & {
     url: string;
     operation: RelayerOperation;
-    jobId?: string;
+    jobId?: string | undefined;
   }
 >;
 
 export abstract class RelayerV2RequestErrorBase extends RelayerErrorBase {
   private _url: string;
   private _operation: RelayerOperation;
-  private _jobId?: string;
+  private _jobId?: string | undefined;
 
   constructor(params: RelayerV2RequestErrorBaseParams) {
     super({ ...params, name: params.name ?? 'RelayerV2RequestErrorBase' });

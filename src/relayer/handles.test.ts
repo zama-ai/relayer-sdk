@@ -5,10 +5,10 @@ import type {
   BytesHex,
   ChecksummedAddress,
   EncryptionBits,
-} from '../types/primitives';
-import { hexToBytes } from '../utils/bytes';
+} from '../base/types/primitives';
+import { hexToBytes } from '../base/bytes';
 import { FhevmHandle } from '../sdk/FhevmHandle';
-import { MAX_UINT64 } from '../utils/uint';
+import { MAX_UINT64 } from '../base/uint';
 import { fheTypeIdFromEncryptionBits } from '../sdk/FheType';
 import { ZKProof } from '../sdk/ZKProof';
 

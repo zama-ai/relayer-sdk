@@ -1,7 +1,7 @@
 import { EncryptionError } from '../../errors/EncryptionError';
 import { pkeParams as pkeParamsAsset } from '../../test';
 import { TEST_CONFIG } from '../../test/config';
-import { ChecksummedAddress } from '../../types/primitives';
+import { ChecksummedAddress } from '../../base/types/primitives';
 import { TFHEZKProofBuilder } from './TFHEZKProofBuilder';
 
 ////////////////////////////////////////////////////////////////////////////////

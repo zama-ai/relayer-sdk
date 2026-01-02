@@ -1,18 +1,16 @@
 import type { ethers as EthersT } from 'ethers';
-import type {
-  FhevmInstanceConfig,
-  RelayerInputProofPayload,
-} from '../types/relayer';
-import type { Prettify } from '../utils/types';
+import type { RelayerInputProofPayload } from '../relayer-provider/types/public-api';
+import type { FhevmInstanceConfig } from '../types/relayer';
+import type { Prettify } from '../base/types/utils';
 import type {
   Bytes32Hex,
   Bytes65Hex,
   ChecksummedAddress,
   EncryptionBits,
   FheTypeName,
-} from '../types/primitives';
+} from '../base/types/primitives';
 import fetchMock from 'fetch-mock';
-import { hexToBytes } from '../utils/bytes';
+import { hexToBytes } from '../base/bytes';
 import { currentCiphertextVersion } from '../relayer/sendEncryption';
 import { CoprocessorSigners } from './fhevm-mock/CoprocessorSigners';
 import { getProvider as config_getProvider } from '../config';

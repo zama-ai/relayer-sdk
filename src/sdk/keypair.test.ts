@@ -1,5 +1,5 @@
 import { TEST_CONFIG } from '../test/config';
-import { hexToBytes } from '../utils/bytes';
+import { hexToBytes } from '../base/bytes';
 import { generateKeypair, createEIP712 } from './keypair';
 import {
   ml_kem_pke_pk_to_u8vec,

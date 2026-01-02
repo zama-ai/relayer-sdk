@@ -3,21 +3,21 @@ import type {
   Bytes65Hex,
   BytesHex,
   ChecksummedAddress,
-} from '../../types/primitives';
+} from '@base/types/primitives';
 import type {
   CoprocessorEIP712DomainType,
   CoprocessorEIP712MessageType,
   CoprocessorEIP712Type,
   CoprocessorEIP712TypesType,
 } from './types';
-import { assertIsChecksummedAddress } from '../../utils/address';
+import { assertIsChecksummedAddress } from '@base/address';
 import {
   assertIsBytes32HexArray,
   assertIsBytes65HexArray,
   assertIsBytesHex,
-} from '../../utils/bytes';
-import { verifySignature } from '../../utils/signature';
-import { assertIsUint256 } from '../../utils/uint';
+} from '@base/bytes';
+import { verifySignature } from '@base/signature';
+import { assertIsUint256 } from '@base/uint';
 
 ////////////////////////////////////////////////////////////////////////////////
 // CoprocessorEIP712 Class
@@ -26,7 +26,7 @@ import { assertIsUint256 } from '../../utils/uint';
 export class CoprocessorEIP712 {
   public readonly domain: CoprocessorEIP712DomainType;
 
-  static #types: CoprocessorEIP712TypesType = {
+  static readonly #types: CoprocessorEIP712TypesType = {
     CiphertextVerification: [
       { name: 'ctHandles', type: 'bytes32[]' },
       { name: 'userAddress', type: 'address' },
@@ -130,16 +130,13 @@ export class CoprocessorEIP712 {
   }: {
     readonly signatures: readonly Bytes65Hex[];
     readonly message: CoprocessorEIP712MessageType;
-  }) {
+  }): ChecksummedAddress[] {
     assertIsBytes65HexArray(signatures);
     const recoveredAddresses = signatures.map((signature: BytesHex) => {
       const recoveredAddress = verifySignature({
         signature,
         domain: this.domain,
-        types: this.types as any as Record<
-          string,
-          Array<EthersT.TypedDataField>
-        >,
+        types: this.types as any as Record<string, EthersT.TypedDataField[]>,
         message,
       });
       return recoveredAddress;

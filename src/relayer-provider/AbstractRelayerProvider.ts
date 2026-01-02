@@ -1,15 +1,18 @@
-import type { TFHEPkeUrlsType } from '../sdk/lowlevel/types';
-import type { BytesHex } from '../types/primitives';
+import type { TFHEPkeUrlsType } from '@sdk/lowlevel/types';
+import type { BytesHex } from '@base/types/primitives';
+import type { FhevmInstanceOptions } from '../types/relayer';
 import type {
-  FhevmInstanceOptions,
   RelayerGetOperation,
+  RelayerInputProofOptions,
   RelayerInputProofPayload,
   RelayerInputProofResult,
+  RelayerPublicDecryptOptions,
   RelayerPublicDecryptPayload,
   RelayerPublicDecryptResult,
+  RelayerUserDecryptOptions,
   RelayerUserDecryptPayload,
   RelayerUserDecryptResult,
-} from '../types/relayer';
+} from './types/public-api';
 import { sdkName, version } from '../_version';
 import {
   assertRecordBytes32HexArrayProperty,
@@ -18,8 +21,8 @@ import {
   assertRecordBytesHexNo0xProperty,
   assertRecordBytesHexProperty,
   bytesToHexNo0x,
-} from '../utils/bytes';
-import { assertRecordStringProperty } from '../utils/string';
+} from '@base/bytes';
+import { assertRecordStringProperty } from '@base/string';
 import { ensureError } from '../errors/utils';
 import { InternalError } from '../errors/InternalError';
 import { InvalidPropertyError } from '../errors/InvalidPropertyError';
@@ -30,15 +33,15 @@ import {
   throwRelayerUnexpectedJSONError,
   throwRelayerUnknownError,
 } from '../relayer/error';
-import { TFHEPkeParams } from '../sdk/lowlevel/TFHEPkeParams';
+import { TFHEPkeParams } from '@sdk/lowlevel/TFHEPkeParams';
 import {
   assertIsRelayerGetResponseKeyUrlCamelCase,
   assertIsRelayerGetResponseKeyUrlSnakeCase,
   toRelayerGetResponseKeyUrlSnakeCase,
 } from './AbstractRelayerGetResponseKeyUrl';
-import { RelayerGetResponseKeyUrlSnakeCase } from './common-types';
-import { ZKProof } from '../sdk/ZKProof';
-import { uintToHex } from '../utils/uint';
+import { RelayerGetResponseKeyUrlSnakeCase } from './types/private';
+import { ZKProof } from '@sdk/ZKProof';
+import { uintToHex } from '@base/uint';
 
 export type RelayerProviderFetchOptions<T> = {
   timeout?: number;
@@ -169,17 +172,17 @@ export abstract class AbstractRelayerProvider {
 
   public abstract fetchPostInputProof(
     payload: RelayerInputProofPayload,
-    options?: FhevmInstanceOptions & RelayerProviderFetchOptions<any>,
+    options?: RelayerInputProofOptions,
   ): Promise<RelayerInputProofResult>;
 
   public abstract fetchPostPublicDecrypt(
     payload: RelayerPublicDecryptPayload,
-    options?: FhevmInstanceOptions & RelayerProviderFetchOptions<any>,
+    options?: RelayerPublicDecryptOptions,
   ): Promise<RelayerPublicDecryptResult>;
 
   public abstract fetchPostUserDecrypt(
     payload: RelayerUserDecryptPayload,
-    options?: FhevmInstanceOptions & RelayerProviderFetchOptions<any>,
+    options?: RelayerUserDecryptOptions,
   ): Promise<RelayerUserDecryptResult>;
 
   private static async _fetchRelayerGet(

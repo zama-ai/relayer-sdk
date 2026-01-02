@@ -3,19 +3,19 @@ import type {
   TFHEPksCrsBytesType,
   TFHEPublicKeyBytesType,
   TFHEPublicKeyUrlType,
-} from '../sdk/lowlevel/types';
+} from '@sdk/lowlevel/types';
 import type {
   FhevmPkeCrsByCapacityType,
   FhevmPkeCrsType,
   FhevmPublicKeyType,
 } from './relayer';
-import { assertRecordUintProperty } from '../utils/uint';
-import { assertRecordUint8ArrayProperty } from '../utils/bytes';
-import { assertRecordStringProperty } from '../utils/string';
+import { assertRecordUintProperty } from '@base/uint';
+import { assertRecordUint8ArrayProperty } from '@base/bytes';
+import { assertRecordStringProperty } from '@base/string';
 import {
   assertRecordNonNullableProperty,
   isRecordNonNullableProperty,
-} from '../utils/record';
+} from '@base/record';
 
 ////////////////////////////////////////////////////////////////////////////////
 // FhevmPublicKeyType

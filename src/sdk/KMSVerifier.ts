@@ -1,9 +1,9 @@
-import type { ChecksummedAddress } from '../types/primitives';
+import type { ChecksummedAddress } from '@base/types/primitives';
 import type { Provider as EthersProviderType } from 'ethers';
 import type { KmsEIP712DomainType } from './kms/types';
 import { Contract } from 'ethers';
-import { isUint8 } from '../utils/uint';
-import { assertIsChecksummedAddressArray } from '../utils/address';
+import { isUint8 } from '@base/uint';
+import { assertIsChecksummedAddressArray } from '@base/address';
 import { assertKmsEIP712DomainType } from './kms/guards';
 
 export class KMSVerifier {
@@ -68,9 +68,9 @@ export class KMSVerifier {
     );
 
     const res = await Promise.all([
-      contract.eip712Domain(),
-      contract.getThreshold(),
-      contract.getKmsSigners(),
+      contract['eip712Domain'](),
+      contract['getThreshold'](),
+      contract['getKmsSigners'](),
     ]);
 
     const eip712Domain = res[0];

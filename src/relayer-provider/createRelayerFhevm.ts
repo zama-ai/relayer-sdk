@@ -1,5 +1,5 @@
 import type { FhevmPkeConfigType } from '../types/relayer';
-import type { Prettify } from '../utils/types';
+import type { Prettify } from '@base/types/utils';
 import { InvalidRelayerUrlError } from '../errors/InvalidRelayerUrlError';
 import { AbstractRelayerFhevm } from './AbstractRelayerFhevm';
 import { parseRelayerUrl } from './relayerUrl';

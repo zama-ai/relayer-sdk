@@ -1,9 +1,9 @@
-import type { ChecksummedAddress } from '../types/primitives';
+import type { ChecksummedAddress } from '@base/types/primitives';
 import type { Provider as EthersProviderType } from 'ethers';
 import type { CoprocessorEIP712DomainType } from './coprocessor/types';
 import { Contract } from 'ethers';
-import { isUint8 } from '../utils/uint';
-import { assertIsChecksummedAddressArray } from '../utils/address';
+import { isUint8 } from '@base/uint';
+import { assertIsChecksummedAddressArray } from '@base/address';
 import { assertCoprocessorEIP712DomainType } from './coprocessor/guards';
 
 export class InputVerifier {
@@ -68,9 +68,9 @@ export class InputVerifier {
     );
 
     const res = await Promise.all([
-      contract.eip712Domain(),
-      contract.getThreshold(),
-      contract.getCoprocessorSigners(),
+      contract['eip712Domain'](),
+      contract['getThreshold'](),
+      contract['getCoprocessorSigners'](),
     ]);
 
     const eip712Domain = res[0];

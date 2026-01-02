@@ -1,4 +1,4 @@
-import { removeSuffix } from '../utils/string';
+import { removeSuffix } from '@base/string';
 
 /**
  * Parses a relayer URL and extracts or applies the API version.

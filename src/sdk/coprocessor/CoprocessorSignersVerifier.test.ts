@@ -3,7 +3,7 @@ import type {
   BytesHex,
   ChecksummedAddress,
   EncryptionBits,
-} from '../../types/primitives';
+} from '../../base/types/primitives';
 import { CoprocessorSignersVerifier } from './CoprocessorSignersVerifier';
 import { RelayerDuplicateCoprocessorSignerError } from '../../errors/RelayerDuplicateCoprocessorSignerError';
 import { RelayerUnknownCoprocessorSignerError } from '../../errors/RelayerUnknownCoprocessorSignerError';

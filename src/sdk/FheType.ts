@@ -7,7 +7,7 @@ import type {
   FheTypeName,
   FheTypeNameToIdMap,
   SolidityPrimitiveTypeName,
-} from '../types/primitives';
+} from '@base/types/primitives';
 import { InvalidTypeError } from '../errors/InvalidTypeError';
 import { FheTypeError } from '../errors/FheTypeError';
 
@@ -101,9 +101,9 @@ Object.freeze(FheTypeIdToSolidityPrimitiveTypeName);
  * @example isFheTypeId(1) // false (euint4 is deprecated)
  */
 export function isFheTypeId(value: unknown): value is FheTypeId {
+  // 1: euint4 is deprecated
   switch (value as FheTypeId) {
     case 0:
-    // 1: euint4 is deprecated
     case 2:
     case 3:
     case 4:
@@ -169,7 +169,7 @@ export function assertIsEncryptionBits(
 export function assertIsEncryptionBitsArray(
   value: unknown,
   varName?: string,
-): asserts value is Array<EncryptionBits> {
+): asserts value is EncryptionBits[] {
   if (!Array.isArray(value)) {
     throw new InvalidTypeError({
       type: typeof value,
@@ -179,7 +179,9 @@ export function assertIsEncryptionBitsArray(
   for (let i = 0; i < value.length; ++i) {
     if (!isEncryptionBits(value[i])) {
       throw new InvalidTypeError({
-        varName: `${varName}[${i}]`,
+        ...(varName !== undefined
+          ? { varName: `${varName}[${i.toString()}]` }
+          : {}),
         type: typeof value[i],
         expectedType: 'EncryptionBits',
       });
@@ -198,6 +200,7 @@ export function assertIsEncryptionBitsArray(
  * @example fheTypeIdFromEncryptionBits(8) // 2 (euint8)
  */
 export function fheTypeIdFromEncryptionBits(
+  // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
   bitwidth: number | EncryptionBits,
 ): FheTypeId {
   if (!isEncryptionBits(bitwidth)) {
@@ -214,6 +217,7 @@ export function fheTypeIdFromEncryptionBits(
  * @throws {FheTypeError} If name is not a valid FheTypeName.
  * @example fheTypeIdFromName('euint8') // 2
  */
+// eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
 export function fheTypeIdFromName(name: string | FheTypeName): FheTypeId {
   if (!isFheTypeName(name)) {
     throw new FheTypeError({
@@ -229,6 +233,7 @@ export function fheTypeIdFromName(name: string | FheTypeName): FheTypeId {
  * @throws {FheTypeError} If id is not a valid FheTypeId.
  * @example fheTypeNameFromId(2) // 'euint8'
  */
+// eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
 export function fheTypeNameFromId(id: number | FheTypeId): FheTypeName {
   if (!isFheTypeId(id)) {
     throw new FheTypeError({
@@ -250,6 +255,7 @@ export function fheTypeNameFromId(id: number | FheTypeId): FheTypeName {
  * @example solidityPrimitiveTypeNameFromFheTypeId(2) // 'uint256'
  */
 export function solidityPrimitiveTypeNameFromFheTypeId(
+  // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
   typeId: number | FheTypeId,
 ): SolidityPrimitiveTypeName {
   if (!isFheTypeId(typeId)) {
@@ -311,7 +317,8 @@ export function encryptionBitsFromFheTypeName(
   return bw;
 }
 
-function _assertMinimumEncryptionBitWidth(bw: number) {
+// eslint-disable-next-line @typescript-eslint/naming-convention
+function _assertMinimumEncryptionBitWidth(bw: number): void {
   if (bw < MINIMUM_ENCRYPTION_BIT_WIDTH) {
     throw new FheTypeError({
       message: `Invalid FheType encryption bit width: ${bw}. Minimum encryption bit width is ${MINIMUM_ENCRYPTION_BIT_WIDTH} bits.`,

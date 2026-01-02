@@ -1,7 +1,7 @@
 import type { ethers as EthersT } from 'ethers';
 import { Signature } from 'ethers';
-import { assertIs0xString, remove0x } from '../utils/string';
-import { BytesHex } from '../types/primitives';
+import { assertIs0xString, remove0x } from '../base/string';
+import type { BytesHex } from '../base/types/primitives';
 
 export async function signEIP712(
   signer: EthersT.Signer,

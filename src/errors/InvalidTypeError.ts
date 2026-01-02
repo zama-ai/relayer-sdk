@@ -5,7 +5,7 @@ export type InvalidTypeErrorType = InvalidTypeError & {
 };
 
 export class InvalidTypeError extends RelayerErrorBase {
-  private readonly _varName?: string;
+  private readonly _varName?: string | undefined;
   private readonly _type?: string | undefined;
   private readonly _expectedType: string;
   private readonly _expectedCustomType?: string | undefined;
@@ -15,8 +15,8 @@ export class InvalidTypeError extends RelayerErrorBase {
     expectedType,
     expectedCustomType,
   }: {
-    varName?: string;
-    type?: string;
+    varName?: string | undefined;
+    type?: string | undefined;
     expectedType:
       | 'string'
       | 'boolean'
@@ -45,7 +45,7 @@ export class InvalidTypeError extends RelayerErrorBase {
       | 'EncryptionBits'
       | 'EncryptionBitsArray'
       | 'Custom';
-    expectedCustomType?: string;
+    expectedCustomType?: string | undefined;
   }) {
     super({
       message: `InvalidTypeError ${varName} ${expectedType} ${type}`,

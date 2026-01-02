@@ -5,14 +5,14 @@ export type RelayerBaseErrorType = RelayerErrorBase & {
 };
 
 export type RelayerErrorBaseParams = {
-  cause?: RelayerErrorBase | Error;
+  cause?: RelayerErrorBase | Error | undefined;
   message: string;
-  docsBaseUrl?: string;
-  docsPath?: string;
-  docsSlug?: string;
-  metaMessages?: string[];
-  details?: string;
-  name?: string;
+  docsBaseUrl?: string | undefined;
+  docsPath?: string | undefined;
+  docsSlug?: string | undefined;
+  metaMessages?: string[] | undefined;
+  details?: string | undefined;
+  name?: string | undefined;
 };
 
 export abstract class RelayerErrorBase extends Error {
