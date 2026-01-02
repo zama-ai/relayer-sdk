@@ -2,59 +2,124 @@
 
 import type { BytesHex } from '@base/types/primitives';
 
-export type TFHEType = {
-  default?: any;
-  TFHEInput?: any;
-  TfheCompactPublicKey: any;
-  CompactPkeCrs: any;
-  initThreadPool?: any;
-  init_panic_hook: any;
-  CompactCiphertextList: any;
-  ZkComputeLoad: any;
-};
+export type WasmObject = object;
 
-export type TKMSType = {
-  default?: any;
-  u8vec_to_ml_kem_pke_pk: any;
-  u8vec_to_ml_kem_pke_sk: any;
-  new_client: any;
-  new_server_id_addr: any;
-  process_user_decryption_resp_from_js: any;
-  ml_kem_pke_keygen: any;
-  ml_kem_pke_pk_to_u8vec: any;
-  ml_kem_pke_sk_to_u8vec: any;
-  ml_kem_pke_get_pk: any;
-};
+export interface ProvenCompactCiphertextListWasmType {
+  constructor: { name: string };
+  safe_serialize(serialized_size_limit: bigint): Uint8Array;
+}
+
+export interface CompactCiphertextListBuilderWasmType {
+  constructor: { name: string };
+  push_boolean(value: boolean): void;
+  push_u8(value: number): void;
+  push_u16(value: number): void;
+  push_u32(value: number): void;
+  push_u64(value: bigint): void;
+  push_u128(value: bigint): void;
+  push_u160(value: bigint): void;
+  push_u256(value: bigint): void;
+  build_with_proof_packed(
+    crs: CompactPkeCrsWasmType,
+    metadata: Uint8Array,
+    compute_load: unknown,
+  ): ProvenCompactCiphertextListWasmType;
+}
+
+export interface TfheCompactPublicKeyWasmType {
+  safe_serialize(serialized_size_limit: bigint): Uint8Array;
+}
+
+export interface TfheCompactPublicKeyStaticWasmType {
+  constructor: { name: string };
+  safe_deserialize(
+    buffer: Uint8Array,
+    serialized_size_limit: bigint,
+  ): TfheCompactPublicKeyWasmType;
+}
+
+export interface CompactPkeCrsWasmType {
+  safe_serialize(serialized_size_limit: bigint): Uint8Array;
+}
+
+export interface CompactPkeCrsStaticWasmType {
+  constructor: { name: string };
+  safe_deserialize(
+    buffer: Uint8Array,
+    serialized_size_limit: bigint,
+  ): CompactPkeCrsWasmType;
+}
+
+export interface TFHEType {
+  default?: unknown;
+  TFHEInput?: unknown;
+  TfheCompactPublicKey: TfheCompactPublicKeyStaticWasmType;
+  CompactPkeCrs: CompactPkeCrsStaticWasmType;
+  initThreadPool?: (size: number) => Promise<void>;
+  init_panic_hook(): void;
+  CompactCiphertextList: {
+    builder(
+      publicKey: TfheCompactPublicKeyWasmType,
+    ): CompactCiphertextListBuilderWasmType;
+  };
+  ZkComputeLoad: {
+    Verify: unknown;
+    Proof: unknown;
+  };
+}
+
+export interface TKMSType {
+  default?: unknown;
+  u8vec_to_ml_kem_pke_pk(v: Uint8Array): WasmObject;
+  u8vec_to_ml_kem_pke_sk(v: Uint8Array): WasmObject;
+  new_client(
+    server_addrs: WasmObject[],
+    client_address_hex: string,
+    fhe_parameter: string,
+  ): WasmObject;
+  new_server_id_addr(id: number, addr: string): WasmObject;
+  process_user_decryption_resp_from_js(
+    client: WasmObject,
+    request: any,
+    eip712_domain: any,
+    agg_resp: any,
+    enc_pk: WasmObject,
+    enc_sk: WasmObject,
+    verify: boolean,
+  ): WasmObject[];
+  ml_kem_pke_keygen(): WasmObject;
+  ml_kem_pke_pk_to_u8vec(pk: WasmObject): Uint8Array;
+  ml_kem_pke_sk_to_u8vec(sk: WasmObject): Uint8Array;
+  ml_kem_pke_get_pk(sk: WasmObject): WasmObject;
+}
 
 /**
  * TFHE Public Key Encryption (PKE) Common Reference String (CRS) compact data with
  * raw bytes representation.
- *
- * @property id - Unique identifier for the public key provided by the relayer
- * @property capacity - The CRS capacity (always 2048 in the current configuration).
- * @property bytes - Serialized TFHE compact PKE CRS bytes
- * @property srcUrl - Optional URL from which the CRS bytes were fetched
  */
 export type TFHEPksCrsBytesType = {
+  /** Unique identifier for the public key provided by the relayer */
   id: string;
+  /** The CRS capacity (always 2048 in the current configuration). */
   capacity: number;
+  /** Serialized TFHE compact PKE CRS bytes */
   bytes: Uint8Array;
+  /** Optional URL from which the CRS bytes were fetched */
   srcUrl?: string | undefined;
 };
 
 /**
  * TFHE Public Key Encryption (PKE) Common Reference String (CRS) compact data
  * with 0x-prefixed hex-encoded bytes representation.
- *
- * @property id - Unique identifier for the public key provided by the relayer
- * @property capacity - The CRS capacity (always 2048 in the current configuration).
- * @property bytesHex - 0x-prefixed hex-encoded serialized TFHE compact PKE CRS bytes
- * @property srcUrl - Optional URL from which the CRS bytes were fetched
  */
 export type TFHEPkeCrsBytesHexType = {
+  /** Unique identifier for the public key provided by the relayer */
   id: string;
+  /** The CRS capacity (always 2048 in the current configuration). */
   capacity: number;
+  /** 0x-prefixed hex-encoded serialized TFHE compact PKE CRS bytes */
   bytesHex: BytesHex;
+  /** Optional URL from which the CRS bytes were fetched */
   srcUrl?: string | undefined;
 };
 
@@ -64,40 +129,37 @@ export type TFHEPkeCrsBytesHexType = {
  *
  * Typically obtained from the <relayer-url>/keyurl response, which provides
  * the URLs for fetching the data.
- *
- * @property id - Unique identifier for the CRS provided by the relayer
- * @property capacity - The CRS capacity (always 2048 in the current configuration).
- * @property srcUrl - URL from which to fetch the CRS bytes
  */
 export type TFHEPkeCrsUrlType = {
+  /** Unique identifier for the CRS provided by the relayer */
   id: string;
+  /** The CRS capacity (always 2048 in the current configuration). */
   capacity: number;
+  /** URL from which to fetch the CRS bytes */
   srcUrl: string;
 };
 
 /**
  * TFHE public key data with raw bytes representation.
- *
- * @property id - Unique identifier for the public key provided by the relayer
- * @property bytes - Serialized TFHE compact public key bytes
- * @property srcUrl - Optional URL from which the public key bytes were fetched
  */
 export type TFHEPublicKeyBytesType = {
+  /** Unique identifier for the public key provided by the relayer */
   id: string;
+  /** Serialized TFHE compact public key bytes */
   bytes: Uint8Array;
+  /** Optional URL from which the public key bytes were fetched */
   srcUrl?: string | undefined;
 };
 
 /**
  * TFHE public key data with 0x-prefixed hex-encoded bytes representation.
- *
- * @property id - Unique identifier for the public key provided by the relayer
- * @property bytesHex - 0x-prefixed hex-encoded serialized TFHE compact public key bytes
- * @property srcUrl - Optional URL from which the public key bytes were fetched
  */
 export type TFHEPublicKeyBytesHexType = {
+  /** Unique identifier for the public key provided by the relayer */
   id: string;
+  /** 0x-prefixed hex-encoded serialized TFHE compact public key bytes */
   bytesHex: BytesHex;
+  /** Optional URL from which the public key bytes were fetched */
   srcUrl?: string | undefined;
 };
 
@@ -106,19 +168,20 @@ export type TFHEPublicKeyBytesHexType = {
  *
  * Typically obtained from the <relayer-url>/keyurl response, which provides
  * the URLs for fetching the data.
- *
- * @property id - Unique identifier for the public key provided by the relayer
- * @property srcUrl - URL from which to fetch the public key bytes
  */
-export type TFHEPublicKeyUrlType = { id: string; srcUrl: string };
+export type TFHEPublicKeyUrlType = {
+  /** Unique identifier for the public key provided by the relayer */
+  id: string;
+  /** URL from which to fetch the public key bytes */
+  srcUrl: string;
+};
 
 /**
  * URL configuration for fetching TFHE PKE (Public Key Encryption) parameters.
- *
- * @property publicKeyUrl - URL configuration for the TFHE compact public key
- * @property pkeCrsUrl - URL configuration for the PKE CRS (Common Reference String)
  */
 export type TFHEPkeUrlsType = {
+  /** URL configuration for the TFHE compact public key */
   publicKeyUrl: TFHEPublicKeyUrlType;
+  /** URL configuration for the PKE CRS (Common Reference String) */
   pkeCrsUrl: TFHEPkeCrsUrlType;
 };

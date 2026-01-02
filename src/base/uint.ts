@@ -121,8 +121,8 @@ export function isUint256(value: unknown): value is Uint256 {
 ////////////////////////////////////////////////////////////////////////////////
 
 export function numberToBytesHexNo0x(num: number): BytesHexNo0x {
-  let hex = num.toString(16);
-  return hex.length % 2 ? '0' + hex : hex;
+  const hex = num.toString(16);
+  return hex.length % 2 !== 0 ? '0' + hex : hex;
 }
 
 export function numberToBytesHex(num: number): BytesHex {
@@ -160,13 +160,13 @@ export function uintToHex(uint: Uint): Hex {
 }
 
 export function uintToBytesHex(uint: Uint): BytesHex {
-  let hex = uint.toString(16);
-  return hex.length % 2 ? `0x0${hex}` : `0x${hex}`;
+  const hex = uint.toString(16);
+  return hex.length % 2 !== 0 ? `0x0${hex}` : `0x${hex}`;
 }
 
 export function uintToBytesHexNo0x(uint: Uint): BytesHexNo0x {
-  let hex = uint.toString(16);
-  return hex.length % 2 ? `0${hex}` : hex;
+  const hex = uint.toString(16);
+  return hex.length % 2 !== 0 ? `0${hex}` : hex;
 }
 
 export function uint256ToBytes32(value: unknown): Bytes32 {

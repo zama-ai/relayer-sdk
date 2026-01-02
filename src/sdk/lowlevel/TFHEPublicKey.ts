@@ -1,4 +1,5 @@
 import type {
+  TfheCompactPublicKeyWasmType,
   TFHEPublicKeyBytesHexType,
   TFHEPublicKeyBytesType,
   TFHEPublicKeyUrlType,
@@ -10,17 +11,8 @@ import { TFHEError } from '../../errors/TFHEError';
 import {
   assertIsTFHEPublicKeyBytesType,
   assertIsTFHEPublicKeyUrlType,
-} from '../../types/relayer.guards';
+} from './guards';
 import { SERIALIZED_SIZE_LIMIT_PK } from './constants';
-
-////////////////////////////////////////////////////////////////////////////////
-// Private types
-////////////////////////////////////////////////////////////////////////////////
-
-interface TfheCompactPublicKeyType {
-  constructor: { name: string };
-  safe_serialize(sizeLimit: bigint): Uint8Array;
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 // TFHEPublicKey
@@ -28,7 +20,7 @@ interface TfheCompactPublicKeyType {
 
 export class TFHEPublicKey {
   #id: string = '';
-  #tfheCompactPublicKeyWasm!: TfheCompactPublicKeyType;
+  #tfheCompactPublicKeyWasm!: TfheCompactPublicKeyWasmType;
   #srcUrl?: string | undefined;
 
   // eslint-disable-next-line @typescript-eslint/no-empty-function
@@ -42,7 +34,7 @@ export class TFHEPublicKey {
     return this.#srcUrl;
   }
 
-  public get tfheCompactPublicKeyWasm(): TfheCompactPublicKeyType {
+  public get tfheCompactPublicKeyWasm(): TfheCompactPublicKeyWasmType {
     return this.#tfheCompactPublicKeyWasm;
   }
 
@@ -94,7 +86,6 @@ export class TFHEPublicKey {
     const pk = new TFHEPublicKey();
 
     pk.#id = params.id;
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     pk.#tfheCompactPublicKeyWasm = TFHE.TfheCompactPublicKey.safe_deserialize(
       params.bytes,
       SERIALIZED_SIZE_LIMIT_PK,

@@ -136,7 +136,10 @@ export class CoprocessorEIP712 {
       const recoveredAddress = verifySignature({
         signature,
         domain: this.domain,
-        types: this.types as any as Record<string, EthersT.TypedDataField[]>,
+        types: this.types as unknown as Record<
+          string,
+          EthersT.TypedDataField[]
+        >,
         message,
       });
       return recoveredAddress;

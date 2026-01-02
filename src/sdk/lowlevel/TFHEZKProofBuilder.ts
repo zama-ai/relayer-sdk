@@ -67,9 +67,7 @@ export class TFHEZKProofBuilder {
 
   constructor(params: { pkeParams: TFHEPkeParams }) {
     this.#pkeParams = params.pkeParams;
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     this.#fheCompactCiphertextListBuilderWasm =
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       TFHE.CompactCiphertextList.builder(
         this.#pkeParams.getTFHEPublicKey().tfheCompactPublicKeyWasm,
       );
@@ -121,7 +119,7 @@ export class TFHEZKProofBuilder {
   public addUint8(value: unknown): this {
     if (!isUint8(value)) {
       throw new EncryptionError({
-        message: `The value must be a number or bigint in uint8 range (0-${MAX_UINT8.toString()}).`,
+        message: `The value must be a number or bigint in uint8 range (0-${String(MAX_UINT8)}).`,
       });
     }
     this.#addType('euint8');
@@ -132,7 +130,7 @@ export class TFHEZKProofBuilder {
   public addUint16(value: unknown): this {
     if (!isUint16(value)) {
       throw new EncryptionError({
-        message: `The value must be a number or bigint in uint16 range (0-${MAX_UINT16.toString()}).`,
+        message: `The value must be a number or bigint in uint16 range (0-${String(MAX_UINT16)}).`,
       });
     }
     this.#addType('euint16');
@@ -143,7 +141,7 @@ export class TFHEZKProofBuilder {
   public addUint32(value: unknown): this {
     if (!isUint32(value)) {
       throw new EncryptionError({
-        message: `The value must be a number or bigint in uint32 range (0-${MAX_UINT32.toString()}).`,
+        message: `The value must be a number or bigint in uint32 range (0-${String(MAX_UINT32)}).`,
       });
     }
     this.#addType('euint32');
@@ -266,7 +264,6 @@ export class TFHEZKProofBuilder {
         this.#pkeParams.getTFHEPkeCrs().getWasmForCapacity(this.#bitsCapacity)
           .wasm,
         metaData,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         TFHE.ZkComputeLoad.Verify,
       );
 

@@ -77,6 +77,8 @@ export abstract class RelayerV2FetchErrorBase extends RelayerErrorBase {
 
   public get isAbort(): boolean {
     // AbortError is not an instance of Error!
-    return this.cause ? (this.cause as any).name === 'AbortError' : false;
+    return this.cause !== undefined
+      ? (this.cause as { name: string }).name === 'AbortError'
+      : false;
   }
 }

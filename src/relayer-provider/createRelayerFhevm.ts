@@ -1,7 +1,7 @@
 import type { FhevmPkeConfigType } from '../types/relayer';
 import type { Prettify } from '@base/types/utils';
+import type { AbstractRelayerFhevm } from './AbstractRelayerFhevm';
 import { InvalidRelayerUrlError } from '../errors/InvalidRelayerUrlError';
-import { AbstractRelayerFhevm } from './AbstractRelayerFhevm';
 import { parseRelayerUrl } from './relayerUrl';
 import { RelayerV1Fhevm } from './v1/RelayerV1Fhevm';
 import { RelayerV2Fhevm } from './v2/RelayerV2Fhevm';
@@ -29,7 +29,10 @@ export async function createRelayerFhevm(
     config.relayerUrl,
     config.defaultRelayerVersion,
   );
-  if (!resolved) {
+  if (
+    !resolved ||
+    ((resolved.version as unknown) !== 1 && (resolved.version as unknown) !== 2)
+  ) {
     throw new InvalidRelayerUrlError({
       message: `Invalid relayerUrl: ${config.relayerUrl}`,
     });
@@ -41,15 +44,11 @@ export async function createRelayerFhevm(
       publicKey: config.publicKey,
       publicParams: config.publicParams,
     });
-  } else if (resolved.version === 1) {
+  } else {
     return RelayerV1Fhevm.fromConfig({
       relayerVersionUrl: resolved.url,
       publicKey: config.publicKey,
       publicParams: config.publicParams,
-    });
-  } else {
-    throw new InvalidRelayerUrlError({
-      message: `Invalid relayerUrl: ${config.relayerUrl}`,
     });
   }
 }

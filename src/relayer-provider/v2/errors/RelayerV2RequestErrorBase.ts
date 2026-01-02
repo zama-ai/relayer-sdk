@@ -20,9 +20,9 @@ export type RelayerV2RequestErrorBaseParams = Prettify<
 >;
 
 export abstract class RelayerV2RequestErrorBase extends RelayerErrorBase {
-  private _url: string;
-  private _operation: RelayerOperation;
-  private _jobId?: string | undefined;
+  private readonly _url: string;
+  private readonly _operation: RelayerOperation;
+  private readonly _jobId?: string | undefined;
 
   constructor(params: RelayerV2RequestErrorBaseParams) {
     super({ ...params, name: params.name ?? 'RelayerV2RequestErrorBase' });

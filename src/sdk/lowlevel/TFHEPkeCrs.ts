@@ -1,4 +1,5 @@
 import type {
+  CompactPkeCrsWasmType,
   TFHEPkeCrsBytesHexType,
   TFHEPkeCrsUrlType,
   TFHEPksCrsBytesType,
@@ -11,16 +12,7 @@ import { TFHEError } from '../../errors/TFHEError';
 import {
   assertIsTFHEPkeCrsUrlType,
   assertIsTFHEPksCrsBytesType,
-} from '../../types/relayer.guards';
-
-////////////////////////////////////////////////////////////////////////////////
-// Public/Private types
-////////////////////////////////////////////////////////////////////////////////
-
-interface CompactPkeCrsWasmType {
-  constructor: { name: string };
-  safe_serialize(sizeLimit: bigint): Uint8Array;
-}
+} from './guards';
 
 ////////////////////////////////////////////////////////////////////////////////
 // TFHEPkeCrs
@@ -63,7 +55,7 @@ export class TFHEPkeCrs {
   } {
     if (this.#capacity !== capacity) {
       throw new TFHEError({
-        message: `Unsupported FHEVM PkeCrs capacity: ${capacity.toString()}`,
+        message: `Unsupported FHEVM PkeCrs capacity: ${String(capacity)}`,
       });
     }
 
@@ -83,7 +75,7 @@ export class TFHEPkeCrs {
   } {
     if (this.#capacity !== capacity) {
       throw new TFHEError({
-        message: `Unsupported FHEVM PkeCrs capacity: ${capacity.toString()}`,
+        message: `Unsupported FHEVM PkeCrs capacity: ${String(capacity)}`,
       });
     }
 
@@ -136,7 +128,6 @@ export class TFHEPkeCrs {
   private static _fromBytes(params: TFHEPksCrsBytesType): TFHEPkeCrs {
     const crs = new TFHEPkeCrs();
     crs.#id = params.id;
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     crs.#tfheCompactPkeCrsWasm = TFHE.CompactPkeCrs.safe_deserialize(
       params.bytes,
       SERIALIZED_SIZE_LIMIT_CRS,

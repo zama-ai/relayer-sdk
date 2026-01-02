@@ -1,4 +1,3 @@
-import type { Prettify } from '@base/types/utils';
 import type {
   Bytes32Hex,
   BytesHex,
@@ -58,39 +57,37 @@ export type PublicParams<T> = {
   2048: { publicParams: T; publicParamsId: string };
 };
 
-export type FhevmInstanceConfig = Prettify<
-  {
-    verifyingContractAddressDecryption: string;
-    verifyingContractAddressInputVerification: string;
-    kmsContractAddress: string;
-    inputVerifierContractAddress: string;
-    aclContractAddress: string;
-    gatewayChainId: number;
-    relayerUrl: string;
-    network: Eip1193Provider | string;
-    chainId?: number;
-  } & Partial<FhevmPkeConfigType> &
-    FhevmInstanceOptions
->;
+export type FhevmInstanceConfig = {
+  verifyingContractAddressDecryption: string;
+  verifyingContractAddressInputVerification: string;
+  kmsContractAddress: string;
+  inputVerifierContractAddress: string;
+  aclContractAddress: string;
+  gatewayChainId: number;
+  relayerUrl: string;
+  network: Eip1193Provider | string;
+  chainId?: number;
+} & Partial<FhevmPkeConfigType> &
+  FhevmInstanceOptions;
 
 /**
  * The FHEVM TFHE Compact public key.
- * @property data - The TFHE compact public key as raw bytes.
- * @property id - A server-assigned identifier for the key (not required for cryptographic operations).
  */
 export type FhevmPublicKeyType = {
+  /** The TFHE compact public key as raw bytes. */
   data: Uint8Array;
+  /** A server-assigned identifier for the key (not required for cryptographic operations). */
   id: string;
 };
 
 /**
  * The FHEVM TFHE Compact PKE (Public Key Encryption) CRS (Common Reference String).
  * For more info about CRS see: https://docs.zama.org/tfhe-rs/fhe-computation/advanced-features/zk-pok
- * @property publicParams - The TFHE compact pke crs as raw bytes.
- * @property publicParamsId - A server-assigned identifier for the key (not required for cryptographic operations).
  */
 export type FhevmPkeCrsType = {
+  /** The TFHE compact pke crs as raw bytes. */
   publicParams: Uint8Array;
+  /** A server-assigned identifier for the key (not required for cryptographic operations). */
   publicParamsId: string;
 };
 
@@ -116,12 +113,11 @@ export type FhevmPkeCrsByCapacityType = {
  * required for encrypting values on the client side.
  * @see {@link FhevmPublicKeyType}
  * @see {@link FhevmPkeCrsByCapacityType}
- *
- * @property publicKey - The TFHE compact public key used for encryption.
- * @property publicParams - PKE CRS parameters indexed by encryption capacity.
  */
 export type FhevmPkeConfigType = {
+  /** The TFHE compact public key used for encryption. */
   publicKey: FhevmPublicKeyType;
+  /** PKE CRS parameters indexed by encryption capacity. */
   publicParams: FhevmPkeCrsByCapacityType;
 };
 
@@ -129,13 +125,13 @@ export type FhevmPkeConfigType = {
 // ClearValues
 ////////////////////////////////////////////////////////////////////////////////
 
-export type ClearValueType = bigint | boolean | ChecksummedAddress;
-export type ClearValues = Record<Bytes32Hex, ClearValueType>;
+export type ClearValueType = bigint | boolean | `0x${string}`;
+export type ClearValues = Record<`0x${string}`, ClearValueType>;
 export type UserDecryptResults = ClearValues;
 export type PublicDecryptResults = {
   clearValues: ClearValues;
-  abiEncodedClearValues: BytesHex;
-  decryptionProof: BytesHex;
+  abiEncodedClearValues: `0x${string}`;
+  decryptionProof: `0x${string}`;
 };
 
 export type HandleContractPair = {

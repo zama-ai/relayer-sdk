@@ -7,21 +7,10 @@
     "module": "commonjs",
     "esModuleInterop": true,
     "allowJs": true,
-    "resolveJsonModule": true,
-    "baseUrl": ".",
-    "paths": {
-      "@sdk/*": ["../sdk/*"],
-      "@base/*": ["../base/*"]
-    }
+    "resolveJsonModule": true
   },
-  "include": [
-    "./**/*.ts",
-    "./**/*.d.ts",
-    "./../sdk/**/*.global.d.ts",
-    "./../sdk/**/*.ts",
-    "./../sdk/**/*.d.ts",
-    "./../base/**/*.ts",
-    "./../base/**/*.d.ts"
-  ],
-  "exclude": ["**/*.test.ts", "./../sdk/**/*.test.ts", "./../base/**/*.test.ts"]
+  // Warning : "./../sdk/**/*.global.d.ts" global include must be kept otherwise TFHE.xxx is not resolved
+  // by the compiler
+  "include": ["./**/*.ts", "./**/*.d.ts", "./../sdk/**/*.global.d.ts"],
+  "exclude": ["**/*.test.ts"]
 }

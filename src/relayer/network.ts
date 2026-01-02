@@ -14,10 +14,10 @@ export const getKeysFromRelayer = async (
     return keyurlCache[versionUrl];
   }
 
-  const data: RelayerGetResponseKeyUrlSnakeCase = await fetchRelayerV1Get(
+  const data: RelayerGetResponseKeyUrlSnakeCase = (await fetchRelayerV1Get(
     'KEY_URL',
     `${versionUrl}/keyurl`,
-  );
+  )) as RelayerGetResponseKeyUrlSnakeCase;
 
   try {
     let pubKeyUrl: string;

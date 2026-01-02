@@ -1,7 +1,7 @@
 import type {
   RelayerApiError500Type,
   RelayerInputProofPayload,
-} from '../../relayer-provider/types/public-api';
+} from '../types/public-api';
 import type { RelayerV2ResponseFailed } from './types';
 import fetchMock from 'fetch-mock';
 import { RelayerV2AsyncRequest } from './RelayerV2AsyncRequest';

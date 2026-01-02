@@ -1,6 +1,6 @@
 import type { RelayerOperation } from '../types/public-api';
 
-export type RelayerV1FetchResponseJson = { response: any };
+export type RelayerV1FetchResponseJson = { response: unknown };
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -20,7 +20,7 @@ export type RelayerV1ProviderErrorCause =
       statusText: Response['statusText'];
       url: Response['url'];
       response: Response;
-      responseJson: any;
+      responseJson: unknown;
     }
   | {
       code: 'RELAYER_NO_JSON_ERROR';

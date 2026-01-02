@@ -1,8 +1,8 @@
 import { createRelayerProvider } from '../createRelayerProvider';
 import type {
-  RelayerInputProofOptions,
+  RelayerInputProofOptionsType,
   RelayerInputProofProgressArgs,
-} from '../../relayer-provider/types/public-api';
+} from '../types/public-api';
 import { createInstance } from '../..';
 import fetchMock from 'fetch-mock';
 import { InvalidPropertyError } from '../../errors/InvalidPropertyError';
@@ -325,7 +325,7 @@ describeIfFetchMock('RelayerV2Provider', () => {
         onProgress: (args: RelayerInputProofProgressArgs) => {
           console.log('onProgress: ' + JSON.stringify(args));
         },
-      } as RelayerInputProofOptions,
+      } as RelayerInputProofOptionsType,
     );
 
     expect(res.handles.length).toBe(1);

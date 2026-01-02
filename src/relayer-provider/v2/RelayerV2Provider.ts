@@ -1,7 +1,7 @@
 import type {
-  RelayerInputProofOptions,
-  RelayerPublicDecryptOptions,
-  RelayerUserDecryptOptions,
+  RelayerInputProofOptionsType,
+  RelayerPublicDecryptOptionsType,
+  RelayerUserDecryptOptionsType,
   RelayerInputProofPayload,
   RelayerInputProofResult,
   RelayerPublicDecryptPayload,
@@ -18,17 +18,13 @@ import {
 import { RelayerV2AsyncRequest } from './RelayerV2AsyncRequest';
 
 export class RelayerV2Provider extends AbstractRelayerProvider {
-  constructor(relayerUrl: string) {
-    super(relayerUrl);
-  }
-
-  public get version(): number {
+  public override get version(): number {
     return 2;
   }
 
   public override async fetchPostInputProof(
     payload: RelayerInputProofPayload,
-    options?: RelayerInputProofOptions,
+    options?: RelayerInputProofOptionsType,
   ): Promise<RelayerInputProofResult> {
     const request = new RelayerV2AsyncRequest({
       relayerOperation: 'INPUT_PROOF',
@@ -38,12 +34,12 @@ export class RelayerV2Provider extends AbstractRelayerProvider {
     });
     const result = await request.run();
     assertIsRelayerInputProofResult(result, 'fetchPostInputProof()');
-    return result as RelayerInputProofResult;
+    return result;
   }
 
   public override async fetchPostPublicDecrypt(
     payload: RelayerPublicDecryptPayload,
-    options?: RelayerPublicDecryptOptions,
+    options?: RelayerPublicDecryptOptionsType,
   ): Promise<RelayerPublicDecryptResult> {
     const request = new RelayerV2AsyncRequest({
       relayerOperation: 'PUBLIC_DECRYPT',
@@ -58,7 +54,7 @@ export class RelayerV2Provider extends AbstractRelayerProvider {
 
   public override async fetchPostUserDecrypt(
     payload: RelayerUserDecryptPayload,
-    options?: RelayerUserDecryptOptions,
+    options?: RelayerUserDecryptOptionsType,
   ): Promise<RelayerUserDecryptResult> {
     const request = new RelayerV2AsyncRequest({
       relayerOperation: 'USER_DECRYPT',

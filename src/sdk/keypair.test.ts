@@ -56,7 +56,9 @@ describeIfFetchMock('token', () => {
     expect(eip712.domain.chainId).toBe(12345);
     expect(eip712.domain.name).toBe('Decryption');
     expect(eip712.domain.version).toBe('1');
-    expect(eip712.message.publicKey).toBe(`0x${keypair.publicKey}`);
+    expect((eip712.message as { publicKey: unknown }).publicKey).toBe(
+      `0x${keypair.publicKey}`,
+    );
     expect(eip712.primaryType).toBe('UserDecryptRequestVerification');
     expect(eip712.types.UserDecryptRequestVerification.length).toBe(5);
     expect(eip712.types.UserDecryptRequestVerification[0].name).toBe(
@@ -82,10 +84,12 @@ describeIfFetchMock('token', () => {
     expect(eip712.domain.chainId).toBe(12345);
     expect(eip712.domain.name).toBe('Decryption');
     expect(eip712.domain.version).toBe('1');
-    expect(eip712.message.publicKey).toBe(`0x${keypair.publicKey}`);
-    expect(eip712.message.delegatedAccount).toBe(
-      '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
+    expect((eip712.message as { publicKey: unknown }).publicKey).toBe(
+      `0x${keypair.publicKey}`,
     );
+    expect(
+      (eip712.message as { delegatedAccount: unknown }).delegatedAccount,
+    ).toBe('0xa5e1defb98EFe38EBb2D958CEe052410247F4c80');
     expect(eip712.primaryType).toBe('DelegatedUserDecryptRequestVerification');
 
     /*

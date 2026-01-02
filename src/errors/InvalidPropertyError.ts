@@ -1,4 +1,4 @@
-import {
+import type {
   BytesHexNo0xTypeName,
   BytesHexTypeName,
   BytesTypeName,

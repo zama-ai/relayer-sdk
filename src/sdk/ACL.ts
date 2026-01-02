@@ -45,7 +45,7 @@ export class ACL {
     if (!isChecksummedAddress(aclAddress)) {
       throw new ChecksummedAddressError({ address: aclAddress });
     }
-    if (!provider) {
+    if ((provider as unknown) === undefined || (provider as unknown) === null) {
       throw new ContractError({
         contractAddress: aclAddress,
         contractName: 'ACL',
@@ -86,9 +86,10 @@ export class ACL {
       }
     }
 
-    const results = await Promise.all(
-      handlesArray.map((h) => this.#contract['isAllowedForDecryption']!(h)),
-    );
+    const results: boolean[] = (await Promise.all(
+      // eslint-disable-next-line @typescript-eslint/dot-notation
+      handlesArray.map((h) => this.#contract['isAllowedForDecryption'](h)),
+    )) as unknown[] as boolean[];
 
     return isArray ? results : results[0];
   }
@@ -99,14 +100,6 @@ export class ACL {
    * @throws {FhevmHandleError} If checkArguments is true and any handle is not a valid Bytes32Hex
    * @throws {ACLPublicDecryptionError} If any handle is not allowed for public decryption
    */
-  public async checkAllowedForDecryption(
-    handles: Bytes32Hex[],
-    options?: { checkArguments?: boolean },
-  ): Promise<void>;
-  public async checkAllowedForDecryption(
-    handles: Bytes32Hex,
-    options?: { checkArguments?: boolean },
-  ): Promise<void>;
   public async checkAllowedForDecryption(
     handles: Bytes32Hex[] | Bytes32Hex,
     options: {
@@ -134,7 +127,10 @@ export class ACL {
    * @throws {ChecksummedAddressError} If checkArguments is true and any address is not a valid checksummed address
    */
   public async persistAllowed(
-    handleAddressPairs: { address: ChecksummedAddress; handle: Bytes32Hex }[],
+    handleAddressPairs: Array<{
+      address: ChecksummedAddress;
+      handle: Bytes32Hex;
+    }>,
     options?: { checkArguments?: boolean },
   ): Promise<boolean[]>;
   public async persistAllowed(
@@ -143,7 +139,7 @@ export class ACL {
   ): Promise<boolean>;
   public async persistAllowed(
     handleAddressPairs:
-      | { address: ChecksummedAddress; handle: Bytes32Hex }[]
+      | Array<{ address: ChecksummedAddress; handle: Bytes32Hex }>
       | { address: ChecksummedAddress; handle: Bytes32Hex },
     options: {
       checkArguments?: boolean;
@@ -163,11 +159,12 @@ export class ACL {
       }
     }
 
-    const results = await Promise.all(
+    const results = (await Promise.all(
       handleAddressPairsArray.map((p) =>
-        this.#contract['persistAllowed']!(p.handle, p.address),
+        // eslint-disable-next-line @typescript-eslint/dot-notation
+        this.#contract['persistAllowed'](p.handle, p.address),
       ),
-    );
+    )) as unknown[] as boolean[];
 
     return isArray ? results : results[0];
   }
@@ -189,29 +186,9 @@ export class ACL {
   public async checkUserAllowedForDecryption(
     params: {
       userAddress: ChecksummedAddress;
-      handleContractPairs: {
-        contractAddress: ChecksummedAddress;
-        handle: Bytes32Hex;
-      };
-    },
-    options?: { checkArguments?: boolean },
-  ): Promise<void>;
-  public async checkUserAllowedForDecryption(
-    params: {
-      userAddress: ChecksummedAddress;
-      handleContractPairs: {
-        contractAddress: ChecksummedAddress;
-        handle: Bytes32Hex;
-      }[];
-    },
-    options?: { checkArguments?: boolean },
-  ): Promise<void>;
-  public async checkUserAllowedForDecryption(
-    params: {
-      userAddress: ChecksummedAddress;
       handleContractPairs:
         | { contractAddress: ChecksummedAddress; handle: Bytes32Hex }
-        | { contractAddress: ChecksummedAddress; handle: Bytes32Hex }[];
+        | Array<{ contractAddress: ChecksummedAddress; handle: Bytes32Hex }>;
     },
     options: {
       checkArguments?: boolean;
@@ -241,7 +218,10 @@ export class ACL {
     }
 
     // Collect all unique (address, handle) pairs to avoid duplicate RPC calls
-    const allChecks: { address: ChecksummedAddress; handle: Bytes32Hex }[] = [];
+    const allChecks: Array<{
+      address: ChecksummedAddress;
+      handle: Bytes32Hex;
+    }> = [];
     const seenKeys = new Set<string>();
 
     for (const pair of pairsArray) {
@@ -274,7 +254,7 @@ export class ACL {
     // Verify user permissions
     for (const pair of pairsArray) {
       const userKey = `${params.userAddress.toLowerCase()}:${pair.handle}`;
-      if (!resultMap.get(userKey)) {
+      if (resultMap.get(userKey) !== true) {
         throw new ACLUserDecryptionError({
           contractAddress: this.#aclAddress,
           message: `User ${params.userAddress} is not authorized to user decrypt handle ${pair.handle}!`,
@@ -285,7 +265,7 @@ export class ACL {
     // Verify contract permissions
     for (const pair of pairsArray) {
       const contractKey = `${pair.contractAddress.toLowerCase()}:${pair.handle}`;
-      if (!resultMap.get(contractKey)) {
+      if (resultMap.get(contractKey) !== true) {
         throw new ACLUserDecryptionError({
           contractAddress: this.#aclAddress,
           message: `dapp contract ${pair.contractAddress} is not authorized to user decrypt handle ${pair.handle}!`,

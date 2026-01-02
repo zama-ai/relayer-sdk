@@ -26,7 +26,8 @@ export function isRecordNonNullableProperty<K extends string>(
   property: K,
 ): o is RecordNonNullablePropertyType<K> {
   if (
-    !o ||
+    o === undefined ||
+    o === null ||
     typeof o !== 'object' ||
     !(property in o) ||
     (o as Record<string, unknown>)[property] === undefined ||
@@ -170,10 +171,7 @@ export function assertRecordBooleanProperty<K extends string>(
   }
 }
 
-export function typeofProperty<K extends string>(
-  o: unknown,
-  property: K,
-): string {
+export function typeofProperty(o: unknown, property: string): string {
   if (isRecordNonNullableProperty(o, property)) {
     return typeof o[property];
   }

@@ -218,7 +218,7 @@ export class KmsEIP712 {
       const recoveredAddress = verifySignature({
         signature,
         domain: this.domain,
-        types: KmsEIP712.#types as any as Record<
+        types: KmsEIP712.#types as unknown as Record<
           string,
           EthersT.TypedDataField[]
         >,
@@ -239,7 +239,7 @@ export class KmsEIP712 {
       const recoveredAddress = verifySignature({
         signature,
         domain: this.domain,
-        types: KmsEIP712.#delegateTypes as any as Record<
+        types: KmsEIP712.#delegateTypes as unknown as Record<
           string,
           EthersT.TypedDataField[]
         >,

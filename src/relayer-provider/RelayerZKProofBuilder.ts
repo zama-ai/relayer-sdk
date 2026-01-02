@@ -1,4 +1,4 @@
-import type { RelayerInputProofOptions } from './types/public-api';
+import type { RelayerInputProofOptionsType } from './types/public-api';
 import type {
   Bytes,
   Bytes32,
@@ -6,9 +6,9 @@ import type {
   EncryptionBits,
   ZKProofType,
 } from '@base/types/primitives';
+import type { TFHEPkeParams } from '@sdk/lowlevel/TFHEPkeParams';
+import type { FhevmHostChainConfig } from '@sdk/fhevmHostChain';
 import { TFHEZKProofBuilder } from '@sdk/lowlevel/TFHEZKProofBuilder';
-import { TFHEPkeParams } from '@sdk/lowlevel/TFHEPkeParams';
-import { FhevmHostChainConfig } from '@sdk/fhevmHostChain';
 
 ////////////////////////////////////////////////////////////////////////////////
 // RelayerZKProofBuilder
@@ -19,10 +19,10 @@ export class RelayerZKProofBuilder {
   // Instance Properties
   //////////////////////////////////////////////////////////////////////////////
 
-  #builder: TFHEZKProofBuilder;
-  #config: FhevmHostChainConfig;
-  #contractAddress: ChecksummedAddress;
-  #userAddress: ChecksummedAddress;
+  readonly #builder: TFHEZKProofBuilder;
+  readonly #config: FhevmHostChainConfig;
+  readonly #contractAddress: ChecksummedAddress;
+  readonly #userAddress: ChecksummedAddress;
 
   //////////////////////////////////////////////////////////////////////////////
   // Constructor
@@ -110,8 +110,9 @@ export class RelayerZKProofBuilder {
   //////////////////////////////////////////////////////////////////////////////
 
   public async encrypt(
-    _options?: RelayerInputProofOptions,
+    _options?: RelayerInputProofOptionsType,
   ): Promise<{ handles: Bytes32[]; inputProof: Bytes }> {
+    await Promise.resolve();
     throw new Error('To be implemented');
   }
 }

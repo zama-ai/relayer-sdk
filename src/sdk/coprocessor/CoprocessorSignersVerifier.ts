@@ -79,12 +79,14 @@ export class CoprocessorSignersVerifier {
     );
 
     const res = await Promise.all([
+      // eslint-disable-next-line @typescript-eslint/dot-notation
       inputContract['getCoprocessorSigners'](),
+      // eslint-disable-next-line @typescript-eslint/dot-notation
       inputContract['getThreshold'](),
     ]);
 
-    const coprocessorSignersAddresses = res[0];
-    const threshold = res[1];
+    const coprocessorSignersAddresses = res[0] as ChecksummedAddress[];
+    const threshold = res[1] as number;
 
     return new CoprocessorSignersVerifier({
       ...params,

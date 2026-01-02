@@ -317,7 +317,6 @@ export function encryptionBitsFromFheTypeName(
   return bw;
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 function _assertMinimumEncryptionBitWidth(bw: number): void {
   if (bw < MINIMUM_ENCRYPTION_BIT_WIDTH) {
     throw new FheTypeError({

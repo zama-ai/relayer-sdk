@@ -68,14 +68,17 @@ export class InputVerifier {
     );
 
     const res = await Promise.all([
+      // eslint-disable-next-line @typescript-eslint/dot-notation
       contract['eip712Domain'](),
+      // eslint-disable-next-line @typescript-eslint/dot-notation
       contract['getThreshold'](),
+      // eslint-disable-next-line @typescript-eslint/dot-notation
       contract['getCoprocessorSigners'](),
     ]);
 
-    const eip712Domain = res[0];
-    const threshold = res[1];
-    const coprocessorSigners = res[2];
+    const eip712DomainArray = res[0] as unknown[];
+    const threshold = res[1] as unknown;
+    const coprocessorSigners = res[2] as unknown;
 
     if (!isUint8(threshold)) {
       throw new Error(`Invalid InputVerifier Coprocessor signers threshold.`);
@@ -89,16 +92,16 @@ export class InputVerifier {
       });
     }
 
-    const _eip712Domain = {
-      name: eip712Domain[1],
-      version: eip712Domain[2],
-      chainId: eip712Domain[3],
-      verifyingContract: eip712Domain[4],
+    const eip712Domain = {
+      name: eip712DomainArray[1],
+      version: eip712DomainArray[2],
+      chainId: eip712DomainArray[3],
+      verifyingContract: eip712DomainArray[4],
     };
 
     try {
       assertCoprocessorEIP712DomainType(
-        _eip712Domain,
+        eip712Domain,
         'InputVerifier.eip712Domain()',
       );
     } catch (e) {
@@ -107,7 +110,7 @@ export class InputVerifier {
 
     const inputVerifier = new InputVerifier({
       address: params.inputVerifierContractAddress,
-      eip712Domain: _eip712Domain,
+      eip712Domain: eip712Domain,
       threshold: Number(threshold),
       coprocessorSigners,
     });

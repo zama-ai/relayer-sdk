@@ -3,7 +3,7 @@ import { TFHEPublicKey } from './TFHEPublicKey';
 import { tfhePublicKeyBytes, tfhePublicKeyBytesWithSrcUrl } from '../../test';
 import { TEST_CONFIG } from '../../test/config';
 import { TFHEError } from '../../errors/TFHEError';
-import { assertIsTFHEPublicKeyBytesType } from '../../types/relayer.guards';
+import { assertIsTFHEPublicKeyBytesType } from './guards';
 
 ////////////////////////////////////////////////////////////////////////////////
 //

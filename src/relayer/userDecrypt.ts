@@ -1,6 +1,6 @@
 import type {
   HandleContractPairRelayer,
-  RelayerUserDecryptOptions,
+  RelayerUserDecryptOptionsType,
   RelayerUserDecryptPayload,
 } from '@relayer-provider/types/public-api';
 import type { BytesHex } from '@base/types/primitives';
@@ -114,7 +114,7 @@ export const userDecryptRequest =
     userAddress: string,
     startTimestamp: string | number,
     durationDays: string | number,
-    options?: RelayerUserDecryptOptions,
+    options?: RelayerUserDecryptOptionsType,
   ): Promise<UserDecryptResults> => {
     const extraData: BytesHex = '0x00';
     let pubKey;

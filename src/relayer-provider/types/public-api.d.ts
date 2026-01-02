@@ -1,10 +1,37 @@
-import { Prettify } from '@base/types/utils';
 import type {
   Bytes32Hex,
   BytesHex,
   BytesHexNo0x,
+  EncryptionBits,
 } from '@base/types/primitives';
+import type { Prettify } from '@base/types/utils';
 import type { FhevmInstanceOptions } from '../../types/relayer';
+
+////////////////////////////////////////////////////////////////////////////////
+
+export type RelayerEncryptedInput = {
+  addBool: (value: boolean | number | bigint) => RelayerEncryptedInput;
+  add8: (value: number | bigint) => RelayerEncryptedInput;
+  add16: (value: number | bigint) => RelayerEncryptedInput;
+  add32: (value: number | bigint) => RelayerEncryptedInput;
+  add64: (value: number | bigint) => RelayerEncryptedInput;
+  add128: (value: number | bigint) => RelayerEncryptedInput;
+  add256: (value: number | bigint) => RelayerEncryptedInput;
+  addAddress: (value: string) => RelayerEncryptedInput;
+  getBits: () => EncryptionBits[];
+  generateZKProof(): {
+    readonly chainId: bigint;
+    readonly aclContractAddress: `0x${string}`;
+    readonly contractAddress: `0x${string}`;
+    readonly userAddress: `0x${string}`;
+    readonly ciphertextWithZKProof: Uint8Array | string;
+    readonly encryptionBits: readonly EncryptionBits[];
+  };
+  encrypt: (options?: RelayerInputProofOptionsType) => Promise<{
+    handles: Uint8Array[];
+    inputProof: Uint8Array;
+  }>;
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -25,7 +52,7 @@ export type RelayerPostOperationResult =
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export type RelayerInputProofOptions = Prettify<
+export type RelayerInputProofOptionsType = Prettify<
   FhevmInstanceOptions & {
     signal?: AbortSignal;
     timeout?: number;
@@ -33,7 +60,7 @@ export type RelayerInputProofOptions = Prettify<
   }
 >;
 
-export type RelayerUserDecryptOptions = Prettify<
+export type RelayerUserDecryptOptionsType = Prettify<
   FhevmInstanceOptions & {
     signal?: AbortSignal;
     timeout?: number;
@@ -41,7 +68,7 @@ export type RelayerUserDecryptOptions = Prettify<
   }
 >;
 
-export type RelayerPublicDecryptOptions = Prettify<
+export type RelayerPublicDecryptOptionsType = Prettify<
   FhevmInstanceOptions & {
     signal?: AbortSignal;
     timeout?: number;
@@ -159,7 +186,7 @@ export type RelayerProgressAbortType<O extends RelayerPostOperation> = Prettify<
 
 // https://github.com/zama-ai/fhevm-relayer/blob/96151ef300f787658c5fbaf1b4471263160032d5/src/http/public_decrypt_http_listener.rs#L19
 export type RelayerPublicDecryptPayload = {
-  ciphertextHandles: `0x${string}`[];
+  ciphertextHandles: Array<`0x${string}`>;
   // Hex encoded bytes with 0x prefix. Default: 0x00
   extraData: `0x${string}`;
 };
@@ -198,7 +225,7 @@ export type RelayerUserDecryptPayload = {
   // Number as a string
   contractsChainId: string;
   // List of hex encoded addresses with 0x prefix
-  contractAddresses: `0x${string}`[];
+  contractAddresses: Array<`0x${string}`>;
   // Hex encoded address with 0x prefix.
   userAddress: `0x${string}`;
   // Hex encoded signature without 0x prefix.
@@ -228,11 +255,11 @@ export type RelayerPublicDecryptResult = {
  *   }
  * ]
  */
-export type RelayerUserDecryptResult = {
+export type RelayerUserDecryptResult = Array<{
   payload: BytesHexNo0x;
   signature: BytesHexNo0x;
   //extraData: BytesHex;
-}[];
+}>;
 
 export type RelayerInputProofResult = {
   // Ordered List of hex encoded handles with 0x prefix.
@@ -255,7 +282,7 @@ export type RelayerApiErrorType =
 export type RelayerApiError404Type = {
   label: 'not_found';
   message: string;
-  details: Array<RelayerErrorDetailType>;
+  details: RelayerErrorDetailType[];
 };
 
 export type RelayerApiError500Type = {
@@ -289,7 +316,7 @@ export type RelayerApiError400NoDetailsType = {
 export type RelayerApiError400WithDetailsType = {
   label: 'missing_fields' | 'validation_failed';
   message: string;
-  details: Array<RelayerErrorDetailType>;
+  details: RelayerErrorDetailType[];
 };
 
 export type RelayerErrorDetailType = {

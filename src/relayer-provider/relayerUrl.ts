@@ -17,7 +17,11 @@ export function parseRelayerUrl(
   relayerUrl: unknown,
   fallbackVersion: 1 | 2,
 ): { url: string; version: 1 | 2 } | null {
-  if (!relayerUrl || typeof relayerUrl !== 'string') {
+  if (
+    relayerUrl === undefined ||
+    relayerUrl === null ||
+    typeof relayerUrl !== 'string'
+  ) {
     return null;
   }
 
@@ -40,6 +44,7 @@ export function parseRelayerUrl(
     };
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   if (fallbackVersion !== 1 && fallbackVersion !== 2) {
     return null;
   }

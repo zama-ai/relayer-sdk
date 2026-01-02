@@ -11,6 +11,13 @@
     "forceConsistentCasingInFileNames": true,
     "verbatimModuleSyntax": false,
     "allowUnusedLabels": false,
-    "allowUnreachableCode": false
+    "allowUnreachableCode": false,
+    "baseUrl": ".",
+    "paths": {
+      "@base/*": ["./src/base/*"],
+      "@sdk/*": ["./src/sdk/*"],
+      "@relayer-provider/*": ["./src/relayer-provider/*"],
+      "*": ["*"]
+    }
   }
 }

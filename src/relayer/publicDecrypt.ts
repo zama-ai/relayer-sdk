@@ -1,5 +1,5 @@
 import type {
-  RelayerPublicDecryptOptions,
+  RelayerPublicDecryptOptionsType,
   RelayerPublicDecryptPayload,
   RelayerPublicDecryptResult,
 } from '@relayer-provider/types/public-api';
@@ -200,7 +200,7 @@ export const publicDecryptRequest =
   ) =>
   async (
     _handles: (Uint8Array | string)[],
-    options?: RelayerPublicDecryptOptions,
+    options?: RelayerPublicDecryptOptionsType,
   ): Promise<PublicDecryptResults> => {
     const extraData: `0x${string}` = '0x00';
     const acl = new ethers.Contract(aclContractAddress, aclABI, provider);

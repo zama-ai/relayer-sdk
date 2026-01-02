@@ -7,17 +7,8 @@
     "module": "commonjs",
     "esModuleInterop": true,
     "allowJs": true,
-    "resolveJsonModule": true,
-    "baseUrl": ".",
-    "paths": {
-      "@base/*": ["../base/*"]
-    }
+    "resolveJsonModule": true
   },
-  "include": [
-    "./**/*.ts",
-    "./**/*.d.ts",
-    "./../base/**/*.ts",
-    "./../base/**/*.d.ts"
-  ],
-  "exclude": ["**/*.test.ts", "./../base/**/*.test.ts"]
+  "include": ["./**/*.ts", "./**/*.d.ts"],
+  "exclude": ["**/*.test.ts"]
 }

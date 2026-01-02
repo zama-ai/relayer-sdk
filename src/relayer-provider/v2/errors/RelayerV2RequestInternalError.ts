@@ -12,7 +12,8 @@ export type RelayerV2InternalRequestErrorType =
   };
 
 export type RelayerV2InternalRequestErrorParams = Prettify<
-  Omit<RelayerV2RequestErrorBaseParams, 'name'> & {
+  Omit<RelayerV2RequestErrorBaseParams, 'name' | 'message'> & {
+    message?: string;
     status?: number;
     state?: string;
   }

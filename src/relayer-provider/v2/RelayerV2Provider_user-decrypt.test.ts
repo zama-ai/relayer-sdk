@@ -23,7 +23,7 @@ import type {
   BytesHex,
   ChecksummedAddress,
 } from '../../base/types/primitives';
-import type { RelayerUserDecryptPayload } from '../../relayer-provider/types/public-api';
+import type { RelayerUserDecryptPayload } from '../types/public-api';
 import type { FhevmInstanceConfig } from '../../types/relayer';
 
 // Jest Command line

@@ -9,6 +9,19 @@
   "bin": {
     "relayer": "bin/relayer.js"
   },
+  "files": [
+    "bin",
+    "bundle",
+    "lib",
+    "LICENCE",
+    "README.md",
+    "bundle.d.ts",
+    "bundle.js",
+    "node.d.ts",
+    "node.js",
+    "web.d.ts",
+    "web.js"
+  ],
   "exports": {
     "./web": {
       "types": "./lib/web.d.ts",

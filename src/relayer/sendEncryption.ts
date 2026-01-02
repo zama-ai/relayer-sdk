@@ -1,6 +1,6 @@
-import type { RelayerProviderFetchOptions } from '@relayer-provider/AbstractRelayerProvider';
 import type {
-  RelayerInputProofOptions,
+  RelayerEncryptedInput,
+  RelayerInputProofOptionsType,
   RelayerInputProofPayload,
   RelayerInputProofResult,
 } from '@relayer-provider/types/public-api';
@@ -47,7 +47,7 @@ export async function requestCiphertextWithZKProofVerification({
   coprocessorSignersVerifier: CoprocessorSignersVerifier;
   relayerProvider: AbstractRelayerProvider;
   extraData: BytesHex;
-  options?: FhevmInstanceOptions & RelayerProviderFetchOptions<any>;
+  options?: RelayerInputProofOptionsType;
 }) {
   const fhevmHandles: FhevmHandle[] = FhevmHandle.fromZKProof(
     zkProof,
@@ -152,23 +152,6 @@ export type RelayerEncryptedInputInternal = RelayerEncryptedInput & {
   _input: EncryptedInput;
 };
 
-export type RelayerEncryptedInput = {
-  addBool: (value: boolean | number | bigint) => RelayerEncryptedInput;
-  add8: (value: number | bigint) => RelayerEncryptedInput;
-  add16: (value: number | bigint) => RelayerEncryptedInput;
-  add32: (value: number | bigint) => RelayerEncryptedInput;
-  add64: (value: number | bigint) => RelayerEncryptedInput;
-  add128: (value: number | bigint) => RelayerEncryptedInput;
-  add256: (value: number | bigint) => RelayerEncryptedInput;
-  addAddress: (value: string) => RelayerEncryptedInput;
-  getBits: () => EncryptionBits[];
-  generateZKProof(): ZKProofType;
-  encrypt: (options?: RelayerInputProofOptions) => Promise<{
-    handles: Uint8Array[];
-    inputProof: Uint8Array;
-  }>;
-};
-
 export const createRelayerEncryptedInput =
   ({
     aclContractAddress,
@@ -264,7 +247,7 @@ export const createRelayerEncryptedInput =
           encryptionBits: input.getBits(),
         });
       },
-      encrypt: async (options?: RelayerInputProofOptions) => {
+      encrypt: async (options?: RelayerInputProofOptionsType) => {
         const extraData: `0x${string}` = '0x00';
 
         const ciphertext = input.encrypt();

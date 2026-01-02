@@ -11,7 +11,7 @@ import type {
   RelayerUserDecryptResult,
 } from '../types/public-api';
 import type { BytesHex } from '@base/types/primitives';
-import { Flavor, NonEmptyExtract, Prettify } from '@base/types/utils';
+import type { Flavor, NonEmptyExtract, Prettify } from '@base/types/utils';
 
 // RelayerV2<Response|GetResponse|PostResponse><QueuedOrFailed|Succeeded>
 

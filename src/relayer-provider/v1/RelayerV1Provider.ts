@@ -17,11 +17,7 @@ import {
 } from '../AbstractRelayerProvider';
 
 export class RelayerV1Provider extends AbstractRelayerProvider {
-  constructor(relayerUrl: string) {
-    super(relayerUrl);
-  }
-
-  public get version(): number {
+  public override get version(): number {
     return 1;
   }
 
@@ -59,12 +55,15 @@ export class RelayerV1Provider extends AbstractRelayerProvider {
     payload: RelayerPublicDecryptPayload,
     options?: FhevmInstanceOptions,
   ): Promise<RelayerPublicDecryptResult> {
-    const json = await fetchRelayerV1Post(
+    const json = (await fetchRelayerV1Post(
       'PUBLIC_DECRYPT',
       this.publicDecrypt,
       payload,
       options,
-    );
+    )) as {
+      response: Array<{ signatures: unknown; decrypted_value: unknown }>;
+    };
+
     const response = json.response[0];
     const result = {
       signatures: response.signatures as BytesHexNo0x[],

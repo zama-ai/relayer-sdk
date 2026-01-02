@@ -147,7 +147,7 @@ export class FhevmHostChainConfig {
     _checkChainIdArg(gatewayChainId, 'gateway chain ID');
 
     let hostNetworkConfig: FhevmHostChainNetworkConfigType;
-    if (network === undefined) {
+    if ((network as unknown) === undefined) {
       throw new FhevmConfigError({ message: 'Missing network' });
     }
 

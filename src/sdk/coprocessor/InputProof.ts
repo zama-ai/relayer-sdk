@@ -204,8 +204,8 @@ export class InputProof {
       const start = handlesStart + i * HANDLE_SIZE;
       const end = start + HANDLE_SIZE;
       const handleBytes = proofBytes.slice(start, end);
-      const handleHex = bytesToHex(handleBytes) as Bytes32Hex;
-      handles.push(handleHex);
+      const handleBytes32Hex = bytesToHex(handleBytes);
+      handles.push(handleBytes32Hex);
     }
 
     // Extract signatures
@@ -214,8 +214,8 @@ export class InputProof {
       const start = signaturesStart + i * SIGNATURE_SIZE;
       const end = start + SIGNATURE_SIZE;
       const signatureBytes = proofBytes.slice(start, end);
-      const signatureHex = bytesToHex(signatureBytes) as Bytes65Hex;
-      signatures.push(signatureHex);
+      const signatureBytes65Hex = bytesToHex(signatureBytes);
+      signatures.push(signatureBytes65Hex);
     }
 
     // Extract extra data

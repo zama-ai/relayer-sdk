@@ -3,7 +3,7 @@ import {
   assertRecordBytesHexNo0xProperty,
   assertRecordBytesHexProperty,
 } from '@base/bytes';
-import { RelayerPublicDecryptResult } from '../../types/public-api';
+import type { RelayerPublicDecryptResult } from '../../types/public-api';
 
 export function assertIsRelayerV2ResultPublicDecrypt(
   value: unknown,

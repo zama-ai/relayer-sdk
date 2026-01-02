@@ -6,7 +6,7 @@ import {
   assertRecordStringArrayProperty,
   assertRecordStringProperty,
 } from '@base/string';
-import {
+import type {
   RelayerGetResponseKeyUrlCamelCase,
   RelayerGetResponseKeyUrlSnakeCase,
   RelayerKeyDataCamelCase,
@@ -134,7 +134,7 @@ function _assertIsRelayerKeyData(
   value: unknown,
   name: string,
   dataIdName: 'data_id' | 'dataId',
-) {
+): void {
   assertRecordStringProperty(value, dataIdName, name);
   assertRecordStringArrayProperty(value, 'urls', name);
 }
@@ -144,7 +144,7 @@ function _assertIsRelayerKeyData(
 function _toRelayerGetResponseKeyUrlSnakeCase(
   response: RelayerGetResponseKeyUrlCamelCase,
 ): RelayerGetResponseKeyUrlSnakeCase {
-  const fheKeyInfoSnakeCase: Array<RelayerKeyInfoSnakeCase> =
+  const fheKeyInfoSnakeCase: RelayerKeyInfoSnakeCase[] =
     response.response.fheKeyInfo.map((infoCamelCase) => ({
       fhe_public_key: {
         data_id: infoCamelCase.fhePublicKey.dataId,

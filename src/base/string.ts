@@ -12,7 +12,7 @@ import { InternalError } from '../errors/InternalError';
 import { InvalidPropertyError } from '../errors/InvalidPropertyError';
 
 export function removeSuffix(s: string | undefined, suffix: string): string {
-  if (!s) {
+  if (s === undefined) {
     return '';
   }
   if (suffix.length === 0) {
@@ -98,7 +98,7 @@ export function assertRecordStringProperty<K extends string>(
   o: unknown,
   property: K,
   objName: string,
-  expectedValue?: string | string[] | undefined,
+  expectedValue?: string | string[],
 ): asserts o is RecordStringPropertyType<K> {
   if (!isRecordStringProperty(o, property)) {
     throw new InvalidPropertyError({
@@ -190,14 +190,11 @@ export function assertRecordTimestampProperty<K extends string>(
   }
 }
 
-export function safeJSONstringify(
-  o: unknown,
-  space?: string | number | undefined,
-): string {
+export function safeJSONstringify(o: unknown, space?: string | number): string {
   try {
     return JSON.stringify(
       o,
-      (_, v) => (typeof v === 'bigint' ? v.toString() : v),
+      (_, v: unknown) => (typeof v === 'bigint' ? v.toString() : v),
       space,
     );
   } catch {

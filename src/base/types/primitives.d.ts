@@ -1,15 +1,56 @@
 import type { Prettify } from './utils';
 
+/**
+ * Unsigned integer represented as a JavaScript number.
+ *
+ * Note: JavaScript numbers are 64-bit floats, so this is only safe for
+ * integers up to Number.MAX_SAFE_INTEGER (2^53 - 1).
+ */
 export type UintNumber = number;
+
+/**
+ * Unsigned integer represented as a JavaScript bigint.
+ */
 export type UintBigInt = bigint;
+
+/**
+ * Unsigned integer represented as a JavaScript number or bigint.
+ */
 export type Uint = UintNumber | UintBigInt;
+
+/**
+ * 8-bits Unsigned integer.
+ */
 export type Uint8 = UintNumber | UintBigInt;
+
+/**
+ * 16-bits Unsigned integer.
+ */
 export type Uint16 = UintNumber | UintBigInt;
+
+/**
+ * 32-bits Unsigned integer.
+ */
 export type Uint32 = UintNumber | UintBigInt;
+
+/**
+ * 64-bits Unsigned integer.
+ */
 export type Uint64 = UintNumber | UintBigInt;
+
+/**
+ * 128-bits Unsigned integer.
+ */
 export type Uint128 = UintNumber | UintBigInt;
+
+/**
+ * 256-bits Unsigned integer.
+ */
 export type Uint256 = UintNumber | UintBigInt;
 
+/**
+ * String literal union of unsigned integer type names.
+ */
 export type UintTypeName =
   | 'Uint'
   | 'Uint8'
@@ -19,9 +60,16 @@ export type UintTypeName =
   | 'Uint128'
   | 'Uint256';
 
+/**
+ * 64-bits Unsigned integer represented as a JavaScript bigint.
+ */
 export type Uint64BigInt = UintBigInt;
 
-// length is odd or even
+/**
+ * A 0x-prefixed hexadecimal string.
+ *
+ * Unlike `BytesHex`, the length can be odd or even (e.g., `0x1` or `0x01` are both valid).
+ */
 export type Hex = `0x${string}`;
 
 export type Bytes = Uint8Array;
@@ -29,17 +77,51 @@ export type Bytes8 = Uint8Array;
 export type Bytes32 = Uint8Array;
 export type Bytes65 = Uint8Array;
 
-// Bytes??Hex length is even
+/**
+ * A 0x-prefixed hexadecimal string representing byte data.
+ *
+ * The length must be even (excluding the `0x` prefix) since each byte is
+ * represented by two hex characters. Use `Hex` if odd-length strings are acceptable.
+ *
+ * @example
+ * const data: BytesHex = '0x48656c6c6f'; // "Hello" in hex
+ */
 export type BytesHex = `0x${string}`;
+
+/**
+ * A hexadecimal string representing byte data without the `0x` prefix.
+ * @see {@link BytesHex}
+ */
 export type BytesHexNo0x = string;
 
+/**
+ * A 0x-prefixed hexadecimal string representing exactly 21 bytes (44 characters - inluding the prefix).
+ */
 export type Bytes21Hex = `0x${string}`;
+
+/**
+ * A hexadecimal string representing exactly 21 bytes without the `0x` prefix (42 characters).
+ */
 export type Bytes21HexNo0x = string;
 
+/**
+ * A 0x-prefixed hexadecimal string representing exactly 32 bytes (66 characters - inluding the prefix).
+ */
 export type Bytes32Hex = `0x${string}`;
+
+/**
+ * A hexadecimal string representing exactly 32 bytes without the `0x` prefix (64 characters).
+ */
 export type Bytes32HexNo0x = string;
 
+/**
+ * A 0x-prefixed hexadecimal string representing exactly 65 bytes (132 characters - inluding the prefix).
+ */
 export type Bytes65Hex = `0x${string}`;
+
+/**
+ * A hexadecimal string representing exactly 65 bytes without the `0x` prefix (130 characters).
+ */
 export type Bytes65HexNo0x = string;
 
 export type BytesTypeName = 'Bytes' | 'Bytes8' | 'Bytes32' | 'Bytes65';
@@ -77,7 +159,6 @@ export type ChecksummedAddress = `0x${string}`;
  * | 160  | 7         | `eaddress`      | Used for encrypted Ethereum addresses. |
  * | 256  | 8         | `euint256`      | The maximum supported integer size. |
  */
-
 export type FheTypeName = Prettify<keyof FheTypeNameToIdMap>;
 export type FheTypeId = Prettify<keyof FheTypeIdToNameMap>;
 export type FheTypeEncryptionBitwidth = Prettify<
@@ -110,6 +191,9 @@ export interface FheTypeIdToNameMap {
 
 export type SolidityPrimitiveTypeName = 'bool' | 'uint256' | 'address';
 
+/**
+ * Bitwidth to FheTypeId
+ */
 export interface FheTypeEncryptionBitwidthToIdMap {
   2: FheTypeNameToIdMap['ebool'];
   // ??: FheTypeNameToIdMap['euint4'];
@@ -122,7 +206,9 @@ export interface FheTypeEncryptionBitwidthToIdMap {
   256: FheTypeNameToIdMap['euint256'];
 }
 
-// Invert FheTypeEncryptionBitwidthToIdMap to get FheTypeId -> Bitwidth
+/**
+ * FheTypeId to Bitwidth
+ */
 export type FheTypeIdToEncryptionBitwidthMap = {
   [K in keyof FheTypeEncryptionBitwidthToIdMap as FheTypeEncryptionBitwidthToIdMap[K]]: K;
 };
