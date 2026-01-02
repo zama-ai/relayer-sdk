@@ -1,8 +1,8 @@
 import fetchMock from 'fetch-mock';
-import { TEST_CONFIG } from '../test/config';
+import { TEST_CONFIG, getTestProvider } from '../test/config';
 import { InputVerifier } from './InputVerifier';
 import { JsonRpcProvider } from 'ethers';
-import { ChecksummedAddress } from '../types/primitives';
+import type { ChecksummedAddress } from '../base/types/primitives';
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -259,7 +259,7 @@ describe('InputVerfier', () => {
     let inputVerifier: InputVerifier;
 
     beforeAll(async () => {
-      const provider = new JsonRpcProvider(
+      const provider = getTestProvider(
         TEST_CONFIG.v2.fhevmInstanceConfig.network,
       );
 
@@ -326,7 +326,7 @@ describe('InputVerfier', () => {
     let inputVerifier: InputVerifier;
 
     beforeAll(async () => {
-      const provider = new JsonRpcProvider(
+      const provider = getTestProvider(
         TEST_CONFIG.v2.fhevmInstanceConfig.network,
       );
 

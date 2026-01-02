@@ -1,8 +1,8 @@
-import type { Prettify } from '../../../utils/types';
+import type { Prettify } from '@base/types/utils';
 import type { RelayerErrorBaseParams } from '../../../errors/RelayerErrorBase';
 import type { RelayerV2ResponseErrorBaseParams } from './RelayerV2ResponseErrorBase';
+import type { InvalidPropertyError } from '../../../errors/InvalidPropertyError';
 import { RelayerV2ResponseErrorBase } from './RelayerV2ResponseErrorBase';
-import { InvalidPropertyError } from '../../../errors/InvalidPropertyError';
 import { ensureError } from '../../../errors/utils';
 
 ////////////////////////////////////////////////////////////////////////////////

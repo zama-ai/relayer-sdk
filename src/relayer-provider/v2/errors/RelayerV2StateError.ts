@@ -9,6 +9,7 @@ export type RelayerV2StateErrorType = RelayerErrorBase & {
   name: 'RelayerV2StateError';
 };
 
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type RelayerV2StateErrorParams = {
   state: RelayerV2AsyncRequestState;
   message: string;
@@ -26,7 +27,7 @@ export class RelayerV2StateError extends RelayerErrorBase {
     Object.freeze(this._state);
   }
 
-  public get state() {
+  public get state(): RelayerV2AsyncRequestState {
     return this._state;
   }
 }

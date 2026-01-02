@@ -1,4 +1,4 @@
-import type { RelayerGetResponseKeyUrlSnakeCase } from '../relayer-provider/common-types';
+import type { RelayerGetResponseKeyUrlSnakeCase } from '../relayer-provider/types/private';
 import { getKeysFromRelayer } from './network';
 import { tfheCompactPkeCrsBytes, tfheCompactPublicKeyBytes } from '../test';
 import { SERIALIZED_SIZE_LIMIT_PK } from '../sdk/lowlevel/constants';

@@ -1,5 +1,5 @@
-import type { BytesHex, ChecksummedAddress } from '../../types/primitives';
-import type { Prettify } from '../../utils/types';
+import type { BytesHex, ChecksummedAddress } from '@base/types/primitives';
+import type { Prettify } from '@base/types/utils';
 
 ////////////////////////////////////////////////////////////////////////////////
 // KmsEIP712 Types

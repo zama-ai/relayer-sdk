@@ -1,15 +1,19 @@
-import type { TFHEPkeUrlsType } from '../sdk/lowlevel/types';
-import type { BytesHex } from '../types/primitives';
+import type { TFHEPkeUrlsType } from '@sdk/lowlevel/types';
+import type { BytesHex } from '@base/types/primitives';
+import type { RelayerGetResponseKeyUrlSnakeCase } from './types/private';
+import type { ZKProof } from '@sdk/ZKProof';
 import type {
-  FhevmInstanceOptions,
   RelayerGetOperation,
+  RelayerInputProofOptionsType,
   RelayerInputProofPayload,
   RelayerInputProofResult,
+  RelayerPublicDecryptOptionsType,
   RelayerPublicDecryptPayload,
   RelayerPublicDecryptResult,
+  RelayerUserDecryptOptionsType,
   RelayerUserDecryptPayload,
   RelayerUserDecryptResult,
-} from '../types/relayer';
+} from './types/public-api';
 import { sdkName, version } from '../_version';
 import {
   assertRecordBytes32HexArrayProperty,
@@ -18,8 +22,8 @@ import {
   assertRecordBytesHexNo0xProperty,
   assertRecordBytesHexProperty,
   bytesToHexNo0x,
-} from '../utils/bytes';
-import { assertRecordStringProperty } from '../utils/string';
+} from '@base/bytes';
+import { assertRecordStringProperty } from '@base/string';
 import { ensureError } from '../errors/utils';
 import { InternalError } from '../errors/InternalError';
 import { InvalidPropertyError } from '../errors/InvalidPropertyError';
@@ -30,21 +34,13 @@ import {
   throwRelayerUnexpectedJSONError,
   throwRelayerUnknownError,
 } from '../relayer/error';
-import { TFHEPkeParams } from '../sdk/lowlevel/TFHEPkeParams';
+import { TFHEPkeParams } from '@sdk/lowlevel/TFHEPkeParams';
 import {
   assertIsRelayerGetResponseKeyUrlCamelCase,
   assertIsRelayerGetResponseKeyUrlSnakeCase,
   toRelayerGetResponseKeyUrlSnakeCase,
 } from './AbstractRelayerGetResponseKeyUrl';
-import { RelayerGetResponseKeyUrlSnakeCase } from './common-types';
-import { ZKProof } from '../sdk/ZKProof';
-import { uintToHex } from '../utils/uint';
-
-export type RelayerProviderFetchOptions<T> = {
-  timeout?: number;
-  signal?: AbortSignal;
-  onProgress?: (args: T) => void;
-};
+import { uintToHex } from '@base/uint';
 
 export abstract class AbstractRelayerProvider {
   private readonly _relayerUrl: string;
@@ -84,13 +80,13 @@ export abstract class AbstractRelayerProvider {
       throw new Error(`Invalid relayer key url response`);
     }
 
-    const pub_key_0 = responseSnakeCase.response.fhe_key_info[0].fhe_public_key;
-    const tfheCompactPublicKeyId = pub_key_0.data_id;
-    const tfheCompactPublicKeyUrl = pub_key_0.urls[0];
+    const pubKey0 = responseSnakeCase.response.fhe_key_info[0].fhe_public_key;
+    const tfheCompactPublicKeyId = pubKey0.data_id;
+    const tfheCompactPublicKeyUrl = pubKey0.urls[0];
 
-    const crs_2048 = responseSnakeCase.response.crs['2048'];
-    const compactPkeCrs2048Id = crs_2048.data_id;
-    const compactPkeCrs2048Url = crs_2048.urls[0];
+    const crs2048 = responseSnakeCase.response.crs['2048'];
+    const compactPkeCrs2048Id = crs2048.data_id;
+    const compactPkeCrs2048Url = crs2048.urls[0];
 
     return {
       publicKeyUrl: {
@@ -151,7 +147,7 @@ export abstract class AbstractRelayerProvider {
 
   public fetchPostInputProofWithZKProof(
     params: { zkProof: ZKProof; extraData: BytesHex },
-    options?: FhevmInstanceOptions & RelayerProviderFetchOptions<any>,
+    options?: RelayerInputProofOptionsType,
   ): Promise<RelayerInputProofResult> {
     return this.fetchPostInputProof(
       {
@@ -169,33 +165,33 @@ export abstract class AbstractRelayerProvider {
 
   public abstract fetchPostInputProof(
     payload: RelayerInputProofPayload,
-    options?: FhevmInstanceOptions & RelayerProviderFetchOptions<any>,
+    options?: RelayerInputProofOptionsType,
   ): Promise<RelayerInputProofResult>;
 
   public abstract fetchPostPublicDecrypt(
     payload: RelayerPublicDecryptPayload,
-    options?: FhevmInstanceOptions & RelayerProviderFetchOptions<any>,
+    options?: RelayerPublicDecryptOptionsType,
   ): Promise<RelayerPublicDecryptResult>;
 
   public abstract fetchPostUserDecrypt(
     payload: RelayerUserDecryptPayload,
-    options?: FhevmInstanceOptions & RelayerProviderFetchOptions<any>,
+    options?: RelayerUserDecryptOptionsType,
   ): Promise<RelayerUserDecryptResult>;
 
   private static async _fetchRelayerGet(
     relayerOperation: RelayerGetOperation,
     url: string,
-  ): Promise<{ response: any }> {
+  ): Promise<{ response: unknown }> {
     const init = {
       method: 'GET',
       headers: {
-        'ZAMA-SDK-VERSION': `${version}`,
-        'ZAMA-SDK-NAME': `${sdkName}`,
+        'ZAMA-SDK-VERSION': version,
+        'ZAMA-SDK-NAME': sdkName,
       },
     } satisfies RequestInit;
 
     let response: Response;
-    let json: { response: any };
+    let json: { response: unknown };
     try {
       response = await fetch(url, init);
     } catch (e) {
@@ -208,7 +204,7 @@ export abstract class AbstractRelayerProvider {
 
     let parsed;
     try {
-      parsed = await response.json();
+      parsed = (await response.json()) as unknown;
     } catch (e) {
       throwRelayerJSONError(relayerOperation, e, response);
     }
@@ -260,9 +256,9 @@ export function assertIsRelayerUserDecryptResult(
 }
 
 function _assertIsRelayerFetchResponseJson(
-  json: any,
-): asserts json is { response: any } {
-  if (!json || typeof json !== 'object') {
+  json: unknown,
+): asserts json is { response: unknown } {
+  if (json === undefined || json === null || typeof json !== 'object') {
     throw new Error('Unexpected response JSON.');
   }
   if (

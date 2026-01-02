@@ -1,27 +1,27 @@
-import type { RelayerProviderFetchOptions } from '../relayer-provider/AbstractRelayerProvider';
-import type { RelayerV2InputProofOptions } from '../relayer-provider/v2/types/types';
-import type { EncryptedInput } from '../sdk/encrypt';
+import type {
+  RelayerEncryptedInput,
+  RelayerInputProofOptionsType,
+  RelayerInputProofPayload,
+  RelayerInputProofResult,
+} from '@relayer-provider/types/public-api';
+import type { EncryptedInput } from '@sdk/encrypt';
 import type { TFHEType } from '../tfheType';
 import type {
   BytesHex,
   ChecksummedAddress,
   EncryptionBits,
   ZKProofType,
-} from '../types/primitives';
-import type {
-  FhevmInstanceOptions,
-  RelayerInputProofPayload,
-  RelayerInputProofResult,
-} from '../types/relayer';
+} from '@base/types/primitives';
+import type { FhevmInstanceOptions } from '../types/relayer';
 import { ethers, getAddress as ethersGetAddress } from 'ethers';
-import { isChecksummedAddress } from '../utils/address';
-import { bytesToHexNo0x, hexToBytes } from '../utils/bytes';
-import { numberToBytesHexNo0x } from '../utils/uint';
-import { AbstractRelayerProvider } from '../relayer-provider/AbstractRelayerProvider';
-import { createEncryptedInput } from '../sdk/encrypt';
-import { FhevmHandle } from '../sdk/FhevmHandle';
-import { ZKProof } from '../sdk/ZKProof';
-import { CoprocessorSignersVerifier } from '../sdk/coprocessor/CoprocessorSignersVerifier';
+import { isChecksummedAddress } from '@base/address';
+import { bytesToHexNo0x, hexToBytes } from '@base/bytes';
+import { numberToBytesHexNo0x } from '@base/uint';
+import { AbstractRelayerProvider } from '@relayer-provider/AbstractRelayerProvider';
+import { createEncryptedInput } from '@sdk/encrypt';
+import { FhevmHandle } from '@sdk/FhevmHandle';
+import { ZKProof } from '@sdk/ZKProof';
+import { CoprocessorSignersVerifier } from '@sdk/coprocessor/CoprocessorSignersVerifier';
 import { throwRelayerInternalError } from './error';
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -47,7 +47,7 @@ export async function requestCiphertextWithZKProofVerification({
   coprocessorSignersVerifier: CoprocessorSignersVerifier;
   relayerProvider: AbstractRelayerProvider;
   extraData: BytesHex;
-  options?: FhevmInstanceOptions & RelayerProviderFetchOptions<any>;
+  options?: RelayerInputProofOptionsType;
 }) {
   const fhevmHandles: FhevmHandle[] = FhevmHandle.fromZKProof(
     zkProof,
@@ -152,23 +152,6 @@ export type RelayerEncryptedInputInternal = RelayerEncryptedInput & {
   _input: EncryptedInput;
 };
 
-export type RelayerEncryptedInput = {
-  addBool: (value: boolean | number | bigint) => RelayerEncryptedInput;
-  add8: (value: number | bigint) => RelayerEncryptedInput;
-  add16: (value: number | bigint) => RelayerEncryptedInput;
-  add32: (value: number | bigint) => RelayerEncryptedInput;
-  add64: (value: number | bigint) => RelayerEncryptedInput;
-  add128: (value: number | bigint) => RelayerEncryptedInput;
-  add256: (value: number | bigint) => RelayerEncryptedInput;
-  addAddress: (value: string) => RelayerEncryptedInput;
-  getBits: () => EncryptionBits[];
-  generateZKProof(): ZKProofType;
-  encrypt: (options?: RelayerV2InputProofOptions) => Promise<{
-    handles: Uint8Array[];
-    inputProof: Uint8Array;
-  }>;
-};
-
 export const createRelayerEncryptedInput =
   ({
     aclContractAddress,
@@ -264,7 +247,7 @@ export const createRelayerEncryptedInput =
           encryptionBits: input.getBits(),
         });
       },
-      encrypt: async (options?: RelayerV2InputProofOptions) => {
+      encrypt: async (options?: RelayerInputProofOptionsType) => {
         const extraData: `0x${string}` = '0x00';
 
         const ciphertext = input.encrypt();
@@ -286,10 +269,11 @@ export const createRelayerEncryptedInput =
           extraData,
         };
 
-        const json = await relayerProvider.fetchPostInputProof(payload, {
-          ...defaultOptions,
-          ...options,
-        });
+        const json: RelayerInputProofResult =
+          await relayerProvider.fetchPostInputProof(payload, {
+            ...defaultOptions,
+            ...options,
+          });
 
         if (!isFhevmRelayerInputProofResponse(json)) {
           throwRelayerInternalError('INPUT_PROOF', json);

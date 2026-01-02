@@ -2,11 +2,11 @@ import type {
   Eip1193Provider as EthersEip1193ProviderType,
   Provider as EthersProviderType,
 } from 'ethers';
-import type { ChecksummedAddress, Uint64 } from '../types/primitives';
+import type { ChecksummedAddress, Uint64 } from '@base/types/primitives';
 import type { FhevmInstanceConfig } from '../types/relayer';
 import { JsonRpcProvider, BrowserProvider } from 'ethers';
-import { isChecksummedAddress } from '../utils/address';
-import { isUint64 } from '../utils/uint';
+import { isChecksummedAddress } from '@base/address';
+import { isUint64 } from '@base/uint';
 import { FhevmConfigError } from '../errors/FhevmConfigError';
 import { InputVerifier } from './InputVerifier';
 import { KMSVerifier } from './KMSVerifier';
@@ -21,24 +21,24 @@ type FhevmHostChainNetworkConfigType =
 
 export class FhevmHostChainConfig {
   // ACL.sol host contract address
-  #hostACLContractAddress: ChecksummedAddress;
+  readonly #hostACLContractAddress: ChecksummedAddress;
   // KMSVerifier.sol host contract address
-  #hostKMSVerifierContractAddress: ChecksummedAddress;
+  readonly #hostKMSVerifierContractAddress: ChecksummedAddress;
   // InputVerifier.sol host contract address
-  #hostInputVerifierContractAddress: ChecksummedAddress;
+  readonly #hostInputVerifierContractAddress: ChecksummedAddress;
   // Host chainId (Uint64)
-  #hostChainId: bigint;
+  readonly #hostChainId: bigint;
   // Host Rpc Url or Host eip-1193 provider
-  #hostNetworkConfig: FhevmHostChainNetworkConfigType;
+  readonly #hostNetworkConfig: FhevmHostChainNetworkConfigType;
   // The Host provider in ether.js format
-  #hostEthersProvider: EthersProviderType;
+  readonly #hostEthersProvider: EthersProviderType;
 
   // Decryption.sol gateway contract address
-  #gatewayVerifyingContractAddressDecryption: ChecksummedAddress;
+  readonly #gatewayVerifyingContractAddressDecryption: ChecksummedAddress;
   // InputVerification.sol gateway contract address
-  #gatewayVerifyingContractAddressInputVerification: ChecksummedAddress;
+  readonly #gatewayVerifyingContractAddressInputVerification: ChecksummedAddress;
   // Gateway chainId (Uint64)
-  #gatewayChainId: bigint;
+  readonly #gatewayChainId: bigint;
 
   private constructor(params: {
     hostChainId: bigint;
@@ -147,7 +147,7 @@ export class FhevmHostChainConfig {
     _checkChainIdArg(gatewayChainId, 'gateway chain ID');
 
     let hostNetworkConfig: FhevmHostChainNetworkConfigType;
-    if (network === undefined) {
+    if ((network as unknown) === undefined) {
       throw new FhevmConfigError({ message: 'Missing network' });
     }
 

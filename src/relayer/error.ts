@@ -1,5 +1,5 @@
-import type { RelayerV1ProviderErrorCause } from '../relayer-provider/v1/types';
-import type { RelayerOperation } from '../types/relayer';
+import type { RelayerOperation } from '@relayer-provider/types/public-api';
+import type { RelayerV1ProviderErrorCause } from '@relayer-provider/v1/types';
 
 export function getErrorCause(e: unknown): object | undefined {
   if (e instanceof Error && typeof e.cause === 'object' && e.cause !== null) {

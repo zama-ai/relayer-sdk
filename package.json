@@ -1,6 +1,6 @@
 {
   "name": "@zama-fhe/relayer-sdk",
-  "version": "0.4.0-alpha.3",
+  "version": "0.4.0-alpha.4",
   "description": "fhevm Relayer SDK",
   "main": "lib/node.js",
   "types": "lib/node.d.ts",
@@ -9,6 +9,19 @@
   "bin": {
     "relayer": "bin/relayer.js"
   },
+  "files": [
+    "bin",
+    "bundle",
+    "lib",
+    "LICENCE",
+    "README.md",
+    "bundle.d.ts",
+    "bundle.js",
+    "node.d.ts",
+    "node.js",
+    "web.d.ts",
+    "web.js"
+  ],
   "exports": {
     "./web": {
       "types": "./lib/web.d.ts",
@@ -28,11 +41,14 @@
     "./package.json": "./package.json"
   },
   "scripts": {
-    "lint": "eslint src/",
     "generateKeys": "./generateKeys.js",
     "build": "npm run build:lib && npm run build:bundle",
     "build:lib": "npm run rollup:lib && npm run build:dts",
     "build:bundle": "vite build --config config/vite.config.js",
+    "build:strict:relayer-provider": "tsc --project ./src/relayer-provider/tsconfig.json --noEmit",
+    "build:strict:base": "tsc --project ./src/base/tsconfig.json --noEmit",
+    "build:strict:sdk": "tsc --project ./src/sdk/tsconfig.json --noEmit",
+    "build:strict": "npm run build:strict:base && npm run build:strict:sdk && npm run build:strict:relayer-provider",
     "test": "jest --colors --passWithNoTests --coverage",
     "test:cli": "./src/test/scripts/test-testnet.sh",
     "test:testnet": "jest --colors --passWithNoTests --coverage --config jest.testnet.config.cjs",
@@ -42,6 +58,7 @@
     "test:watch": "jest --colors --passWithNoTests --watch",
     "prettier": "prettier --write \"**/*.{js,json,md,sol,ts,yml}\"",
     "prettier:check": "prettier --check \"**/*.{js,json,md,sol,ts,yml}\"",
+    "lint": "eslint",
     "rollup:lib": "rollup -c config/rollup.config.js",
     "clean": "rm -rf dist.tmp lib bundle coverage",
     "clean:dts": "rm -rf dist.tmp",
@@ -49,7 +66,8 @@
     "tsc:ts": "tsc --project ./tsconfig.json --noEmit",
     "tsc:ts:test": "tsc --project ./tsconfig.test.json --noEmit",
     "flatten:dts": "api-extractor run --local --config config/api-extractor.node.json && api-extractor run --local --config config/api-extractor.web.json",
-    "build:dts": "npm run clean:dts && npm run tsc:dts && npm run flatten:dts && npm run clean:dts",
+    "copy:dts": "mkdir -p dist.tmp/base/types dist.tmp/sdk/lowlevel dist.tmp/relayer-provider/types dist.tmp/types && cp src/base/types/*.d.ts dist.tmp/base/types/ && cp src/sdk/lowlevel/*.d.ts dist.tmp/sdk/lowlevel/ && cp src/relayer-provider/types/*.d.ts dist.tmp/relayer-provider/types/ && cp src/types/relayer.d.ts dist.tmp/types/",
+    "build:dts": "npm run clean:dts && npm run tsc:dts && npm run copy:dts && npx tsc-alias -p config/tsc-alias.json && npm run flatten:dts && npm run clean:dts",
     "version": "cd ./scripts && node ./generate-version.cjs"
   },
   "repository": {
@@ -74,6 +92,7 @@
     "wasm-feature-detect": "^1.8.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.2",
     "@fetch-mock/jest": "0.2.16",
     "@jest/globals": "30.0.4",
     "@microsoft/api-extractor": "7.52.8",
@@ -89,9 +108,12 @@
     "@types/jest": "30.0.0",
     "@types/keccak": "3.0.5",
     "@types/node-fetch": "2.6.12",
+    "@typescript-eslint/eslint-plugin": "^8.51.0",
+    "@typescript-eslint/parser": "^8.51.0",
     "buffer": "6.0.3",
     "crypto-browserify": "3.12.1",
     "dotenv": "^17.2.3",
+    "eslint": "^9.39.2",
     "fetch-mock": "^12.6.0",
     "jest": "^30.0.4",
     "jest-environment-jsdom": "^30.2.0",
@@ -107,6 +129,7 @@
     "tsc-alias": "1.8.16",
     "tslib": "2.8.1",
     "typescript": "5.8.3",
+    "typescript-eslint": "^8.51.0",
     "vite": "7.0.5",
     "vite-plugin-node-polyfills": "0.24.0",
     "vite-plugin-static-copy": "^3.1.2"

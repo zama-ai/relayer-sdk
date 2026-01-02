@@ -1,10 +1,13 @@
-import type { RelayerV2InputProofOptions } from '../relayer-provider/v2/types/types';
-import type { BytesHex } from '../types/primitives';
+import type {
+  HandleContractPairRelayer,
+  RelayerUserDecryptOptionsType,
+  RelayerUserDecryptPayload,
+} from '@relayer-provider/types/public-api';
+import type { BytesHex } from '@base/types/primitives';
 import type {
   ClearValueType,
   FhevmInstanceOptions,
-  HandleContractPairRelayer,
-  RelayerUserDecryptPayload,
+  HandleContractPair,
   UserDecryptResults,
 } from '../types/relayer';
 import {
@@ -13,8 +16,8 @@ import {
   Contract,
   getAddress as ethersGetAddress,
 } from 'ethers';
-import { bytesToBigInt, bytesToHex, hexToBytes } from '../utils/bytes';
-import { AbstractRelayerProvider } from '../relayer-provider/AbstractRelayerProvider';
+import { bytesToBigInt, bytesToHex, hexToBytes } from '@base/bytes';
+import { AbstractRelayerProvider } from '@relayer-provider/AbstractRelayerProvider';
 import { check2048EncryptedBits } from './decryptUtils';
 
 // Add type checking
@@ -91,11 +94,6 @@ function checkDeadlineValidity(startTimestamp: bigint, durationDays: bigint) {
   }
 }
 
-export type HandleContractPair = {
-  handle: Uint8Array | string;
-  contractAddress: string;
-};
-
 export const userDecryptRequest =
   (
     kmsSigners: string[],
@@ -116,7 +114,7 @@ export const userDecryptRequest =
     userAddress: string,
     startTimestamp: string | number,
     durationDays: string | number,
-    options?: RelayerV2InputProofOptions,
+    options?: RelayerUserDecryptOptionsType,
   ): Promise<UserDecryptResults> => {
     const extraData: BytesHex = '0x00';
     let pubKey;

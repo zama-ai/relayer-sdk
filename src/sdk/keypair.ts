@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/consistent-type-definitions */
 import { isAddress } from 'ethers';
-import { bytesToHexNo0x } from '../utils/bytes';
+import { bytesToHexNo0x } from '@base/bytes';
 
 export type EIP712Type = { name: string; type: string };
 
@@ -10,11 +11,9 @@ export type EIP712 = {
     verifyingContract: string;
     version: string;
   };
-  message: any;
+  message: unknown;
   primaryType: string;
-  types: {
-    [key: string]: EIP712Type[];
-  };
+  types: Record<string, EIP712Type[]>;
 };
 
 /**
@@ -40,7 +39,7 @@ export const createEIP712 =
     delegatedAccount?: string,
   ): EIP712 => {
     const extraData: `0x${string}` = '0x00';
-    if (delegatedAccount && !isAddress(delegatedAccount))
+    if (delegatedAccount !== undefined && !isAddress(delegatedAccount))
       throw new Error('Invalid delegated account.');
 
     if (!isAddress(verifyingContract)) {
@@ -81,7 +80,7 @@ export const createEIP712 =
       verifyingContract,
     };
 
-    if (delegatedAccount) {
+    if (delegatedAccount !== undefined) {
       return {
         types: {
           EIP712Domain,
@@ -133,7 +132,10 @@ export const createEIP712 =
     };
   };
 
-export const generateKeypair = () => {
+export const generateKeypair = (): {
+  publicKey: string;
+  privateKey: string;
+} => {
   const keypair = TKMS.ml_kem_pke_keygen();
   return {
     publicKey: bytesToHexNo0x(

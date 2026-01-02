@@ -1,16 +1,16 @@
-import type { FhevmInstanceOptions } from '../types/relayer';
-import type { RelayerEncryptedInput } from './sendEncryption';
 import {
   createRelayerEncryptedInput,
   currentCiphertextVersion,
 } from './sendEncryption';
 import fetchMock from 'fetch-mock';
-import { createRelayerProvider } from '../relayer-provider/createRelayerProvider';
+import type { RelayerEncryptedInput } from '@relayer-provider/types/public-api';
+import type { FhevmInstanceOptions } from '../types/relayer';
+import { FhevmHandle } from '@sdk/FhevmHandle';
+import { ZKProof } from '@sdk/ZKProof';
+import { createRelayerProvider } from '@relayer-provider/createRelayerProvider';
 import { InvalidPropertyError } from '../errors/InvalidPropertyError';
 import { TEST_CONFIG } from '../test/config';
-import { FhevmHandle } from '../sdk/FhevmHandle';
 import { tfheCompactPkeCrsWasm, tfheCompactPublicKeyWasm } from '../test';
-import { ZKProof } from '../sdk/ZKProof';
 
 ////////////////////////////////////////////////////////////////////////////////
 //

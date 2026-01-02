@@ -1,35 +1,51 @@
-import { isUint } from '../../utils/uint';
-import { setAuth } from '../../auth';
+/* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/consistent-type-definitions */
+import type {
+  RelayerPostOperation,
+  RelayerApiErrorType,
+} from '../types/public-api';
+import type { Auth } from '../../types/relayer';
 import {
   assertIsRelayerV2ResponseFailedWithError500,
   assertIsRelayerV2ResponseFailedWithError400,
   assertIsRelayerV2ResponseFailedWithError429,
   assertIsRelayerV2ResponseFailedWithError503,
   assertIsRelayerV2ResponseFailedWithError404,
-} from './types/RelayerV2ResponseFailed';
+} from './guards/RelayerV2ResponseFailed';
 import type {
-  RelayerV2ResponseApiErrorCode,
-  RelayerV2ResultInputProof,
-  RelayerV2ResultPublicDecrypt,
   RelayerV2ResultUserDecrypt,
   RelayerV2PostResponseStatus,
   RelayerV2GetResponseStatus,
-  RelayerV2ProgressQueued,
-  RelayerV2ProgressRateLimited,
-  RelayerV2ProgressArgs,
-  RelayerV2ProgressSucceeded,
-  RelayerV2ProgressFailed,
-  RelayerV2ProgressFailureStatus,
-  RelayerV2ProgressTimeout,
-  RelayerV2ProgressAbort,
-} from './types/types';
+  RelayerV2ResultInputProofAccepted,
+  RelayerV2ResultPublicDecrypt,
+  RelayerV2ResultInputProof,
+  RelayerV2ResultInputProofRejected,
+} from './types';
+import type {
+  RelayerFailureStatus,
+  RelayerProgressSucceededType,
+  RelayerProgressQueuedType,
+  RelayerProgressRateLimitedType,
+  RelayerProgressTimeoutType,
+  RelayerProgressFailedType,
+  RelayerProgressAbortType,
+  RelayerInputProofOptionsType,
+  RelayerUserDecryptOptionsType,
+  RelayerPublicDecryptOptionsType,
+  RelayerInputProofProgressArgs,
+  RelayerUserDecryptProgressArgs,
+  RelayerPublicDecryptProgressArgs,
+  RelayerPublicDecryptResult,
+  RelayerInputProofResult,
+  RelayerUserDecryptResult,
+} from '../types/public-api';
+import { isUint } from '@base/uint';
+import { setAuth } from '../../auth';
 import { RelayerV2ResponseInvalidBodyError } from './errors/RelayerV2ResponseInvalidBodyError';
 import { RelayerV2ResponseStatusError } from './errors/RelayerV2ResponseStatusError';
-import { assertIsRelayerV2GetResponseInputProofSucceeded } from './types/RelayerV2GetResponseInputProofSucceeded';
-import { assertIsRelayerV2GetResponsePublicDecryptSucceeded } from './types/RelayerV2GetResponsePublicDecryptSucceeded';
-import { assertIsRelayerV2GetResponseUserDecryptSucceeded } from './types/RelayerV2GetResponseUserDecryptSucceeded';
+import { assertIsRelayerV2GetResponseInputProofSucceeded } from './guards/RelayerV2GetResponseInputProofSucceeded';
+import { assertIsRelayerV2GetResponsePublicDecryptSucceeded } from './guards/RelayerV2GetResponsePublicDecryptSucceeded';
+import { assertIsRelayerV2GetResponseUserDecryptSucceeded } from './guards/RelayerV2GetResponseUserDecryptSucceeded';
 import { RelayerV2RequestInternalError } from './errors/RelayerV2RequestInternalError';
-import { RelayerProviderFetchOptions } from '../AbstractRelayerProvider';
 import { InvalidPropertyError } from '../../errors/InvalidPropertyError';
 import { RelayerV2ResponseApiError } from './errors/RelayerV2ResponseApiError';
 import { RelayerV2FetchError } from './errors/RelayerV2FetchError';
@@ -39,16 +55,12 @@ import { RelayerV2MaxRetryError } from './errors/RelayerV2MaxRetryError';
 import {
   assertIsRelayerV2GetResponseQueued,
   assertIsRelayerV2PostResponseQueued,
-} from './types/RelayerV2ResponseQueued';
-import { safeJSONstringify } from '../../utils/string';
+} from './guards/RelayerV2ResponseQueued';
+import { safeJSONstringify } from '@base/string';
 import { sdkName, version } from '../../_version';
-import type {
-  Auth,
-  FhevmInstanceOptions,
-  RelayerPostOperation,
-} from '../../types/relayer';
 import { RelayerV2TimeoutError } from './errors/RelayerV2TimeoutError';
 import { RelayerV2AbortError } from './errors/RelayerV2AbortError';
+import { assertNever } from '../../errors/utils';
 
 /*
     Actions:
@@ -103,10 +115,13 @@ type RelayerV2AsyncRequestParams = {
   relayerOperation: RelayerPostOperation;
   url: string;
   payload: Record<string, unknown>;
-  timeoutInSeconds?: number;
-  throwErrorIfNoRetryAfter?: boolean;
-  options?: FhevmInstanceOptions &
-    RelayerProviderFetchOptions<RelayerV2ProgressArgs>;
+  timeoutInSeconds?: number | undefined;
+  throwErrorIfNoRetryAfter?: boolean | undefined;
+  options?:
+    | RelayerInputProofOptionsType
+    | RelayerUserDecryptOptionsType
+    | RelayerPublicDecryptOptionsType
+    | undefined;
 };
 
 export type RelayerV2TerminateReason =
@@ -117,27 +132,36 @@ export type RelayerV2TerminateReason =
 
 export class RelayerV2AsyncRequest {
   private _fetchMethod: 'GET' | 'POST' | undefined;
+  private _elapsed: number;
   private _jobId: string | undefined;
   private _jobIdTimestamp: number | undefined;
-  private _state: RelayerV2AsyncRequestState;
-  private _relayerOperation: RelayerPostOperation;
-  private _publicAPINoReentrancy: boolean;
+  private readonly _state: RelayerV2AsyncRequestState;
+  private readonly _relayerOperation: RelayerPostOperation;
   private _internalAbortController: AbortController | undefined;
   private _internalAbortSignal: AbortSignal | undefined;
   private _externalAbortSignal: AbortSignal | undefined;
   private _terminateReason: RelayerV2TerminateReason | undefined;
   private _terminateError: unknown;
   private _retryCount: number;
-  private _retryAfterTimeoutID: any;
-  private _url: string;
-  private _payload: Record<string, unknown>;
-  private _fhevmAuth: Auth | undefined;
-  private _retryAfterTimeoutPromiseFuncReject?: (reason?: any) => void;
-  private _onProgress?: (args: RelayerV2ProgressArgs) => void;
-  private _requestMaxDurationInMs: number;
+  private _retryAfterTimeoutID: ReturnType<typeof setTimeout> | undefined;
+  private readonly _url: string;
+  private readonly _payload: Record<string, unknown>;
+  private readonly _fhevmAuth: Auth | undefined;
+  private _retryAfterTimeoutPromiseFuncReject?:
+    | ((reason?: unknown) => void)
+    | undefined;
+  private readonly _onProgress?:
+    | ((
+        args:
+          | RelayerInputProofProgressArgs
+          | RelayerUserDecryptProgressArgs
+          | RelayerPublicDecryptProgressArgs,
+      ) => void)
+    | undefined;
+  private readonly _requestMaxDurationInMs: number;
   private _requestStartTimestamp: number | undefined;
-  private _requestGlobalTimeoutID: any;
-  private _throwErrorIfNoRetryAfter: boolean;
+  private _requestGlobalTimeoutID: ReturnType<typeof setTimeout> | undefined;
+  private readonly _throwErrorIfNoRetryAfter: boolean;
 
   private static readonly DEFAULT_RETRY_AFTER_MS = 2500;
   private static readonly MINIMUM_RETRY_AFTER_MS = 1000;
@@ -147,9 +171,9 @@ export class RelayerV2AsyncRequest {
 
   constructor(params: RelayerV2AsyncRequestParams) {
     if (
-      params.relayerOperation !== 'INPUT_PROOF' &&
-      params.relayerOperation !== 'PUBLIC_DECRYPT' &&
-      params.relayerOperation !== 'USER_DECRYPT'
+      (params.relayerOperation as unknown) !== 'INPUT_PROOF' &&
+      (params.relayerOperation as unknown) !== 'PUBLIC_DECRYPT' &&
+      (params.relayerOperation as unknown) !== 'USER_DECRYPT'
     ) {
       throw new InvalidPropertyError({
         objName: 'RelayerV2AsyncRequestParams',
@@ -160,6 +184,7 @@ export class RelayerV2AsyncRequest {
       });
     }
 
+    this._elapsed = 0;
     this._relayerOperation = params.relayerOperation;
     this._internalAbortController = new AbortController();
     this._internalAbortSignal = this._internalAbortController.signal;
@@ -177,7 +202,7 @@ export class RelayerV2AsyncRequest {
     this._url = params.url;
     this._payload = params.payload;
     this._fhevmAuth = params.options?.auth;
-    this._onProgress = params.options?.onProgress;
+    this._onProgress = params.options?.onProgress as typeof this._onProgress;
     this._state = {
       aborted: false,
       canceled: false,
@@ -192,7 +217,6 @@ export class RelayerV2AsyncRequest {
     this._retryAfterTimeoutID = undefined;
     this._requestGlobalTimeoutID = undefined;
     this._terminateReason = undefined;
-    this._publicAPINoReentrancy = false;
     this._throwErrorIfNoRetryAfter = params.throwErrorIfNoRetryAfter ?? false;
     this._requestMaxDurationInMs =
       params.options?.timeout ??
@@ -204,17 +228,10 @@ export class RelayerV2AsyncRequest {
   //////////////////////////////////////////////////////////////////////////////
 
   public async run(): Promise<
-    | RelayerV2ResultUserDecrypt
-    | RelayerV2ResultPublicDecrypt
-    | RelayerV2ResultInputProof
+    | RelayerUserDecryptResult
+    | RelayerPublicDecryptResult
+    | RelayerInputProofResult
   > {
-    if (this._publicAPINoReentrancy) {
-      throw new RelayerV2StateError({
-        message: `Relayer.run() failed. Call not permitted.`,
-        state: { ...this._state },
-      });
-    }
-
     if (this._state.terminated) {
       throw new RelayerV2StateError({
         message: `Relayer.run() failed. Request already terminated.`,
@@ -259,14 +276,14 @@ export class RelayerV2AsyncRequest {
 
     if (this._externalAbortSignal?.aborted === true) {
       throw new RelayerV2StateError({
-        message: `Relayer.run() failed. External AbortSignal already aborted (reason:${this._externalAbortSignal?.reason}).`,
+        message: `Relayer.run() failed. External AbortSignal already aborted (reason:${this._externalAbortSignal.reason}).`,
         state: { ...this._state },
       });
     }
 
     if (this._internalAbortSignal?.aborted === true) {
       throw new RelayerV2StateError({
-        message: `Relayer.run() failed. Internal AbortSignal already aborted (reason:${this._internalAbortSignal?.reason}).`,
+        message: `Relayer.run() failed. Internal AbortSignal already aborted (reason:${this._internalAbortSignal.reason}).`,
         state: { ...this._state },
       });
     }
@@ -293,7 +310,7 @@ export class RelayerV2AsyncRequest {
     } catch (e) {
       this._state.failed = true;
 
-      if ((e as any).name === 'AbortError') {
+      if ((e as { name: string }).name === 'AbortError') {
         this._assert(this._state.aborted, 'this._state.aborted');
         this._assert(this._state.terminated, 'this._state.terminated');
       }
@@ -309,7 +326,7 @@ export class RelayerV2AsyncRequest {
   // Public API: cancel
   //////////////////////////////////////////////////////////////////////////////
 
-  private _canContinue() {
+  private _canContinue(): boolean {
     return !(
       this._state.canceled ||
       this._state.terminated ||
@@ -318,14 +335,7 @@ export class RelayerV2AsyncRequest {
     );
   }
 
-  public cancel() {
-    if (this._publicAPINoReentrancy) {
-      throw new RelayerV2StateError({
-        message: `Relayer.cancel() failed. Call not permitted.`,
-        state: { ...this._state },
-      });
-    }
-
+  public cancel(): void {
     if (!this._canContinue()) {
       this._trace('cancel', '!this._canContinue()');
       return;
@@ -408,9 +418,9 @@ export class RelayerV2AsyncRequest {
 
   // POST : 202 | 400 | 429 | 500 | 503
   private async _runPostLoop(): Promise<
-    | RelayerV2ResultPublicDecrypt
-    | RelayerV2ResultUserDecrypt
-    | RelayerV2ResultInputProof
+    | RelayerPublicDecryptResult
+    | RelayerUserDecryptResult
+    | RelayerInputProofResult
   > {
     this._assert(
       this._fetchMethod === undefined,
@@ -429,8 +439,9 @@ export class RelayerV2AsyncRequest {
       // However, the `fetch` call can potentially throw an `AbortError`. In this case
       // in the error catch the `terminated` flag will be `true`! But, that's ok because the
       // next part of the function will never be executed (thrown error).
-      const elapsed = this._jobId ? Date.now() - this._jobIdTimestamp! : 0;
-      const response = await this._fetchPost(elapsed);
+      this._elapsed =
+        this._jobId !== undefined ? Date.now() - this._jobIdTimestamp! : 0;
+      const response = await this._fetchPost();
 
       // At this stage: `terminated` is guaranteed to be `false`.
 
@@ -452,10 +463,8 @@ export class RelayerV2AsyncRequest {
             assertIsRelayerV2PostResponseQueued(bodyJson, 'body');
           } catch (cause) {
             this._throwResponseInvalidBodyError({
-              fetchMethod: 'POST',
               status: responseStatus,
               cause: cause as InvalidPropertyError,
-              elapsed,
               bodyJson: safeJSONstringify(bodyJson),
             });
           }
@@ -476,8 +485,8 @@ export class RelayerV2AsyncRequest {
             operation: this._relayerOperation,
             retryCount: this._retryCount,
             retryAfterMs,
-            elapsed,
-          } satisfies RelayerV2ProgressQueued);
+            elapsed: this._elapsed,
+          } satisfies RelayerProgressQueuedType<RelayerPostOperation>);
 
           await this._setRetryAfterTimeout(retryAfterMs);
 
@@ -494,23 +503,20 @@ export class RelayerV2AsyncRequest {
             assertIsRelayerV2ResponseFailedWithError400(bodyJson, 'body');
           } catch (cause) {
             this._throwResponseInvalidBodyError({
-              fetchMethod: 'POST',
               status: responseStatus,
               cause: cause as InvalidPropertyError,
-              elapsed,
               bodyJson: safeJSONstringify(bodyJson),
             });
           }
 
           this._throwRelayerV2ResponseApiError({
-            fetchMethod: 'POST',
             status: responseStatus,
             relayerApiError: bodyJson.error,
-            elapsed,
           });
         }
         // RelayerV2ResponseFailed
         // RelayerV2ApiError429
+        // falls through
         case 429: {
           // Retry
           // Rate Limit error (Cloudflare/Kong/Relayer), reason in message
@@ -520,10 +526,8 @@ export class RelayerV2AsyncRequest {
             assertIsRelayerV2ResponseFailedWithError429(bodyJson, 'body');
           } catch (cause) {
             this._throwResponseInvalidBodyError({
-              fetchMethod: 'POST',
               status: responseStatus,
               cause: cause as InvalidPropertyError,
-              elapsed,
               bodyJson: safeJSONstringify(bodyJson),
             });
           }
@@ -533,14 +537,15 @@ export class RelayerV2AsyncRequest {
           // Async onProgress callback
           this._postAsyncOnProgressCallback({
             type: 'ratelimited',
+            operation: this._relayerOperation,
             url: this._url,
             method: 'POST',
             status: responseStatus,
             retryAfterMs,
             retryCount: this._retryCount,
-            elapsed,
+            elapsed: this._elapsed,
             relayerApiError: bodyJson.error,
-          } satisfies RelayerV2ProgressRateLimited);
+          } satisfies RelayerProgressRateLimitedType<RelayerPostOperation>);
 
           // Wait if needed (minimum 1s)
           await this._setRetryAfterTimeout(retryAfterMs);
@@ -558,23 +563,20 @@ export class RelayerV2AsyncRequest {
             assertIsRelayerV2ResponseFailedWithError500(bodyJson, 'body');
           } catch (cause) {
             this._throwResponseInvalidBodyError({
-              fetchMethod: 'POST',
               status: responseStatus,
               cause: cause as InvalidPropertyError,
-              elapsed,
               bodyJson: safeJSONstringify(bodyJson),
             });
           }
 
           this._throwRelayerV2ResponseApiError({
-            fetchMethod: 'POST',
             status: responseStatus,
             relayerApiError: bodyJson.error,
-            elapsed,
           });
         }
         // RelayerV2ResponseFailed
         // RelayerV2ApiError503
+        // falls through
         case 503: {
           // Abort
           // Possible Reasons: Gateway has some internal error (unknown)
@@ -584,30 +586,27 @@ export class RelayerV2AsyncRequest {
             assertIsRelayerV2ResponseFailedWithError503(bodyJson, 'body');
           } catch (cause) {
             this._throwResponseInvalidBodyError({
-              fetchMethod: 'POST',
               status: responseStatus,
               cause: cause as InvalidPropertyError,
-              elapsed,
               bodyJson: safeJSONstringify(bodyJson),
             });
           }
 
           this._throwRelayerV2ResponseApiError({
-            fetchMethod: 'POST',
             status: responseStatus,
             relayerApiError: bodyJson.error,
-            elapsed,
           });
         }
+        // falls through
         default: {
           // Use TS compiler + `never` to guarantee the switch integrity
-          const throwUnsupportedStatus = (unsupportedStatus: never) => {
+          const throwUnsupportedStatus = (unsupportedStatus: never): never => {
             throw new RelayerV2ResponseStatusError({
               fetchMethod: 'POST',
               status: unsupportedStatus,
               url: this._url,
               operation: this._relayerOperation,
-              elapsed,
+              elapsed: this._elapsed,
               retryCount: this._retryCount,
               state: { ...this._state },
             });
@@ -627,9 +626,9 @@ export class RelayerV2AsyncRequest {
   // GET: 200 | 202 | 404 | 500 | 503
   // GET is not rate-limited, therefore there is not 429 error
   private async _runGetLoop(): Promise<
-    | RelayerV2ResultPublicDecrypt
-    | RelayerV2ResultUserDecrypt
-    | RelayerV2ResultInputProof
+    | RelayerInputProofResult
+    | RelayerPublicDecryptResult
+    | RelayerUserDecryptResult
   > {
     this._assert(this._fetchMethod === 'POST', "this._fetchMethod === 'POST'");
     this._assert(this._jobId !== undefined, 'this._jobId !== undefined');
@@ -645,8 +644,8 @@ export class RelayerV2AsyncRequest {
 
       this._assertCanContinueAfterAwait();
 
-      const elapsed = Date.now() - this._jobIdTimestamp;
-      const response = await this._fetchGet(elapsed);
+      this._elapsed = Date.now() - this._jobIdTimestamp;
+      const response = await this._fetchGet();
 
       // At this stage: `terminated` is guaranteed to be `false`.
 
@@ -659,24 +658,19 @@ export class RelayerV2AsyncRequest {
           const bodyJson = await this._getResponseJson(response);
 
           try {
+            //
+            // INPUT_PROOF
+            //
             if (this._relayerOperation === 'INPUT_PROOF') {
               assertIsRelayerV2GetResponseInputProofSucceeded(bodyJson, 'body');
 
-              // Async onProgress callback
-              this._postAsyncOnProgressCallback({
-                type: 'succeeded',
-                url: this._url,
-                method: 'GET',
-                status: responseStatus,
-                jobId: this.jobId,
-                requestId: bodyJson.requestId,
-                operation: this._relayerOperation,
-                retryCount: this._retryCount,
-                elapsed,
-                result: bodyJson.result,
-              } satisfies RelayerV2ProgressSucceeded<'INPUT_PROOF'>);
+              const inputProofBodyResult: RelayerV2ResultInputProof =
+                bodyJson.result;
 
-              if (!bodyJson.result.accepted) {
+              if (!inputProofBodyResult.accepted) {
+                const inputProofRejected: RelayerV2ResultInputProofRejected =
+                  inputProofBodyResult;
+
                 const e = new RelayerV2ResponseInputProofRejectedError({
                   url: this._url,
                   fetchMethod: 'GET',
@@ -685,35 +679,51 @@ export class RelayerV2AsyncRequest {
                   retryCount: this._retryCount,
                   status: responseStatus,
                   state: { ...this._state },
-                  elapsed,
-                  result: bodyJson.result,
+                  elapsed: this._elapsed,
+                  result: inputProofRejected,
                 });
                 throw e;
               }
-            } else if (this._relayerOperation === 'PUBLIC_DECRYPT') {
+
+              const inputProofAccepted: RelayerV2ResultInputProofAccepted =
+                inputProofBodyResult;
+              /*
+               1. Cast to internal type (as RelayerV2ResultInputProofAcceped)
+               2. Compile-time compatibility check (satisfies RelayerInputProofResult)
+               3. Return type as public API type (as RelayerInputProofResult)
+              */
+              const inputProofResult: RelayerInputProofResult =
+                inputProofAccepted satisfies RelayerInputProofResult as RelayerInputProofResult;
+
+              // Async onProgress callback
+              this._postAsyncOnProgressCallback({
+                type: 'succeeded',
+                url: this._url,
+                method: 'GET',
+                status: responseStatus,
+                jobId: this.jobId,
+                requestId: bodyJson.requestId,
+                operation: this._relayerOperation,
+                retryCount: this._retryCount,
+                elapsed: this._elapsed,
+                result: inputProofResult,
+              } satisfies RelayerProgressSucceededType<'INPUT_PROOF'>);
+
+              return inputProofResult;
+            }
+            //
+            // PUBLIC_DECRYPT
+            //
+            else if (this._relayerOperation === 'PUBLIC_DECRYPT') {
               assertIsRelayerV2GetResponsePublicDecryptSucceeded(
                 bodyJson,
                 'body',
               );
 
-              // Async onProgress callback
-              this._postAsyncOnProgressCallback({
-                type: 'succeeded',
-                url: this._url,
-                method: 'GET',
-                status: responseStatus,
-                jobId: this.jobId,
-                requestId: bodyJson.requestId,
-                operation: this._relayerOperation,
-                retryCount: this._retryCount,
-                elapsed,
-                result: bodyJson.result,
-              } satisfies RelayerV2ProgressSucceeded<'PUBLIC_DECRYPT'>);
-            } else if (this._relayerOperation === 'USER_DECRYPT') {
-              assertIsRelayerV2GetResponseUserDecryptSucceeded(
-                bodyJson,
-                'body',
-              );
+              const publicDecryptBodyResult: RelayerV2ResultPublicDecrypt =
+                bodyJson.result;
+              const publicDecryptResult: RelayerPublicDecryptResult =
+                publicDecryptBodyResult;
 
               // Async onProgress callback
               this._postAsyncOnProgressCallback({
@@ -725,9 +735,51 @@ export class RelayerV2AsyncRequest {
                 requestId: bodyJson.requestId,
                 operation: this._relayerOperation,
                 retryCount: this._retryCount,
-                elapsed,
-                result: bodyJson.result,
-              } satisfies RelayerV2ProgressSucceeded<'USER_DECRYPT'>);
+                elapsed: this._elapsed,
+                result: publicDecryptResult,
+              } satisfies RelayerProgressSucceededType<'PUBLIC_DECRYPT'>);
+
+              return publicDecryptResult;
+            }
+            //
+            // USER_DECRYPT
+            //
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+            else if (this._relayerOperation === 'USER_DECRYPT') {
+              assertIsRelayerV2GetResponseUserDecryptSucceeded(
+                bodyJson,
+                'body',
+              );
+
+              const userDecryptBodyResult: RelayerV2ResultUserDecrypt =
+                bodyJson.result;
+              const userDecryptResult: RelayerUserDecryptResult =
+                userDecryptBodyResult.result;
+
+              // Async onProgress callback
+              this._postAsyncOnProgressCallback({
+                type: 'succeeded',
+                url: this._url,
+                method: 'GET',
+                status: responseStatus,
+                jobId: this.jobId,
+                requestId: bodyJson.requestId,
+                operation: this._relayerOperation,
+                retryCount: this._retryCount,
+                elapsed: this._elapsed,
+                result: userDecryptResult,
+              } satisfies RelayerProgressSucceededType<'USER_DECRYPT'>);
+
+              return userDecryptResult;
+            }
+            //
+            // Unkown operation, assert failed
+            //
+            else {
+              assertNever(
+                this._relayerOperation,
+                `Unkown operation: ${this._relayerOperation}`,
+              );
             }
           } catch (cause) {
             // Special case for InputProof rejected
@@ -736,20 +788,18 @@ export class RelayerV2AsyncRequest {
             }
 
             this._throwResponseInvalidBodyError({
-              fetchMethod: 'GET',
               status: responseStatus,
-              elapsed,
               cause: cause as InvalidPropertyError,
               bodyJson: safeJSONstringify(bodyJson),
             });
           }
 
-          // RelayerV2ResultPublicDecrypt
-          // RelayerV2ResultUserDecrypt
-          // RelayerV2ResultInputProof;
-          return bodyJson.result;
+          // unreachable code here
+          // break or return not accepted by TSC
+          // use 'falls through' comment to help eslint
         }
         // RelayerV2ResponseQueued
+        // falls through
         case 202: {
           const bodyJson = await this._getResponseJson(response);
 
@@ -757,9 +807,7 @@ export class RelayerV2AsyncRequest {
             assertIsRelayerV2GetResponseQueued(bodyJson, 'body');
           } catch (cause) {
             this._throwResponseInvalidBodyError({
-              fetchMethod: 'GET',
               status: responseStatus,
-              elapsed,
               cause: cause as InvalidPropertyError,
               bodyJson: safeJSONstringify(bodyJson),
             });
@@ -778,13 +826,14 @@ export class RelayerV2AsyncRequest {
             jobId: this.jobId,
             retryAfterMs,
             retryCount: this._retryCount,
-            elapsed,
-          } satisfies RelayerV2ProgressQueued);
+            elapsed: this._elapsed,
+          } satisfies RelayerProgressQueuedType<RelayerPostOperation>);
 
           // Wait if needed (minimum 1s)
           await this._setRetryAfterTimeout(retryAfterMs);
           continue;
         }
+        // falls through
         case 400: {
           // Abort
           // Wrong jobId, incorrect format or unknown value etc.
@@ -794,21 +843,18 @@ export class RelayerV2AsyncRequest {
             assertIsRelayerV2ResponseFailedWithError400(bodyJson, 'body');
           } catch (cause) {
             this._throwResponseInvalidBodyError({
-              fetchMethod: 'GET',
               status: responseStatus,
-              elapsed,
               cause: cause as InvalidPropertyError,
               bodyJson: safeJSONstringify(bodyJson),
             });
           }
 
           this._throwRelayerV2ResponseApiError({
-            fetchMethod: 'GET',
             status: responseStatus,
             relayerApiError: bodyJson.error,
-            elapsed,
           });
         }
+        // falls through
         case 404: {
           // Abort
           // Wrong jobId, incorrect format or unknown value etc.
@@ -818,23 +864,20 @@ export class RelayerV2AsyncRequest {
             assertIsRelayerV2ResponseFailedWithError404(bodyJson, 'body');
           } catch (cause) {
             this._throwResponseInvalidBodyError({
-              fetchMethod: 'GET',
               status: responseStatus,
-              elapsed,
               cause: cause as InvalidPropertyError,
               bodyJson: safeJSONstringify(bodyJson),
             });
           }
 
           this._throwRelayerV2ResponseApiError({
-            fetchMethod: 'GET',
             status: responseStatus,
             relayerApiError: bodyJson.error,
-            elapsed,
           });
         }
         // RelayerV2ResponseFailed
         // RelayerV2ApiError500
+        // falls through
         case 500: {
           // Abort
           // Relayer internal error
@@ -844,23 +887,20 @@ export class RelayerV2AsyncRequest {
             assertIsRelayerV2ResponseFailedWithError500(bodyJson, 'body');
           } catch (cause) {
             this._throwResponseInvalidBodyError({
-              fetchMethod: 'GET',
               status: responseStatus,
-              elapsed,
               cause: cause as InvalidPropertyError,
               bodyJson: safeJSONstringify(bodyJson),
             });
           }
 
           this._throwRelayerV2ResponseApiError({
-            fetchMethod: 'GET',
             status: responseStatus,
             relayerApiError: bodyJson.error,
-            elapsed,
           });
         }
         // RelayerV2ResponseFailed
         // RelayerV2ApiError503
+        // falls through
         case 503: {
           // Abort
           // Possible Reasons: Gateway has some internal error (unknown)
@@ -870,31 +910,28 @@ export class RelayerV2AsyncRequest {
             assertIsRelayerV2ResponseFailedWithError503(bodyJson, 'body');
           } catch (cause) {
             this._throwResponseInvalidBodyError({
-              fetchMethod: 'GET',
               status: responseStatus,
-              elapsed,
               cause: cause as InvalidPropertyError,
               bodyJson: safeJSONstringify(bodyJson),
             });
           }
 
           this._throwRelayerV2ResponseApiError({
-            fetchMethod: 'GET',
             status: responseStatus,
             relayerApiError: bodyJson.error,
-            elapsed,
           });
         }
+        // falls through
         default: {
           // Use TS compiler + `never` to guarantee the switch integrity
-          const throwUnsupportedStatus = (unsupportedStatus: never) => {
+          const throwUnsupportedStatus = (unsupportedStatus: never): never => {
             throw new RelayerV2ResponseStatusError({
               fetchMethod: 'GET',
               status: unsupportedStatus,
               url: this._url,
               jobId: this.jobId,
               operation: this._relayerOperation,
-              elapsed,
+              elapsed: this._elapsed,
               retryCount: this._retryCount,
               state: { ...this._state },
             });
@@ -909,12 +946,20 @@ export class RelayerV2AsyncRequest {
 
   //////////////////////////////////////////////////////////////////////////////
 
-  private async _getResponseJson(response: Response): Promise<any> {
-    const bodyJson = await response.json();
+  private async _getResponseJson(response: Response): Promise<unknown> {
+    try {
+      // This situation usually happens when Cloudflare overrides the relayer's reply body.
+      // and put a HTML page instead
+      const bodyJson = (await response.json()) as unknown;
 
-    this._assertCanContinueAfterAwait();
+      this._assertCanContinueAfterAwait();
 
-    return bodyJson;
+      return bodyJson;
+    } catch (e) {
+      this._throwFetchError({
+        cause: e,
+      });
+    }
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -928,7 +973,10 @@ export class RelayerV2AsyncRequest {
     }
 
     try {
-      const n = Number.parseInt(response.headers.get('Retry-After')!);
+      const n = Number.parseInt(
+        // can be null
+        response.headers.get('Retry-After') as unknown as string,
+      );
       if (isUint(n)) {
         const ms = n * 1000;
         return ms < RelayerV2AsyncRequest.MINIMUM_RETRY_AFTER_MS
@@ -963,8 +1011,8 @@ export class RelayerV2AsyncRequest {
    * @private
    * @throws {RelayerV2RequestInternalError} Thrown if jobId is undefined or if the jobId has already been set.
    */
-  private _setJobIdOnce(jobId: string) {
-    this._assert(jobId !== undefined, 'jobId !== undefined');
+  private _setJobIdOnce(jobId: string): void {
+    this._assert((jobId as unknown) !== undefined, 'jobId !== undefined');
     this._assert(this._jobId === undefined, 'this._jobId === undefined');
 
     this._jobId = jobId;
@@ -980,11 +1028,13 @@ export class RelayerV2AsyncRequest {
   // Fetch functions
   //////////////////////////////////////////////////////////////////////////////
 
-  private async _fetchPost(elapsed: number) {
+  private async _fetchPost(): Promise<Response> {
     // Debug state-check guards:
+    // - the fetchMethod is guaranteed to be 'POST'.
     // - the jobId is guaranteed to be undefined.
     // - `terminated` is guaranteed to be `false`
     // - `fetching` is guaranteed to be `false`
+    this._assert(this._fetchMethod === 'POST', 'this._fetchMethod === "POST"');
     this._assert(this._jobId === undefined, 'this._jobId === undefined');
     this._assert(!this._state.terminated, '!this._state.terminated');
     this._assert(!this._state.fetching, '!this._state.fetching');
@@ -996,8 +1046,8 @@ export class RelayerV2AsyncRequest {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'ZAMA-SDK-VERSION': `${version}`,
-          'ZAMA-SDK-NAME': `${sdkName}`,
+          'ZAMA-SDK-VERSION': version,
+          'ZAMA-SDK-NAME': sdkName,
         },
         body: JSON.stringify(this._payload),
         ...(this._internalAbortSignal
@@ -1018,16 +1068,14 @@ export class RelayerV2AsyncRequest {
       // Warning: `terminated` can be `true` here!
       // (ex: if `controller.abort()` has been called from the outside while still executing `fetch`)
 
-      this._trace('_fetchPost', 'catch(e) + throw e: ' + cause);
+      this._trace('_fetchPost', `catch(e) + throw e: ${String(cause)}`);
 
       // Keep the standard 'AbortError'
-      if ((cause as any).name === 'AbortError') {
+      if ((cause as { name: string }).name === 'AbortError') {
         throw cause;
       } else {
         this._throwFetchError({
-          fetchMethod: 'POST',
           cause,
-          elapsed,
         });
       }
     }
@@ -1037,7 +1085,6 @@ export class RelayerV2AsyncRequest {
     // Debug state-check guards:
     // - the jobId is guaranteed to be undefined.
     // - `terminated` is guaranteed to be `false`
-    this._assert(this._jobId === undefined, 'this._jobId === undefined');
     this._assert(!this._state.terminated, '!this._state.terminated');
 
     // Debug
@@ -1050,11 +1097,13 @@ export class RelayerV2AsyncRequest {
 
   //////////////////////////////////////////////////////////////////////////////
 
-  private async _fetchGet(elapsed: number) {
+  private async _fetchGet(): Promise<Response> {
     // Debug state-check guards:
+    // - the fetchMethod is guaranteed to be 'GET'.
     // - the jobId is guaranteed to be set.
     // - `terminated` is guaranteed to be `false`
     // - `fetching` is guaranteed to be `false`
+    this._assert(this._fetchMethod === 'GET', 'this._fetchMethod === "GET"');
     this._assert(this._jobId !== undefined, 'this._jobId !== undefined');
     this._assert(!this._state.terminated, '!this._state.terminated');
     this._assert(!this._state.fetching, '!this._state.fetching');
@@ -1064,8 +1113,8 @@ export class RelayerV2AsyncRequest {
     const init: RequestInit = {
       method: 'GET',
       headers: {
-        'ZAMA-SDK-VERSION': `${version}`,
-        'ZAMA-SDK-NAME': `${sdkName}`,
+        'ZAMA-SDK-VERSION': version,
+        'ZAMA-SDK-NAME': sdkName,
       },
       ...(this._internalAbortSignal
         ? { signal: this._internalAbortSignal }
@@ -1087,13 +1136,11 @@ export class RelayerV2AsyncRequest {
       );
 
       // Keep the standard 'AbortError'
-      if ((cause as any).name === 'AbortError') {
+      if ((cause as { name: string }).name === 'AbortError') {
         throw cause;
       } else {
         this._throwFetchError({
-          fetchMethod: 'GET',
           cause,
-          elapsed,
         });
       }
     }
@@ -1103,7 +1150,6 @@ export class RelayerV2AsyncRequest {
     // Debug state-check guards:
     // - the jobId is guaranteed to be set.
     // - `terminated` is guaranteed to be `false`
-    this._assert(this._jobId !== undefined, 'this._jobId !== undefined');
     this._assert(!this._state.terminated, '!this._state.terminated');
 
     // Debug
@@ -1121,7 +1167,7 @@ export class RelayerV2AsyncRequest {
   //////////////////////////////////////////////////////////////////////////////
 
   // Warning: Use arrow function only!
-  private _handleExternalSignalAbort = (ev: Event) => {
+  private readonly _handleExternalSignalAbort = (ev: Event): void => {
     const signal = ev.currentTarget as AbortSignal;
 
     // TESTING: the following sequences must be extensively tested:
@@ -1156,7 +1202,7 @@ export class RelayerV2AsyncRequest {
   };
 
   // Warning: Use arrow function only!
-  private _handleInternalSignalAbort = (ev: Event) => {
+  private readonly _handleInternalSignalAbort = (ev: Event): void => {
     const signal = ev.currentTarget as AbortSignal;
 
     // Debug state-check guards:
@@ -1180,10 +1226,11 @@ export class RelayerV2AsyncRequest {
     this._postAsyncOnProgressCallback({
       type: 'abort',
       url: this._url,
-      ...(this._jobId ? { jobId: this._jobId } : {}),
+      ...(this._fetchMethod !== undefined ? { method: this._fetchMethod } : {}),
+      ...(this._jobId !== undefined ? { jobId: this._jobId } : {}),
       operation: this._relayerOperation,
       retryCount: this._retryCount,
-    } satisfies RelayerV2ProgressAbort);
+    } satisfies RelayerProgressAbortType<RelayerPostOperation>);
 
     this._terminate(
       'abort',
@@ -1202,7 +1249,7 @@ export class RelayerV2AsyncRequest {
   /**
    * Can be called multiple times
    */
-  private _terminate(reason: RelayerV2TerminateReason, error?: unknown) {
+  private _terminate(reason: RelayerV2TerminateReason, error?: unknown): void {
     // Warning: this._state.fetching can be true
     // ex: call cancel while fetch is running
 
@@ -1278,14 +1325,15 @@ export class RelayerV2AsyncRequest {
 
     this._trace('_setRetryAfterTimeout', `delayMs=${delayMs}`);
 
-    if (this._retryAfterTimeoutID !== undefined) {
+    // Keep the test in case we must remove the assert
+    if ((this._retryAfterTimeoutID as unknown) !== undefined) {
       return Promise.reject(new Error(`retry-after already running.`));
     }
 
     const p = new Promise<void>((resolve, reject) => {
       this._retryAfterTimeoutPromiseFuncReject = reject;
 
-      const callback = () => {
+      const callback = (): void => {
         this._retryAfterTimeoutID = undefined;
         this._retryAfterTimeoutPromiseFuncReject = undefined;
         resolve();
@@ -1295,8 +1343,9 @@ export class RelayerV2AsyncRequest {
       this._retryAfterTimeoutID = setTimeout(callback, delayMs);
     });
 
+    // Keep the assertion (defensive)
     this._assert(
-      this._retryAfterTimeoutID !== undefined,
+      (this._retryAfterTimeoutID as unknown) !== undefined,
       'this._retryAfterTimeoutID !== undefined',
     );
     this._assert(
@@ -1309,7 +1358,7 @@ export class RelayerV2AsyncRequest {
 
   //////////////////////////////////////////////////////////////////////////////
 
-  private _tryClearRetryAfterTimeout(error?: unknown) {
+  private _tryClearRetryAfterTimeout(error?: unknown): void {
     if (this._retryAfterTimeoutID === undefined) {
       // Debug
       this._assert(
@@ -1319,7 +1368,12 @@ export class RelayerV2AsyncRequest {
       return;
     }
 
-    const reject = this._retryAfterTimeoutPromiseFuncReject!;
+    this._assert(
+      this._retryAfterTimeoutPromiseFuncReject !== undefined,
+      'this._retryAfterTimeoutPromiseFuncReject !== undefined',
+    );
+
+    const reject = this._retryAfterTimeoutPromiseFuncReject;
     const tid = this._retryAfterTimeoutID;
 
     this._retryAfterTimeoutID = undefined;
@@ -1335,14 +1389,14 @@ export class RelayerV2AsyncRequest {
   // Global Request Timeout
   //////////////////////////////////////////////////////////////////////////////
 
-  private _setGlobalRequestTimeout(delayMs: number) {
+  private _setGlobalRequestTimeout(delayMs: number): void {
     // Debug
     this._assert(
       this._requestGlobalTimeoutID === undefined,
       'this._requestGlobalTimeoutID === undefined',
     );
 
-    const callback = () => {
+    const callback = (): void => {
       this._requestGlobalTimeoutID = undefined;
       this._handleGlobalRequestTimeout();
     };
@@ -1350,7 +1404,7 @@ export class RelayerV2AsyncRequest {
     this._requestGlobalTimeoutID = setTimeout(callback, delayMs);
   }
 
-  private _handleGlobalRequestTimeout() {
+  private _handleGlobalRequestTimeout(): void {
     // Debug state-check guards:
     this._assert(
       this instanceof RelayerV2AsyncRequest,
@@ -1364,10 +1418,11 @@ export class RelayerV2AsyncRequest {
     this._postAsyncOnProgressCallback({
       type: 'timeout',
       url: this._url,
-      ...(this._jobId ? { jobId: this._jobId } : {}),
+      ...(this._fetchMethod !== undefined ? { method: this._fetchMethod } : {}),
+      ...(this._jobId !== undefined ? { jobId: this._jobId } : {}),
       operation: this._relayerOperation,
       retryCount: this._retryCount,
-    } satisfies RelayerV2ProgressTimeout);
+    } satisfies RelayerProgressTimeoutType<RelayerPostOperation>);
 
     this._terminate(
       'timeout',
@@ -1380,7 +1435,7 @@ export class RelayerV2AsyncRequest {
     );
   }
 
-  private _tryClearGlobalRequestTimeout() {
+  private _tryClearGlobalRequestTimeout(): void {
     if (this._requestGlobalTimeoutID === undefined) {
       return;
     }
@@ -1395,7 +1450,12 @@ export class RelayerV2AsyncRequest {
   // Progress
   //////////////////////////////////////////////////////////////////////////////
 
-  private _postAsyncOnProgressCallback(args: any) {
+  private _postAsyncOnProgressCallback(
+    args:
+      | RelayerInputProofProgressArgs
+      | RelayerUserDecryptProgressArgs
+      | RelayerPublicDecryptProgressArgs,
+  ): void {
     const onProgressFunc = this._onProgress;
     if (onProgressFunc) {
       // setTimeout(() => {
@@ -1419,38 +1479,44 @@ export class RelayerV2AsyncRequest {
   //////////////////////////////////////////////////////////////////////////////
 
   private _throwRelayerV2ResponseApiError(params: {
-    fetchMethod: 'GET' | 'POST';
-    status: RelayerV2ProgressFailureStatus;
-    relayerApiError: RelayerV2ResponseApiErrorCode;
-    elapsed: number;
+    status: RelayerFailureStatus;
+    relayerApiError: RelayerApiErrorType;
   }): never {
     // Clone
     const clonedRelayerApiError = JSON.parse(
       JSON.stringify(params.relayerApiError),
-    );
+    ) as RelayerApiErrorType;
 
-    // Async onProgress callback
-    this._postAsyncOnProgressCallback({
+    const args: RelayerProgressFailedType<RelayerPostOperation> = {
       type: 'failed',
       url: this._url,
-      method: params.fetchMethod,
+      method: this._fetchMethod!,
       status: params.status,
-      ...(this._jobId ? { jobId: this._jobId } : {}),
+      ...(this._jobId !== undefined ? { jobId: this._jobId } : {}),
       operation: this._relayerOperation,
       retryCount: this._retryCount,
-      elapsed: params.elapsed,
+      elapsed: this._elapsed,
       relayerApiError: clonedRelayerApiError,
-    } satisfies RelayerV2ProgressFailed);
+    } satisfies RelayerProgressFailedType<RelayerPostOperation>;
+
+    // Async onProgress callback
+    this._postAsyncOnProgressCallback(
+      this._relayerOperation === 'INPUT_PROOF'
+        ? (args as RelayerProgressFailedType<'INPUT_PROOF'>)
+        : this._relayerOperation === 'PUBLIC_DECRYPT'
+          ? (args as RelayerProgressFailedType<'PUBLIC_DECRYPT'>)
+          : (args as RelayerProgressFailedType<'USER_DECRYPT'>),
+    );
 
     throw new RelayerV2ResponseApiError({
       url: this._url,
-      fetchMethod: params.fetchMethod,
+      fetchMethod: this._fetchMethod!,
       status: params.status,
       jobId: this._jobId,
       operation: this._relayerOperation,
       retryCount: this._retryCount,
-      elapsed: params.elapsed,
       relayerApiError: params.relayerApiError,
+      elapsed: this._elapsed,
       state: { ...this._state },
     });
   }
@@ -1472,9 +1538,10 @@ export class RelayerV2AsyncRequest {
   }
 
   private _throwMaxRetryError(params: { fetchMethod: 'GET' | 'POST' }): never {
-    const elapsed = this._jobIdTimestamp
-      ? Date.now() - this._jobIdTimestamp
-      : 0;
+    const elapsed =
+      this._jobIdTimestamp !== undefined
+        ? Date.now() - this._jobIdTimestamp
+        : 0;
     throw new RelayerV2MaxRetryError({
       operation: this._relayerOperation,
       url: this._url,
@@ -1487,34 +1554,32 @@ export class RelayerV2AsyncRequest {
   }
 
   private _throwResponseInvalidBodyError(params: {
-    fetchMethod: 'GET' | 'POST';
     status: number;
     cause: InvalidPropertyError;
-    elapsed: number;
     bodyJson: string;
   }): never {
     throw new RelayerV2ResponseInvalidBodyError({
       ...params,
+      fetchMethod: this._fetchMethod!,
       url: this._url,
       jobId: this._jobId,
       operation: this._relayerOperation,
       state: { ...this._state },
       retryCount: this._retryCount,
+      elapsed: this._elapsed,
     });
   }
 
-  private _throwFetchError(params: {
-    fetchMethod: 'GET' | 'POST';
-    cause: unknown;
-    elapsed: number;
-  }): never {
+  private _throwFetchError(params: { cause: unknown }): never {
     throw new RelayerV2FetchError({
       ...params,
+      elapsed: this._elapsed,
       url: this._url,
       jobId: this._jobId,
       operation: this._relayerOperation,
       state: { ...this._state },
       retryCount: this._retryCount,
+      fetchMethod: this._fetchMethod!,
     });
   }
 
@@ -1536,7 +1601,7 @@ export class RelayerV2AsyncRequest {
    * The error includes relevant state information (like current state and jobId)
    * to aid in debugging the exact point of the integrity failure.
    */
-  private _assertCanContinueAfterAwait() {
+  private _assertCanContinueAfterAwait(): void {
     if (!this._canContinue()) {
       this._throwInternalError('cannot continue.');
     }
@@ -1546,7 +1611,7 @@ export class RelayerV2AsyncRequest {
   // Trace
   //////////////////////////////////////////////////////////////////////////////
 
-  private _trace(functionName: string, message: string) {
+  private _trace(functionName: string, message: string): void {
     console.log(`[RelayerV2AsyncRequest]:${functionName}: ${message}`);
   }
 }

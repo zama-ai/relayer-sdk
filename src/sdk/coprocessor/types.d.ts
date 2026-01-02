@@ -1,10 +1,10 @@
-import type { Prettify } from '../../utils/types';
+import type { Prettify } from '@base/types/utils';
 import type {
   Bytes32,
   Bytes32Hex,
   BytesHex,
   ChecksummedAddress,
-} from '../../types/primitives';
+} from '@base/types/primitives';
 
 ////////////////////////////////////////////////////////////////////////////////
 // CoprocessorEIP712 Types

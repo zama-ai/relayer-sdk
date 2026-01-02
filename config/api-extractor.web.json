@@ -6,7 +6,7 @@
     "untrimmedFilePath": "../lib/web.d.ts"
   },
   "compiler": {
-    "tsconfigFilePath": "./tsconfig.dts.json"
+    "tsconfigFilePath": "./tsconfig.api-extractor.json"
   },
   "projectFolder": ".",
   "apiReport": {

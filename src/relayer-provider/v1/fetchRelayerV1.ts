@@ -1,3 +1,9 @@
+import type { RelayerV1FetchResponseJson } from './types';
+import type { FhevmInstanceOptions } from '../../types/relayer';
+import type {
+  RelayerGetOperation,
+  RelayerPostOperation,
+} from '../types/public-api';
 import { sdkName, version } from '../../_version';
 import {
   throwRelayerUnexpectedJSONError,
@@ -6,17 +12,11 @@ import {
   throwRelayerUnknownError,
 } from '../../relayer/error';
 import { setAuth } from '../../auth';
-import type { RelayerV1FetchResponseJson } from './types';
-import type {
-  FhevmInstanceOptions,
-  RelayerGetOperation,
-  RelayerPostOperation,
-} from '../../types/relayer';
 
 function assertIsRelayerV1FetchResponseJson(
-  json: any,
+  json: unknown,
 ): asserts json is RelayerV1FetchResponseJson {
-  if (!json || typeof json !== 'object') {
+  if (json === undefined || json === null || typeof json !== 'object') {
     throw new Error('Unexpected response JSON.');
   }
   if (
@@ -35,7 +35,7 @@ function assertIsRelayerV1FetchResponseJson(
 export async function fetchRelayerV1Post(
   relayerOperation: RelayerPostOperation,
   url: string,
-  payload: any,
+  payload: unknown,
   options?: FhevmInstanceOptions,
 ): Promise<RelayerV1FetchResponseJson> {
   const init = setAuth(
@@ -43,8 +43,8 @@ export async function fetchRelayerV1Post(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'ZAMA-SDK-VERSION': `${version}`,
-        'ZAMA-SDK-NAME': `${sdkName}`,
+        'ZAMA-SDK-VERSION': version,
+        'ZAMA-SDK-NAME': sdkName,
       },
       body: JSON.stringify(payload),
     } satisfies RequestInit,
@@ -64,7 +64,7 @@ export async function fetchRelayerV1Post(
 
   let parsed;
   try {
-    parsed = await response.json();
+    parsed = (await response.json()) as unknown;
   } catch (e) {
     throwRelayerJSONError(relayerOperation, e, response);
   }
@@ -86,8 +86,8 @@ export async function fetchRelayerV1Get(
   const init = {
     method: 'GET',
     headers: {
-      'ZAMA-SDK-VERSION': `${version}`,
-      'ZAMA-SDK-NAME': `${sdkName}`,
+      'ZAMA-SDK-VERSION': version,
+      'ZAMA-SDK-NAME': sdkName,
     },
   } satisfies RequestInit;
 
@@ -105,7 +105,7 @@ export async function fetchRelayerV1Get(
 
   let parsed;
   try {
-    parsed = await response.json();
+    parsed = (await response.json()) as unknown;
   } catch (e) {
     throwRelayerJSONError(relayerOperation, e, response);
   }

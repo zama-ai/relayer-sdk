@@ -3,7 +3,7 @@ import { TFHEPublicKey } from './TFHEPublicKey';
 import { tfhePublicKeyBytes, tfhePublicKeyBytesWithSrcUrl } from '../../test';
 import { TEST_CONFIG } from '../../test/config';
 import { TFHEError } from '../../errors/TFHEError';
-import { assertIsTFHEPublicKeyBytesType } from '../../types/relayer.guards';
+import { assertIsTFHEPublicKeyBytesType } from './guards';
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -318,7 +318,7 @@ describe('TFHEPublicKey', () => {
           id: tfhePublicKeyBytes.id,
           srcUrl: testUrl,
         }),
-      ).rejects.toThrow('Invalid public key (deserialization failed)');
+      ).rejects.toThrow('Impossible to fetch public key: wrong relayer url.');
     });
   });
 

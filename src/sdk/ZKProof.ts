@@ -5,10 +5,10 @@ import type {
   ZKProofType,
   Uint64BigInt,
   Bytes,
-} from '../types/primitives';
-import { assertIsChecksummedAddress } from '../utils/address';
-import { bytesToHexLarge, hexToBytesFaster, isBytes } from '../utils/bytes';
-import { assertIsUint64 } from '../utils/uint';
+} from '@base/types/primitives';
+import { assertIsChecksummedAddress } from '@base/address';
+import { bytesToHexLarge, hexToBytesFaster, isBytes } from '@base/bytes';
+import { assertIsUint64 } from '@base/uint';
 import { ZKProofError } from '../errors/ZKProofError';
 import { assertIsEncryptionBitsArray } from './FheType';
 
@@ -134,9 +134,9 @@ export class ZKProof implements ZKProofType, ZKProofLike {
 
     return new ZKProof({
       chainId,
-      aclContractAddress: zkProofLike.aclContractAddress as ChecksummedAddress,
-      contractAddress: zkProofLike.contractAddress as ChecksummedAddress,
-      userAddress: zkProofLike.userAddress as ChecksummedAddress,
+      aclContractAddress: zkProofLike.aclContractAddress,
+      contractAddress: zkProofLike.contractAddress,
+      userAddress: zkProofLike.userAddress,
       ciphertextWithZKProof,
       encryptionBits: zkProofLike.encryptionBits,
     });

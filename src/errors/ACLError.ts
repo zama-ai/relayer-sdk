@@ -1,5 +1,5 @@
-import type { Prettify } from '../utils/types';
-import type { Bytes32Hex, ChecksummedAddress } from '../types/primitives';
+import type { Prettify } from '@base/types/utils';
+import type { Bytes32Hex, ChecksummedAddress } from '@base/types/primitives';
 import {
   ContractErrorBase,
   ContractErrorBaseParams,

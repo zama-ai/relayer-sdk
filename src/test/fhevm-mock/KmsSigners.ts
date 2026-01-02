@@ -3,8 +3,8 @@ import type {
   KmsEIP712Params,
   KmsEIP712Type,
 } from '../../sdk/kms/types';
-import type { Prettify } from '../../utils/types';
-import type { BytesHex } from '../../types/primitives';
+import type { Prettify } from '../../base/types/utils';
+import type { BytesHex } from '../../base/types/primitives';
 
 import { Wordlist } from 'ethers';
 import { KmsSigner } from './KmsSigner';

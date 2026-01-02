@@ -7,21 +7,21 @@ import type {
   Bytes65Hex,
   BytesHex,
   ChecksummedAddress,
-} from '../../types/primitives';
-import type { Prettify } from '../../utils/types';
+} from '@base/types/primitives';
+import type { Prettify } from '@base/types/utils';
 import type { ethers as EthersT } from 'ethers';
+import type { ZKProof } from '../ZKProof';
+import type { FhevmHandle } from '../FhevmHandle';
 import { RelayerDuplicateCoprocessorSignerError } from '../../errors/RelayerDuplicateCoprocessorSignerError';
 import {
   assertIsChecksummedAddress,
   assertIsChecksummedAddressArray,
-} from '../../utils/address';
+} from '@base/address';
 import { RelayerUnknownCoprocessorSignerError } from '../../errors/RelayerUnknownCoprocessorSignerError';
 import { CoprocessorEIP712 } from './CoprocessorEIP712';
 import { RelayerThresholdCoprocessorSignerError } from '../../errors/RelayerThresholdCoprocessorSignerError';
 import { InputProof } from './InputProof';
 import { Contract } from 'ethers';
-import { ZKProof } from '../ZKProof';
-import { FhevmHandle } from '../FhevmHandle';
 
 ////////////////////////////////////////////////////////////////////////////////
 // CoprocessorSignersVerifier
@@ -51,7 +51,9 @@ export class CoprocessorSignersVerifier {
     this.#eip712 = new CoprocessorEIP712(params);
   }
 
-  public static fromAddresses(params: CoprocessorSignersVerifierParams) {
+  public static fromAddresses(
+    params: CoprocessorSignersVerifierParams,
+  ): CoprocessorSignersVerifier {
     return new CoprocessorSignersVerifier(params);
   }
 
@@ -62,7 +64,7 @@ export class CoprocessorSignersVerifier {
         readonly provider: EthersT.Provider;
       } & CoprocessorEIP712Params
     >,
-  ) {
+  ): Promise<CoprocessorSignersVerifier> {
     assertIsChecksummedAddress(params.inputVerifierContractAddress);
 
     const abiInputVerifier = [
@@ -77,12 +79,14 @@ export class CoprocessorSignersVerifier {
     );
 
     const res = await Promise.all([
-      inputContract.getCoprocessorSigners(),
-      inputContract.getThreshold(),
+      // eslint-disable-next-line @typescript-eslint/dot-notation
+      inputContract['getCoprocessorSigners'](),
+      // eslint-disable-next-line @typescript-eslint/dot-notation
+      inputContract['getThreshold'](),
     ]);
 
-    const coprocessorSignersAddresses = res[0];
-    const threshold = res[1];
+    const coprocessorSignersAddresses = res[0] as ChecksummedAddress[];
+    const threshold = res[1] as number;
 
     return new CoprocessorSignersVerifier({
       ...params,
@@ -138,7 +142,7 @@ export class CoprocessorSignersVerifier {
     readonly zkProof: ZKProof;
     readonly signatures: readonly Bytes65Hex[];
     readonly extraData: BytesHex;
-  }) {
+  }): void {
     const handlesBytes32: Bytes32[] = params.handles.map((h) => h.toBytes32());
 
     const message: CoprocessorEIP712MessageType = {
@@ -149,13 +153,13 @@ export class CoprocessorSignersVerifier {
       extraData: params.extraData,
     };
 
-    return this._verify({ signatures: params.signatures, message });
+    this._verify({ signatures: params.signatures, message });
   }
 
   private _verify(params: {
     signatures: readonly Bytes65Hex[];
     message: CoprocessorEIP712MessageType;
-  }) {
+  }): void {
     // 1. Verify signatures
     const recoveredAddresses = this.#eip712.verify(params);
 

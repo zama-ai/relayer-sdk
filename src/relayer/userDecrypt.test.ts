@@ -1,4 +1,4 @@
-import type { RelayerUserDecryptPayload } from '../types/relayer';
+import type { RelayerUserDecryptPayload } from '../relayer-provider/types/public-api';
 import { userDecryptRequest } from './userDecrypt';
 import fetchMock from 'fetch-mock';
 import { ethers } from 'ethers';

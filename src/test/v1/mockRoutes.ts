@@ -1,4 +1,4 @@
-import type { EncryptionBits } from '../../types/primitives';
+import type { EncryptionBits } from '../../base/types/primitives';
 import fetchMock, { type CallLog } from 'fetch-mock';
 import { fetchMockInputProof, TEST_CONFIG } from '../config';
 import { tfheCompactPublicKeyBytes, tfheCompactPkeCrsBytes } from '..';

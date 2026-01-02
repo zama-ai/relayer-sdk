@@ -3,8 +3,8 @@ import type {
   Bytes32Hex,
   Bytes65Hex,
   BytesHex,
-} from '../../types/primitives';
-import { MAX_UINT8, uintToBytesHexNo0x } from '../../utils/uint';
+} from '@base/types/primitives';
+import { MAX_UINT8, uintToBytesHexNo0x } from '@base/uint';
 import {
   assertIsBytes65HexArray,
   assertIsBytesHex,
@@ -13,17 +13,17 @@ import {
   hexToBytes,
   hexToBytes32,
   toBytes32HexArray,
-} from '../../utils/bytes';
+} from '@base/bytes';
 import { RelayerTooManyHandlesError } from '../../errors/RelayerTooManyHandlesError';
 import { assertRelayer } from '../../errors/InternalError';
-import { remove0x } from '../../utils/string';
+import { remove0x } from '@base/string';
 import { RelayerInvalidProofError } from '../../errors/RelayerInvalidProofError';
 
 export class InputProof {
-  #proof: BytesHex;
-  #signatures: Bytes65Hex[];
-  #handles: Bytes32Hex[];
-  #extraData: BytesHex;
+  readonly #proof: BytesHex;
+  readonly #signatures: Bytes65Hex[];
+  readonly #handles: Bytes32Hex[];
+  readonly #extraData: BytesHex;
 
   private constructor({
     proof,
@@ -179,8 +179,8 @@ export class InputProof {
       });
     }
 
-    const numHandles = proofBytes[0]!;
-    const numSignatures = proofBytes[1]!;
+    const numHandles = proofBytes[0];
+    const numSignatures = proofBytes[1];
 
     const HANDLE_SIZE = 32;
     const SIGNATURE_SIZE = 65;
@@ -204,8 +204,8 @@ export class InputProof {
       const start = handlesStart + i * HANDLE_SIZE;
       const end = start + HANDLE_SIZE;
       const handleBytes = proofBytes.slice(start, end);
-      const handleHex = bytesToHex(handleBytes) as Bytes32Hex;
-      handles.push(handleHex);
+      const handleBytes32Hex = bytesToHex(handleBytes);
+      handles.push(handleBytes32Hex);
     }
 
     // Extract signatures
@@ -214,8 +214,8 @@ export class InputProof {
       const start = signaturesStart + i * SIGNATURE_SIZE;
       const end = start + SIGNATURE_SIZE;
       const signatureBytes = proofBytes.slice(start, end);
-      const signatureHex = bytesToHex(signatureBytes) as Bytes65Hex;
-      signatures.push(signatureHex);
+      const signatureBytes65Hex = bytesToHex(signatureBytes);
+      signatures.push(signatureBytes65Hex);
     }
 
     // Extract extra data

@@ -1,5 +1,5 @@
 import type { TFHEType } from '../tfheType';
-import { AbstractRelayerProvider } from './AbstractRelayerProvider';
+import type { AbstractRelayerProvider } from './AbstractRelayerProvider';
 
 export abstract class AbstractRelayerFhevm {
   public abstract get version(): number;

@@ -1,10 +1,8 @@
-import type { RelayerV2ResponseApiErrorCode } from '../types/types';
-import type { Prettify } from '../../../utils/types';
-import { RelayerErrorBaseParams } from '../../../errors/RelayerErrorBase';
-import {
-  RelayerV2ResponseErrorBase,
-  RelayerV2ResponseErrorBaseParams,
-} from './RelayerV2ResponseErrorBase';
+import type { RelayerV2ResponseErrorBaseParams } from './RelayerV2ResponseErrorBase';
+import type { RelayerApiErrorType } from '../../types/public-api';
+import type { RelayerErrorBaseParams } from '../../../errors/RelayerErrorBase';
+import type { Prettify } from '@base/types/utils';
+import { RelayerV2ResponseErrorBase } from './RelayerV2ResponseErrorBase';
 
 ////////////////////////////////////////////////////////////////////////////////
 // RelayerV2GetResponseApiError
@@ -16,7 +14,7 @@ export type RelayerV2ResponseApiErrorType = RelayerV2ResponseErrorBase & {
 
 export type RelayerV2ResponseApiErrorParams = Prettify<
   Omit<RelayerV2ResponseErrorBaseParams, keyof RelayerErrorBaseParams> & {
-    relayerApiError: RelayerV2ResponseApiErrorCode;
+    relayerApiError: RelayerApiErrorType;
   }
 >;
 

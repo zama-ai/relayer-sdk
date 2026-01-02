@@ -1,4 +1,4 @@
-import { FhevmHandle } from '../sdk/FhevmHandle';
+import { FhevmHandle } from '@sdk/FhevmHandle';
 
 export function check2048EncryptedBits(handles: `0x${string}`[]) {
   let total = 0;

@@ -1,7 +1,7 @@
-import { assertRecordStringProperty } from '../../utils/string';
-import { assertRecordChecksummedAddressProperty } from '../../utils/address';
-import { KmsEIP712DomainType } from './types';
-import { assertRecordUint256Property } from '../../utils/uint';
+import type { KmsEIP712DomainType } from './types';
+import { assertRecordStringProperty } from '@base/string';
+import { assertRecordChecksummedAddressProperty } from '@base/address';
+import { assertRecordUint256Property } from '@base/uint';
 
 export function assertKmsEIP712DomainType(
   value: unknown,

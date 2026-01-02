@@ -16,6 +16,6 @@ export function ensureError(e: unknown): Error {
   return err;
 }
 
-export function assertNever(value: never, message: string): never {
+export function assertNever(_value: never, message: string): never {
   throw new InternalError({ message });
 }

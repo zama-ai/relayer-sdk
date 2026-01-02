@@ -9,7 +9,7 @@ import {
 import { TEST_CONFIG } from '../../test/config';
 import { TFHEError } from '../../errors/TFHEError';
 import { SERIALIZED_SIZE_LIMIT_CRS } from './constants';
-import { bytesToHexLarge } from '../../utils/bytes';
+import { bytesToHexLarge } from '../../base/bytes';
 
 ////////////////////////////////////////////////////////////////////////////////
 //

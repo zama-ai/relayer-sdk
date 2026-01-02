@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.strict.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "target": "es2021",
+    "lib": ["es2022"],
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "allowJs": true,
+    "resolveJsonModule": true
+  },
+  // Warning : "./../sdk/**/*.global.d.ts" global include must be kept otherwise TFHE.xxx is not resolved
+  // by the compiler
+  "include": ["./**/*.ts", "./**/*.d.ts", "./../sdk/**/*.global.d.ts"],
+  "exclude": ["**/*.test.ts"]
+}

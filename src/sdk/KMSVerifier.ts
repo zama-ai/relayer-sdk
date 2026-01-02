@@ -1,9 +1,9 @@
-import type { ChecksummedAddress } from '../types/primitives';
+import type { ChecksummedAddress } from '@base/types/primitives';
 import type { Provider as EthersProviderType } from 'ethers';
 import type { KmsEIP712DomainType } from './kms/types';
 import { Contract } from 'ethers';
-import { isUint8 } from '../utils/uint';
-import { assertIsChecksummedAddressArray } from '../utils/address';
+import { isUint8 } from '@base/uint';
+import { assertIsChecksummedAddressArray } from '@base/address';
 import { assertKmsEIP712DomainType } from './kms/guards';
 
 export class KMSVerifier {
@@ -68,14 +68,17 @@ export class KMSVerifier {
     );
 
     const res = await Promise.all([
-      contract.eip712Domain(),
-      contract.getThreshold(),
-      contract.getKmsSigners(),
+      // eslint-disable-next-line @typescript-eslint/dot-notation
+      contract['eip712Domain'](),
+      // eslint-disable-next-line @typescript-eslint/dot-notation
+      contract['getThreshold'](),
+      // eslint-disable-next-line @typescript-eslint/dot-notation
+      contract['getKmsSigners'](),
     ]);
 
-    const eip712Domain = res[0];
-    const threshold = res[1];
-    const kmsSigners = res[2];
+    const eip712DomainArray = res[0] as unknown[];
+    const threshold = res[1] as unknown;
+    const kmsSigners = res[2] as unknown;
 
     if (!isUint8(threshold)) {
       throw new Error(`Invalid KMSVerifier kms signers threshold.`);
@@ -89,22 +92,22 @@ export class KMSVerifier {
       });
     }
 
-    const _eip712Domain = {
-      name: eip712Domain[1],
-      version: eip712Domain[2],
-      chainId: eip712Domain[3],
-      verifyingContract: eip712Domain[4],
+    const eip712Domain = {
+      name: eip712DomainArray[1],
+      version: eip712DomainArray[2],
+      chainId: eip712DomainArray[3],
+      verifyingContract: eip712DomainArray[4],
     };
 
     try {
-      assertKmsEIP712DomainType(_eip712Domain, 'KMSVerifier.eip712Domain()');
+      assertKmsEIP712DomainType(eip712Domain, 'KMSVerifier.eip712Domain()');
     } catch (e) {
       throw new Error(`Invalid KMSVerifier EIP-712 domain.`, { cause: e });
     }
 
     const kmsVerifier = new KMSVerifier({
       address: params.kmsContractAddress,
-      eip712Domain: _eip712Domain,
+      eip712Domain: eip712Domain,
       threshold: Number(threshold),
       kmsSigners: kmsSigners,
     });

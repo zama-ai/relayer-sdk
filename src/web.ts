@@ -65,7 +65,23 @@ export type {
   ApiKeyHeader,
   FhevmInstanceConfig,
   FhevmInstanceOptions,
+  ZKProofLike,
+  FhevmPkeCrsType,
+  FhevmPkeConfigType,
+  FhevmPublicKeyType,
+  FhevmPkeCrsByCapacityType,
+  Prettify,
 } from './index';
+
+export type {
+  Bytes32Hex,
+  BytesHex,
+  BytesHexNo0x,
+  FheTypeEncryptionBitwidth,
+  FheTypeEncryptionBitwidthToIdMap,
+  FheTypeNameToIdMap,
+} from './base/types/primitives';
+export type * from './relayer-provider/types/public-api';
 
 export {
   createInstance,

@@ -1,11 +1,7 @@
 import type { TFHEType } from '../../tfheType';
-import type {
-  FhevmPublicKeyType,
-  FhevmPkeCrsByCapacityType,
-  FhevmPkeConfigType,
-} from '../../types/relayer';
-import type { Prettify } from '../../utils/types';
-import { TFHEPkeParams } from '../../sdk/lowlevel/TFHEPkeParams';
+import type { FhevmPkeConfigType } from '../../types/relayer';
+import type { PartialWithUndefined, Prettify } from '@base/types/utils';
+import { TFHEPkeParams } from '@sdk/lowlevel/TFHEPkeParams';
 import { AbstractRelayerFhevm } from '../AbstractRelayerFhevm';
 import { RelayerV2Provider } from './RelayerV2Provider';
 
@@ -22,7 +18,7 @@ export class RelayerV2Fhevm extends AbstractRelayerFhevm {
     this.#tfhePkeParams = params.tfhePkeParams;
   }
 
-  public get version(): number {
+  public override get version(): number {
     return 2;
   }
 
@@ -43,15 +39,14 @@ export class RelayerV2Fhevm extends AbstractRelayerFhevm {
     config: Prettify<
       {
         relayerVersionUrl: string;
-      } & Partial<FhevmPkeConfigType>
+      } & PartialWithUndefined<FhevmPkeConfigType>
     >,
-  ) {
+  ): Promise<RelayerV2Fhevm> {
     const relayerProvider = new RelayerV2Provider(config.relayerVersionUrl);
 
-    let relayerPublicKey = TFHEPkeParams.tryFromFhevmPkeConfig(config);
-    if (!relayerPublicKey) {
-      relayerPublicKey = await relayerProvider.fetchTFHEPkeParams();
-    }
+    const relayerPublicKey =
+      TFHEPkeParams.tryFromFhevmPkeConfig(config) ??
+      (await relayerProvider.fetchTFHEPkeParams());
 
     // Missing:
     // Create FhevmHostChain

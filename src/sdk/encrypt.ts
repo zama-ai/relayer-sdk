@@ -1,9 +1,13 @@
-import type { TFHEType } from '../tfheType';
-import type { EncryptionBits } from '../types/primitives';
-import { isChecksummedAddress } from '../utils/address';
-import { hexToBytes } from '../utils/bytes';
+import type {
+  CompactPkeCrsWasmType,
+  TfheCompactPublicKeyWasmType,
+} from './lowlevel/types';
+import type { EncryptionBits } from '@base/types/primitives';
+import { isChecksummedAddress } from '@base/address';
+import { hexToBytes } from '@base/bytes';
 import { SERIALIZED_SIZE_LIMIT_CIPHERTEXT } from './lowlevel/constants';
 
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type EncryptedInput = {
   addBool: (value: boolean | number | bigint) => EncryptedInput;
   add8: (value: number | bigint) => EncryptedInput;
@@ -17,7 +21,8 @@ export type EncryptedInput = {
   encrypt: () => Uint8Array;
 };
 
-const checkEncryptedValue = (value: number | bigint, bits: number) => {
+const checkEncryptedValue = (value: number | bigint, bits: number): void => {
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   if (value == null) throw new Error('Missing value');
   let limit;
   if (bits >= 8) {
@@ -36,15 +41,15 @@ const checkEncryptedValue = (value: number | bigint, bits: number) => {
   }
 };
 
-type EncryptInputParams = {
+interface EncryptInputParams {
   aclContractAddress: string;
   chainId: number;
-  tfheCompactPublicKey: TFHEType['TfheCompactPublicKey'];
-  tfheCompactPkeCrs: TFHEType['CompactPkeCrs'];
+  tfheCompactPublicKey: TfheCompactPublicKeyWasmType;
+  tfheCompactPkeCrs: CompactPkeCrsWasmType;
   contractAddress: string;
   userAddress: string;
   capacity: number;
-};
+}
 
 export const createEncryptedInput = ({
   aclContractAddress,
@@ -65,7 +70,7 @@ export const createEncryptedInput = ({
   const bits: EncryptionBits[] = [];
   const builder = TFHE.CompactCiphertextList.builder(tfheCompactPublicKey);
   let ciphertextWithZKProof: Uint8Array = new Uint8Array(); // updated in `_prove`
-  const checkLimit = (added: number) => {
+  const checkLimit = (added: number): void => {
     if (bits.reduce((acc, val) => acc + Math.max(2, val), 0) + added > 2048) {
       throw Error(
         'Packing more than 2048 bits in a single input ciphertext is unsupported',
@@ -79,6 +84,7 @@ export const createEncryptedInput = ({
 
   return {
     addBool(value: boolean | number | bigint) {
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (value == null) throw new Error('Missing value');
       if (
         typeof value !== 'boolean' &&
@@ -89,6 +95,7 @@ export const createEncryptedInput = ({
       if (Number(value) > 1) throw new Error('The value must be 1 or 0.');
       checkEncryptedValue(Number(value), 1);
       checkLimit(2);
+      // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
       builder.push_boolean(!!value);
       bits.push(2); // ebool takes 2 encrypted bits
       return this;

@@ -1,4 +1,4 @@
-import { AbstractRelayerProvider } from './AbstractRelayerProvider';
+import type { AbstractRelayerProvider } from './AbstractRelayerProvider';
 import { RelayerV1Provider } from './v1/RelayerV1Provider';
 import { RelayerV2Provider } from './v2/RelayerV2Provider';
 import { parseRelayerUrl } from './relayerUrl';

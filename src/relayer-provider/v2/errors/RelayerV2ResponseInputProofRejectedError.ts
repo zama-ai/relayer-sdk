@@ -1,10 +1,8 @@
-import type { Prettify } from '../../../utils/types';
-import type { RelayerV2ResultInputProofRejected } from '../types/types';
-import { RelayerErrorBaseParams } from '../../../errors/RelayerErrorBase';
-import {
-  RelayerV2ResponseErrorBase,
-  RelayerV2ResponseErrorBaseParams,
-} from './RelayerV2ResponseErrorBase';
+import type { Prettify } from '@base/types/utils';
+import type { RelayerV2ResultInputProofRejected } from '../types';
+import type { RelayerErrorBaseParams } from '../../../errors/RelayerErrorBase';
+import type { RelayerV2ResponseErrorBaseParams } from './RelayerV2ResponseErrorBase';
+import { RelayerV2ResponseErrorBase } from './RelayerV2ResponseErrorBase';
 
 ////////////////////////////////////////////////////////////////////////////////
 // RelayerV2ResponseInputProofRejectedError
@@ -22,7 +20,7 @@ export type RelayerV2ResponseInputProofRejectedErrorParams = Prettify<
 >;
 
 export class RelayerV2ResponseInputProofRejectedError extends RelayerV2ResponseErrorBase {
-  private _result: RelayerV2ResultInputProofRejected;
+  private readonly _result: RelayerV2ResultInputProofRejected;
 
   constructor(params: RelayerV2ResponseInputProofRejectedErrorParams) {
     super({

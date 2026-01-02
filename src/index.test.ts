@@ -175,7 +175,7 @@ describeIfFetchMock('index', () => {
   //////////////////////////////////////////////////////////////////////////////
 
   it('v1: fails: network', async () => {
-    config.network = undefined;
+    config.network = undefined as unknown as string;
     await expect(createInstance(config)).rejects.toThrow(
       'You must provide a network URL or a EIP1193 object (eg: window.ethereum)',
     );

@@ -1,7 +1,7 @@
-import { assertRecordStringProperty } from '../../utils/string';
-import { assertRecordChecksummedAddressProperty } from '../../utils/address';
-import { CoprocessorEIP712DomainType } from './types';
-import { assertRecordUint256Property } from '../../utils/uint';
+import type { CoprocessorEIP712DomainType } from './types';
+import { assertRecordChecksummedAddressProperty } from '@base/address';
+import { assertRecordUint256Property } from '@base/uint';
+import { assertRecordStringProperty } from '@base/string';
 
 export function assertCoprocessorEIP712DomainType(
   value: unknown,

@@ -1,5 +1,5 @@
 import type { ethers as EthersT } from 'ethers';
-import type { Bytes65Hex, ChecksummedAddress } from '../../types/primitives';
+import type { Bytes65Hex, ChecksummedAddress } from '@base/types/primitives';
 import type {
   KmsDelegateEIP712Type,
   KmsDelegateEIP712TypesType,
@@ -12,10 +12,10 @@ import type {
 import {
   assertIsChecksummedAddress,
   assertIsChecksummedAddressArray,
-} from '../../utils/address';
-import { assertIsBytes65HexArray, assertIsBytesHex } from '../../utils/bytes';
-import { verifySignature } from '../../utils/signature';
-import { assertIsUint256, assertIsUint32 } from '../../utils/uint';
+} from '@base/address';
+import { assertIsBytes65HexArray, assertIsBytesHex } from '@base/bytes';
+import { verifySignature } from '@base/signature';
+import { assertIsUint256, assertIsUint32 } from '@base/uint';
 
 ////////////////////////////////////////////////////////////////////////////////
 // KmsEIP712 Class
@@ -24,7 +24,7 @@ import { assertIsUint256, assertIsUint32 } from '../../utils/uint';
 export class KmsEIP712 {
   public readonly domain: KmsEIP712DomainType;
 
-  static #types: KmsEIP712TypesType = {
+  static readonly #types: KmsEIP712TypesType = {
     EIP712Domain: [
       { name: 'name', type: 'string' },
       { name: 'version', type: 'string' },
@@ -40,7 +40,7 @@ export class KmsEIP712 {
     ] as const,
   } as const;
 
-  static #delegateTypes: KmsDelegateEIP712TypesType = {
+  static readonly #delegateTypes: KmsDelegateEIP712TypesType = {
     EIP712Domain: [
       { name: 'name', type: 'string' },
       { name: 'version', type: 'string' },
@@ -209,15 +209,18 @@ export class KmsEIP712 {
     return eip712;
   }
 
-  public verify(signatures: Bytes65Hex[], message: KmsEIP712UserArgsType) {
+  public verify(
+    signatures: Bytes65Hex[],
+    message: KmsEIP712UserArgsType,
+  ): ChecksummedAddress[] {
     assertIsBytes65HexArray(signatures);
     const recoveredAddresses = signatures.map((signature: Bytes65Hex) => {
       const recoveredAddress = verifySignature({
         signature,
         domain: this.domain,
-        types: KmsEIP712.#types as any as Record<
+        types: KmsEIP712.#types as unknown as Record<
           string,
-          Array<EthersT.TypedDataField>
+          EthersT.TypedDataField[]
         >,
         message,
         primaryType: 'UserDecryptRequestVerification',
@@ -230,15 +233,15 @@ export class KmsEIP712 {
   public verifyDelegate(
     signatures: Bytes65Hex[],
     message: KmsDelegateEIP712UserArgsType,
-  ) {
+  ): ChecksummedAddress[] {
     assertIsBytes65HexArray(signatures);
     const recoveredAddresses = signatures.map((signature: Bytes65Hex) => {
       const recoveredAddress = verifySignature({
         signature,
         domain: this.domain,
-        types: KmsEIP712.#delegateTypes as any as Record<
+        types: KmsEIP712.#delegateTypes as unknown as Record<
           string,
-          Array<EthersT.TypedDataField>
+          EthersT.TypedDataField[]
         >,
         message,
         primaryType: 'DelegatedUserDecryptRequestVerification',

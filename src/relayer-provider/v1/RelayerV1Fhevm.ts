@@ -1,4 +1,7 @@
-import type { TFHEType } from '../../tfheType';
+import type {
+  CompactPkeCrsWasmType,
+  TfheCompactPublicKeyWasmType,
+} from '@sdk/lowlevel/types';
 import type { PublicParams } from '../../types/relayer';
 import { getPublicParams, getTfheCompactPublicKey } from '../../config';
 import { AbstractRelayerFhevm } from '../AbstractRelayerFhevm';
@@ -6,14 +9,15 @@ import { RelayerV1Provider } from './RelayerV1Provider';
 import {
   SERIALIZED_SIZE_LIMIT_CRS,
   SERIALIZED_SIZE_LIMIT_PK,
-} from '../../sdk/lowlevel/constants';
+} from '@sdk/lowlevel/constants';
 
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 type RelayerV1PublicKeyDataType = {
-  publicKey: TFHEType['TfheCompactPublicKey'];
+  publicKey: TfheCompactPublicKeyWasmType;
   publicKeyId: string;
 };
 
-type RelayerV1PublicParamsDataType = PublicParams<TFHEType['CompactPkeCrs']>;
+type RelayerV1PublicParamsDataType = PublicParams<CompactPkeCrsWasmType>;
 
 export class RelayerV1Fhevm extends AbstractRelayerFhevm {
   private readonly _relayerProvider: RelayerV1Provider;
@@ -31,7 +35,7 @@ export class RelayerV1Fhevm extends AbstractRelayerFhevm {
     this._publicParamsData = params.publicParamsData;
   }
 
-  public get version(): number {
+  public override get version(): number {
     return 1;
   }
 
@@ -41,12 +45,14 @@ export class RelayerV1Fhevm extends AbstractRelayerFhevm {
 
   public static async fromConfig(config: {
     relayerVersionUrl: string;
-    publicKey?: {
-      data: Uint8Array | null;
-      id: string | null;
-    };
-    publicParams?: PublicParams<Uint8Array> | null;
-  }) {
+    publicKey?:
+      | {
+          data: Uint8Array | null;
+          id: string | null;
+        }
+      | undefined;
+    publicParams?: PublicParams<Uint8Array> | null | undefined;
+  }): Promise<RelayerV1Fhevm> {
     const relayerProvider = new RelayerV1Provider(config.relayerVersionUrl);
     const publicKeyData = await getTfheCompactPublicKey(config);
     const publicParamsData = await getPublicParams(config);
@@ -75,7 +81,7 @@ export class RelayerV1Fhevm extends AbstractRelayerFhevm {
 
   public override getPublicKeyWasm(): {
     id: string;
-    wasm: TFHEType['TfheCompactPublicKey'];
+    wasm: TfheCompactPublicKeyWasmType;
   } {
     return {
       id: this._publicKeyData.publicKeyId,
@@ -94,7 +100,7 @@ export class RelayerV1Fhevm extends AbstractRelayerFhevm {
     id: string;
     bytes: Uint8Array;
   } {
-    if (capacity === undefined) {
+    if ((capacity as unknown) === undefined) {
       throw new Error(`Missing PublicParams bits format`);
     }
     if (capacity !== 2048) {
@@ -103,8 +109,8 @@ export class RelayerV1Fhevm extends AbstractRelayerFhevm {
 
     const res = {
       capacity,
-      id: this._publicParamsData['2048']!.publicParamsId,
-      bytes: this._publicParamsData['2048']!.publicParams.safe_serialize(
+      id: this._publicParamsData['2048'].publicParamsId,
+      bytes: this._publicParamsData['2048'].publicParams.safe_serialize(
         SERIALIZED_SIZE_LIMIT_CRS,
       ),
     };
@@ -116,9 +122,9 @@ export class RelayerV1Fhevm extends AbstractRelayerFhevm {
   ): {
     capacity: C;
     id: string;
-    wasm: TFHEType['CompactPkeCrs'];
+    wasm: CompactPkeCrsWasmType;
   } {
-    if (capacity === undefined) {
+    if ((capacity as unknown) === undefined) {
       throw new Error(`Missing PublicParams bits format`);
     }
     if (capacity !== 2048) {
@@ -127,8 +133,8 @@ export class RelayerV1Fhevm extends AbstractRelayerFhevm {
 
     return {
       capacity,
-      id: this._publicParamsData['2048']!.publicParamsId,
-      wasm: this._publicParamsData['2048']!.publicParams,
+      id: this._publicParamsData['2048'].publicParamsId,
+      wasm: this._publicParamsData['2048'].publicParams,
     };
   }
 }

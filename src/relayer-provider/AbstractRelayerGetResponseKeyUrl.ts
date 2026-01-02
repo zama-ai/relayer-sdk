@@ -1,18 +1,18 @@
 import {
   assertRecordNonNullableProperty,
   assertRecordArrayProperty,
-} from '../utils/record';
+} from '@base/record';
 import {
   assertRecordStringArrayProperty,
   assertRecordStringProperty,
-} from '../utils/string';
-import {
+} from '@base/string';
+import type {
   RelayerGetResponseKeyUrlCamelCase,
   RelayerGetResponseKeyUrlSnakeCase,
   RelayerKeyDataCamelCase,
   RelayerKeyDataSnakeCase,
   RelayerKeyInfoSnakeCase,
-} from './common-types';
+} from './types/private';
 
 export function isRelayerGetResponseKeyUrlCamelCase(
   value: unknown,
@@ -134,7 +134,7 @@ function _assertIsRelayerKeyData(
   value: unknown,
   name: string,
   dataIdName: 'data_id' | 'dataId',
-) {
+): void {
   assertRecordStringProperty(value, dataIdName, name);
   assertRecordStringArrayProperty(value, 'urls', name);
 }
@@ -144,7 +144,7 @@ function _assertIsRelayerKeyData(
 function _toRelayerGetResponseKeyUrlSnakeCase(
   response: RelayerGetResponseKeyUrlCamelCase,
 ): RelayerGetResponseKeyUrlSnakeCase {
-  const fheKeyInfoSnakeCase: Array<RelayerKeyInfoSnakeCase> =
+  const fheKeyInfoSnakeCase: RelayerKeyInfoSnakeCase[] =
     response.response.fheKeyInfo.map((infoCamelCase) => ({
       fhe_public_key: {
         data_id: infoCamelCase.fhePublicKey.dataId,

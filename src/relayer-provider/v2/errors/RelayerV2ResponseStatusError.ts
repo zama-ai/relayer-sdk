@@ -1,7 +1,7 @@
 import type { RelayerV2ResponseErrorBaseParams } from './RelayerV2ResponseErrorBase';
 import type { RelayerV2AsyncRequestState } from '../RelayerV2AsyncRequest';
 import type { RelayerErrorBaseParams } from '../../../errors/RelayerErrorBase';
-import type { Prettify } from '../../../utils/types';
+import type { Prettify } from '@base/types/utils';
 import { RelayerV2ResponseErrorBase } from './RelayerV2ResponseErrorBase';
 
 ////////////////////////////////////////////////////////////////////////////////

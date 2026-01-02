@@ -12,9 +12,12 @@
     "esModuleInterop": true,
     "allowJs": true,
     "strict": true,
-    "baseUrl": ".",
     "resolveJsonModule": true,
+    "baseUrl": ".",
     "paths": {
+      "@base/*": ["./src/base/*"],
+      "@sdk/*": ["./src/sdk/*"],
+      "@relayer-provider/*": ["./src/relayer-provider/*"],
       "*": ["*"]
     },
     // Add a bit of extra testing

@@ -3,12 +3,12 @@ import type {
   Bytes32Hex,
   Bytes65Hex,
   BytesHex,
-} from '../../types/primitives';
+} from '../../base/types/primitives';
 import { InputProof } from './InputProof';
 import { RelayerTooManyHandlesError } from '../../errors/RelayerTooManyHandlesError';
 import { RelayerInvalidProofError } from '../../errors/RelayerInvalidProofError';
 import { InvalidTypeError } from '../../errors/InvalidTypeError';
-import { hexToBytes } from '../../utils/bytes';
+import { hexToBytes } from '../../base/bytes';
 
 ////////////////////////////////////////////////////////////////////////////////
 //

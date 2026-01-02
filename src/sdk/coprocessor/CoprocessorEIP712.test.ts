@@ -4,7 +4,7 @@ import type {
   BytesHex,
   ChecksummedAddress,
   EncryptionBits,
-} from '../../types/primitives';
+} from '../../base/types/primitives';
 import { CoprocessorEIP712 } from './CoprocessorEIP712';
 import { InvalidTypeError } from '../../errors/InvalidTypeError';
 import { ChecksummedAddressError } from '../../errors/ChecksummedAddressError';

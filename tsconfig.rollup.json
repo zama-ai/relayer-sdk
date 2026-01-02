@@ -13,6 +13,9 @@
     "baseUrl": ".",
     "resolveJsonModule": true,
     "paths": {
+      "@base/*": ["./src/base/*"],
+      "@sdk/*": ["./src/sdk/*"],
+      "@relayer-provider/*": ["./src/relayer-provider/*"],
       "*": ["*"]
     }
   },

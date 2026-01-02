@@ -8,7 +8,7 @@ export {
   isChecksummedAddress,
   assertIsChecksummedAddress,
   checksummedAddressToBytes20,
-} from './utils/address';
+} from './base/address';
 
 // Bytes utilities
 export {
@@ -19,9 +19,9 @@ export {
   isBytes32Hex,
   isBytes32,
   concatBytes,
-} from './utils/bytes';
+} from './base/bytes';
 
-export { safeJSONstringify } from './utils/string';
+export { safeJSONstringify } from './base/string';
 
 export * from './sdk/FhevmHandle';
 export * from './sdk/FheType';
@@ -33,13 +33,13 @@ export { KMSVerifier } from './sdk/KMSVerifier';
 export { TFHEPkeCrs } from './sdk/lowlevel/TFHEPkeCrs';
 export { TFHEPublicKey } from './sdk/lowlevel/TFHEPublicKey';
 
-export { RelayerV1Fhevm } from './relayer-provider/v1/RelayerV1Fhevm';
-export { RelayerV1Provider } from './relayer-provider/v1/RelayerV1Provider';
-export { RelayerV2Fhevm } from './relayer-provider/v2/RelayerV2Fhevm';
-export { RelayerV2Provider } from './relayer-provider/v2/RelayerV2Provider';
-export { createRelayerFhevm } from './relayer-provider/createRelayerFhevm';
-export { AbstractRelayerFhevm } from './relayer-provider/AbstractRelayerFhevm';
-export { AbstractRelayerProvider } from './relayer-provider/AbstractRelayerProvider';
+export { RelayerV1Fhevm } from '@relayer-provider/v1/RelayerV1Fhevm';
+export { RelayerV1Provider } from '@relayer-provider/v1/RelayerV1Provider';
+export { RelayerV2Fhevm } from '@relayer-provider/v2/RelayerV2Fhevm';
+export { RelayerV2Provider } from '@relayer-provider/v2/RelayerV2Provider';
+export { createRelayerFhevm } from '@relayer-provider/createRelayerFhevm';
+export { AbstractRelayerFhevm } from '@relayer-provider/AbstractRelayerFhevm';
+export { AbstractRelayerProvider } from '@relayer-provider/AbstractRelayerProvider';
 
 // Re-export public API for convenience
 export { SepoliaConfig, MainnetConfig, createInstance } from './index';

@@ -15,15 +15,15 @@ import {
 import { createEIP712, createInstance, UserDecryptResults } from '../..';
 import { KmsSigner } from '../../test/fhevm-mock/KmsSigner';
 import { KmsEIP712 } from '../../sdk/kms/KmsEIP712';
-import { assertIsBytes65Hex, assertIsBytesHexNo0x } from '../../utils/bytes';
-import { ensure0x, safeJSONstringify } from '../../utils/string';
+import { assertIsBytes65Hex, assertIsBytesHexNo0x } from '../../base/bytes';
+import { ensure0x, safeJSONstringify } from '../../base/string';
 import type { ethers as EthersT } from 'ethers';
 import type {
   Bytes65Hex,
   BytesHex,
   ChecksummedAddress,
-} from '../../types/primitives';
-import type { RelayerUserDecryptPayload } from '../../types/relayer';
+} from '../../base/types/primitives';
+import type { RelayerUserDecryptPayload } from '../types/public-api';
 import type { FhevmInstanceConfig } from '../../types/relayer';
 
 // Jest Command line

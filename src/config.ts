@@ -1,9 +1,9 @@
 import type { Eip1193Provider, Provider } from 'ethers';
 import type { TFHEType } from './tfheType';
-import type { ChecksummedAddress } from './types/primitives';
+import type { ChecksummedAddress } from './base/types/primitives';
 import type { FhevmInstanceConfig, PublicParams } from './types/relayer';
 import { BrowserProvider, Contract, JsonRpcProvider } from 'ethers';
-import { removeSuffix } from './utils/string';
+import { removeSuffix } from './base/string';
 import { getKeysFromRelayer } from './relayer/network';
 import {
   SERIALIZED_SIZE_LIMIT_PK,
@@ -46,11 +46,13 @@ export const getChainId = async (
 };
 
 export const getTfheCompactPublicKey = async (config: {
-  relayerVersionUrl?: string;
-  publicKey?: {
-    data: Uint8Array | null;
-    id: string | null;
-  };
+  relayerVersionUrl?: string | undefined;
+  publicKey?:
+    | {
+        data: Uint8Array | null;
+        id: string | null;
+      }
+    | undefined;
 }): Promise<{
   publicKey: TFHEType['TfheCompactPublicKey'];
   publicKeyId: string;
@@ -81,8 +83,8 @@ export const getTfheCompactPublicKey = async (config: {
 };
 
 export const getPublicParams = async (config: {
-  relayerVersionUrl?: string;
-  publicParams?: PublicParams<Uint8Array> | null;
+  relayerVersionUrl?: string | undefined;
+  publicParams?: PublicParams<Uint8Array> | null | undefined;
 }): Promise<PublicParams<TFHEType['CompactPkeCrs']>> => {
   if (config.relayerVersionUrl && !config.publicParams) {
     const inputs = await getKeysFromRelayer(
@@ -120,7 +122,7 @@ export const getKMSSigners = async (
     abiKmsVerifier,
     provider,
   );
-  const signers: string[] = await kmsContract.getKmsSigners();
+  const signers: string[] = await kmsContract['getKmsSigners']();
   return signers;
 };
 
@@ -133,7 +135,7 @@ export const getKMSSignersThreshold = async (
     abiKmsVerifier,
     provider,
   );
-  const threshold: bigint = await kmsContract.getThreshold();
+  const threshold: bigint = await kmsContract['getThreshold']();
   return Number(threshold); // threshold is always supposed to fit in a number
 };
 
@@ -147,7 +149,7 @@ export const getCoprocessorSigners = async (
     provider,
   );
   const signers: ChecksummedAddress[] =
-    await inputContract.getCoprocessorSigners();
+    await inputContract['getCoprocessorSigners']();
   return signers;
 };
 
@@ -160,6 +162,6 @@ export const getCoprocessorSignersThreshold = async (
     abiInputVerifier,
     provider,
   );
-  const threshold: bigint = await inputContract.getThreshold();
+  const threshold: bigint = await inputContract['getThreshold']();
   return Number(threshold); // threshold is always supposed to fit in a number
 };
