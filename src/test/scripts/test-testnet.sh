@@ -11,7 +11,7 @@ if [ ! -d ".github" ]; then
   exit 1
 fi
 
-STEPS=14
+STEPS=16
 STEP=0
 
 echo ""
@@ -34,6 +34,20 @@ echo "= $((++STEP))/${STEPS} Run: pubkey fetch --network testnet ..."
 echo "=================================================="
 
 npx . pubkey fetch --network testnet
+
+echo ""
+echo "=================================================="
+echo "= $((++STEP))/${STEPS} Run: input-proof --values 123:euint32 true:ebool ... --network testnet --version 1 --json ..."
+echo "=================================================="
+
+npx . input-proof --values 123:euint32 true:ebool 1234567890123456789:euint256 0xb2a8A265dD5A27026693Aa6cE87Fb21Ac197b6b9:eaddress --network testnet --version 1
+
+echo ""
+echo "=================================================="
+echo "= $((++STEP))/${STEPS} Run: input-proof --values 123:euint32 true:ebool ... --network testnet --version 2 --json ..."
+echo "=================================================="
+
+npx . input-proof --values 123:euint32 true:ebool 1234567890123456789:euint256 0xb2a8A265dD5A27026693Aa6cE87Fb21Ac197b6b9:eaddress --network testnet --version 2
 
 echo ""
 echo "=================================================="

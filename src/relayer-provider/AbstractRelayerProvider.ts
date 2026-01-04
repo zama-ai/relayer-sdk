@@ -35,12 +35,29 @@ import {
   throwRelayerUnknownError,
 } from '../relayer/error';
 import { TFHEPkeParams } from '@sdk/lowlevel/TFHEPkeParams';
+import { FhevmHandle } from '@sdk/FhevmHandle';
 import {
   assertIsRelayerGetResponseKeyUrlCamelCase,
   assertIsRelayerGetResponseKeyUrlSnakeCase,
   toRelayerGetResponseKeyUrlSnakeCase,
 } from './AbstractRelayerGetResponseKeyUrl';
 import { uintToHex } from '@base/uint';
+
+////////////////////////////////////////////////////////////////////////////////
+
+// Cache promises to avoid race conditions when multiple concurrent calls
+// are made before the first one completes
+const privateKeyurlCache = new Map<string, Promise<TFHEPkeParams>>();
+
+/**
+ * Clears the TFHEPkeParams cache. Exported for testing purposes only.
+ * @internal
+ */
+export function _clearTFHEPkeParamsCache(): void {
+  privateKeyurlCache.clear();
+}
+
+////////////////////////////////////////////////////////////////////////////////
 
 export abstract class AbstractRelayerProvider {
   private readonly _relayerUrl: string;
@@ -55,21 +72,39 @@ export abstract class AbstractRelayerProvider {
   public get keyUrl(): string {
     return `${this.url}/keyurl`;
   }
-  public get inputProof(): string {
+  public get inputProofUrl(): string {
     return `${this.url}/input-proof`;
   }
-  public get publicDecrypt(): string {
+  public get publicDecryptUrl(): string {
     return `${this.url}/public-decrypt`;
   }
-  public get userDecrypt(): string {
+  public get userDecryptUrl(): string {
     return `${this.url}/user-decrypt`;
   }
 
   public abstract get version(): number;
 
-  public async fetchTFHEPkeParams(): Promise<TFHEPkeParams> {
+  public fetchTFHEPkeParams(): Promise<TFHEPkeParams> {
+    const cached = privateKeyurlCache.get(this._relayerUrl);
+    if (cached !== undefined) {
+      return cached;
+    }
+
+    // Create and cache the promise immediately to prevent race conditions
+    const promise = this._fetchTFHEPkeParamsImpl().catch((err: unknown) => {
+      // Remove from cache on failure so subsequent calls can retry
+      privateKeyurlCache.delete(this._relayerUrl);
+      throw err;
+    });
+
+    privateKeyurlCache.set(this._relayerUrl, promise);
+
+    return promise;
+  }
+
+  private async _fetchTFHEPkeParamsImpl(): Promise<TFHEPkeParams> {
     const urls = await this.fetchTFHEPkeUrls();
-    return await TFHEPkeParams.fetch(urls);
+    return TFHEPkeParams.fetch(urls);
   }
 
   public async fetchTFHEPkeUrls(): Promise<TFHEPkeUrlsType> {
@@ -101,7 +136,6 @@ export abstract class AbstractRelayerProvider {
     };
   }
 
-  // TODO: should be private
   public async fetchGetKeyUrl(): Promise<RelayerGetResponseKeyUrlSnakeCase> {
     const response = await AbstractRelayerProvider._fetchRelayerGet(
       'KEY_URL',
@@ -145,11 +179,13 @@ export abstract class AbstractRelayerProvider {
     return responseSnakeCase;
   }
 
-  public fetchPostInputProofWithZKProof(
+  public async fetchPostInputProofWithZKProof(
     params: { zkProof: ZKProof; extraData: BytesHex },
     options?: RelayerInputProofOptionsType,
-  ): Promise<RelayerInputProofResult> {
-    return this.fetchPostInputProof(
+  ): Promise<{ result: RelayerInputProofResult; fhevmHandles: FhevmHandle[] }> {
+    const fhevmHandles: FhevmHandle[] = FhevmHandle.fromZKProof(params.zkProof);
+
+    const result = await this.fetchPostInputProof(
       {
         contractAddress: params.zkProof.contractAddress,
         userAddress: params.zkProof.userAddress,
@@ -161,6 +197,33 @@ export abstract class AbstractRelayerProvider {
       },
       options,
     );
+
+    // Note: this check is theoretically unecessary
+    // We prefer to perform this test since we do not trust the relayer
+    // The purpose is to check if the relayer is possibly malicious
+
+    if (fhevmHandles.length !== result.handles.length) {
+      throw new Error(
+        `Incorrect Handles list sizes: (expected) ${fhevmHandles.length} != ${result.handles.length} (received)`,
+      );
+    }
+
+    const relayerResultHandles = result.handles.map((h) =>
+      FhevmHandle.fromBytes32Hex(h),
+    );
+
+    for (let i = 0; i < fhevmHandles.length; ++i) {
+      if (!fhevmHandles[i].equals(relayerResultHandles[i])) {
+        throw new Error(
+          `Incorrect Handle ${i}: (expected) ${fhevmHandles[i].toBytes32Hex()} != ${relayerResultHandles[i].toBytes32Hex()} (received)`,
+        );
+      }
+    }
+
+    return {
+      result,
+      fhevmHandles,
+    };
   }
 
   public abstract fetchPostInputProof(

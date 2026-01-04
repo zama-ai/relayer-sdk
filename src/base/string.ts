@@ -43,6 +43,13 @@ export function assertIs0xString(s: unknown): asserts s is `0x${string}` {
   }
 }
 
+export function isNonEmptyString(s: unknown): s is string {
+  if (s === undefined || s === null || typeof s !== 'string') {
+    return false;
+  }
+  return s.length > 0;
+}
+
 /**
  * Type guard that checks if a property exists on an object and is a string.
  *

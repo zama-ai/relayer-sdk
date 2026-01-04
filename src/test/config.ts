@@ -1,17 +1,18 @@
 import type { ethers as EthersT } from 'ethers';
 import type { RelayerInputProofPayload } from '../relayer-provider/types/public-api';
-import type { FhevmInstanceConfig } from '../types/relayer';
+import type {
+  FhevmInstanceConfig,
+  FhevmInstanceOptions,
+} from '../types/relayer';
 import type { Prettify } from '../base/types/utils';
 import type {
   Bytes32Hex,
   Bytes65Hex,
   ChecksummedAddress,
-  EncryptionBits,
   FheTypeName,
 } from '../base/types/primitives';
 import fetchMock from 'fetch-mock';
-import { hexToBytes } from '../base/bytes';
-import { currentCiphertextVersion } from '../relayer/sendEncryption';
+import { hexToBytesFaster } from '../base/bytes';
 import { CoprocessorSigners } from './fhevm-mock/CoprocessorSigners';
 import { getProvider as config_getProvider } from '../config';
 import { KmsSigners } from './fhevm-mock/KmsSigners';
@@ -20,6 +21,7 @@ import { setupV2RoutesInputProof, setupV2RoutesKeyUrl } from './v2/mockRoutes';
 import { Contract, HDNodeWallet, Wallet } from 'ethers';
 import { FhevmHandle } from '../sdk/FhevmHandle';
 import { ZKProof } from '../sdk/ZKProof';
+import { TFHEZKProofBuilder } from '@sdk/lowlevel/TFHEZKProofBuilder';
 
 export function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -28,7 +30,9 @@ export function sleep(ms: number) {
 export type TestRelayerConfig<V extends 1 | 2> = {
   version: V;
   urls: TestRelayerUrls;
-  fhevmInstanceConfig: FhevmInstanceConfig;
+  fhevmInstanceConfig: Omit<FhevmInstanceConfig, 'chainId'> & {
+    chainId: number;
+  };
 };
 
 export type TestRelayerUrls = {
@@ -40,11 +44,13 @@ export type TestRelayerUrls = {
 };
 
 export type TestConfig = {
-  type: 'devnet' | 'testnet' | 'fetch-mock';
+  type: 'devnet' | 'testnet' | 'mainnet' | 'fetch-mock';
   testContracts: {
     FHETestAddress: ChecksummedAddress;
   };
-  fhevmInstanceConfig: Prettify<Omit<FhevmInstanceConfig, 'relayerUrl'>>;
+  fhevmInstanceConfig: Prettify<
+    Omit<FhevmInstanceConfig, 'relayerUrl' | 'chainId'> & { chainId: number }
+  >;
   v1: TestRelayerConfig<1>;
   v2: TestRelayerConfig<2>;
   mnemonic: string;
@@ -108,15 +114,30 @@ export const DEADBEEF_INPUT_PROOF_PAYLOAD: RelayerInputProofPayload = {
   extraData: '0x00',
 } as const;
 
-export const TEST_COPROCESSORS: CoprocessorSigners =
-  CoprocessorSigners.fromPrivateKeys({
-    privateKeys: [
-      '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
-    ],
-    gatewayChainId: TEST_CONFIG.fhevmInstanceConfig.gatewayChainId!,
-    verifyingContractAddressInputVerification: TEST_CONFIG.fhevmInstanceConfig
-      .verifyingContractAddressInputVerification! as ChecksummedAddress,
-  });
+// Lazy initialization to avoid issues with jest mocking
+let _testCoprocessors: CoprocessorSigners | null = null;
+export function getTestCoprocessors(): CoprocessorSigners {
+  if (!_testCoprocessors) {
+    _testCoprocessors = CoprocessorSigners.fromPrivateKeys({
+      privateKeys: [
+        '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+      ],
+      gatewayChainId: BigInt(TEST_CONFIG.fhevmInstanceConfig.gatewayChainId!),
+      verifyingContractAddressInputVerification: TEST_CONFIG.fhevmInstanceConfig
+        .verifyingContractAddressInputVerification! as ChecksummedAddress,
+    });
+  }
+  return _testCoprocessors;
+}
+
+// Keep for backwards compatibility - getter that lazily initializes
+export const TEST_COPROCESSORS = {
+  get addresses() {
+    return getTestCoprocessors().addresses;
+  },
+  computeSignatures: (params: any) =>
+    getTestCoprocessors().computeSignatures(params),
+};
 
 export const TEST_INPUT_VERIFIER = {
   eip712Domain: [
@@ -143,52 +164,60 @@ export const TEST_KMS_VERIFIER = {
 };
 
 // Must have the same number of signers as TEST_COPROCESSORS
-export const TEST_KMS: KmsSigners = KmsSigners.fromPrivateKeys({
-  privateKeys: [
-    '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadffff',
-  ],
-  chainId: TEST_CONFIG.fhevmInstanceConfig.gatewayChainId!,
-  verifyingContractAddressDecryption: TEST_CONFIG.fhevmInstanceConfig
-    .verifyingContractAddressDecryption! as ChecksummedAddress,
-});
-
-export async function fetchMockInputProof(
-  args: {
-    contractAddress: string;
-    userAddress: string;
-    ciphertextWithInputVerification: string;
+// Lazy initialization to avoid issues with jest mocking
+let _testKms: KmsSigners | null = null;
+export function getTestKms(): KmsSigners {
+  if (!_testKms) {
+    _testKms = KmsSigners.fromPrivateKeys({
+      privateKeys: [
+        '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadffff',
+      ],
+      chainId: BigInt(TEST_CONFIG.fhevmInstanceConfig.gatewayChainId!),
+      verifyingContractAddressDecryption: TEST_CONFIG.fhevmInstanceConfig
+        .verifyingContractAddressDecryption! as ChecksummedAddress,
+    });
+  }
+  return _testKms;
+}
+// Keep for backwards compatibility - getter that lazily initializes
+export const TEST_KMS = {
+  get addresses() {
+    return getTestKms().addresses;
   },
-  bitwidths: EncryptionBits[],
-): Promise<{
+};
+
+export async function fetchMockInputProof(args: {
+  contractAddress: string;
+  userAddress: string;
+  ciphertextWithInputVerification: string;
+}): Promise<{
   readonly handles: readonly Bytes32Hex[];
   readonly signatures: readonly Bytes65Hex[];
 }> {
-  const ciphertext = hexToBytes(args.ciphertextWithInputVerification);
+  const ciphertext = hexToBytesFaster(args.ciphertextWithInputVerification, {
+    strict: true,
+  });
 
-  // const handlesUint8ArrayList: Uint8Array[] = computeHandles(
-  //   ciphertext,
-  //   bitwidths,
-  //   TEST_CONFIG.fhevmInstanceConfig.aclContractAddress,
-  //   TEST_CONFIG.fhevmInstanceConfig.chainId!,
-  //   currentCiphertextVersion(),
-  // );
+  const extract =
+    TFHEZKProofBuilder.parseProvenCompactCiphertextList(ciphertext);
+
   const zkProof = ZKProof.fromComponents({
     ciphertextWithZKProof: ciphertext,
     aclContractAddress: TEST_CONFIG.fhevmInstanceConfig
       .aclContractAddress as `0x{string}`,
-    chainId: BigInt(TEST_CONFIG.fhevmInstanceConfig.chainId!),
-    encryptionBits: bitwidths,
+    chainId: BigInt(TEST_CONFIG.fhevmInstanceConfig.chainId),
+    encryptionBits: extract.encryptionBits,
     userAddress: args.userAddress as ChecksummedAddress,
     contractAddress: args.contractAddress as ChecksummedAddress,
   });
-  const handlesBytes32HexList = FhevmHandle.fromZKProof(
-    zkProof,
-    currentCiphertextVersion(),
-  ).map((handle: FhevmHandle) => handle.toBytes32Hex());
+
+  const handlesBytes32HexList = FhevmHandle.fromZKProof(zkProof).map(
+    (handle: FhevmHandle) => handle.toBytes32Hex(),
+  );
 
   const params = {
     ctHandles: handlesBytes32HexList,
-    contractChainId: TEST_CONFIG.fhevmInstanceConfig.chainId!,
+    contractChainId: BigInt(TEST_CONFIG.fhevmInstanceConfig.chainId!),
     contractAddress: args.contractAddress as `0x${string}`,
     userAddress: args.userAddress as `0x${string}`,
     extraData: '0x00' as `0x${string}`,
@@ -197,18 +226,24 @@ export async function fetchMockInputProof(
   return await TEST_COPROCESSORS.computeSignatures(params);
 }
 
-export function setupAllFetchMockRoutes(params: {
-  bitWidths?: EncryptionBits[];
+export function setupAllFetchMockRoutes(params?: {
+  enableInputProofRoutes?: boolean;
+  jobId?: string;
+  instanceOptions?: FhevmInstanceOptions;
   retry?: number;
+  inputProofResult?: {
+    readonly handles: readonly string[];
+    readonly signatures: readonly string[];
+  };
 }) {
   if (TEST_CONFIG.type !== 'fetch-mock') {
     return;
   }
   setupV1RoutesKeyUrl();
   setupV2RoutesKeyUrl();
-  if (params.bitWidths) {
-    setupV1RoutesInputProof(params.bitWidths);
-    setupV2RoutesInputProof(params.bitWidths, params.retry);
+  if (params?.enableInputProofRoutes === true) {
+    setupV1RoutesInputProof(params);
+    setupV2RoutesInputProof(params);
   }
 }
 
@@ -261,4 +296,89 @@ export async function fheTestGet(
 
 export function timestampNow(): number {
   return Math.floor(Date.now() / 1000);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// setupJestMock
+////////////////////////////////////////////////////////////////////////////////
+
+export function setupEthersJestMock() {
+  // Use global config directly to avoid module resolution issues
+  const getJestConfig = () => (global as any).JEST_FHEVM_CONFIG;
+
+  const actualEthers = jest.requireActual('ethers');
+
+  return {
+    ...actualEthers,
+    // Keep getAddress and isAddress as real implementations - all test addresses are valid
+    // Only mock the network-related functions
+    JsonRpcProvider: jest.fn((...args: any[]) => {
+      const config = getJestConfig();
+      if (config.type !== 'fetch-mock') {
+        return new actualEthers.JsonRpcProvider(...args);
+      }
+      return {
+        getNetwork: () =>
+          Promise.resolve({
+            chainId: BigInt(config.fhevmInstanceConfig.chainId),
+          }),
+      };
+    }),
+    Contract: jest.fn((...args: any[]) => {
+      const config = getJestConfig();
+      if (config.type !== 'fetch-mock') {
+        return new actualEthers.Contract(...args);
+      }
+
+      // Determine which contract is being created based on address
+      const contractAddress = args[0] as string;
+
+      if (
+        contractAddress ===
+        config.fhevmInstanceConfig.inputVerifierContractAddress
+      ) {
+        // InputVerifier contract mock
+        return {
+          eip712Domain: () => Promise.resolve(TEST_INPUT_VERIFIER.eip712Domain),
+          getCoprocessorSigners: () =>
+            Promise.resolve(getTestCoprocessors().addresses),
+          getThreshold: () =>
+            Promise.resolve(BigInt(getTestCoprocessors().addresses.length)),
+        };
+      } else if (
+        contractAddress === config.fhevmInstanceConfig.kmsContractAddress
+      ) {
+        // KMSVerifier contract mock
+        return {
+          eip712Domain: () =>
+            Promise.resolve(Promise.resolve(TEST_KMS_VERIFIER.eip712Domain)),
+          getKmsSigners: () => Promise.resolve(getTestKms().addresses),
+          getThreshold: () =>
+            Promise.resolve(BigInt(getTestKms().addresses.length)),
+        };
+      } else if (
+        contractAddress === config.fhevmInstanceConfig.aclContractAddress
+      ) {
+        // ACL contract mock - always return true for valid inputs
+        // These are called at test runtime, so module imports are available
+        return {
+          persistAllowed: () => Promise.resolve(true),
+          isAllowedForDecryption: () => Promise.resolve(true),
+        };
+      }
+
+      // Default mock for unknown contracts
+      return {};
+    }),
+  };
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Mock Eip1193Provider
+////////////////////////////////////////////////////////////////////////////////
+
+export function createMockEip1193Provider() {
+  return {
+    request: async () => {},
+  };
 }

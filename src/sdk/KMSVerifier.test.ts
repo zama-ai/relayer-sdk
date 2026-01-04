@@ -18,51 +18,18 @@ import type { ChecksummedAddress } from '../base/types/primitives';
 // =======
 // npx jest --config jest.testnet.config.cjs --colors --passWithNoTests ./src/sdk/KMSVerifier.test.ts
 //
+// Devnet:
+// =======
+// npx jest --config jest.devnet.config.cjs --colors --passWithNoTests ./src/sdk/KMSVerifier.test.ts
+//
 ////////////////////////////////////////////////////////////////////////////////
 
 const describeIfFetchMock =
   TEST_CONFIG.type === 'fetch-mock' ? describe : describe.skip;
 
 jest.mock('ethers', () => {
-  const actual = jest.requireActual('ethers');
-
-  return {
-    ...actual,
-    JsonRpcProvider: jest.fn((...args: any[]) => {
-      // Lazy evaluation: check condition when constructor is called
-      const { TEST_CONFIG } = jest.requireActual('../test/config');
-      if (TEST_CONFIG.type !== 'fetch-mock') {
-        return new actual.JsonRpcProvider(...args);
-      }
-      return {};
-    }),
-    isAddress: (...args: any[]) => {
-      const { TEST_CONFIG } = jest.requireActual('../test/config');
-      if (TEST_CONFIG.type !== 'fetch-mock') {
-        return actual.isAddress(...args);
-      }
-      return true;
-    },
-    getAddress: (address: string) => {
-      const { TEST_CONFIG } = jest.requireActual('../test/config');
-      if (TEST_CONFIG.type !== 'fetch-mock') {
-        return actual.getAddress(address);
-      }
-      return address;
-    },
-    Contract: jest.fn((...args: any[]) => {
-      const { TEST_CONFIG, TEST_KMS, TEST_KMS_VERIFIER } =
-        jest.requireActual('../test/config');
-      if (TEST_CONFIG.type !== 'fetch-mock') {
-        return new actual.Contract(...args);
-      }
-      return {
-        eip712Domain: () => Promise.resolve(TEST_KMS_VERIFIER.eip712Domain),
-        getKmsSigners: () => Promise.resolve(TEST_KMS.addresses),
-        getThreshold: () => Promise.resolve(BigInt(TEST_KMS.addresses.length)),
-      };
-    }),
-  };
+  const { setupEthersJestMock } = jest.requireActual('../test/config');
+  return setupEthersJestMock();
 });
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -1,8 +1,9 @@
 import type { ChecksummedAddress } from '@base/types/primitives';
 import type { Provider as EthersProviderType } from 'ethers';
 import type { CoprocessorEIP712DomainType } from './coprocessor/types';
+import type { IInputVerifier } from './types';
 import { Contract } from 'ethers';
-import { isUint8 } from '@base/uint';
+import { isUint8, isUintBigInt } from '@base/uint';
 import { assertIsChecksummedAddressArray } from '@base/address';
 import { assertCoprocessorEIP712DomainType } from './coprocessor/guards';
 
@@ -45,7 +46,7 @@ export class InputVerifier {
     return this.#eip712Domain;
   }
 
-  public get gatewayChainId(): number {
+  public get gatewayChainId(): bigint {
     return this.#eip712Domain.chainId;
   }
 
@@ -57,6 +58,10 @@ export class InputVerifier {
     return this.#threshold;
   }
 
+  public get verifyingContractAddressInputVerification(): ChecksummedAddress {
+    return this.#eip712Domain.verifyingContract;
+  }
+
   public static async loadFromChain(params: {
     inputVerifierContractAddress: ChecksummedAddress;
     provider: EthersProviderType;
@@ -65,20 +70,17 @@ export class InputVerifier {
       params.inputVerifierContractAddress,
       InputVerifier.#abi,
       params.provider,
-    );
+    ) as unknown as IInputVerifier;
 
     const res = await Promise.all([
-      // eslint-disable-next-line @typescript-eslint/dot-notation
-      contract['eip712Domain'](),
-      // eslint-disable-next-line @typescript-eslint/dot-notation
-      contract['getThreshold'](),
-      // eslint-disable-next-line @typescript-eslint/dot-notation
-      contract['getCoprocessorSigners'](),
+      contract.eip712Domain(),
+      contract.getThreshold(),
+      contract.getCoprocessorSigners(),
     ]);
 
-    const eip712DomainArray = res[0] as unknown[];
-    const threshold = res[1] as unknown;
-    const coprocessorSigners = res[2] as unknown;
+    const eip712DomainArray = res[0];
+    const threshold = res[1];
+    const coprocessorSigners = res[2];
 
     if (!isUint8(threshold)) {
       throw new Error(`Invalid InputVerifier Coprocessor signers threshold.`);
@@ -92,10 +94,15 @@ export class InputVerifier {
       });
     }
 
+    const unknownChainId = eip712DomainArray[3];
+    if (!isUintBigInt(unknownChainId)) {
+      throw new Error('Invalid InputVerifier EIP-712 domain chainId.');
+    }
+
     const eip712Domain = {
       name: eip712DomainArray[1],
       version: eip712DomainArray[2],
-      chainId: eip712DomainArray[3],
+      chainId: unknownChainId,
       verifyingContract: eip712DomainArray[4],
     };
 

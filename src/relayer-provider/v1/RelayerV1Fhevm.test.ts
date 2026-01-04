@@ -41,9 +41,9 @@ describeIfFetchMock('RelayerV1Fhevm', () => {
   //////////////////////////////////////////////////////////////////////////////
 
   it('v1: createRelayerFhevm', async () => {
-    const SepoliaConfigeRelayerUrl = SepoliaConfig.relayerUrl!;
     const relayerFhevm = await createRelayerFhevm({
-      relayerUrl: `${SepoliaConfigeRelayerUrl}`,
+      ...SepoliaConfig,
+      relayerUrl: SepoliaConfig.relayerUrl,
       defaultRelayerVersion,
     });
     expect(relayerFhevm.version).toBe(1);
@@ -52,9 +52,9 @@ describeIfFetchMock('RelayerV1Fhevm', () => {
   //////////////////////////////////////////////////////////////////////////////
 
   it('v1: getPublicKey().publicKeyId', async () => {
-    const SepoliaConfigeRelayerUrl = SepoliaConfig.relayerUrl!;
     const relayerFhevm = await createRelayerFhevm({
-      relayerUrl: `${SepoliaConfigeRelayerUrl}`,
+      ...SepoliaConfig,
+      relayerUrl: SepoliaConfig.relayerUrl,
       defaultRelayerVersion,
     });
     const pub_key = relayerFhevm.getPublicKeyBytes();
@@ -64,9 +64,9 @@ describeIfFetchMock('RelayerV1Fhevm', () => {
   //////////////////////////////////////////////////////////////////////////////
 
   it('v1: getPublicKey().publicKey', async () => {
-    const SepoliaConfigeRelayerUrl = SepoliaConfig.relayerUrl!;
     const relayerFhevm = await createRelayerFhevm({
-      relayerUrl: `${SepoliaConfigeRelayerUrl}`,
+      ...SepoliaConfig,
+      relayerUrl: SepoliaConfig.relayerUrl,
       defaultRelayerVersion,
     });
     const pub_key = relayerFhevm.getPublicKeyBytes();
@@ -76,9 +76,9 @@ describeIfFetchMock('RelayerV1Fhevm', () => {
   //////////////////////////////////////////////////////////////////////////////
 
   it('v1: getPublicParams(2048).publicParamsId', async () => {
-    const SepoliaConfigeRelayerUrl = SepoliaConfig.relayerUrl!;
     const relayerFhevm = await createRelayerFhevm({
-      relayerUrl: `${SepoliaConfigeRelayerUrl}`,
+      ...SepoliaConfig,
+      relayerUrl: SepoliaConfig.relayerUrl,
       defaultRelayerVersion,
     });
     const pub_params = relayerFhevm.getPkeCrsBytesForCapacity(2048);
@@ -88,9 +88,9 @@ describeIfFetchMock('RelayerV1Fhevm', () => {
   //////////////////////////////////////////////////////////////////////////////
 
   it('v1: getPublicParams(2048).publicParams', async () => {
-    const SepoliaConfigeRelayerUrl = SepoliaConfig.relayerUrl!;
     const relayerFhevm = await createRelayerFhevm({
-      relayerUrl: `${SepoliaConfigeRelayerUrl}`,
+      ...SepoliaConfig,
+      relayerUrl: SepoliaConfig.relayerUrl,
       defaultRelayerVersion,
     });
     const pub_params = relayerFhevm.getPkeCrsBytesForCapacity(2048);
@@ -100,9 +100,9 @@ describeIfFetchMock('RelayerV1Fhevm', () => {
   //////////////////////////////////////////////////////////////////////////////
 
   it('v1: getPublicParams(123).publicParams', async () => {
-    const SepoliaConfigeRelayerUrl = SepoliaConfig.relayerUrl!;
     const relayerFhevm = await createRelayerFhevm({
-      relayerUrl: `${SepoliaConfigeRelayerUrl}`,
+      ...SepoliaConfig,
+      relayerUrl: SepoliaConfig.relayerUrl,
       defaultRelayerVersion,
     });
     expect(() => relayerFhevm.getPkeCrsBytesForCapacity(123)).toThrow(
@@ -113,9 +113,9 @@ describeIfFetchMock('RelayerV1Fhevm', () => {
   //////////////////////////////////////////////////////////////////////////////
 
   it('v1: relayerProvider()', async () => {
-    const SepoliaConfigeRelayerUrl = SepoliaConfig.relayerUrl!;
     const relayerFhevm = await createRelayerFhevm({
-      relayerUrl: `${SepoliaConfigeRelayerUrl}`,
+      ...SepoliaConfig,
+      relayerUrl: SepoliaConfig.relayerUrl,
       defaultRelayerVersion,
     });
     expect(relayerFhevm instanceof RelayerV1Fhevm).toBe(true);
@@ -127,16 +127,17 @@ describeIfFetchMock('RelayerV1Fhevm', () => {
   //////////////////////////////////////////////////////////////////////////////
 
   it('v1: createRelayerFhevm from publicKey and publicParams', async () => {
-    const SepoliaConfigRelayerUrl = SepoliaConfig.relayerUrl!;
     const relayerFhevm1 = await createRelayerFhevm({
-      relayerUrl: `${SepoliaConfigRelayerUrl}`,
+      ...SepoliaConfig,
+      relayerUrl: SepoliaConfig.relayerUrl,
       defaultRelayerVersion,
     });
     const pub_key = relayerFhevm1.getPublicKeyBytes();
     const pub_params = relayerFhevm1.getPkeCrsBytesForCapacity(2048);
 
     const relayerFhevm2 = await createRelayerFhevm({
-      relayerUrl: `${SepoliaConfigRelayerUrl}`,
+      ...SepoliaConfig,
+      relayerUrl: SepoliaConfig.relayerUrl,
       defaultRelayerVersion,
       publicKey: {
         data: pub_key.bytes,

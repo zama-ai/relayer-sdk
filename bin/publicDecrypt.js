@@ -32,7 +32,10 @@ export async function publicDecrypt(handles, config, zamaFhevmApiKey, options) {
       timeout,
       //signal: abortController.signal,
       onProgress: (args) => {
-        logCLI('progress=' + args.type, options);
+        logCLI(
+          `[${args.type}] progress: ${args.step}/${args.totalSteps}`,
+          options,
+        );
       },
       ...(zamaFhevmApiKey
         ? { auth: { __type: 'ApiKeyHeader', value: zamaFhevmApiKey } }

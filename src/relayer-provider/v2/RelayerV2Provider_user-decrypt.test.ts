@@ -103,7 +103,9 @@ describeIfFetchMock('RelayerV2Provider', () => {
     relayerProvider = createRelayerProvider(TEST_CONFIG.v2.urls.base, 1);
     expect(relayerProvider.version).toBe(2);
     expect(relayerProvider.url).toBe(TEST_CONFIG.v2.urls.base);
-    expect(relayerProvider.userDecrypt).toBe(TEST_CONFIG.v2.urls.userDecrypt);
+    expect(relayerProvider.userDecryptUrl).toBe(
+      TEST_CONFIG.v2.urls.userDecrypt,
+    );
   });
 
   afterAll(() => {
@@ -304,7 +306,7 @@ describeIfFetch('FhevmInstance.userDecrypot:sepolia:', () => {
     );
 
     const kmsEIP712 = new KmsEIP712({
-      chainId: TEST_CONFIG.fhevmInstanceConfig.chainId!,
+      chainId: BigInt(TEST_CONFIG.fhevmInstanceConfig.chainId!),
       verifyingContractAddressDecryption:
         TEST_CONFIG.fhevmInstanceConfig.verifyingContractAddressDecryption,
     });
@@ -351,12 +353,16 @@ describeIfFetch('FhevmInstance.userDecrypot:sepolia:', () => {
   }
 
   it('v2: FhevmInstance.userDecrypt succeeded', async () => {
-    setupAllFetchMockRoutes({});
+    setupAllFetchMockRoutes({
+      enableInputProofRoutes: false,
+    });
     await testUserDecrypt(TEST_CONFIG.v2.fhevmInstanceConfig);
   }, 60000);
 
   it('v1: FhevmInstance.userDecrypt succeeded', async () => {
-    setupAllFetchMockRoutes({});
+    setupAllFetchMockRoutes({
+      enableInputProofRoutes: false,
+    });
     await testUserDecrypt(TEST_CONFIG.v1.fhevmInstanceConfig);
   }, 60000);
 });
@@ -402,7 +408,7 @@ describe('FhevmInstance.createEIP712', () => {
     );
 
     const kmsEIP712 = new KmsEIP712({
-      chainId: TEST_CONFIG.fhevmInstanceConfig.chainId!,
+      chainId: BigInt(TEST_CONFIG.fhevmInstanceConfig.chainId!),
       verifyingContractAddressDecryption:
         TEST_CONFIG.fhevmInstanceConfig.verifyingContractAddressDecryption,
     });
@@ -470,7 +476,7 @@ describe('FhevmInstance.createEIP712', () => {
     );
 
     const kmsEIP712 = new KmsEIP712({
-      chainId: TEST_CONFIG.fhevmInstanceConfig.chainId!,
+      chainId: BigInt(TEST_CONFIG.fhevmInstanceConfig.chainId!),
       verifyingContractAddressDecryption:
         TEST_CONFIG.fhevmInstanceConfig.verifyingContractAddressDecryption,
     });
@@ -506,22 +512,30 @@ describe('FhevmInstance.createEIP712', () => {
   }
 
   it('v1: createEIP712 succeeded', async () => {
-    setupAllFetchMockRoutes({});
+    setupAllFetchMockRoutes({
+      enableInputProofRoutes: false,
+    });
     await testCreateEIP712(TEST_CONFIG.v1.fhevmInstanceConfig);
   }, 60000);
 
   it('v2: createEIP712 succeeded', async () => {
-    setupAllFetchMockRoutes({});
+    setupAllFetchMockRoutes({
+      enableInputProofRoutes: false,
+    });
     await testCreateEIP712(TEST_CONFIG.v2.fhevmInstanceConfig);
   }, 60000);
 
   it('v1: createEIP712 delegate succeeded', async () => {
-    setupAllFetchMockRoutes({});
+    setupAllFetchMockRoutes({
+      enableInputProofRoutes: false,
+    });
     await testDelegateCreateEIP712(TEST_CONFIG.v2.fhevmInstanceConfig);
   }, 60000);
 
   it('v2: createEIP712 delegate succeeded', async () => {
-    setupAllFetchMockRoutes({});
+    setupAllFetchMockRoutes({
+      enableInputProofRoutes: false,
+    });
     await testDelegateCreateEIP712(TEST_CONFIG.v2.fhevmInstanceConfig);
   }, 60000);
 });

@@ -35,9 +35,10 @@ import type { Flavor, NonEmptyExtract, Prettify } from '@base/types/utils';
 // 3. 1 & 2
 // 4. Ciphertext is garbage
 
+// GET:  202 | 400 | 401 | 429 | 500 | 503
 export type RelayerV2PostResponseStatus =
   | NonEmptyExtract<RelayerSuccessStatus, 202>
-  | NonEmptyExtract<RelayerFailureStatus, 400 | 429 | 500 | 503>;
+  | NonEmptyExtract<RelayerFailureStatus, 400 | 401 | 429 | 500 | 503>;
 export type RelayerV2PostResponse =
   | RelayerV2ResponseFailed
   | RelayerV2PostResponseQueued;
@@ -49,10 +50,10 @@ interface RelayerV2ResultMap {
   USER_DECRYPT: RelayerV2ResultUserDecrypt;
 }
 
-// GET:  200 | 202 | 400 | 404 | 500 | 503
+// GET:  200 | 202 | 400 | 401 | 404 | 500 | 503
 export type RelayerV2GetResponseStatus =
   | NonEmptyExtract<RelayerSuccessStatus, 200 | 202>
-  | NonEmptyExtract<RelayerFailureStatus, 400 | 404 | 500 | 503>;
+  | NonEmptyExtract<RelayerFailureStatus, 400 | 401 | 404 | 500 | 503>;
 export type RelayerV2GetResponse<
   R extends RelayerV2ResultMap[keyof RelayerV2ResultMap],
 > =

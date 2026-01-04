@@ -10,14 +10,13 @@ import type {
   CoprocessorEIP712Type,
   CoprocessorEIP712TypesType,
 } from './types';
+import type { Prettify } from '@base/types/utils';
+import type { FhevmHandleLike } from '../FhevmHandle';
 import { assertIsChecksummedAddress } from '@base/address';
-import {
-  assertIsBytes32HexArray,
-  assertIsBytes65HexArray,
-  assertIsBytesHex,
-} from '@base/bytes';
+import { assertIsBytes65HexArray, assertIsBytesHex } from '@base/bytes';
 import { verifySignature } from '@base/signature';
 import { assertIsUint256 } from '@base/uint';
+import { assertIsHandleLikeArray, toHandleBytes32Hex } from '../FhevmHandle';
 
 ////////////////////////////////////////////////////////////////////////////////
 // CoprocessorEIP712 Class
@@ -42,7 +41,7 @@ export class CoprocessorEIP712 {
   }
 
   constructor(params: {
-    readonly gatewayChainId: number;
+    readonly gatewayChainId: bigint;
     readonly verifyingContractAddressInputVerification: string;
   }) {
     // The coprocessor eip712 does not require a uint32 contrary to kms.
@@ -59,7 +58,7 @@ export class CoprocessorEIP712 {
     Object.freeze(this.domain);
   }
 
-  public get gatewayChainId(): number {
+  public get gatewayChainId(): bigint {
     return this.domain.chainId;
   }
 
@@ -77,8 +76,12 @@ export class CoprocessorEIP712 {
     contractAddress,
     userAddress,
     extraData,
-  }: CoprocessorEIP712MessageType): CoprocessorEIP712Type {
-    assertIsBytes32HexArray(ctHandles);
+  }: Prettify<
+    Omit<CoprocessorEIP712MessageType, 'ctHandles'> & {
+      readonly ctHandles: readonly FhevmHandleLike[];
+    }
+  >): CoprocessorEIP712Type {
+    assertIsHandleLikeArray(ctHandles as unknown);
     assertIsChecksummedAddress(userAddress);
     assertIsChecksummedAddress(contractAddress);
     assertIsUint256(contractChainId);
@@ -106,7 +109,7 @@ export class CoprocessorEIP712 {
         ] as const,
       },
       message: {
-        ctHandles: [...ctHandles],
+        ctHandles: ctHandles.map(toHandleBytes32Hex),
         userAddress: userAddress,
         contractAddress: contractAddress,
         contractChainId: contractChainId,

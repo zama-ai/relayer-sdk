@@ -1,7 +1,14 @@
 import eslint from '@eslint/js';
 import tseslint from 'typescript-eslint';
 
-export default tseslint.config(
+const targetFiles = [
+  'src/sdk/**/*.ts',
+  'src/relayer-provider/**/*.ts',
+  'src/base/**/*.ts',
+];
+
+/** @type {import('typescript-eslint').ConfigArray} */
+export default [
   // Global ignores
   {
     ignores: [
@@ -18,18 +25,27 @@ export default tseslint.config(
     ],
   },
 
+  // Base ESLint recommended config
+  {
+    ...eslint.configs.recommended,
+    files: targetFiles,
+  },
+
+  // TypeScript ESLint strict type-checked configs
+  ...tseslint.configs.strictTypeChecked.map((config) => ({
+    ...config,
+    files: targetFiles,
+  })),
+
+  // TypeScript ESLint stylistic type-checked configs
+  ...tseslint.configs.stylisticTypeChecked.map((config) => ({
+    ...config,
+    files: targetFiles,
+  })),
+
   // TypeScript ESLint strict rules for the target folders only
   {
-    files: [
-      'src/sdk/**/*.ts',
-      'src/relayer-provider/**/*.ts',
-      'src/base/**/*.ts',
-    ],
-    extends: [
-      eslint.configs.recommended,
-      ...tseslint.configs.strictTypeChecked,
-      ...tseslint.configs.stylisticTypeChecked,
-    ],
+    files: targetFiles,
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
@@ -170,6 +186,36 @@ export default tseslint.config(
       'no-unused-vars': 'off',
       'no-shadow': 'off',
       'no-undef': 'off',
+
+      // Prevent Node.js-specific globals in browser code
+      'no-restricted-globals': [
+        'error',
+        {
+          name: 'process',
+          message:
+            'process is Node.js specific and not available in browsers. Use a browser-compatible alternative.',
+        },
+        {
+          name: 'Buffer',
+          message:
+            'Buffer is Node.js specific. Use Uint8Array or TextEncoder/TextDecoder instead.',
+        },
+        {
+          name: '__dirname',
+          message:
+            '__dirname is Node.js specific. Use import.meta.url instead.',
+        },
+        {
+          name: '__filename',
+          message:
+            '__filename is Node.js specific. Use import.meta.url instead.',
+        },
+        {
+          name: 'global',
+          message:
+            'global is Node.js specific. Use globalThis for cross-platform compatibility.',
+        },
+      ],
     },
   },
 
@@ -186,4 +232,4 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'warn', // Warn instead of error for .d.ts
     },
   },
-);
+];

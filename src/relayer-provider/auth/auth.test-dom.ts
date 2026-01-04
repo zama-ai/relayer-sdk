@@ -6,8 +6,9 @@ import { setAuth } from './auth';
 
 // Jest Command line
 // =================
-// npx jest --colors --passWithNoTests --coverage --config jest.dom.config.cjs ./src/auth.test-dom.ts --collectCoverageFrom=./src/auth.ts --testNamePattern=BBB
-// npx jest --colors --passWithNoTests --coverage --config jest.dom.config.cjs ./src/auth.test-dom.ts --collectCoverageFrom=./src/auth.ts
+// npx jest --colors --passWithNoTests --config jest.dom.config.cjs ./src/relayer-provider/auth/auth.test-dom.ts
+// npx jest --colors --passWithNoTests --coverage --config jest.dom.config.cjs ./src/relayer-provider/auth/auth.test-dom.ts --collectCoverageFrom=./src/relayer-provider/auth/auth.ts --testNamePattern=xxx
+// npx jest --colors --passWithNoTests --coverage --config jest.dom.config.cjs ./src/relayer-provider/auth/auth.test-dom.ts --collectCoverageFrom=./src/relayer-provider/auth/auth.ts
 
 describe('auth.dom', () => {
   let cookieSpy: jest.SpyInstance;

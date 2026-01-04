@@ -1,9 +1,13 @@
-import type { TFHEType } from '../../tfheType';
-import type { FhevmPkeConfigType } from '../../types/relayer';
-import type { PartialWithUndefined, Prettify } from '@base/types/utils';
+import type {
+  CompactPkeCrsWasmType,
+  TfheCompactPublicKeyWasmType,
+} from '@sdk/lowlevel/types';
+import type { FhevmInstanceConfig } from '../../types/relayer';
+import type { FhevmHostChain } from '@sdk/fhevmHostChain';
 import { TFHEPkeParams } from '@sdk/lowlevel/TFHEPkeParams';
 import { AbstractRelayerFhevm } from '../AbstractRelayerFhevm';
 import { RelayerV2Provider } from './RelayerV2Provider';
+import { FhevmHostChainConfig } from '@sdk/fhevmHostChain';
 
 export class RelayerV2Fhevm extends AbstractRelayerFhevm {
   readonly #relayerProvider: RelayerV2Provider;
@@ -12,13 +16,15 @@ export class RelayerV2Fhevm extends AbstractRelayerFhevm {
   private constructor(params: {
     relayerProvider: RelayerV2Provider;
     tfhePkeParams: TFHEPkeParams;
+    fhevmHostChain: FhevmHostChain;
   }) {
-    super();
+    super(params);
+
     this.#relayerProvider = params.relayerProvider;
     this.#tfhePkeParams = params.tfhePkeParams;
   }
 
-  public override get version(): number {
+  public override get version(): 1 | 2 {
     return 2;
   }
 
@@ -36,11 +42,9 @@ export class RelayerV2Fhevm extends AbstractRelayerFhevm {
    * @returns A new RelayerV2Fhevm instance
    */
   public static async fromConfig(
-    config: Prettify<
-      {
-        relayerVersionUrl: string;
-      } & PartialWithUndefined<FhevmPkeConfigType>
-    >,
+    config: FhevmInstanceConfig & {
+      relayerVersionUrl: string;
+    },
   ): Promise<RelayerV2Fhevm> {
     const relayerProvider = new RelayerV2Provider(config.relayerVersionUrl);
 
@@ -48,15 +52,15 @@ export class RelayerV2Fhevm extends AbstractRelayerFhevm {
       TFHEPkeParams.tryFromFhevmPkeConfig(config) ??
       (await relayerProvider.fetchTFHEPkeParams());
 
-    // Missing:
     // Create FhevmHostChain
-    // const cfg = FhevmHostChainConfig.fromUserConfig(userConfig);
-    // const fhevmHostChain = await cfg.loadFromChain();
-    // const fhevmHostChain = await FhevmHostChainConfig.fromUserConfig(userConfig).loadFromChain();
+    const cfg: FhevmHostChainConfig =
+      FhevmHostChainConfig.fromUserConfig(config);
+    const fhevmHostChain: FhevmHostChain = await cfg.loadFromChain();
 
     return new RelayerV2Fhevm({
       relayerProvider,
       tfhePkeParams: relayerPublicKey,
+      fhevmHostChain,
     });
   }
 
@@ -77,7 +81,7 @@ export class RelayerV2Fhevm extends AbstractRelayerFhevm {
 
   public override getPublicKeyWasm(): {
     id: string;
-    wasm: TFHEType['TfheCompactPublicKey'];
+    wasm: TfheCompactPublicKeyWasmType;
   } {
     return {
       id: this.#tfhePkeParams.getTFHEPublicKey().id,
@@ -109,7 +113,7 @@ export class RelayerV2Fhevm extends AbstractRelayerFhevm {
   ): {
     capacity: C;
     id: string;
-    wasm: TFHEType['CompactPkeCrs'];
+    wasm: CompactPkeCrsWasmType;
   } {
     const w = this.#tfhePkeParams.getTFHEPkeCrs().getWasmForCapacity(capacity);
     return {

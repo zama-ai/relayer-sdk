@@ -38,7 +38,10 @@ export async function inputProof(
       zkproof,
       {
         onProgress: (args) => {
-          logCLI(`onProgress: ${args.type}`, options);
+          logCLI(
+            `[${args.type}] progress: ${args.step}/${args.totalSteps}`,
+            options,
+          );
         },
         auth: { __type: 'ApiKeyHeader', value: zamaFhevmApiKey },
       },

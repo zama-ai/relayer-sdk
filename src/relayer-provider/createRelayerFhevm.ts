@@ -1,5 +1,4 @@
-import type { FhevmPkeConfigType } from '../types/relayer';
-import type { Prettify } from '@base/types/utils';
+import type { FhevmInstanceConfig } from '../types/relayer';
 import type { AbstractRelayerFhevm } from './AbstractRelayerFhevm';
 import { InvalidRelayerUrlError } from '../errors/InvalidRelayerUrlError';
 import { parseRelayerUrl } from './relayerUrl';
@@ -10,20 +9,14 @@ import { RelayerV2Fhevm } from './v2/RelayerV2Fhevm';
  * Creates a relayer FHEVM instance based on the URL and version.
  *
  * @param config - Configuration object
- * @param config.relayerUrl - The relayer API URL (may include `/v1` or `/v2` suffix)
  * @param config.defaultRelayerVersion - Version to use if URL doesn't specify one
- * @param config.publicKey - Optional TFHE public key (fetched from relayer if not provided)
- * @param config.publicParams - Optional TFHE public params (fetched from relayer if not provided)
  * @returns A {@link RelayerV1Fhevm} or {@link RelayerV2Fhevm} instance
  * @throws {InvalidRelayerUrlError} If the URL is invalid
  */
 export async function createRelayerFhevm(
-  config: Prettify<
-    {
-      relayerUrl: string;
-      defaultRelayerVersion: 1 | 2;
-    } & Partial<FhevmPkeConfigType>
-  >,
+  config: FhevmInstanceConfig & {
+    defaultRelayerVersion: 1 | 2;
+  },
 ): Promise<AbstractRelayerFhevm> {
   const resolved = parseRelayerUrl(
     config.relayerUrl,
@@ -40,15 +33,13 @@ export async function createRelayerFhevm(
 
   if (resolved.version === 2) {
     return RelayerV2Fhevm.fromConfig({
+      ...config,
       relayerVersionUrl: resolved.url,
-      publicKey: config.publicKey,
-      publicParams: config.publicParams,
     });
   } else {
     return RelayerV1Fhevm.fromConfig({
+      ...config,
       relayerVersionUrl: resolved.url,
-      publicKey: config.publicKey,
-      publicParams: config.publicParams,
     });
   }
 }

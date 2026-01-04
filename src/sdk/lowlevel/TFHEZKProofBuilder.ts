@@ -1,9 +1,15 @@
 import type {
   ChecksummedAddress,
   EncryptionBits,
+  FheTypeId,
   FheTypeName,
   Uint64,
 } from '@base/types/primitives';
+import type { TFHEPkeParams } from './TFHEPkeParams';
+import type {
+  CompactCiphertextListBuilderWasmType,
+  ProvenCompactCiphertextListWasmType,
+} from './types';
 import { EncryptionError } from '../../errors/EncryptionError';
 import { assertRelayer } from '../../errors/InternalError';
 import {
@@ -18,40 +24,19 @@ import {
   MAX_UINT8,
   uint256ToBytes32,
 } from '@base/uint';
-import { encryptionBitsFromFheTypeName } from '../FheType';
+import {
+  encryptionBitsFromFheTypeId,
+  encryptionBitsFromFheTypeName,
+  isFheTypeId,
+} from '../FheType';
 import { isChecksummedAddress } from '@base/address';
-import type { TFHEPkeParams } from './TFHEPkeParams';
-import { hexToBytes } from '@base/bytes';
+import { hexToBytes, hexToBytesFaster } from '@base/bytes';
 import {
   SERIALIZED_SIZE_LIMIT_CIPHERTEXT,
   TFHE_CRS_BITS_CAPACITY,
   TFHE_ZKPROOF_CIPHERTEXT_CAPACITY,
 } from './constants';
 import { ZKProof } from '../ZKProof';
-
-////////////////////////////////////////////////////////////////////////////////
-// Private types
-////////////////////////////////////////////////////////////////////////////////
-
-interface TheCompactCiphertextListBuilderType {
-  push_boolean(value: boolean): void;
-  push_u8(value: number): void;
-  push_u16(value: number): void;
-  push_u32(value: number): void;
-  push_u64(value: bigint): void;
-  push_u128(value: bigint): void;
-  push_u160(value: bigint): void;
-  push_u256(value: bigint): void;
-  build_with_proof_packed(
-    crs: unknown,
-    metadata: Uint8Array,
-    computeLoad: unknown,
-  ): TfheProvenCompactCiphertextListType;
-}
-
-interface TfheProvenCompactCiphertextListType {
-  safe_serialize(sizeLimit: bigint): Uint8Array;
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 // TFHEZKProofBuilder
@@ -62,7 +47,7 @@ export class TFHEZKProofBuilder {
   readonly #bits: EncryptionBits[] = [];
   readonly #bitsCapacity: number = TFHE_CRS_BITS_CAPACITY;
   readonly #ciphertextCapacity: number = TFHE_ZKPROOF_CIPHERTEXT_CAPACITY;
-  readonly #fheCompactCiphertextListBuilderWasm: TheCompactCiphertextListBuilderType;
+  readonly #fheCompactCiphertextListBuilderWasm: CompactCiphertextListBuilderWasmType;
   readonly #pkeParams: TFHEPkeParams;
 
   constructor(params: { pkeParams: TFHEPkeParams }) {
@@ -308,5 +293,38 @@ export class TFHEZKProofBuilder {
     this.#checkLimit(encryptionBits);
     this.#totalBits += encryptionBits;
     this.#bits.push(encryptionBits);
+  }
+
+  public static parseProvenCompactCiphertextList(
+    ciphertextWithZKProof: Uint8Array | string,
+  ): { fheTypeIds: FheTypeId[]; encryptionBits: EncryptionBits[] } {
+    const ciphertext: Uint8Array =
+      typeof ciphertextWithZKProof === 'string'
+        ? hexToBytesFaster(ciphertextWithZKProof, { strict: true })
+        : ciphertextWithZKProof;
+
+    const listWasm: ProvenCompactCiphertextListWasmType =
+      TFHE.ProvenCompactCiphertextList.safe_deserialize(
+        ciphertext,
+        SERIALIZED_SIZE_LIMIT_CIPHERTEXT,
+      );
+
+    const len = listWasm.len();
+
+    const fheTypeIds: FheTypeId[] = [];
+    for (let i = 0; i < len; ++i) {
+      const v = listWasm.get_kind_of(i);
+      if (!isFheTypeId(v)) {
+        throw new EncryptionError({
+          message: `Invalid FheTypeId: ${v}`,
+        });
+      }
+      fheTypeIds.push(v);
+    }
+
+    return {
+      fheTypeIds,
+      encryptionBits: fheTypeIds.map(encryptionBitsFromFheTypeId),
+    };
   }
 }

@@ -18,6 +18,7 @@ import {
 } from '@base/address';
 import {
   assertIsBytes32,
+  bytes32ToHex,
   bytesToHex,
   concatBytes,
   hexToBytes,
@@ -41,10 +42,48 @@ import {
   isFheTypeId,
   solidityPrimitiveTypeNameFromFheTypeId,
 } from './FheType';
+import { InvalidTypeError } from '../errors/InvalidTypeError';
 
 ////////////////////////////////////////////////////////////////////////////////
 // FhevmHandle
 ////////////////////////////////////////////////////////////////////////////////
+
+export type FhevmHandleLike = Bytes32 | Bytes32Hex | FhevmHandle;
+
+export function toHandleBytes32Hex(h: FhevmHandleLike): Bytes32Hex {
+  if (h instanceof FhevmHandle) {
+    return h.toBytes32Hex();
+  }
+  if (typeof h === 'string') {
+    return h;
+  }
+  return bytes32ToHex(h);
+}
+
+export function assertIsHandleLikeArray(
+  value: unknown,
+): asserts value is FhevmHandleLike[] {
+  if (!Array.isArray(value)) {
+    throw new InvalidTypeError({
+      type: typeof value,
+      expectedType: 'Array',
+    });
+  }
+  for (let i = 0; i < value.length; ++i) {
+    assertIsHandleLike(value[i]);
+  }
+}
+
+export function assertIsHandleLike(
+  handle: unknown,
+): asserts handle is FhevmHandleLike {
+  if (handle instanceof FhevmHandle) {
+    return;
+  }
+  if (!FhevmHandle.canParse(handle)) {
+    throw new FhevmHandleError({ handle });
+  }
+}
 
 export class FhevmHandle {
   //////////////////////////////////////////////////////////////////////////////
@@ -304,7 +343,10 @@ export class FhevmHandle {
     return h;
   }
 
-  public static fromZKProof(zkProof: ZKProof, version: number): FhevmHandle[] {
+  public static fromZKProof(
+    zkProof: ZKProof,
+    version: number = FhevmHandle.CURRENT_CIPHERTEXT_VERSION,
+  ): FhevmHandle[] {
     assertIsUint8(version);
 
     const fheTypeIds = zkProof.encryptionBits.map((w) =>
@@ -368,13 +410,11 @@ export class FhevmHandle {
   // Static Assertions
   //////////////////////////////////////////////////////////////////////////////
 
-  public static assertIsHandleHex(
+  public static assertIsHandleLike(
     handle: unknown,
-  ): asserts handle is Bytes32Hex {
-    if (typeof handle !== 'string') {
-      throw new FhevmHandleError({
-        message: 'Invalid bytes32 hexadecimal string',
-      });
+  ): asserts handle is FhevmHandleLike {
+    if (handle instanceof FhevmHandle) {
+      return;
     }
     if (!FhevmHandle.canParse(handle)) {
       throw new FhevmHandleError({ handle });
@@ -450,5 +490,9 @@ export class FhevmHandle {
 
     // Truncate to 21 bytes (0x + 42 hex chars)
     return hashBytes32Hex.slice(0, 2 + 2 * 21) as Bytes21Hex;
+  }
+
+  public toString(): string {
+    return this.toBytes32Hex();
   }
 }

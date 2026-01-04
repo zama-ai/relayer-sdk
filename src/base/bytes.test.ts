@@ -49,9 +49,9 @@ import { MAX_UINT256 } from './uint';
 // Jest Command line
 // =================
 //
-// npx jest --colors --passWithNoTests ./src/utils/bytes.test.ts
-// npx jest --colors --passWithNoTests --coverage ./src/utils/bytes.test.ts --collectCoverageFrom=./src/utils/bytes.ts
-// npx jest --colors --passWithNoTests --coverage ./src/utils/bytes.test.ts --collectCoverageFrom=./src/utils/bytes.ts --testNamePattern=xxx
+// npx jest --colors --passWithNoTests ./src/base/bytes.test.ts
+// npx jest --colors --passWithNoTests --coverage ./src/base/bytes.test.ts --collectCoverageFrom=./src/base/bytes.ts
+// npx jest --colors --passWithNoTests --coverage ./src/base/bytes.test.ts --collectCoverageFrom=./src/base/bytes.ts --testNamePattern=xxx
 //
 ////////////////////////////////////////////////////////////////////////////////
 

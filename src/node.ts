@@ -1,11 +1,13 @@
 import * as TFHEPkg from 'node-tfhe';
 import * as TKMSPkg from 'node-tkms';
 
-global.TFHE = TFHEPkg;
-global.TKMS = TKMSPkg;
-
 // CommonJS no need to perform explicit named re-export. Wildcard is enough.
-export type { TFHEType } from './tfheType';
+import type { TFHEType, TKMSType } from './sdk/lowlevel/types';
+
+export type { TFHEType };
+
+global.TFHE = TFHEPkg satisfies TFHEType;
+global.TKMS = TKMSPkg satisfies TKMSType;
 
 export type {
   RelayerEncryptedInput,
@@ -19,10 +21,6 @@ export type {
   ClearValues,
   EIP712,
   EIP712Type,
-  Auth,
-  BearerToken,
-  ApiKeyCookie,
-  ApiKeyHeader,
   FhevmInstanceConfig,
   FhevmInstanceOptions,
   ZKProofLike,
@@ -43,6 +41,8 @@ export type {
 } from './base/types/primitives';
 export type * from './relayer-provider/types/public-api';
 
+export type * from './sdk/lowlevel/types';
+
 export {
   SepoliaConfig,
   MainnetConfig,
@@ -53,4 +53,4 @@ export {
   getErrorCauseStatus,
 } from './index';
 
-export { createTfheKeypair, createTfhePublicKey } from './tfhe';
+export { createTfheKeypair, createTfhePublicKey } from './node_tfhe';

@@ -42,9 +42,9 @@ import {
 // Jest Command line
 // =================
 //
-// npx jest --colors --passWithNoTests ./src/utils/uint.test.ts
-// npx jest --colors --passWithNoTests --coverage ./src/utils/uint.test.ts --collectCoverageFrom=./src/utils/uint.ts
-// npx jest --colors --passWithNoTests --coverage ./src/utils/uint.test.ts --collectCoverageFrom=./src/utils/uint.ts --testNamePattern=xxx
+// npx jest --colors --passWithNoTests ./src/base/uint.test.ts
+// npx jest --colors --passWithNoTests --coverage ./src/base/uint.test.ts --collectCoverageFrom=./src/base/uint.ts
+// npx jest --colors --passWithNoTests --coverage ./src/base/uint.test.ts --collectCoverageFrom=./src/base/uint.ts --testNamePattern=xxx
 //
 ////////////////////////////////////////////////////////////////////////////////
 

@@ -26,7 +26,7 @@ import { FhevmHandle } from '../FhevmHandle';
 // Test Constants
 ////////////////////////////////////////////////////////////////////////////////
 
-const VALID_GATEWAY_CHAIN_ID = 10901;
+const VALID_GATEWAY_CHAIN_ID = 10901n;
 const VALID_VERIFYING_CONTRACT =
   '0xf0Ffdc93b7E186bC2f8CB3dAA75D86d1930A433D' as ChecksummedAddress;
 const VALID_SIGNER_1 =
@@ -40,7 +40,7 @@ function createValidParams() {
   return {
     gatewayChainId: VALID_GATEWAY_CHAIN_ID,
     verifyingContractAddressInputVerification: VALID_VERIFYING_CONTRACT,
-    coprocessorSignersAddresses: [VALID_SIGNER_1, VALID_SIGNER_2],
+    coprocessorSigners: [VALID_SIGNER_1, VALID_SIGNER_2],
     threshold: 1,
   };
 }
@@ -71,7 +71,10 @@ describe('CoprocessorSignersVerifier', () => {
       const verifier =
         CoprocessorSignersVerifier.fromAddresses(createValidParams());
 
-      expect(verifier.addresses).toEqual([VALID_SIGNER_1, VALID_SIGNER_2]);
+      expect(verifier.coprocessorSigners).toEqual([
+        VALID_SIGNER_1,
+        VALID_SIGNER_2,
+      ]);
     });
 
     it('sets threshold correctly', () => {
@@ -100,28 +103,24 @@ describe('CoprocessorSignersVerifier', () => {
     it('accepts single signer address', () => {
       const params = {
         ...createValidParams(),
-        coprocessorSignersAddresses: [VALID_SIGNER_1],
+        coprocessorSigners: [VALID_SIGNER_1],
       };
       const verifier = CoprocessorSignersVerifier.fromAddresses(params);
 
       expect(verifier.count).toBe(1);
-      expect(verifier.addresses).toEqual([VALID_SIGNER_1]);
+      expect(verifier.coprocessorSigners).toEqual([VALID_SIGNER_1]);
     });
 
     it('accepts multiple signer addresses', () => {
       const params = {
         ...createValidParams(),
-        coprocessorSignersAddresses: [
-          VALID_SIGNER_1,
-          VALID_SIGNER_2,
-          VALID_SIGNER_3,
-        ],
+        coprocessorSigners: [VALID_SIGNER_1, VALID_SIGNER_2, VALID_SIGNER_3],
         threshold: 2,
       };
       const verifier = CoprocessorSignersVerifier.fromAddresses(params);
 
       expect(verifier.count).toBe(3);
-      expect(verifier.addresses).toEqual([
+      expect(verifier.coprocessorSigners).toEqual([
         VALID_SIGNER_1,
         VALID_SIGNER_2,
         VALID_SIGNER_3,
@@ -137,7 +136,7 @@ describe('CoprocessorSignersVerifier', () => {
     it('throws for non-checksummed signer address', () => {
       const params = {
         ...createValidParams(),
-        coprocessorSignersAddresses: [
+        coprocessorSigners: [
           '0x37ac010c1c566696326813b840319b58bb5840e4' as ChecksummedAddress,
         ],
       };
@@ -150,7 +149,7 @@ describe('CoprocessorSignersVerifier', () => {
     it('throws for invalid hex in signer address', () => {
       const params = {
         ...createValidParams(),
-        coprocessorSignersAddresses: [
+        coprocessorSigners: [
           '0xINVALIDHEXADDRESS1234567890123456789012' as ChecksummedAddress,
         ],
       };
@@ -178,22 +177,20 @@ describe('CoprocessorSignersVerifier', () => {
   describe('immutability', () => {
     it('addresses array is not affected by modifying original params', () => {
       const params = createValidParams();
-      const signersCopy = [...params.coprocessorSignersAddresses];
+      const signersCopy = [...params.coprocessorSigners];
       const verifier = CoprocessorSignersVerifier.fromAddresses(params);
 
       // Attempt to modify original array
-      (params.coprocessorSignersAddresses as ChecksummedAddress[]).push(
-        VALID_SIGNER_3,
-      );
+      (params.coprocessorSigners as ChecksummedAddress[]).push(VALID_SIGNER_3);
 
-      expect(verifier.addresses).toEqual(signersCopy);
+      expect(verifier.coprocessorSigners).toEqual(signersCopy);
     });
 
     it('returned addresses array is frozen', () => {
       const verifier =
         CoprocessorSignersVerifier.fromAddresses(createValidParams());
 
-      expect(Object.isFrozen(verifier.addresses)).toBe(true);
+      expect(Object.isFrozen(verifier.coprocessorSigners)).toBe(true);
     });
   });
 
@@ -242,7 +239,7 @@ describe('CoprocessorSignersVerifier', () => {
         const verifier = CoprocessorSignersVerifier.fromAddresses({
           gatewayChainId: PAYLOAD_GATEWAY_CHAIN_ID,
           verifyingContractAddressInputVerification: PAYLOAD_VERIFYING_CONTRACT,
-          coprocessorSignersAddresses: EXPECTED_SIGNER_ADDRESSES,
+          coprocessorSigners: EXPECTED_SIGNER_ADDRESSES,
           threshold: PAYLOAD_THRESHOLD,
         });
 
@@ -275,7 +272,7 @@ describe('CoprocessorSignersVerifier', () => {
         const verifier = CoprocessorSignersVerifier.fromAddresses({
           gatewayChainId: PAYLOAD_GATEWAY_CHAIN_ID,
           verifyingContractAddressInputVerification: PAYLOAD_VERIFYING_CONTRACT,
-          coprocessorSignersAddresses: EXPECTED_SIGNER_ADDRESSES,
+          coprocessorSigners: EXPECTED_SIGNER_ADDRESSES,
           threshold: PAYLOAD_THRESHOLD,
         });
 
@@ -311,7 +308,7 @@ describe('CoprocessorSignersVerifier', () => {
         const verifier = CoprocessorSignersVerifier.fromAddresses({
           gatewayChainId: PAYLOAD_GATEWAY_CHAIN_ID,
           verifyingContractAddressInputVerification: PAYLOAD_VERIFYING_CONTRACT,
-          coprocessorSignersAddresses: [unknownSigner],
+          coprocessorSigners: [unknownSigner],
           threshold: 1,
         });
 
@@ -344,7 +341,7 @@ describe('CoprocessorSignersVerifier', () => {
         const verifier = CoprocessorSignersVerifier.fromAddresses({
           gatewayChainId: PAYLOAD_GATEWAY_CHAIN_ID,
           verifyingContractAddressInputVerification: PAYLOAD_VERIFYING_CONTRACT,
-          coprocessorSignersAddresses: EXPECTED_SIGNER_ADDRESSES,
+          coprocessorSigners: EXPECTED_SIGNER_ADDRESSES,
           threshold: PAYLOAD_SIGNATURES.length + 1,
         });
 

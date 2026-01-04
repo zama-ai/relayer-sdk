@@ -6,8 +6,8 @@ import { verifySignature } from './signature';
 // Jest Command line
 // =================
 //
-// npx jest --colors --passWithNoTests ./src/utils/signature.test.ts
-// npx jest --colors --passWithNoTests --coverage ./src/utils/signature.test.ts --collectCoverageFrom=./src/utils/signature.ts
+// npx jest --colors --passWithNoTests ./src/base/signature.test.ts
+// npx jest --colors --passWithNoTests --coverage ./src/base/signature.test.ts --collectCoverageFrom=./src/base/signature.ts
 //
 ////////////////////////////////////////////////////////////////////////////////
 

@@ -11,6 +11,7 @@ import { FhevmHandle } from '../sdk/FhevmHandle';
 import { MAX_UINT64 } from '../base/uint';
 import { fheTypeIdFromEncryptionBits } from '../sdk/FheType';
 import { ZKProof } from '../sdk/ZKProof';
+import { TFHEZKProofBuilder } from '@sdk/lowlevel/TFHEZKProofBuilder';
 
 // npx jest --colors --passWithNoTests ./src/relayer/handles.test.ts
 
@@ -39,11 +40,15 @@ const DATA: {
 
 describe('handles', () => {
   it('compute from ZkPok', () => {
+    const extract = TFHEZKProofBuilder.parseProvenCompactCiphertextList(
+      DATA.ciphertextWithZKProof,
+    );
+    expect(extract.encryptionBits).toStrictEqual(DATA.bitwidths);
     const zkProof = ZKProof.fromComponents({
       ciphertextWithZKProof: hexToBytes(DATA.ciphertextWithZKProof),
       aclContractAddress: DATA.aclAddress as ChecksummedAddress,
       chainId: BigInt(DATA.chainId),
-      encryptionBits: DATA.bitwidths,
+      encryptionBits: extract.encryptionBits,
       userAddress: DATA.userAddress,
       contractAddress: DATA.contractAddress,
     });

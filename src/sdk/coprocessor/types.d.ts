@@ -10,15 +10,15 @@ import type {
 // CoprocessorEIP712 Types
 ////////////////////////////////////////////////////////////////////////////////
 
-export type CoprocessorEIP712Params = {
-  readonly gatewayChainId: number;
+export interface ICoprocessorEIP712 {
+  readonly gatewayChainId: bigint;
   readonly verifyingContractAddressInputVerification: ChecksummedAddress;
-};
+}
 
 export type CoprocessorEIP712DomainType = {
   readonly name: 'InputVerification';
   readonly version: '1';
-  readonly chainId: number;
+  readonly chainId: bigint;
   readonly verifyingContract: ChecksummedAddress;
 };
 
@@ -26,7 +26,7 @@ export type CoprocessorEIP712MessageType = Readonly<{
   ctHandles: readonly Bytes32Hex[] | readonly Bytes32[];
   userAddress: ChecksummedAddress;
   contractAddress: ChecksummedAddress;
-  contractChainId: number;
+  contractChainId: bigint;
   extraData: BytesHex;
 }>;
 
@@ -34,7 +34,7 @@ export type CoprocessorEIP712MessageHexType = Readonly<{
   ctHandles: readonly Bytes32Hex[];
   userAddress: ChecksummedAddress;
   contractAddress: ChecksummedAddress;
-  contractChainId: number;
+  contractChainId: bigint;
   extraData: BytesHex;
 }>;
 

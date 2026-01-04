@@ -1,18 +1,18 @@
-import type { RelayerGetResponseKeyUrlSnakeCase } from '../relayer-provider/types/private';
-import { getKeysFromRelayer } from './network';
-import { tfheCompactPkeCrsBytes, tfheCompactPublicKeyBytes } from '../test';
-import { SERIALIZED_SIZE_LIMIT_PK } from '../sdk/lowlevel/constants';
+import type { RelayerGetResponseKeyUrlSnakeCase } from '../types/private';
+import { getKeysFromRelayer } from './networkV1';
+import { tfheCompactPkeCrsBytes, tfheCompactPublicKeyBytes } from '../../test';
+import { SERIALIZED_SIZE_LIMIT_PK } from '../../sdk/lowlevel/constants';
 import fetchMock from 'fetch-mock';
-import { TEST_CONFIG } from '../test/config';
+import { TEST_CONFIG } from '../../test/config';
 
 ////////////////////////////////////////////////////////////////////////////////
 //
 // Jest Command line
 // =================
 //
-// npx jest --colors --passWithNoTests ./src/relayer/network.test.ts
-// npx jest --colors --passWithNoTests --coverage ./src/relayer/network.test.ts --collectCoverageFrom=./src/relayer/network.ts --testNamePattern=xxx
-// npx jest --colors --passWithNoTests --coverage ./src/relayer/network.test.ts --collectCoverageFrom=./src/relayer/network.ts
+// npx jest --colors --passWithNoTests ./src/relayer-provider/v1/networkV1.test.ts
+// npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v1/networkV1.test.ts --collectCoverageFrom=./src/relayer-provider/v1/networkV1.ts --testNamePattern=xxx
+// npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v1/networkV1.test.ts --collectCoverageFrom=./src/relayer-provider/v1/networkV1.ts
 //
 ////////////////////////////////////////////////////////////////////////////////
 

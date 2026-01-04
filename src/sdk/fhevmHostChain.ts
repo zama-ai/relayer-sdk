@@ -148,7 +148,10 @@ export class FhevmHostChainConfig {
 
     let hostNetworkConfig: FhevmHostChainNetworkConfigType;
     if ((network as unknown) === undefined) {
-      throw new FhevmConfigError({ message: 'Missing network' });
+      throw new FhevmConfigError({
+        message:
+          'You must provide a network URL or a EIP1193 object (eg: window.ethereum)',
+      });
     }
 
     if (typeof network === 'string') {
@@ -225,6 +228,7 @@ export class FhevmHostChain {
     config: FhevmHostChainConfig,
   ): Promise<FhevmHostChain> {
     const res = await Promise.all([
+      config.ethersProvider.getNetwork(),
       InputVerifier.loadFromChain({
         inputVerifierContractAddress: config.inputVerifierContractAddress,
         provider: config.ethersProvider,
@@ -235,10 +239,27 @@ export class FhevmHostChain {
       }),
     ]);
 
+    const inputVerifier: InputVerifier = res[1];
+    const kmsVerifier: KMSVerifier = res[2];
+
+    // Ethers Network
+    const ethersNetworkChainId: bigint = res[0].chainId;
+    if (ethersNetworkChainId !== config.chainId) {
+      throw new FhevmConfigError({
+        message: `Invalid config chainId ${String(config.chainId)}. Expecting ${String(ethersNetworkChainId)}.`,
+      });
+    }
+
+    if (inputVerifier.gatewayChainId !== config.gatewayChainId) {
+      throw new FhevmConfigError({
+        message: `Invalid config gatewayChainId ${String(config.gatewayChainId)}. Expecting ${String(inputVerifier.gatewayChainId)}.`,
+      });
+    }
+
     return new FhevmHostChain({
       config,
-      inputVerifier: res[0],
-      kmsVerifier: res[1],
+      inputVerifier,
+      kmsVerifier,
     });
   }
 
@@ -260,6 +281,10 @@ export class FhevmHostChain {
 
   public get kmsSignerThreshold(): number {
     return this.#kmsVerifier.threshold;
+  }
+
+  public get gatewayChainId(): bigint {
+    return this.#inputVerifier.gatewayChainId;
   }
 }
 

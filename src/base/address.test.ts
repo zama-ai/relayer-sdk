@@ -20,10 +20,10 @@ import { InvalidTypeError } from '../errors/InvalidTypeError';
 // Jest Command line
 // =================
 //
-// npx jest --colors --passWithNoTests ./src/utils/address.test.ts
-// npx jest --colors --passWithNoTests ./src/utils/address.test.ts --testNamePattern=xxx
-// npx jest --colors --passWithNoTests --coverage ./src/utils/address.test.ts --collectCoverageFrom=./src/utils/address.ts
-// npx jest --colors --passWithNoTests --coverage ./src/utils/address.test.ts --collectCoverageFrom=./src/utils/address.ts --testNamePattern=xxx
+// npx jest --colors --passWithNoTests ./src/base/address.test.ts
+// npx jest --colors --passWithNoTests ./src/base/address.test.ts --testNamePattern=xxx
+// npx jest --colors --passWithNoTests --coverage ./src/base/address.test.ts --collectCoverageFrom=./src/base/address.ts
+// npx jest --colors --passWithNoTests --coverage ./src/base/address.test.ts --collectCoverageFrom=./src/base/address.ts --testNamePattern=xxx
 //
 ////////////////////////////////////////////////////////////////////////////////
 

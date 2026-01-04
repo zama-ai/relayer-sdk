@@ -52,46 +52,8 @@ import type { EncryptionBits } from '../../base/types/primitives';
 ////////////////////////////////////////////////////////////////////////////////
 
 jest.mock('ethers', () => {
-  const actual = jest.requireActual('ethers');
-
-  return {
-    ...actual,
-    JsonRpcProvider: jest.fn((...args: any[]) => {
-      // Lazy evaluation: check condition when constructor is called
-      const { TEST_CONFIG } = jest.requireActual('../../test/config');
-      if (TEST_CONFIG.type !== 'fetch-mock') {
-        return new actual.JsonRpcProvider(...args);
-      }
-      return {};
-    }),
-    isAddress: (...args: any[]) => {
-      const { TEST_CONFIG } = jest.requireActual('../../test/config');
-      if (TEST_CONFIG.type !== 'fetch-mock') {
-        return actual.isAddress(...args);
-      }
-      return true;
-    },
-    getAddress: (address: string) => {
-      const { TEST_CONFIG } = jest.requireActual('../../test/config');
-      if (TEST_CONFIG.type !== 'fetch-mock') {
-        return actual.getAddress(address);
-      }
-      return address;
-    },
-    Contract: jest.fn((...args: any[]) => {
-      const { TEST_CONFIG, TEST_COPROCESSORS, TEST_KMS } =
-        jest.requireActual('../../test/config');
-      if (TEST_CONFIG.type !== 'fetch-mock') {
-        return new actual.Contract(...args);
-      }
-      return {
-        getKmsSigners: () => Promise.resolve(TEST_KMS.addresses),
-        getCoprocessorSigners: () =>
-          Promise.resolve(TEST_COPROCESSORS.addresses),
-        getThreshold: () => Promise.resolve(BigInt(TEST_KMS.addresses.length)), // === TEST_COPROCESSORS.addresses.length
-      };
-    }),
-  };
+  const { setupEthersJestMock } = jest.requireActual('../../test/config');
+  return setupEthersJestMock();
 });
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -124,7 +86,7 @@ describeIfFetchMock('RelayerV2Provider', () => {
     relayerProvider = p;
     expect(relayerProvider.version).toBe(2);
     expect(relayerProvider.url).toBe(TEST_CONFIG.v2.urls.base);
-    expect(relayerProvider.inputProof).toBe(TEST_CONFIG.v2.urls.inputProof);
+    expect(relayerProvider.inputProofUrl).toBe(TEST_CONFIG.v2.urls.inputProof);
   });
 
   afterAll(() => {
@@ -355,14 +317,11 @@ describe('createEncryptedInput', () => {
   async function prepareTest(params: {
     config: FhevmInstanceConfig;
     test: {
-      values: number[];
-      bitWidths: EncryptionBits[];
       retry?: number;
     };
   }) {
-    expect(params.test.bitWidths.length).toBe(params.test.values.length);
     setupAllFetchMockRoutes({
-      bitWidths: params.test.bitWidths,
+      enableInputProofRoutes: true,
       retry: params.test.retry,
     });
 
@@ -370,7 +329,7 @@ describe('createEncryptedInput', () => {
     const provider = getProvider(config.network);
     const verifier = await CoprocessorSignersVerifier.fromProvider({
       provider,
-      gatewayChainId: config.gatewayChainId,
+      gatewayChainId: BigInt(config.gatewayChainId),
       inputVerifierContractAddress:
         config.inputVerifierContractAddress as `0x${string}`,
       verifyingContractAddressInputVerification:

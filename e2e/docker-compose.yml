@@ -1,0 +1,19 @@
+version: '3.8'
+services:
+  nginx:
+    container_name: local-nginx
+    # Build the image using the Dockerfile in the current directory
+    build: .
+    ports:
+      # Map container port 443 to host port 443
+      - '5173:80'
+    volumes:
+      # Mount your project's dist directory into the container
+      # This is the directory Nginx will serve files from.
+      - ./servers/cdn:/usr/share/nginx/html
+      # Mount your custom Nginx configuration file
+      - ./test-nginx.conf:/etc/nginx/nginx.conf
+      # Mount the SSL certificate and key from your host into the container
+      # This assumes the certificates are in a directory named 'certs'
+      # - ./certs/my-cdn.crt:/etc/nginx/certs/my-cdn.crt
+      # - ./certs/my-cdn.key:/etc/nginx/certs/my-cdn.key

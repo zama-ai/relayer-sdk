@@ -1,0 +1,118 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>relayer-sdk-js UMD test</title>
+</head>
+
+<body>
+  <script>
+    const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+    async function trace(str, startTime) {
+      const p = document.createElement('p');
+      p.textContent = `[${Date.now() - startTime}ms] ${str}`;
+      document.body.appendChild(p);
+      // repaint
+      p.offsetHeight;
+      await sleep(200);
+    }
+    function loadUMD(src, globalName) {
+      return new Promise((resolve, reject) => {
+        // Check if already loaded
+        if (window[globalName]) {
+          resolve(window[globalName]);
+          return;
+        }
+
+        const script = document.createElement('script');
+        script.src = src;
+        script.onload = () => {
+          if (window[globalName]) {
+            resolve(window[globalName]);
+          } else {
+            reject(new Error(`Global ${globalName} not found after loading`));
+          }
+        };
+        script.onerror = () => reject(new Error(`Failed to load ${src}`));
+        document.head.appendChild(script);
+      });
+    }
+
+    // The protocol-sdk is served by localhost:5173
+    const umdUrl = 'http://localhost:5173/libs/relayer-sdk-js/relayer-sdk-js.umd.cjs';
+    const umdLibname = 'relayerSDK';
+
+    // The relayer-sdk is served by localhost:5174
+    // const umdUrl = 'http://localhost:5174/relayer-sdk-js/relayer-sdk-js.umd.cjs';
+    // const umdLibname = 'relayerSDK';
+    
+    loadUMD(umdUrl, umdLibname)
+      .then(library => {
+        console.log("UMD loaded and ready!");
+        console.log("Library:", library);
+        // Initialize your app
+        initializeApp(library);
+      })
+      .catch(error => {
+        console.error("Error loading UMD:", error);
+      });
+
+    async function initializeApp(protocolSDK) {
+      const startTime = Date.now();
+
+      // Use the library
+      await protocolSDK.initSDK();
+      const SERIALIZED_SIZE_LIMIT_PK = BigInt(1024 * 1024 * 512);
+      const SERIALIZED_SIZE_LIMIT_CRS = BigInt(1024 * 1024 * 512);
+      const tfhe = protocolSDK.tfhe;
+
+      const block_params = new tfhe.ShortintParameters(
+        tfhe.ShortintParametersName.PARAM_MESSAGE_2_CARRY_2_KS_PBS_TUNIFORM_2M128,
+      );
+      const casting_params = new tfhe.ShortintCompactPublicKeyEncryptionParameters(
+        tfhe.ShortintCompactPublicKeyEncryptionParametersName.V1_0_PARAM_PKE_MESSAGE_2_CARRY_2_KS_PBS_TUNIFORM_2M128,
+      );
+      const config = tfhe.TfheConfigBuilder.default()
+        .use_custom_parameters(block_params)
+        .use_dedicated_compact_public_key_parameters(casting_params)
+        .build();
+
+      const clientKey = tfhe.TfheClientKey.generate(config);
+      const publicKey = tfhe.TfheCompactPublicKey.new(clientKey);
+
+      const publicKeyBin = publicKey.safe_serialize(SERIALIZED_SIZE_LIMIT_PK);
+      const privateKeyBin = clientKey.safe_serialize(SERIALIZED_SIZE_LIMIT_PK);
+
+      await trace(publicKeyBin instanceof Uint8Array, startTime);
+      await trace(publicKeyBin.length, startTime);
+
+      await trace(privateKeyBin instanceof Uint8Array, startTime);
+      await trace(privateKeyBin.length, startTime);
+
+      const crs0 = tfhe.CompactPkeCrs.from_config(config, 4 * 32);
+      const crs128 = crs0.safe_serialize(SERIALIZED_SIZE_LIMIT_CRS);
+      await trace("crs128.length=" + crs128.length, startTime);
+
+      const crs1 = tfhe.CompactPkeCrs.from_config(config, 4 * 64);
+      const crs256 = crs1.safe_serialize(SERIALIZED_SIZE_LIMIT_CRS);
+      await trace("crs256.length=" + crs256.length, startTime);
+
+      const crs2 = tfhe.CompactPkeCrs.from_config(config, 4 * 128);
+      const crs512 = crs2.safe_serialize(SERIALIZED_SIZE_LIMIT_CRS);
+      await trace("crs512.length=" + crs512.length, startTime);
+
+      const crs3 = tfhe.CompactPkeCrs.from_config(config, 4 * 256);
+      const crs1024 = crs3.safe_serialize(SERIALIZED_SIZE_LIMIT_CRS);
+      await trace("crs1024.length=" + crs1024.length, startTime);
+
+      const crs4 = tfhe.CompactPkeCrs.from_config(config, 4 * 512);
+      const crs2048 = crs4.safe_serialize(SERIALIZED_SIZE_LIMIT_CRS);
+      await trace(`crs2048.length=${crs2048.length}`, startTime);
+    }    
+  </script>
+  Hello relayer-sdk-js
+</body>
+
+</html>

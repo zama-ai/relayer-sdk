@@ -1,7 +1,7 @@
 import type { CoprocessorEIP712DomainType } from './types';
 import { assertRecordChecksummedAddressProperty } from '@base/address';
-import { assertRecordUint256Property } from '@base/uint';
 import { assertRecordStringProperty } from '@base/string';
+import { assertRecordUintBigIntProperty } from '@base/uint';
 
 export function assertCoprocessorEIP712DomainType(
   value: unknown,
@@ -20,7 +20,7 @@ export function assertCoprocessorEIP712DomainType(
     name,
     '1' satisfies T['version'],
   );
-  assertRecordUint256Property(value, 'chainId' satisfies keyof T, name);
+  assertRecordUintBigIntProperty(value, 'chainId' satisfies keyof T, name);
   assertRecordChecksummedAddressProperty(
     value,
     'verifyingContract' satisfies keyof T,

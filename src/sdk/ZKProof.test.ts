@@ -265,6 +265,23 @@ describe('ZKProof', () => {
       expect(zkProof.ciphertextWithZKProof).toBeInstanceOf(Uint8Array);
     });
 
+    it('ciphertextWithZKProof getter throws if internally empty (defensive check)', () => {
+      // Bypass TypeScript private constructor to test the getter's defensive check
+      // This simulates a scenario where the internal state is corrupted
+      const malformedZKProof = new (ZKProof as any)({
+        chainId: VALID_CHAIN_ID,
+        aclContractAddress: VALID_ACL_ADDRESS,
+        contractAddress: VALID_CONTRACT_ADDRESS,
+        userAddress: VALID_USER_ADDRESS,
+        ciphertextWithZKProof: new Uint8Array(0), // Empty!
+        encryptionBits: VALID_ENCRYPTION_BITS,
+      });
+
+      expect(() => malformedZKProof.ciphertextWithZKProof).toThrow(
+        ZKProofError,
+      );
+    });
+
     it('encryptionBits returns readonly array', () => {
       expect(zkProof.encryptionBits).toEqual(VALID_ENCRYPTION_BITS);
       expect(Object.isFrozen(zkProof.encryptionBits)).toBe(true);

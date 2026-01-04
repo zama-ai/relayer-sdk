@@ -8,10 +8,6 @@ import type { Prettify } from './base/types/utils';
 import type { EIP712, EIP712Type } from './sdk/keypair';
 import type { BytesHex, ZKProofLike } from './base/types/primitives';
 import type {
-  Auth,
-  ApiKeyCookie,
-  ApiKeyHeader,
-  BearerToken,
   ClearValues,
   ClearValueType,
   FhevmInstanceConfig,
@@ -25,15 +21,6 @@ import type {
   FhevmPublicKeyType,
   FhevmPkeCrsByCapacityType,
 } from './types/relayer';
-import { isChecksummedAddress } from './base/address';
-import {
-  getChainId,
-  getCoprocessorSigners,
-  getCoprocessorSignersThreshold,
-  getKMSSigners,
-  getKMSSignersThreshold,
-  getProvider,
-} from './config';
 import { userDecryptRequest } from './relayer/userDecrypt';
 import {
   createRelayerEncryptedInput,
@@ -56,10 +43,6 @@ export type { EncryptionBits } from './base/types/primitives';
 export type {
   EIP712,
   EIP712Type,
-  Auth,
-  BearerToken,
-  ApiKeyCookie,
-  ApiKeyHeader,
   RelayerEncryptedInput,
   HandleContractPair,
   PublicParams,
@@ -78,7 +61,6 @@ export type {
   FhevmPkeCrsByCapacityType,
   Prettify,
 };
-export type * from './relayer-provider/types/public-api';
 
 ////////////////////////////////////////////////////////////////////////////////
 // FhevmInstance
@@ -170,106 +152,55 @@ Object.freeze(SepoliaConfig);
 export const createInstance = async (
   config: FhevmInstanceConfig,
 ): Promise<FhevmInstance> => {
-  const {
-    verifyingContractAddressDecryption,
-    verifyingContractAddressInputVerification,
-    publicKey,
-    inputVerifierContractAddress,
-    kmsContractAddress,
-    aclContractAddress,
-    gatewayChainId,
-    auth,
-  } = config;
-
-  if (!isChecksummedAddress(aclContractAddress)) {
-    throw new Error('ACL contract address is not valid or empty');
-  }
-  if (!isChecksummedAddress(inputVerifierContractAddress)) {
-    throw new Error('InputVerifier contract address is not valid or empty');
-  }
-  if (!isChecksummedAddress(kmsContractAddress)) {
-    throw new Error('KMS contract address is not valid or empty');
-  }
-  if (!isChecksummedAddress(verifyingContractAddressDecryption)) {
-    throw new Error(
-      'Verifying contract for Decryption address is not valid or empty',
-    );
-  }
-  if (!isChecksummedAddress(verifyingContractAddressInputVerification)) {
-    throw new Error(
-      'Verifying contract for InputVerification address is not valid or empty',
-    );
-  }
-
-  if (publicKey && !(publicKey.data instanceof Uint8Array)) {
-    throw new Error('publicKey must be a Uint8Array');
-  }
-
-  // TODO change argument
-  // provider is never undefined | null here!
-  const provider = getProvider(config.network);
-
-  const relayerUrl = config.relayerUrl ?? SepoliaConfig.relayerUrl!;
   const relayerFhevm = await createRelayerFhevm({
-    relayerUrl,
-    publicKey: config.publicKey,
-    publicParams: config.publicParams,
+    ...config,
     defaultRelayerVersion: 1,
   });
 
-  const chainId = await getChainId(provider, config);
+  const auth = config.auth;
+  const aclContractAddress =
+    relayerFhevm.fhevmHostChain.config.aclContractAddress;
+  const verifyingContractAddressInputVerification =
+    relayerFhevm.fhevmHostChain.config
+      .verifyingContractAddressInputVerification;
+  const verifyingContractAddressDecryption =
+    relayerFhevm.fhevmHostChain.config.verifyingContractAddressDecryption;
+  const gatewayChainId = BigInt(relayerFhevm.fhevmHostChain.gatewayChainId);
 
-  const kmsSigners = await getKMSSigners(provider, kmsContractAddress);
-
-  const thresholdKMSSigners = await getKMSSignersThreshold(
-    provider,
-    kmsContractAddress,
-  );
-
-  const coprocessorSigners = await getCoprocessorSigners(
-    provider,
-    inputVerifierContractAddress,
-  );
-
-  const thresholdCoprocessorSigners = await getCoprocessorSignersThreshold(
-    provider,
-    inputVerifierContractAddress,
-  );
-
-  const tfheCompactPublicKeyWasm = relayerFhevm.getPublicKeyWasm().wasm;
-  const tfheCompactPkeCrs2048Wasm = relayerFhevm.getPkeCrsWasmForCapacity(2048);
+  const chainId = Number(relayerFhevm.fhevmHostChain.config.chainId);
+  const kmsSigners = relayerFhevm.fhevmHostChain.kmsSigners;
+  const thresholdKMSSigners = relayerFhevm.fhevmHostChain.kmsSignerThreshold;
+  const coprocessorSigners = relayerFhevm.fhevmHostChain.coprocessorSigners;
+  const thresholdCoprocessorSigners =
+    relayerFhevm.fhevmHostChain.coprocessorSignerThreshold;
+  const provider = relayerFhevm.fhevmHostChain.config.ethersProvider;
 
   return {
     createEncryptedInput: createRelayerEncryptedInput({
-      aclContractAddress,
-      verifyingContractAddressInputVerification,
-      chainId,
-      gatewayChainId,
-      relayerProvider: relayerFhevm.relayerProvider,
-      tfheCompactPublicKey: tfheCompactPublicKeyWasm,
-      tfheCompactPkeCrs: tfheCompactPkeCrs2048Wasm.wasm,
-      coprocessorSigners,
-      thresholdCoprocessorSigners,
+      fhevm: relayerFhevm,
       capacity: 2048,
       defaultOptions: auth ? { auth } : undefined,
     }),
-    requestZKProofVerification: (
+    requestZKProofVerification: async (
       zkProof: ZKProofLike,
       options?: RelayerInputProofOptionsType,
-    ) => {
+    ): Promise<{
+      handles: Uint8Array[];
+      inputProof: Uint8Array;
+    }> => {
       if (
         zkProof.chainId !== BigInt(chainId) ||
         zkProof.aclContractAddress !== aclContractAddress
       ) {
         throw new Error('Invalid ZKProof');
       }
-      return requestCiphertextWithZKProofVerification({
+      const ip = await requestCiphertextWithZKProofVerification({
         zkProof: ZKProof.fromComponents(zkProof, {
           copy: false /* the ZKProof behaves as a validator and is not meant to be shared */,
         }),
         coprocessorSignersVerifier: CoprocessorSignersVerifier.fromAddresses({
-          coprocessorSignersAddresses: coprocessorSigners,
-          gatewayChainId,
+          coprocessorSigners: coprocessorSigners,
+          gatewayChainId: BigInt(gatewayChainId),
           threshold: thresholdCoprocessorSigners,
           verifyingContractAddressInputVerification,
         }),
@@ -277,13 +208,15 @@ export const createInstance = async (
         relayerProvider: relayerFhevm.relayerProvider,
         options,
       });
+
+      return ip.toBytes();
     },
     generateKeypair,
     createEIP712: createEIP712(verifyingContractAddressDecryption, chainId),
     publicDecrypt: publicDecryptRequest(
       kmsSigners,
       thresholdKMSSigners,
-      gatewayChainId,
+      Number(gatewayChainId),
       verifyingContractAddressDecryption,
       aclContractAddress,
       relayerFhevm.relayerProvider,
@@ -292,7 +225,7 @@ export const createInstance = async (
     ),
     userDecrypt: userDecryptRequest(
       kmsSigners,
-      gatewayChainId,
+      Number(gatewayChainId),
       chainId,
       verifyingContractAddressDecryption,
       aclContractAddress,

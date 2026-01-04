@@ -6,7 +6,7 @@ export type EIP712Type = { name: string; type: string };
 
 export type EIP712 = {
   domain: {
-    chainId: number;
+    chainId: bigint;
     name: string;
     verifyingContract: string;
     version: string;
@@ -76,12 +76,12 @@ export const createEIP712 =
     const domain = {
       name: 'Decryption',
       version: '1',
-      chainId: contractsChainId,
+      chainId: BigInt(contractsChainId),
       verifyingContract,
     };
 
     if (delegatedAccount !== undefined) {
-      return {
+      const result: EIP712 = {
         types: {
           EIP712Domain,
           DelegatedUserDecryptRequestVerification: [
@@ -107,9 +107,10 @@ export const createEIP712 =
           delegatedAccount: delegatedAccount,
         },
       };
+      return result;
     }
 
-    return {
+    const result: EIP712 = {
       types: {
         EIP712Domain,
         UserDecryptRequestVerification: [
@@ -130,6 +131,7 @@ export const createEIP712 =
         extraData,
       },
     };
+    return result;
   };
 
 export const generateKeypair = (): {

@@ -53,7 +53,7 @@ describeIfFetchMock('token', () => {
       86400,
     );
 
-    expect(eip712.domain.chainId).toBe(12345);
+    expect(eip712.domain.chainId).toBe(12345n);
     expect(eip712.domain.name).toBe('Decryption');
     expect(eip712.domain.version).toBe('1');
     expect((eip712.message as { publicKey: unknown }).publicKey).toBe(
@@ -67,7 +67,7 @@ describeIfFetchMock('token', () => {
     expect(eip712.types.UserDecryptRequestVerification[0].type).toBe('bytes');
   });
 
-  it('create a valid EIP712 with delegated accunt', async () => {
+  it('create a valid EIP712 with delegated account', async () => {
     const keypair = generateKeypair();
 
     const eip712 = createEIP712(
@@ -81,7 +81,7 @@ describeIfFetchMock('token', () => {
       '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
     );
 
-    expect(eip712.domain.chainId).toBe(12345);
+    expect(eip712.domain.chainId).toBe(12345n);
     expect(eip712.domain.name).toBe('Decryption');
     expect(eip712.domain.version).toBe('1');
     expect((eip712.message as { publicKey: unknown }).publicKey).toBe(
@@ -93,12 +93,12 @@ describeIfFetchMock('token', () => {
     expect(eip712.primaryType).toBe('DelegatedUserDecryptRequestVerification');
 
     /*
-     { name: 'publicKey', type: 'bytes' },
-          { name: 'contractAddresses', type: 'address[]' },
-          { name: 'startTimestamp', type: 'uint256' },
-          { name: 'durationDays', type: 'uint256' },
-          { name: 'delegatedAccount', type: 'address' },
-           */
+      { name: 'publicKey', type: 'bytes' },
+      { name: 'contractAddresses', type: 'address[]' },
+      { name: 'startTimestamp', type: 'uint256' },
+      { name: 'durationDays', type: 'uint256' },
+      { name: 'delegatedAccount', type: 'address' },
+    */
     expect(eip712.types.DelegatedUserDecryptRequestVerification.length).toBe(6);
 
     expect(eip712.types.DelegatedUserDecryptRequestVerification[0].name).toBe(

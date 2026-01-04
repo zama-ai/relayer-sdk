@@ -92,7 +92,7 @@ describeIfFetchMock('RelayerV2Provider:public-decrypt:mock:', () => {
     relayerProvider = createRelayerProvider(TEST_CONFIG.v2.urls.base, 1);
     expect(relayerProvider.version).toBe(2);
     expect(relayerProvider.url).toBe(TEST_CONFIG.v2.urls.base);
-    expect(relayerProvider.publicDecrypt).toBe(
+    expect(relayerProvider.publicDecryptUrl).toBe(
       TEST_CONFIG.v2.urls.publicDecrypt,
     );
   });
@@ -256,7 +256,9 @@ describeIfFetch('RelayerV2Provider:public-decrypt:sepolia:', () => {
   });
 
   it('v2: succeeded', async () => {
-    setupAllFetchMockRoutes({});
+    setupAllFetchMockRoutes({
+      enableInputProofRoutes: false,
+    });
 
     const config = TEST_CONFIG.v2.fhevmInstanceConfig;
     const handle = await fheTestGet(
@@ -271,7 +273,9 @@ describeIfFetch('RelayerV2Provider:public-decrypt:sepolia:', () => {
   }, 60000);
 
   it('v1: succeeded', async () => {
-    setupAllFetchMockRoutes({});
+    setupAllFetchMockRoutes({
+      enableInputProofRoutes: false,
+    });
 
     const config = TEST_CONFIG.v1.fhevmInstanceConfig;
     const handle = await fheTestGet(

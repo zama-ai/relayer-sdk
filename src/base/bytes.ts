@@ -561,6 +561,16 @@ export function bytesToHex(bytes: Uint8Array | undefined): BytesHex {
   return `0x${bytesToHexNo0x(bytes)}`;
 }
 
+/**
+ * Convert a 32-bytes long Uint8Array to a 0x prefixed hex string (length=66)
+ */
+export function bytes32ToHex(bytes: Uint8Array | undefined): Bytes32Hex {
+  if (!isBytes32(bytes)) {
+    throw new Error('Invalid bytes32 argument');
+  }
+  return `0x${bytesToHexNo0x(bytes)}`;
+}
+
 export function bytesToHexLarge(bytes: Uint8Array): BytesHex {
   const out = new Uint8Array(2 + bytes.length * 2);
   out[0] = 48; // '0'

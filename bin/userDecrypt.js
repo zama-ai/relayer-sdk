@@ -67,7 +67,10 @@ export async function userDecrypt({
         timeout,
         //signal: abortController.signal,
         onProgress: (args) => {
-          logCLI('progress=' + args.type, options);
+          logCLI(
+            `[${args.type}] progress: ${args.step}/${args.totalSteps}`,
+            options,
+          );
         },
         auth: { __type: 'ApiKeyHeader', value: zamaFhevmApiKey },
       },

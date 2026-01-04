@@ -12,6 +12,7 @@ import {
   assertRecordStringArrayProperty,
   assertRecordTimestampProperty,
   safeJSONstringify,
+  isNonEmptyString,
 } from './string';
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -19,8 +20,8 @@ import {
 // Jest Command line
 // =================
 //
-// npx jest --colors --passWithNoTests ./src/utils/string.test.ts
-// npx jest --colors --passWithNoTests --coverage ./src/utils/string.test.ts --collectCoverageFrom=./src/utils/string.ts
+// npx jest --colors --passWithNoTests ./src/base/string.test.ts
+// npx jest --colors --passWithNoTests --coverage ./src/base/string.test.ts --collectCoverageFrom=./src/base/string.ts
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -227,5 +228,34 @@ describe('string', () => {
     const circular: Record<string, unknown> = { a: 1 };
     circular.self = circular;
     expect(safeJSONstringify(circular)).toBe('');
+  });
+
+  //////////////////////////////////////////////////////////////////////////////
+
+  it('isNonEmptyString', () => {
+    // Valid non-empty strings
+    expect(isNonEmptyString('hello')).toBe(true);
+    expect(isNonEmptyString('a')).toBe(true);
+    expect(isNonEmptyString(' ')).toBe(true); // whitespace is still non-empty
+    expect(isNonEmptyString('0')).toBe(true);
+
+    // Empty string
+    expect(isNonEmptyString('')).toBe(false);
+
+    // Non-string types
+    const nonStringTypes = [
+      null,
+      undefined,
+      123,
+      0,
+      true,
+      false,
+      {},
+      [],
+      ['a'],
+    ];
+    for (const value of nonStringTypes) {
+      expect(isNonEmptyString(value)).toBe(false);
+    }
   });
 });
