@@ -42,12 +42,13 @@ export class RelayerV1Provider extends AbstractRelayerProvider {
 
     const json = await fetchRelayerV1Post(
       'INPUT_PROOF',
-      this.inputProof,
+      this.inputProofUrl,
       payload,
       options,
     );
 
     assertIsRelayerInputProofResult(json.response, 'fetchPostInputProof()');
+
     return json.response;
   }
 
@@ -57,7 +58,7 @@ export class RelayerV1Provider extends AbstractRelayerProvider {
   ): Promise<RelayerPublicDecryptResult> {
     const json = (await fetchRelayerV1Post(
       'PUBLIC_DECRYPT',
-      this.publicDecrypt,
+      this.publicDecryptUrl,
       payload,
       options,
     )) as {
@@ -80,7 +81,7 @@ export class RelayerV1Provider extends AbstractRelayerProvider {
   ): Promise<RelayerUserDecryptResult> {
     const json = await fetchRelayerV1Post(
       'USER_DECRYPT',
-      this.userDecrypt,
+      this.userDecryptUrl,
       payload,
       options,
     );

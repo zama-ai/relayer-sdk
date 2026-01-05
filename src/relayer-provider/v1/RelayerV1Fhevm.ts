@@ -2,10 +2,12 @@ import type {
   CompactPkeCrsWasmType,
   TfheCompactPublicKeyWasmType,
 } from '@sdk/lowlevel/types';
-import type { PublicParams } from '../../types/relayer';
-import { getPublicParams, getTfheCompactPublicKey } from '../../config';
+import type { FhevmHostChain } from '@sdk/fhevmHostChain';
+import type { FhevmInstanceConfig, PublicParams } from '../../types/relayer';
+import { getPublicParams, getTfheCompactPublicKey } from './networkV1';
 import { AbstractRelayerFhevm } from '../AbstractRelayerFhevm';
 import { RelayerV1Provider } from './RelayerV1Provider';
+import { FhevmHostChainConfig } from '@sdk/fhevmHostChain';
 import {
   SERIALIZED_SIZE_LIMIT_CRS,
   SERIALIZED_SIZE_LIMIT_PK,
@@ -28,14 +30,16 @@ export class RelayerV1Fhevm extends AbstractRelayerFhevm {
     relayerProvider: RelayerV1Provider;
     publicKeyData: RelayerV1PublicKeyDataType;
     publicParamsData: RelayerV1PublicParamsDataType;
+    fhevmHostChain: FhevmHostChain;
   }) {
-    super();
+    super(params);
+
     this._relayerProvider = params.relayerProvider;
     this._publicKeyData = params.publicKeyData;
     this._publicParamsData = params.publicParamsData;
   }
 
-  public override get version(): number {
+  public override get version(): 1 | 2 {
     return 1;
   }
 
@@ -43,23 +47,25 @@ export class RelayerV1Fhevm extends AbstractRelayerFhevm {
     return this.relayerProvider.url;
   }
 
-  public static async fromConfig(config: {
-    relayerVersionUrl: string;
-    publicKey?:
-      | {
-          data: Uint8Array | null;
-          id: string | null;
-        }
-      | undefined;
-    publicParams?: PublicParams<Uint8Array> | null | undefined;
-  }): Promise<RelayerV1Fhevm> {
+  public static async fromConfig(
+    config: FhevmInstanceConfig & {
+      relayerVersionUrl: string;
+    },
+  ): Promise<RelayerV1Fhevm> {
     const relayerProvider = new RelayerV1Provider(config.relayerVersionUrl);
     const publicKeyData = await getTfheCompactPublicKey(config);
     const publicParamsData = await getPublicParams(config);
+
+    // Create FhevmHostChain
+    const cfg: FhevmHostChainConfig =
+      FhevmHostChainConfig.fromUserConfig(config);
+    const fhevmHostChain: FhevmHostChain = await cfg.loadFromChain();
+
     return new RelayerV1Fhevm({
       relayerProvider,
       publicKeyData,
       publicParamsData,
+      fhevmHostChain,
     });
   }
 

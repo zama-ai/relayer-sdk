@@ -18,53 +18,18 @@ import type { ChecksummedAddress } from '../base/types/primitives';
 // =======
 // npx jest --config jest.testnet.config.cjs --colors --passWithNoTests ./src/sdk/InputVerifier.test.ts
 //
+// Devnet:
+// =======
+// npx jest --config jest.devnet.config.cjs --colors --passWithNoTests ./src/sdk/InputVerifier.test.ts
+//
 ////////////////////////////////////////////////////////////////////////////////
 
 const describeIfFetchMock =
   TEST_CONFIG.type === 'fetch-mock' ? describe : describe.skip;
 
 jest.mock('ethers', () => {
-  const actual = jest.requireActual('ethers');
-
-  return {
-    ...actual,
-    JsonRpcProvider: jest.fn((...args: any[]) => {
-      // Lazy evaluation: check condition when constructor is called
-      const { TEST_CONFIG } = jest.requireActual('../test/config');
-      if (TEST_CONFIG.type !== 'fetch-mock') {
-        return new actual.JsonRpcProvider(...args);
-      }
-      return {};
-    }),
-    isAddress: (...args: any[]) => {
-      const { TEST_CONFIG } = jest.requireActual('../test/config');
-      if (TEST_CONFIG.type !== 'fetch-mock') {
-        return actual.isAddress(...args);
-      }
-      return true;
-    },
-    getAddress: (address: string) => {
-      const { TEST_CONFIG } = jest.requireActual('../test/config');
-      if (TEST_CONFIG.type !== 'fetch-mock') {
-        return actual.getAddress(address);
-      }
-      return address;
-    },
-    Contract: jest.fn((...args: any[]) => {
-      const { TEST_CONFIG, TEST_COPROCESSORS, TEST_INPUT_VERIFIER } =
-        jest.requireActual('../test/config');
-      if (TEST_CONFIG.type !== 'fetch-mock') {
-        return new actual.Contract(...args);
-      }
-      return {
-        eip712Domain: () => Promise.resolve(TEST_INPUT_VERIFIER.eip712Domain),
-        getCoprocessorSigners: () =>
-          Promise.resolve(TEST_COPROCESSORS.addresses),
-        getThreshold: () =>
-          Promise.resolve(BigInt(TEST_COPROCESSORS.addresses.length)),
-      };
-    }),
-  };
+  const { setupEthersJestMock } = jest.requireActual('../test/config');
+  return setupEthersJestMock();
 });
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -224,7 +189,7 @@ describeIfFetchMock('InputVerifier mock', () => {
             '0x483b9dE06E4E4C7D35CCf5837A1668487406D955' as ChecksummedAddress,
           provider,
         }),
-      ).rejects.toThrow('Invalid InputVerifier EIP-712 domain.');
+      ).rejects.toThrow('Invalid InputVerifier EIP-712 domain chainId.');
     });
 
     it('throws on invalid eip712Domain verifyingContract (not address)', async () => {
@@ -272,6 +237,12 @@ describe('InputVerfier', () => {
 
     it('returns InputVerifier instance', () => {
       expect(inputVerifier).toBeInstanceOf(InputVerifier);
+    });
+
+    it('address getter returns the contract address', () => {
+      expect(inputVerifier.address).toBe(
+        TEST_CONFIG.fhevmInstanceConfig.inputVerifierContractAddress,
+      );
     });
 
     it('eip712Domain.chainId equals gatewayChainId', () => {

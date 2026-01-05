@@ -17,7 +17,7 @@ const relayerProvider = createRelayerProvider(
   'https://test-fhevm-relayer',
   defaultRelayerVersion,
 );
-const RELAYER_PUBLIC_DECRYPT_URL = relayerProvider.publicDecrypt;
+const RELAYER_PUBLIC_DECRYPT_URL = relayerProvider.publicDecryptUrl;
 
 const dummyRelayerUserDecryptPayload: RelayerPublicDecryptPayload = {
   ciphertextHandles: ['0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef'],

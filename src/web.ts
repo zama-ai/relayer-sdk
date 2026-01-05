@@ -6,6 +6,7 @@ import initTFHE, {
   CompactPkeCrs,
   CompactCiphertextList,
   ZkComputeLoad,
+  ProvenCompactCiphertextList,
 } from 'tfhe';
 import {
   default as initTKMS,
@@ -20,6 +21,10 @@ import {
   ml_kem_pke_get_pk,
 } from 'tkms';
 
+import type { TFHEType, TKMSType } from './sdk/lowlevel/types';
+
+export type * from './sdk/lowlevel/types';
+
 window.TFHE = {
   default: initTFHE,
   initThreadPool,
@@ -28,7 +33,9 @@ window.TFHE = {
   CompactPkeCrs: CompactPkeCrs as any,
   CompactCiphertextList: CompactCiphertextList as any,
   ZkComputeLoad: ZkComputeLoad as any,
-};
+  ProvenCompactCiphertextList: ProvenCompactCiphertextList as any,
+} satisfies TFHEType;
+
 window.TKMS = {
   default: initTKMS,
   u8vec_to_ml_kem_pke_pk,
@@ -40,12 +47,10 @@ window.TKMS = {
   ml_kem_pke_pk_to_u8vec,
   ml_kem_pke_sk_to_u8vec,
   ml_kem_pke_get_pk,
-};
+} satisfies TKMSType;
 
 export { InitInput as TFHEInput } from 'tfhe';
 export { InitInput as KMSInput } from 'tkms';
-
-export type { TFHEType } from './tfheType';
 
 export type {
   RelayerEncryptedInput,
@@ -59,10 +64,6 @@ export type {
   ClearValues,
   EIP712,
   EIP712Type,
-  Auth,
-  BearerToken,
-  ApiKeyCookie,
-  ApiKeyHeader,
   FhevmInstanceConfig,
   FhevmInstanceOptions,
   ZKProofLike,
@@ -93,4 +94,4 @@ export {
   getErrorCauseStatus,
 } from './index';
 
-export { initSDK } from './init';
+export { initSDK } from './web_init';

@@ -10,6 +10,7 @@ import { InvalidTypeError } from '../../errors/InvalidTypeError';
 import { ChecksummedAddressError } from '../../errors/ChecksummedAddressError';
 import { ZKProof } from '../ZKProof';
 import { FhevmHandle } from '../FhevmHandle';
+import { FhevmHandleError } from '../../errors/FhevmHandleError';
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -25,7 +26,7 @@ import { FhevmHandle } from '../FhevmHandle';
 // Test Constants
 ////////////////////////////////////////////////////////////////////////////////
 
-const VALID_GATEWAY_CHAIN_ID = 10901;
+const VALID_GATEWAY_CHAIN_ID = 10901n;
 const VALID_VERIFYING_CONTRACT =
   '0xf0Ffdc93b7E186bC2f8CB3dAA75D86d1930A433D' as ChecksummedAddress;
 const VALID_USER_ADDRESS =
@@ -33,7 +34,7 @@ const VALID_USER_ADDRESS =
 const VALID_CONTRACT_ADDRESS =
   '0x9aF5773d8dC3d9A57c92e08EF024804eC39FD3b3' as ChecksummedAddress;
 const VALID_HANDLE =
-  '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef' as Bytes32Hex;
+  '0x20244f826737772a0b7f1254c1cc982d83094d65ec000000000000aa36a70400' as Bytes32Hex;
 const VALID_EXTRA_DATA = '0xabcdef' as BytesHex;
 
 function createValidParams() {
@@ -105,7 +106,7 @@ describe('CoprocessorEIP712', () => {
     it('throws for negative chainId', () => {
       const params = {
         ...createValidParams(),
-        gatewayChainId: -1,
+        gatewayChainId: -1n,
       };
 
       expect(() => new CoprocessorEIP712(params)).toThrow(InvalidTypeError);
@@ -252,7 +253,7 @@ describe('CoprocessorEIP712', () => {
 
     it('accepts multiple ctHandles', () => {
       const handle2 =
-        '0x1234567812345678123456781234567812345678123456781234567812345678' as Bytes32Hex;
+        '0xb956f5d8a5c3652952eecba34451c57820979f3b2d000000000000aa36a70000' as Bytes32Hex;
       const message = {
         ...createValidMessage(),
         ctHandles: [VALID_HANDLE, handle2],
@@ -292,7 +293,7 @@ describe('CoprocessorEIP712', () => {
         ctHandles: ['0xinvalid'] as any,
       };
 
-      expect(() => coprocessor.createEIP712(message)).toThrow(InvalidTypeError);
+      expect(() => coprocessor.createEIP712(message)).toThrow(FhevmHandleError);
     });
 
     it('throws for invalid userAddress', () => {
@@ -320,7 +321,7 @@ describe('CoprocessorEIP712', () => {
     it('throws for invalid contractChainId', () => {
       const message = {
         ...createValidMessage(),
-        contractChainId: -1,
+        contractChainId: -1n,
       };
 
       expect(() => coprocessor.createEIP712(message)).toThrow(InvalidTypeError);

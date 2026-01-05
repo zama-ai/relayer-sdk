@@ -78,7 +78,7 @@ export type RelayerPublicDecryptOptionsType = Prettify<
 
 export type RelayerFetchMethod = 'GET' | 'POST';
 export type RelayerSuccessStatus = 200 | 202;
-export type RelayerFailureStatus = 400 | 404 | 429 | 500 | 503;
+export type RelayerFailureStatus = 400 | 401 | 404 | 429 | 500 | 503;
 export type RelayerProgressTypeValue =
   | 'abort'
   | 'queued'
@@ -112,6 +112,8 @@ export type RelayerProgressBaseType<
   operation: O;
   jobId?: string | undefined;
   retryCount: number;
+  totalSteps: number;
+  step: number;
 };
 
 export type RelayerProgressStatusBaseType<
@@ -274,10 +276,16 @@ export type RelayerInputProofResult = {
 
 export type RelayerApiErrorType =
   | RelayerApiError400Type
+  | RelayerApiError401Type
   | RelayerApiError404Type
   | RelayerApiError429Type
   | RelayerApiError500Type
   | RelayerApiError503Type;
+
+export type RelayerApiError401Type = {
+  label: 'unauthorized';
+  message: string;
+};
 
 export type RelayerApiError404Type = {
   label: 'not_found';
@@ -295,6 +303,7 @@ export type RelayerApiError503Type = {
     | 'protocol_paused'
     | 'gateway_not_reachable'
     | 'readiness_check_timedout'
+    | 'protocol_overwhelmed'
     | 'response_timedout';
   message: string;
 };
@@ -323,3 +332,50 @@ export type RelayerErrorDetailType = {
   field: string;
   issue: string;
 };
+
+////////////////////////////////////////////////////////////////////////////////
+// Auth
+////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Bearer Token Authentication
+ */
+export type BearerToken = {
+  __type: 'BearerToken';
+  /**
+   * The Bearer token.
+   */
+  token: string;
+};
+
+/**
+ * Custom header authentication
+ */
+export type ApiKeyHeader = {
+  __type: 'ApiKeyHeader';
+  /**
+   * The header name. The default value is `x-api-key`.
+   */
+  header?: string;
+  /**
+   * The API key.
+   */
+  value: string;
+};
+
+/**
+ * Custom cookie authentication
+ */
+export type ApiKeyCookie = {
+  __type: 'ApiKeyCookie';
+  /**
+   * The cookie name. The default value is `x-api-key`.
+   */
+  cookie?: string;
+  /**
+   * The API key.
+   */
+  value: string;
+};
+
+export type Auth = BearerToken | ApiKeyHeader | ApiKeyCookie;

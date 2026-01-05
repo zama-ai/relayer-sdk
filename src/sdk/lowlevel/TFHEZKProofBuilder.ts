@@ -4,6 +4,8 @@ import type {
   FheTypeName,
   Uint64,
 } from '@base/types/primitives';
+import type { TFHEPkeParams } from './TFHEPkeParams';
+import type { CompactCiphertextListBuilderWasmType } from './types';
 import { EncryptionError } from '../../errors/EncryptionError';
 import { assertRelayer } from '../../errors/InternalError';
 import {
@@ -20,7 +22,6 @@ import {
 } from '@base/uint';
 import { encryptionBitsFromFheTypeName } from '../FheType';
 import { isChecksummedAddress } from '@base/address';
-import type { TFHEPkeParams } from './TFHEPkeParams';
 import { hexToBytes } from '@base/bytes';
 import {
   SERIALIZED_SIZE_LIMIT_CIPHERTEXT,
@@ -28,30 +29,6 @@ import {
   TFHE_ZKPROOF_CIPHERTEXT_CAPACITY,
 } from './constants';
 import { ZKProof } from '../ZKProof';
-
-////////////////////////////////////////////////////////////////////////////////
-// Private types
-////////////////////////////////////////////////////////////////////////////////
-
-interface TheCompactCiphertextListBuilderType {
-  push_boolean(value: boolean): void;
-  push_u8(value: number): void;
-  push_u16(value: number): void;
-  push_u32(value: number): void;
-  push_u64(value: bigint): void;
-  push_u128(value: bigint): void;
-  push_u160(value: bigint): void;
-  push_u256(value: bigint): void;
-  build_with_proof_packed(
-    crs: unknown,
-    metadata: Uint8Array,
-    computeLoad: unknown,
-  ): TfheProvenCompactCiphertextListType;
-}
-
-interface TfheProvenCompactCiphertextListType {
-  safe_serialize(sizeLimit: bigint): Uint8Array;
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 // TFHEZKProofBuilder
@@ -62,7 +39,7 @@ export class TFHEZKProofBuilder {
   readonly #bits: EncryptionBits[] = [];
   readonly #bitsCapacity: number = TFHE_CRS_BITS_CAPACITY;
   readonly #ciphertextCapacity: number = TFHE_ZKPROOF_CIPHERTEXT_CAPACITY;
-  readonly #fheCompactCiphertextListBuilderWasm: TheCompactCiphertextListBuilderType;
+  readonly #fheCompactCiphertextListBuilderWasm: CompactCiphertextListBuilderWasmType;
   readonly #pkeParams: TFHEPkeParams;
 
   constructor(params: { pkeParams: TFHEPkeParams }) {

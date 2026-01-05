@@ -2,6 +2,8 @@ import {
   isFheTypeId,
   isFheTypeName,
   isEncryptionBits,
+  assertIsEncryptionBits,
+  assertIsEncryptionBitsArray,
   fheTypeIdFromEncryptionBits,
   fheTypeIdFromName,
   fheTypeNameFromId,
@@ -10,6 +12,7 @@ import {
   encryptionBitsFromFheTypeName,
 } from './FheType';
 import { FheTypeError } from '../errors/FheTypeError';
+import { InvalidTypeError } from '../errors/InvalidTypeError';
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -127,6 +130,83 @@ describe('FheType', () => {
       expect(isEncryptionBits(null)).toBe(false);
       expect(isEncryptionBits(undefined)).toBe(false);
       expect(isEncryptionBits({})).toBe(false);
+    });
+  });
+
+  //////////////////////////////////////////////////////////////////////////////
+  // assertIsEncryptionBits
+  //////////////////////////////////////////////////////////////////////////////
+
+  describe('assertIsEncryptionBits', () => {
+    it('does not throw for valid encryption bits', () => {
+      expect(() => assertIsEncryptionBits(2)).not.toThrow();
+      expect(() => assertIsEncryptionBits(8)).not.toThrow();
+      expect(() => assertIsEncryptionBits(16)).not.toThrow();
+      expect(() => assertIsEncryptionBits(32)).not.toThrow();
+      expect(() => assertIsEncryptionBits(64)).not.toThrow();
+      expect(() => assertIsEncryptionBits(128)).not.toThrow();
+      expect(() => assertIsEncryptionBits(160)).not.toThrow();
+      expect(() => assertIsEncryptionBits(256)).not.toThrow();
+    });
+
+    it('throws InvalidTypeError for invalid encryption bits', () => {
+      expect(() => assertIsEncryptionBits(4)).toThrow(InvalidTypeError);
+      expect(() => assertIsEncryptionBits(0)).toThrow(InvalidTypeError);
+      expect(() => assertIsEncryptionBits(512)).toThrow(InvalidTypeError);
+    });
+
+    it('throws InvalidTypeError for non-number values', () => {
+      expect(() => assertIsEncryptionBits('8')).toThrow(InvalidTypeError);
+      expect(() => assertIsEncryptionBits(null)).toThrow(InvalidTypeError);
+      expect(() => assertIsEncryptionBits(undefined)).toThrow(InvalidTypeError);
+    });
+
+    it('includes varName in error when provided', () => {
+      expect(() => assertIsEncryptionBits(4, 'myVar')).toThrow(/myVar/);
+    });
+  });
+
+  //////////////////////////////////////////////////////////////////////////////
+  // assertIsEncryptionBitsArray
+  //////////////////////////////////////////////////////////////////////////////
+
+  describe('assertIsEncryptionBitsArray', () => {
+    it('does not throw for valid encryption bits array', () => {
+      expect(() => assertIsEncryptionBitsArray([2, 8, 16])).not.toThrow();
+      expect(() =>
+        assertIsEncryptionBitsArray([32, 64, 128, 160, 256]),
+      ).not.toThrow();
+      expect(() => assertIsEncryptionBitsArray([])).not.toThrow();
+    });
+
+    it('throws InvalidTypeError for non-array values', () => {
+      expect(() => assertIsEncryptionBitsArray('not-an-array')).toThrow(
+        InvalidTypeError,
+      );
+      expect(() => assertIsEncryptionBitsArray(123)).toThrow(InvalidTypeError);
+      expect(() => assertIsEncryptionBitsArray(null)).toThrow(InvalidTypeError);
+      expect(() => assertIsEncryptionBitsArray(undefined)).toThrow(
+        InvalidTypeError,
+      );
+    });
+
+    it('throws InvalidTypeError for array with invalid encryption bits', () => {
+      expect(() => assertIsEncryptionBitsArray([8, 4, 16])).toThrow(
+        InvalidTypeError,
+      );
+      expect(() => assertIsEncryptionBitsArray([8, 'invalid', 16])).toThrow(
+        InvalidTypeError,
+      );
+    });
+
+    it('includes varName with index in error when provided', () => {
+      expect(() => assertIsEncryptionBitsArray([8, 4], 'myArray')).toThrow(
+        /myArray\[1\]/,
+      );
+    });
+
+    it('throws without varName when not provided', () => {
+      expect(() => assertIsEncryptionBitsArray([4])).toThrow(InvalidTypeError);
     });
   });
 

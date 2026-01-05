@@ -1,6 +1,6 @@
 import type {
   CoprocessorEIP712MessageHexType,
-  CoprocessorEIP712Params,
+  ICoprocessorEIP712,
   CoprocessorEIP712Type,
 } from '../../sdk/coprocessor/types';
 import type { Prettify } from '../../base/types/utils';
@@ -21,7 +21,7 @@ import { remove0x } from '../../base/string';
 // CoprocessorSigners (Multi-sig for Coprocessor)
 ////////////////////////////////////////////////////////////////////////////////
 
-type CoprocessorSignersBaseParams = CoprocessorEIP712Params;
+type CoprocessorSignersBaseParams = ICoprocessorEIP712;
 
 type CoprocessorSignersParams = Prettify<
   { signers: CoprocessorSigner[] } & CoprocessorSignersBaseParams

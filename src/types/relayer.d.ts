@@ -4,53 +4,12 @@ import type {
   BytesHexNo0x,
   ChecksummedAddress,
 } from '@base/types/primitives';
+import type { Auth } from '@relayer-provider/types/public-api';
 import type { Eip1193Provider } from 'ethers';
-
-/**
- * Bearer Token Authentication
- */
-export type BearerToken = {
-  __type: 'BearerToken';
-  /**
-   * The Bearer token.
-   */
-  token: string;
-};
-
-/**
- * Custom header authentication
- */
-export type ApiKeyHeader = {
-  __type: 'ApiKeyHeader';
-  /**
-   * The header name. The default value is `x-api-key`.
-   */
-  header?: string;
-  /**
-   * The API key.
-   */
-  value: string;
-};
-
-/**
- * Custom cookie authentication
- */
-export type ApiKeyCookie = {
-  __type: 'ApiKeyCookie';
-  /**
-   * The cookie name. The default value is `x-api-key`.
-   */
-  cookie?: string;
-  /**
-   * The API key.
-   */
-  value: string;
-};
-
-export type Auth = BearerToken | ApiKeyHeader | ApiKeyCookie;
 
 export type FhevmInstanceOptions = {
   auth?: Auth;
+  debug?: boolean;
 };
 
 export type PublicParams<T> = {

@@ -1,10 +1,10 @@
 import type { RelayerV2AsyncRequestState } from '../../relayer-provider/v2/RelayerV2AsyncRequest';
-import type { EncryptionBits } from '../../base/types/primitives';
 import fetchMock, { CallLog } from 'fetch-mock';
 import { fetchMockInputProof, TEST_CONFIG } from '../config';
 import { tfheCompactPublicKeyBytes, tfheCompactPkeCrsBytes } from '..';
 import { RelayerV2ResponseInvalidBodyError } from '../../relayer-provider/v2/errors/RelayerV2ResponseInvalidBodyError';
 import { InvalidPropertyError } from '../../errors/InvalidPropertyError';
+import { FhevmInstanceOptions } from '../../types/relayer';
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -102,10 +102,15 @@ export function setupV2RoutesKeyUrl() {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export function setupV2RoutesInputProof(
-  bitwidths: EncryptionBits[],
-  retry: number = 0,
-) {
+export function setupV2RoutesInputProof(params?: {
+  jobId?: string;
+  instanceOptions?: FhevmInstanceOptions;
+  retry?: number;
+  inputProofResult?: {
+    readonly handles: readonly string[];
+    readonly signatures: readonly string[];
+  };
+}) {
   if (TEST_CONFIG.type !== 'fetch-mock') {
     throw new Error('Test is not running using fetch-mock');
   }
@@ -116,9 +121,42 @@ export function setupV2RoutesInputProof(
     ciphertextWithInputVerification: '',
   };
 
-  const jobId = '123';
+  const jobId = params?.jobId ?? '123';
+  const auth = params?.instanceOptions?.auth;
 
   fetchMock.post(TEST_CONFIG.v2.urls.inputProof, async (args: CallLog) => {
+    if (auth) {
+      const headers = args.options.headers as
+        | Record<string, string>
+        | undefined;
+
+      switch (auth.__type) {
+        case 'BearerToken': {
+          const hAuthorization = headers?.['Authorization'];
+          if (hAuthorization !== `Bearer ${auth.token}`) {
+            return { status: 401 };
+          }
+          break;
+        }
+
+        case 'ApiKeyHeader': {
+          if (headers?.[auth.header || 'x-api-key'] !== auth.value) {
+            return { status: 401 };
+          }
+          break;
+        }
+
+        case 'ApiKeyCookie':
+          if (
+            headers?.['Cookie'] !==
+            `${auth.cookie || 'x-api-key'}=${auth.value};`
+          ) {
+            return { status: 401 };
+          }
+          break;
+      }
+    }
+
     const body = args.options.body as string;
 
     const json = JSON.parse(body);
@@ -156,7 +194,8 @@ export function setupV2RoutesInputProof(
         };
       } else if (retryCounter.count === 1) {
         retryCounter.count = 2;
-        const res = await fetchMockInputProof(receivedArgs, bitwidths);
+        const res =
+          params?.inputProofResult ?? (await fetchMockInputProof(receivedArgs));
         return {
           status: 200,
           body: {

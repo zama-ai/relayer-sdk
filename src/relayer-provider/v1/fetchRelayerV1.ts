@@ -11,7 +11,7 @@ import {
   throwRelayerResponseError,
   throwRelayerUnknownError,
 } from '../../relayer/error';
-import { setAuth } from '../../auth';
+import { setAuth } from '../auth/auth';
 
 function assertIsRelayerV1FetchResponseJson(
   json: unknown,

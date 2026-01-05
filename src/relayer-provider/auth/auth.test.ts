@@ -2,8 +2,8 @@ import { setAuth } from './auth';
 
 // Jest Command line
 // =================
-// npx jest --colors --passWithNoTests --coverage ./src/auth.test.ts --collectCoverageFrom=./src/auth.ts --testNamePattern=xxx
-// npx jest --colors --passWithNoTests --coverage ./src/auth.test.ts --collectCoverageFrom=./src/auth.ts
+// npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/auth/auth.test.ts --collectCoverageFrom=./src/relayer-provider/auth/auth.ts --testNamePattern=xxx
+// npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/auth/auth.test.ts --collectCoverageFrom=./src/relayer-provider/auth/auth.ts
 
 describe('auth', () => {
   it('setAuth BearerToken', () => {

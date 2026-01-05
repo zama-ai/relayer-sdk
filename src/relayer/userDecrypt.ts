@@ -4,18 +4,14 @@ import type {
   RelayerUserDecryptPayload,
 } from '@relayer-provider/types/public-api';
 import type { BytesHex } from '@base/types/primitives';
+import type { Provider as EthersProviderType } from 'ethers';
 import type {
   ClearValueType,
   FhevmInstanceOptions,
   HandleContractPair,
   UserDecryptResults,
 } from '../types/relayer';
-import {
-  BrowserProvider,
-  JsonRpcProvider,
-  Contract,
-  getAddress as ethersGetAddress,
-} from 'ethers';
+import { Contract, getAddress as ethersGetAddress } from 'ethers';
 import { bytesToBigInt, bytesToHex, hexToBytes } from '@base/bytes';
 import { AbstractRelayerProvider } from '@relayer-provider/AbstractRelayerProvider';
 import { check2048EncryptedBits } from './decryptUtils';
@@ -60,7 +56,7 @@ function buildUserDecryptResults(
     typesList.push(typeDiscriminant);
   }
 
-  const results: UserDecryptResults = {};
+  const results: UserDecryptResults = {} as UserDecryptResults;
   handles.forEach(
     (handle, idx) =>
       (results[handle] = formatAccordingToType(
@@ -102,7 +98,7 @@ export const userDecryptRequest =
     verifyingContractAddress: string,
     aclContractAddress: string,
     relayerProvider: AbstractRelayerProvider,
-    provider: JsonRpcProvider | BrowserProvider,
+    provider: EthersProviderType,
     defaultOptions?: FhevmInstanceOptions,
   ) =>
   async (

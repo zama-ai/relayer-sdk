@@ -10,7 +10,14 @@ import type {
   FhevmInstanceOptions,
   PublicDecryptResults,
 } from '../types/relayer';
-import { ethers, AbiCoder } from 'ethers';
+import type { Provider as EthersProviderType } from 'ethers';
+import {
+  solidityPacked,
+  concat,
+  AbiCoder,
+  Contract,
+  verifyTypedData,
+} from 'ethers';
 import { bytesToHex, hexToBytes } from '@base/bytes';
 import { ensure0x } from '@base/string';
 import { assertNever } from '../errors/utils';
@@ -114,7 +121,7 @@ function abiEncodeClearValues(clearValues: ClearValues) {
     }
   }
 
-  const abiCoder = ethers.AbiCoder.defaultAbiCoder();
+  const abiCoder = AbiCoder.defaultAbiCoder();
 
   // ABI encode the decryptedResult as done in the KMS, since all decrypted values
   // are native static types, thay have same abi-encoding as uint256:
@@ -135,15 +142,12 @@ function buildDecryptionProof(
   extraData: `0x${string}`,
 ): `0x${string}` {
   // Build the decryptionProof as numSigners + KMS signatures + extraData
-  const packedNumSigners = ethers.solidityPacked(
-    ['uint8'],
-    [kmsSignatures.length],
-  );
-  const packedSignatures = ethers.solidityPacked(
+  const packedNumSigners = solidityPacked(['uint8'], [kmsSignatures.length]);
+  const packedSignatures = solidityPacked(
     Array(kmsSignatures.length).fill('bytes'),
     kmsSignatures,
   );
-  const decryptionProof: `0x${string}` = ethers.concat([
+  const decryptionProof: `0x${string}` = concat([
     packedNumSigners,
     packedSignatures,
     extraData,
@@ -181,7 +185,7 @@ function deserializeClearValues(
   // strip dummy first/last element
   const rawValues = decoded.slice(1, 1 + fheTypeIdList.length);
 
-  const results: ClearValues = {};
+  const results: ClearValues = {} as ClearValues;
   handles.forEach((handle, idx) => (results[handle] = rawValues[idx]));
 
   return results;
@@ -195,7 +199,7 @@ export const publicDecryptRequest =
     verifyingContractAddress: string,
     aclContractAddress: string,
     relayerProvider: AbstractRelayerProvider,
-    provider: ethers.JsonRpcProvider | ethers.BrowserProvider,
+    provider: EthersProviderType,
     defaultOptions?: FhevmInstanceOptions,
   ) =>
   async (
@@ -203,7 +207,7 @@ export const publicDecryptRequest =
     options?: RelayerPublicDecryptOptionsType,
   ): Promise<PublicDecryptResults> => {
     const extraData: `0x${string}` = '0x00';
-    const acl = new ethers.Contract(aclContractAddress, aclABI, provider);
+    const acl = new Contract(aclContractAddress, aclABI, provider);
 
     // This will be replaced by new sanitize classes
     let handles: `0x${string}`[];
@@ -267,7 +271,7 @@ export const publicDecryptRequest =
 
     const recoveredAddresses: `0x${string}`[] = kmsSignatures.map(
       (kmsSignature: `0x${string}`) => {
-        const recoveredAddress = ethers.verifyTypedData(
+        const recoveredAddress = verifyTypedData(
           domain,
           types,
           { ctHandles: handles, decryptedResult, extraData: signedExtraData },

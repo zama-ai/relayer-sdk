@@ -1,5 +1,6 @@
 import type { ethers as EthersT } from 'ethers';
 import type { Bytes32Hex, ChecksummedAddress } from '@base/types/primitives';
+import type { FhevmHandleLike } from './FhevmHandle';
 import { Contract } from 'ethers';
 import {
   assertIsChecksummedAddress,
@@ -11,15 +12,23 @@ import {
 } from '../errors/ACLError';
 import { ChecksummedAddressError } from '../errors/ChecksummedAddressError';
 import { ContractError } from '../errors/ContractErrorBase';
-import { FhevmHandle } from './FhevmHandle';
+import { FhevmHandle, toHandleBytes32Hex } from './FhevmHandle';
 
 ////////////////////////////////////////////////////////////////////////////////
 // ACL
 ////////////////////////////////////////////////////////////////////////////////
 
+interface IACL {
+  persistAllowed(
+    handle: Bytes32Hex,
+    account: ChecksummedAddress,
+  ): Promise<boolean>;
+  isAllowedForDecryption(handle: Bytes32Hex): Promise<boolean>;
+}
+
 export class ACL {
   readonly #aclAddress: ChecksummedAddress;
-  readonly #contract: Contract;
+  readonly #contract: IACL;
 
   static readonly #abi = [
     'function persistAllowed(bytes32 handle, address account) view returns (bool)',
@@ -53,7 +62,11 @@ export class ACL {
       });
     }
     this.#aclAddress = aclAddress;
-    this.#contract = new Contract(this.#aclAddress, ACL.#abi, provider);
+    this.#contract = new Contract(
+      this.#aclAddress,
+      ACL.#abi,
+      provider,
+    ) as unknown as IACL;
   }
 
   /**
@@ -62,15 +75,15 @@ export class ACL {
    * @throws {FhevmHandleError} If checkArguments is true and any handle is not a valid Bytes32Hex
    */
   public async isAllowedForDecryption(
-    handles: Bytes32Hex[],
+    handles: FhevmHandleLike[],
     options?: { checkArguments?: boolean },
   ): Promise<boolean[]>;
   public async isAllowedForDecryption(
-    handles: Bytes32Hex,
+    handles: FhevmHandleLike,
     options?: { checkArguments?: boolean },
   ): Promise<boolean>;
   public async isAllowedForDecryption(
-    handles: Bytes32Hex[] | Bytes32Hex,
+    handles: FhevmHandleLike[] | FhevmHandleLike,
     options: {
       checkArguments?: boolean;
     } = {
@@ -82,13 +95,14 @@ export class ACL {
 
     if (options.checkArguments === true) {
       for (let i = 0; i < handlesArray.length; ++i) {
-        FhevmHandle.assertIsHandleHex(handlesArray[i]);
+        FhevmHandle.assertIsHandleLike(handlesArray[i]);
       }
     }
 
     const results: boolean[] = (await Promise.all(
-      // eslint-disable-next-line @typescript-eslint/dot-notation
-      handlesArray.map((h) => this.#contract['isAllowedForDecryption'](h)),
+      handlesArray.map((h) => {
+        return this.#contract.isAllowedForDecryption(toHandleBytes32Hex(h));
+      }),
     )) as unknown[] as boolean[];
 
     return isArray ? results : results[0];
@@ -101,7 +115,7 @@ export class ACL {
    * @throws {ACLPublicDecryptionError} If any handle is not allowed for public decryption
    */
   public async checkAllowedForDecryption(
-    handles: Bytes32Hex[] | Bytes32Hex,
+    handles: FhevmHandleLike[] | FhevmHandleLike,
     options: {
       checkArguments?: boolean;
     } = {
@@ -111,7 +125,9 @@ export class ACL {
     const handlesArray = Array.isArray(handles) ? handles : [handles];
     const results = await this.isAllowedForDecryption(handlesArray, options);
 
-    const failedHandles = handlesArray.filter((_, i) => !results[i]);
+    const failedHandles = handlesArray
+      .filter((_, i) => !results[i])
+      .map(toHandleBytes32Hex);
     if (failedHandles.length > 0) {
       throw new ACLPublicDecryptionError({
         contractAddress: this.#aclAddress,
@@ -129,18 +145,21 @@ export class ACL {
   public async persistAllowed(
     handleAddressPairs: Array<{
       address: ChecksummedAddress;
-      handle: Bytes32Hex;
+      handle: FhevmHandleLike;
     }>,
     options?: { checkArguments?: boolean },
   ): Promise<boolean[]>;
   public async persistAllowed(
-    handleAddressPairs: { address: ChecksummedAddress; handle: Bytes32Hex },
+    handleAddressPairs: {
+      address: ChecksummedAddress;
+      handle: FhevmHandleLike;
+    },
     options?: { checkArguments?: boolean },
   ): Promise<boolean>;
   public async persistAllowed(
     handleAddressPairs:
-      | Array<{ address: ChecksummedAddress; handle: Bytes32Hex }>
-      | { address: ChecksummedAddress; handle: Bytes32Hex },
+      | Array<{ address: ChecksummedAddress; handle: FhevmHandleLike }>
+      | { address: ChecksummedAddress; handle: FhevmHandleLike },
     options: {
       checkArguments?: boolean;
     } = {
@@ -154,15 +173,14 @@ export class ACL {
 
     if (options.checkArguments === true) {
       for (const p of handleAddressPairsArray) {
-        FhevmHandle.assertIsHandleHex(p.handle);
+        FhevmHandle.assertIsHandleLike(p.handle);
         assertIsChecksummedAddress(p.address);
       }
     }
 
     const results = (await Promise.all(
       handleAddressPairsArray.map((p) =>
-        // eslint-disable-next-line @typescript-eslint/dot-notation
-        this.#contract['persistAllowed'](p.handle, p.address),
+        this.#contract.persistAllowed(toHandleBytes32Hex(p.handle), p.address),
       ),
     )) as unknown[] as boolean[];
 
@@ -187,8 +205,11 @@ export class ACL {
     params: {
       userAddress: ChecksummedAddress;
       handleContractPairs:
-        | { contractAddress: ChecksummedAddress; handle: Bytes32Hex }
-        | Array<{ contractAddress: ChecksummedAddress; handle: Bytes32Hex }>;
+        | { contractAddress: ChecksummedAddress; handle: FhevmHandleLike }
+        | Array<{
+            contractAddress: ChecksummedAddress;
+            handle: FhevmHandleLike;
+          }>;
     },
     options: {
       checkArguments?: boolean;
@@ -203,7 +224,7 @@ export class ACL {
     if (options.checkArguments === true) {
       assertIsChecksummedAddress(params.userAddress);
       for (const pair of pairsArray) {
-        FhevmHandle.assertIsHandleHex(pair.handle);
+        FhevmHandle.assertIsHandleLike(pair.handle);
         assertIsChecksummedAddress(pair.contractAddress);
       }
     }
@@ -229,13 +250,19 @@ export class ACL {
       const userKey = `${params.userAddress.toLowerCase()}:${pair.handle}`;
       if (!seenKeys.has(userKey)) {
         seenKeys.add(userKey);
-        allChecks.push({ address: params.userAddress, handle: pair.handle });
+        allChecks.push({
+          address: params.userAddress,
+          handle: toHandleBytes32Hex(pair.handle),
+        });
       }
       // Contract check
       const contractKey = `${pair.contractAddress.toLowerCase()}:${pair.handle}`;
       if (!seenKeys.has(contractKey)) {
         seenKeys.add(contractKey);
-        allChecks.push({ address: pair.contractAddress, handle: pair.handle });
+        allChecks.push({
+          address: pair.contractAddress,
+          handle: toHandleBytes32Hex(pair.handle),
+        });
       }
     }
 

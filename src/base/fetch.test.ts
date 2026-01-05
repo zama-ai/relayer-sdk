@@ -5,8 +5,8 @@ import { fetchBytes } from './fetch';
 // Jest Command line
 // =================
 //
-// npx jest --colors --passWithNoTests ./src/utils/fetch.test.ts
-// npx jest --colors --passWithNoTests --coverage ./src/utils/fetch.test.ts --collectCoverageFrom=./src/utils/fetch.ts
+// npx jest --colors --passWithNoTests ./src/base/fetch.test.ts
+// npx jest --colors --passWithNoTests --coverage ./src/base/fetch.test.ts --collectCoverageFrom=./src/base/fetch.ts
 //
 ////////////////////////////////////////////////////////////////////////////////
 

@@ -305,3 +305,39 @@ export function assertRecordUint256Property<K extends string>(
     });
   }
 }
+
+export function assertRecordUintNumberProperty<K extends string>(
+  o: unknown,
+  property: K,
+  objName: string,
+): asserts o is RecordWithPropertyType<K, number> {
+  if (
+    typeofProperty(o, property) !== 'number' ||
+    !isUintNumber((o as Record<string, unknown>)[property])
+  ) {
+    throw new InvalidPropertyError({
+      objName,
+      property,
+      type: typeofProperty(o, property),
+      expectedType: 'UintNumber',
+    });
+  }
+}
+
+export function assertRecordUintBigIntProperty<K extends string>(
+  o: unknown,
+  property: K,
+  objName: string,
+): asserts o is RecordWithPropertyType<K, number> {
+  if (
+    typeofProperty(o, property) !== 'bigint' ||
+    !isUintBigInt((o as Record<string, unknown>)[property])
+  ) {
+    throw new InvalidPropertyError({
+      objName,
+      property,
+      type: typeofProperty(o, property),
+      expectedType: 'UintBigInt',
+    });
+  }
+}

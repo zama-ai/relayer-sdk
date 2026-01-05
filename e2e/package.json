@@ -1,0 +1,18 @@
+{
+  "type": "module",
+  "scripts": {
+    "setup:cdn": "rm -rf ./servers/cdn/libs/relayer-sdk-js && mkdir -p ./servers/cdn/libs && cp -R ../bundle ./servers/cdn/libs/relayer-sdk-js",
+    "serve:cdn": "serve -l 5173 ./servers/cdn",
+    "serve:site": "serve  -l 5175 ./servers/site",
+    "docker:up": "docker compose down && npm run setup:cdn && docker compose up -d",
+    "docker:down": "docker compose down",
+    "test": "npm run test:playwright",
+    "test:playwright": "playwright test --config ./playwright.config.ts",
+    "test:playwright:docker": "playwright test --config ./playwright.config.docker.ts",
+    "test:playwright:no-webserver": "playwright test --config ./playwright.config.no-webserver.ts",
+    "curl:cdn": "curl http://localhost:5173/libs/relayer-sdk-js/relayer-sdk-js.umd.cjs",
+    "curl:site1": "curl http://localhost:5175/foo/use-localhost-5173.html",
+    "curl:site2": "curl http://localhost:5175/foo/use-test-cdn-zama-ai-5173.html",
+    "curl:site3": "curl http://localhost:5175/foo/browser.html"
+  }
+}

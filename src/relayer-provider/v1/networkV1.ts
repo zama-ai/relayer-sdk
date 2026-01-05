@@ -1,16 +1,39 @@
-import type { RelayerGetResponseKeyUrlSnakeCase } from '@relayer-provider/types/private';
+import type { RelayerGetResponseKeyUrlSnakeCase } from '../types/private';
+import type {
+  CompactPkeCrsWasmType,
+  TfheCompactPublicKeyWasmType,
+} from '@sdk/lowlevel/types';
+import type { PublicParams } from '../../types/relayer';
 import {
   SERIALIZED_SIZE_LIMIT_PK,
   SERIALIZED_SIZE_LIMIT_CRS,
 } from '@sdk/lowlevel/constants';
-import { fetchRelayerV1Get } from '@relayer-provider/v1/fetchRelayerV1';
+import { fetchRelayerV1Get } from './fetchRelayerV1';
+import { isNonEmptyString, removeSuffix } from '@base/string';
 
-const keyurlCache: { [key: string]: any } = {};
-export const getKeysFromRelayer = async (
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+type CachedKey = {
+  publicKey: TfheCompactPublicKeyWasmType;
+  publicKeyId: string;
+  publicParams: {
+    2048: {
+      publicParams: CompactPkeCrsWasmType;
+      publicParamsId: string;
+    };
+  };
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+const keyurlCache: Record<string, CachedKey> = {};
+
+////////////////////////////////////////////////////////////////////////////////
+
+export async function getKeysFromRelayer(
   versionUrl: string,
   publicKeyId?: string | null,
-) => {
-  if (keyurlCache[versionUrl]) {
+): Promise<CachedKey> {
+  if (versionUrl in keyurlCache) {
     return keyurlCache[versionUrl];
   }
 
@@ -25,7 +48,7 @@ export const getKeysFromRelayer = async (
     // If no publicKeyId is provided, use the first one
     // Warning: if there are multiple keys available, the first one will most likely never be the
     // same between several calls (fetching the infos is non-deterministic)
-    if (!publicKeyId) {
+    if (!isNonEmptyString(publicKeyId)) {
       pubKeyUrl = data.response.fhe_key_info[0].fhe_public_key.urls[0];
       publicKeyId = data.response.fhe_key_info[0].fhe_public_key.data_id;
     } else {
@@ -120,4 +143,76 @@ export const getKeysFromRelayer = async (
       cause: e,
     });
   }
-};
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+export async function getTfheCompactPublicKey(config: {
+  relayerVersionUrl?: string | undefined;
+  publicKey?:
+    | {
+        data: Uint8Array | null;
+        id: string | null;
+      }
+    | undefined;
+}): Promise<{
+  publicKey: TfheCompactPublicKeyWasmType;
+  publicKeyId: string;
+}> {
+  if (isNonEmptyString(config.relayerVersionUrl) && !config.publicKey) {
+    const inputs = await getKeysFromRelayer(
+      removeSuffix(config.relayerVersionUrl, '/'),
+    );
+    return { publicKey: inputs.publicKey, publicKeyId: inputs.publicKeyId };
+  } else if (config.publicKey?.data && isNonEmptyString(config.publicKey.id)) {
+    const buff = config.publicKey.data;
+    try {
+      return {
+        publicKey: TFHE.TfheCompactPublicKey.safe_deserialize(
+          buff,
+          SERIALIZED_SIZE_LIMIT_PK,
+        ),
+        publicKeyId: config.publicKey.id,
+      };
+    } catch (e) {
+      throw new Error('Invalid public key (deserialization failed)', {
+        cause: e,
+      });
+    }
+  } else {
+    throw new Error('You must provide a public key with its public key ID.');
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+export async function getPublicParams(config: {
+  relayerVersionUrl?: string | undefined;
+  publicParams?: PublicParams<Uint8Array> | null | undefined;
+}): Promise<PublicParams<CompactPkeCrsWasmType>> {
+  if (isNonEmptyString(config.relayerVersionUrl) && !config.publicParams) {
+    const inputs = await getKeysFromRelayer(
+      removeSuffix(config.relayerVersionUrl, '/'),
+    );
+    return inputs.publicParams;
+  } else if (config.publicParams?.['2048']) {
+    const buff = config.publicParams['2048'].publicParams;
+    try {
+      return {
+        2048: {
+          publicParams: TFHE.CompactPkeCrs.safe_deserialize(
+            buff,
+            SERIALIZED_SIZE_LIMIT_CRS,
+          ),
+          publicParamsId: config.publicParams['2048'].publicParamsId,
+        },
+      };
+    } catch (e) {
+      throw new Error('Invalid public key (deserialization failed)', {
+        cause: e,
+      });
+    }
+  } else {
+    throw new Error('You must provide a valid CRS with its CRS ID.');
+  }
+}

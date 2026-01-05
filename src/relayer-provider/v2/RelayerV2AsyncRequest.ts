@@ -2,8 +2,8 @@
 import type {
   RelayerPostOperation,
   RelayerApiErrorType,
+  Auth,
 } from '../types/public-api';
-import type { Auth } from '../../types/relayer';
 import {
   assertIsRelayerV2ResponseFailedWithError500,
   assertIsRelayerV2ResponseFailedWithError400,
@@ -39,7 +39,7 @@ import type {
   RelayerUserDecryptResult,
 } from '../types/public-api';
 import { isUint } from '@base/uint';
-import { setAuth } from '../../auth';
+import { setAuth } from '../auth/auth';
 import { RelayerV2ResponseInvalidBodyError } from './errors/RelayerV2ResponseInvalidBodyError';
 import { RelayerV2ResponseStatusError } from './errors/RelayerV2ResponseStatusError';
 import { assertIsRelayerV2GetResponseInputProofSucceeded } from './guards/RelayerV2GetResponseInputProofSucceeded';
@@ -131,6 +131,7 @@ export type RelayerV2TerminateReason =
   | 'abort';
 
 export class RelayerV2AsyncRequest {
+  private readonly _debug: boolean;
   private _fetchMethod: 'GET' | 'POST' | undefined;
   private _elapsed: number;
   private _jobId: string | undefined;
@@ -143,6 +144,8 @@ export class RelayerV2AsyncRequest {
   private _terminateReason: RelayerV2TerminateReason | undefined;
   private _terminateError: unknown;
   private _retryCount: number;
+  private _totalSteps: number;
+  private _step: number;
   private _retryAfterTimeoutID: ReturnType<typeof setTimeout> | undefined;
   private readonly _url: string;
   private readonly _payload: Record<string, unknown>;
@@ -184,6 +187,8 @@ export class RelayerV2AsyncRequest {
       });
     }
 
+    this._step = 0;
+    this._totalSteps = 1;
     this._elapsed = 0;
     this._relayerOperation = params.relayerOperation;
     this._internalAbortController = new AbortController();
@@ -201,6 +206,7 @@ export class RelayerV2AsyncRequest {
     }
     this._url = params.url;
     this._payload = params.payload;
+    this._debug = params.options?.debug === true;
     this._fhevmAuth = params.options?.auth;
     this._onProgress = params.options?.onProgress as typeof this._onProgress;
     this._state = {
@@ -416,7 +422,7 @@ export class RelayerV2AsyncRequest {
   // Post Loop
   //////////////////////////////////////////////////////////////////////////////
 
-  // POST : 202 | 400 | 429 | 500 | 503
+  // POST : 202 | 400 | 401 | 429 | 500 | 503
   private async _runPostLoop(): Promise<
     | RelayerPublicDecryptResult
     | RelayerUserDecryptResult
@@ -427,6 +433,10 @@ export class RelayerV2AsyncRequest {
       'this._fetchMethod === undefined',
     );
     this._fetchMethod = 'POST';
+
+    // Until it is implemented. Silence linter.
+    this._totalSteps = 1;
+    this._step = 0;
 
     // No infinite loop!
     let i = 0;
@@ -486,6 +496,8 @@ export class RelayerV2AsyncRequest {
             retryCount: this._retryCount,
             retryAfterMs,
             elapsed: this._elapsed,
+            step: this._step,
+            totalSteps: this._totalSteps,
           } satisfies RelayerProgressQueuedType<RelayerPostOperation>);
 
           await this._setRetryAfterTimeout(retryAfterMs);
@@ -513,6 +525,12 @@ export class RelayerV2AsyncRequest {
             status: responseStatus,
             relayerApiError: bodyJson.error,
           });
+        }
+        // RelayerV2ResponseFailed
+        // RelayerV2ApiError401
+        // falls through
+        case 401: {
+          this._throwUnauthorizedError(responseStatus);
         }
         // RelayerV2ResponseFailed
         // RelayerV2ApiError429
@@ -545,6 +563,8 @@ export class RelayerV2AsyncRequest {
             retryCount: this._retryCount,
             elapsed: this._elapsed,
             relayerApiError: bodyJson.error,
+            step: this._step,
+            totalSteps: this._totalSteps,
           } satisfies RelayerProgressRateLimitedType<RelayerPostOperation>);
 
           // Wait if needed (minimum 1s)
@@ -623,7 +643,7 @@ export class RelayerV2AsyncRequest {
   // Get Loop
   //////////////////////////////////////////////////////////////////////////////
 
-  // GET: 200 | 202 | 404 | 500 | 503
+  // GET: 200 | 202 | 401 | 404 | 500 | 503
   // GET is not rate-limited, therefore there is not 429 error
   private async _runGetLoop(): Promise<
     | RelayerInputProofResult
@@ -656,6 +676,9 @@ export class RelayerV2AsyncRequest {
         // RelayerV2GetResponseSucceeded
         case 200: {
           const bodyJson = await this._getResponseJson(response);
+
+          // Done
+          this._step = this._totalSteps;
 
           try {
             //
@@ -707,6 +730,8 @@ export class RelayerV2AsyncRequest {
                 retryCount: this._retryCount,
                 elapsed: this._elapsed,
                 result: inputProofResult,
+                step: this._step,
+                totalSteps: this._totalSteps,
               } satisfies RelayerProgressSucceededType<'INPUT_PROOF'>);
 
               return inputProofResult;
@@ -737,6 +762,8 @@ export class RelayerV2AsyncRequest {
                 retryCount: this._retryCount,
                 elapsed: this._elapsed,
                 result: publicDecryptResult,
+                step: this._step,
+                totalSteps: this._totalSteps,
               } satisfies RelayerProgressSucceededType<'PUBLIC_DECRYPT'>);
 
               return publicDecryptResult;
@@ -768,6 +795,8 @@ export class RelayerV2AsyncRequest {
                 retryCount: this._retryCount,
                 elapsed: this._elapsed,
                 result: userDecryptResult,
+                step: this._step,
+                totalSteps: this._totalSteps,
               } satisfies RelayerProgressSucceededType<'USER_DECRYPT'>);
 
               return userDecryptResult;
@@ -827,6 +856,8 @@ export class RelayerV2AsyncRequest {
             retryAfterMs,
             retryCount: this._retryCount,
             elapsed: this._elapsed,
+            step: this._step,
+            totalSteps: this._totalSteps,
           } satisfies RelayerProgressQueuedType<RelayerPostOperation>);
 
           // Wait if needed (minimum 1s)
@@ -853,6 +884,10 @@ export class RelayerV2AsyncRequest {
             status: responseStatus,
             relayerApiError: bodyJson.error,
           });
+        }
+        // falls through
+        case 401: {
+          this._throwUnauthorizedError(responseStatus);
         }
         // falls through
         case 404: {
@@ -1226,6 +1261,8 @@ export class RelayerV2AsyncRequest {
     this._postAsyncOnProgressCallback({
       type: 'abort',
       url: this._url,
+      step: this._step,
+      totalSteps: this._totalSteps,
       ...(this._fetchMethod !== undefined ? { method: this._fetchMethod } : {}),
       ...(this._jobId !== undefined ? { jobId: this._jobId } : {}),
       operation: this._relayerOperation,
@@ -1422,6 +1459,8 @@ export class RelayerV2AsyncRequest {
       ...(this._jobId !== undefined ? { jobId: this._jobId } : {}),
       operation: this._relayerOperation,
       retryCount: this._retryCount,
+      step: this._step,
+      totalSteps: this._totalSteps,
     } satisfies RelayerProgressTimeoutType<RelayerPostOperation>);
 
     this._terminate(
@@ -1478,6 +1517,16 @@ export class RelayerV2AsyncRequest {
   // Errors
   //////////////////////////////////////////////////////////////////////////////
 
+  private _throwUnauthorizedError(status: 401): never {
+    this._throwRelayerV2ResponseApiError({
+      status,
+      relayerApiError: {
+        label: 'unauthorized',
+        message: 'Unauthorized, missing or invalid Zama Fhevm API Key.',
+      },
+    });
+  }
+
   private _throwRelayerV2ResponseApiError(params: {
     status: RelayerFailureStatus;
     relayerApiError: RelayerApiErrorType;
@@ -1497,6 +1546,8 @@ export class RelayerV2AsyncRequest {
       retryCount: this._retryCount,
       elapsed: this._elapsed,
       relayerApiError: clonedRelayerApiError,
+      step: this._step,
+      totalSteps: this._totalSteps,
     } satisfies RelayerProgressFailedType<RelayerPostOperation>;
 
     // Async onProgress callback
@@ -1612,6 +1663,8 @@ export class RelayerV2AsyncRequest {
   //////////////////////////////////////////////////////////////////////////////
 
   private _trace(functionName: string, message: string): void {
-    console.log(`[RelayerV2AsyncRequest]:${functionName}: ${message}`);
+    if (this._debug) {
+      console.log(`[RelayerV2AsyncRequest]:${functionName}: ${message}`);
+    }
   }
 }

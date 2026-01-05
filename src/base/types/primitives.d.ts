@@ -221,7 +221,7 @@ export interface ZKProofLike {
   readonly contractAddress: string;
   readonly userAddress: string;
   readonly ciphertextWithZKProof: Uint8Array | string;
-  readonly encryptionBits: readonly number[];
+  readonly encryptionBits?: readonly number[];
 }
 
 export interface ZKProofType extends ZKProofLike {

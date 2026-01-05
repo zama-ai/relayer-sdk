@@ -28,7 +28,7 @@ export class RelayerV2Provider extends AbstractRelayerProvider {
   ): Promise<RelayerInputProofResult> {
     const request = new RelayerV2AsyncRequest({
       relayerOperation: 'INPUT_PROOF',
-      url: this.inputProof,
+      url: this.inputProofUrl,
       payload,
       options,
     });
@@ -43,7 +43,7 @@ export class RelayerV2Provider extends AbstractRelayerProvider {
   ): Promise<RelayerPublicDecryptResult> {
     const request = new RelayerV2AsyncRequest({
       relayerOperation: 'PUBLIC_DECRYPT',
-      url: this.publicDecrypt,
+      url: this.publicDecryptUrl,
       payload,
       options,
     });
@@ -58,7 +58,7 @@ export class RelayerV2Provider extends AbstractRelayerProvider {
   ): Promise<RelayerUserDecryptResult> {
     const request = new RelayerV2AsyncRequest({
       relayerOperation: 'USER_DECRYPT',
-      url: this.userDecrypt,
+      url: this.userDecryptUrl,
       payload,
       options,
     });

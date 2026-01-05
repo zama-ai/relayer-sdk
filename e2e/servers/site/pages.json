@@ -1,0 +1,4 @@
+{
+  "localhost": "./foo/use-localhost-5173.html",
+  "test.cdn.zama.ai": "./foo/use-test-cdn-zama-ai-5173.html"
+}

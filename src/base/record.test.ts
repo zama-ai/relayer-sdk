@@ -14,9 +14,9 @@ import {
 // Jest Command line
 // =================
 //
-// npx jest --colors --passWithNoTests ./src/utils/record.test.ts
-// npx jest --colors --passWithNoTests --coverage ./src/utils/record.test.ts --collectCoverageFrom=./src/utils/record.ts --testNamePattern=xxx
-// npx jest --colors --passWithNoTests --coverage ./src/utils/record.test.ts --collectCoverageFrom=./src/utils/record.ts
+// npx jest --colors --passWithNoTests ./src/base/record.test.ts
+// npx jest --colors --passWithNoTests --coverage ./src/base/record.test.ts --collectCoverageFrom=./src/base/record.ts --testNamePattern=xxx
+// npx jest --colors --passWithNoTests --coverage ./src/base/record.test.ts --collectCoverageFrom=./src/base/record.ts
 //
 ////////////////////////////////////////////////////////////////////////////////
 

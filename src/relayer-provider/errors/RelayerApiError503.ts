@@ -5,7 +5,7 @@ import { assertRecordStringProperty } from '@base/string';
 
 /*
     export type RelayerApiError503Type = {
-      label: "protocol_paused" | "gateway_not_reachable" | "readiness_check_timedout" | "response_timedout";
+      label: "protocol_paused" | "gateway_not_reachable" | "readiness_check_timedout" | "response_timedout" | "protocol_overwhelmed";
       message: string;
     };
 */
@@ -15,6 +15,7 @@ export function assertIsRelayerApiError503Type(
 ): asserts value is RelayerApiError503Type {
   type T = RelayerApiError503Type;
   assertRecordStringProperty(value, 'label' satisfies keyof T, name, [
+    'protocol_overwhelmed' satisfies T['label'],
     'protocol_paused' satisfies T['label'],
     'gateway_not_reachable' satisfies T['label'],
     'readiness_check_timedout' satisfies T['label'],

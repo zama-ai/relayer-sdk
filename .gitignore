@@ -1,5 +1,7 @@
 dist.tmp
 .env.devnet*
+e2e/_test*
+e2e/servers/cdn/libs/relayer-sdk-js
 
 # Logs
 logs

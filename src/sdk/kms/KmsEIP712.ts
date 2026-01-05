@@ -76,7 +76,7 @@ export class KmsEIP712 {
   // - The Kms Nodes are using chainId = gatewayChainId (10900)
   // - The FhevmInstance is using chainId = host chainId (11155111)
   constructor(params: {
-    chainId: number; // It's a general chainId! can be gateway or host.
+    chainId: bigint; // It's a general chainId! can be gateway or host.
     verifyingContractAddressDecryption: string;
   }) {
     // the kms WASM package is expecting an uint32
@@ -91,7 +91,7 @@ export class KmsEIP712 {
     Object.freeze(this.domain);
   }
 
-  public get chainId(): number {
+  public get chainId(): bigint {
     return this.domain.chainId;
   }
 

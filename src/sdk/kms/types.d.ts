@@ -6,14 +6,14 @@ import type { Prettify } from '@base/types/utils';
 ////////////////////////////////////////////////////////////////////////////////
 
 export type KmsEIP712Params = Readonly<{
-  chainId: number;
+  chainId: bigint;
   verifyingContractAddressDecryption: ChecksummedAddress;
 }>;
 
 export type KmsEIP712DomainType = Readonly<{
   name: 'Decryption';
   version: '1';
-  chainId: number;
+  chainId: bigint;
   verifyingContract: ChecksummedAddress;
 }>;
 
@@ -85,9 +85,11 @@ export type KmsDelegateEIP712Type = Readonly<{
   message: KmsDelegateEIP712MessageType;
 }>;
 
-export type KmsEIP712Type = Readonly<{
-  types: KmsEIP712TypesType;
-  primaryType: 'UserDecryptRequestVerification';
-  domain: KmsEIP712DomainType;
-  message: KmsEIP712MessageType;
-}>;
+export type KmsEIP712Type = Readonly<
+  Prettify<{
+    types: KmsEIP712TypesType;
+    primaryType: 'UserDecryptRequestVerification';
+    domain: KmsEIP712DomainType;
+    message: KmsEIP712MessageType;
+  }>
+>;

@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import type {
   ChecksummedAddress,
   EncryptionBits,
@@ -13,6 +15,7 @@ import { hexToBytes } from '../base/bytes';
 // Jest Command line
 // =================
 // npx jest --colors --passWithNoTests ./src/sdk/ZKProof.test.ts
+// npx jest --colors --passWithNoTests ./src/sdk/ZKProof.test.ts --testNamePattern=xxx
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -20,16 +23,24 @@ import { hexToBytes } from '../base/bytes';
 // Test Constants
 ////////////////////////////////////////////////////////////////////////////////
 
-const VALID_ACL_ADDRESS =
-  '0xf0Ffdc93b7E186bC2f8CB3dAA75D86d1930A433D' as ChecksummedAddress;
+const INPUT_PROOF_ASSET_1 = JSON.parse(
+  fs.readFileSync(
+    path.join(__dirname, '../test/assets/input-proof-payload-1.json'),
+    'utf-8',
+  ),
+);
+
+const VALID_ACL_ADDRESS = INPUT_PROOF_ASSET_1.aclAddress as ChecksummedAddress;
 const VALID_CONTRACT_ADDRESS =
-  '0x9aF5773d8dC3d9A57c92e08EF024804eC39FD3b3' as ChecksummedAddress;
+  INPUT_PROOF_ASSET_1.contractAddress as ChecksummedAddress;
 const VALID_USER_ADDRESS =
-  '0x37AC010c1c566696326813b840319B58Bb5840E4' as ChecksummedAddress;
-const VALID_CHAIN_ID = 11155111n;
-const VALID_CIPHERTEXT_HEX = '0xdeadbeef01020304';
+  INPUT_PROOF_ASSET_1.userAddress as ChecksummedAddress;
+const VALID_CHAIN_ID = BigInt(INPUT_PROOF_ASSET_1.chainId);
+const VALID_CIPHERTEXT_HEX =
+  INPUT_PROOF_ASSET_1.ciphertextWithInputVerification;
 const VALID_CIPHERTEXT_BYTES = hexToBytes(VALID_CIPHERTEXT_HEX);
-const VALID_ENCRYPTION_BITS: EncryptionBits[] = [8, 16, 32];
+const VALID_ENCRYPTION_BITS: EncryptionBits[] =
+  INPUT_PROOF_ASSET_1.fheTypeEncryptionBitwidths;
 
 function createValidZKProofLike() {
   return {
@@ -38,6 +49,17 @@ function createValidZKProofLike() {
     contractAddress: VALID_CONTRACT_ADDRESS,
     userAddress: VALID_USER_ADDRESS,
     ciphertextWithZKProof: VALID_CIPHERTEXT_HEX,
+    encryptionBits: VALID_ENCRYPTION_BITS,
+  };
+}
+
+function createValidZKProofLikeBytes() {
+  return {
+    chainId: VALID_CHAIN_ID,
+    aclContractAddress: VALID_ACL_ADDRESS,
+    contractAddress: VALID_CONTRACT_ADDRESS,
+    userAddress: VALID_USER_ADDRESS,
+    ciphertextWithZKProof: VALID_CIPHERTEXT_BYTES,
     encryptionBits: VALID_ENCRYPTION_BITS,
   };
 }
@@ -83,17 +105,6 @@ describe('ZKProof', () => {
 
       expect(zkProof.chainId).toBe(BigInt(11155111));
     });
-
-    it('accepts empty encryptionBits array', () => {
-      const input = {
-        ...createValidZKProofLike(),
-        encryptionBits: [],
-      };
-
-      const zkProof = ZKProof.fromComponents(input);
-
-      expect(zkProof.encryptionBits).toEqual([]);
-    });
   });
 
   //////////////////////////////////////////////////////////////////////////////
@@ -102,30 +113,28 @@ describe('ZKProof', () => {
 
   describe('fromComponents copy option', () => {
     it('takes ownership of Uint8Array by default (no copy)', () => {
-      const originalBytes = new Uint8Array([0xde, 0xad, 0xbe, 0xef]);
       const input = {
-        ...createValidZKProofLike(),
-        ciphertextWithZKProof: originalBytes,
+        ...createValidZKProofLikeBytes(),
       };
 
       const zkProof = ZKProof.fromComponents(input);
 
-      // Should be the same reference
-      expect(zkProof.ciphertextWithZKProof).toBe(originalBytes);
+      // Should be the same reference (Uint8Array input)
+      expect(zkProof.ciphertextWithZKProof).toBe(input.ciphertextWithZKProof);
     });
 
     it('makes defensive copy when copy: true', () => {
-      const originalBytes = new Uint8Array([0xde, 0xad, 0xbe, 0xef]);
       const input = {
-        ...createValidZKProofLike(),
-        ciphertextWithZKProof: originalBytes,
+        ...createValidZKProofLikeBytes(),
       };
 
       const zkProof = ZKProof.fromComponents(input, { copy: true });
 
       // Should be a different reference but same content
-      expect(zkProof.ciphertextWithZKProof).not.toBe(originalBytes);
-      expect(zkProof.ciphertextWithZKProof).toEqual(originalBytes);
+      expect(zkProof.ciphertextWithZKProof).not.toBe(
+        input.ciphertextWithZKProof,
+      );
+      expect(zkProof.ciphertextWithZKProof).toEqual(VALID_CIPHERTEXT_BYTES);
     });
 
     it('copy option has no effect on hex string input', () => {
@@ -231,6 +240,40 @@ describe('ZKProof', () => {
 
       expect(() => ZKProof.fromComponents(input)).toThrow(InvalidTypeError);
     });
+
+    it('throws on encryption count mismatch', () => {
+      const input = {
+        ...createValidZKProofLike(),
+        encryptionBits: [32, 64], // Ciphertext only contains 1 value
+      };
+
+      expect(() => ZKProof.fromComponents(input)).toThrow(ZKProofError);
+      expect(() => ZKProof.fromComponents(input)).toThrow(
+        /Encryption count mismatch/,
+      );
+    });
+
+    it('throws on encryption type mismatch', () => {
+      const input = {
+        ...createValidZKProofLike(),
+        encryptionBits: [64], // Ciphertext contains 32-bit value, not 64-bit
+      };
+
+      expect(() => ZKProof.fromComponents(input)).toThrow(ZKProofError);
+      expect(() => ZKProof.fromComponents(input)).toThrow(
+        /Encryption type mismatch at index 0/,
+      );
+    });
+
+    it('accepts input without encryptionBits (derived from ciphertext)', () => {
+      const { encryptionBits: _, ...inputWithoutBits } =
+        createValidZKProofLike();
+
+      const zkProof = ZKProof.fromComponents(inputWithoutBits);
+
+      // encryptionBits should be derived from the ciphertext
+      expect(zkProof.encryptionBits).toEqual([32]);
+    });
   });
 
   //////////////////////////////////////////////////////////////////////////////
@@ -265,6 +308,23 @@ describe('ZKProof', () => {
       expect(zkProof.ciphertextWithZKProof).toBeInstanceOf(Uint8Array);
     });
 
+    it('ciphertextWithZKProof getter throws if internally empty (defensive check)', () => {
+      // Bypass TypeScript private constructor to test the getter's defensive check
+      // This simulates a scenario where the internal state is corrupted
+      const malformedZKProof = new (ZKProof as any)({
+        chainId: VALID_CHAIN_ID,
+        aclContractAddress: VALID_ACL_ADDRESS,
+        contractAddress: VALID_CONTRACT_ADDRESS,
+        userAddress: VALID_USER_ADDRESS,
+        ciphertextWithZKProof: new Uint8Array(0), // Empty!
+        encryptionBits: VALID_ENCRYPTION_BITS,
+      });
+
+      expect(() => malformedZKProof.ciphertextWithZKProof).toThrow(
+        ZKProofError,
+      );
+    });
+
     it('encryptionBits returns readonly array', () => {
       expect(zkProof.encryptionBits).toEqual(VALID_ENCRYPTION_BITS);
       expect(Object.isFrozen(zkProof.encryptionBits)).toBe(true);
@@ -283,7 +343,7 @@ describe('ZKProof', () => {
     });
 
     it('modifying original encryptionBits array does not affect ZKProof', () => {
-      const encryptionBits: EncryptionBits[] = [8, 16, 32];
+      const encryptionBits: EncryptionBits[] = [32];
       const input = {
         ...createValidZKProofLike(),
         encryptionBits,
@@ -295,7 +355,7 @@ describe('ZKProof', () => {
       encryptionBits.push(64);
 
       // ZKProof should not be affected
-      expect(zkProof.encryptionBits).toEqual([8, 16, 32]);
+      expect(zkProof.encryptionBits).toEqual([32]);
     });
   });
 

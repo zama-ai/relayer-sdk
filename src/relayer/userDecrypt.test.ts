@@ -23,7 +23,7 @@ const relayerProvider = createRelayerProvider(
   'https://test-fhevm-relayer',
   defaultRelayerVersion,
 );
-const RELAYER_USER_DECRYPT_URL = relayerProvider.userDecrypt;
+const RELAYER_USER_DECRYPT_URL = relayerProvider.userDecryptUrl;
 
 const dummyRelayerUserDecryptPayload: RelayerUserDecryptPayload = {
   handleContractPairs: [

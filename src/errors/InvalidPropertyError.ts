@@ -20,6 +20,8 @@ type ExpectedPropertyType =
   | 'Timestamp'
   | 'unknown'
   | 'ChecksummedAddress'
+  | 'UintNumber'
+  | 'UintBigInt'
   | BytesHexNo0xTypeName
   | BytesHexTypeName
   | BytesTypeName

@@ -4,9 +4,20 @@ import type { BytesHex } from '@base/types/primitives';
 
 export type WasmObject = object;
 
+export interface ProvenCompactCiphertextListStaticWasmType {
+  constructor: { name: string };
+  safe_deserialize(
+    buffer: Uint8Array,
+    serialized_size_limit: bigint,
+  ): ProvenCompactCiphertextListWasmType;
+}
+
 export interface ProvenCompactCiphertextListWasmType {
   constructor: { name: string };
   safe_serialize(serialized_size_limit: bigint): Uint8Array;
+  get_kind_of(index: number): unknown;
+  is_empty(): boolean;
+  len(): number;
 }
 
 export interface CompactCiphertextListBuilderWasmType {
@@ -62,6 +73,7 @@ export interface TFHEType {
       publicKey: TfheCompactPublicKeyWasmType,
     ): CompactCiphertextListBuilderWasmType;
   };
+  ProvenCompactCiphertextList: ProvenCompactCiphertextListStaticWasmType;
   ZkComputeLoad: {
     Verify: unknown;
     Proof: unknown;
@@ -86,11 +98,16 @@ export interface TKMSType {
     enc_pk: WasmObject,
     enc_sk: WasmObject,
     verify: boolean,
-  ): WasmObject[];
+  ): TypedPlaintextWasmType[];
   ml_kem_pke_keygen(): WasmObject;
   ml_kem_pke_pk_to_u8vec(pk: WasmObject): Uint8Array;
   ml_kem_pke_sk_to_u8vec(sk: WasmObject): Uint8Array;
   ml_kem_pke_get_pk(sk: WasmObject): WasmObject;
+}
+
+export interface TypedPlaintextWasmType {
+  bytes: Uint8Array;
+  fhe_type: number;
 }
 
 /**

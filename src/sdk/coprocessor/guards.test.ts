@@ -6,7 +6,14 @@ import { InvalidPropertyError } from '../../errors/InvalidPropertyError';
 //
 // Jest Command line
 // =================
+//
 // npx jest --colors --passWithNoTests ./src/sdk/coprocessor/guards.test.ts
+//
+// Testnet:
+// ========
+//
+// npx jest --config jest.testnet.config.cjs --colors --passWithNoTests ./src/sdk/coprocessor/guards.test.ts
+// npx jest --config jest.testnet.config.cjs --colors --passWithNoTests ./src/sdk/coprocessor/guards.test.ts --testNamePattern=xxx
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -21,7 +28,7 @@ function createValidDomain() {
   return {
     name: 'InputVerification' as const,
     version: '1' as const,
-    chainId: 11155111,
+    chainId: 11155111n,
     verifyingContract: VALID_CHECKSUMMED_ADDRESS,
   };
 }
@@ -42,21 +49,21 @@ describe('assertCoprocessorEIP712DomainType', () => {
       ).not.toThrow();
     });
 
-    it('accepts chainId as bigint', () => {
+    it('does not accept chainId as number', () => {
       const domain = {
         ...createValidDomain(),
-        chainId: 11155111n,
+        chainId: 11155111,
       };
 
       expect(() =>
         assertCoprocessorEIP712DomainType(domain, 'domain'),
-      ).not.toThrow();
+      ).toThrow();
     });
 
     it('accepts chainId as 0', () => {
       const domain = {
         ...createValidDomain(),
-        chainId: 0,
+        chainId: 0n,
       };
 
       expect(() =>
@@ -73,7 +80,7 @@ describe('assertCoprocessorEIP712DomainType', () => {
     it('throws for missing name property', () => {
       const domain = {
         version: '1' as const,
-        chainId: 11155111,
+        chainId: 11155111n,
         verifyingContract: VALID_CHECKSUMMED_ADDRESS,
       };
 
@@ -124,7 +131,7 @@ describe('assertCoprocessorEIP712DomainType', () => {
     it('throws for missing version property', () => {
       const domain = {
         name: 'InputVerification' as const,
-        chainId: 11155111,
+        chainId: 11155111n,
         verifyingContract: VALID_CHECKSUMMED_ADDRESS,
       };
 
@@ -176,7 +183,7 @@ describe('assertCoprocessorEIP712DomainType', () => {
     it('throws for negative chainId', () => {
       const domain = {
         ...createValidDomain(),
-        chainId: -1,
+        chainId: -1n,
       };
 
       expect(() => assertCoprocessorEIP712DomainType(domain, 'domain')).toThrow(

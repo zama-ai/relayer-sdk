@@ -33,6 +33,7 @@ module.exports = {
   ],
   coverageReporters: ['lcov', 'text-summary', 'json'],
   transformIgnorePatterns: ['/node_modules/'],
+  testPathIgnorePatterns: ['/node_modules/', '/e2e/'],
   coverageThreshold: {
     global: {
       branches: 45,

@@ -1,6 +1,7 @@
 import type { ChecksummedAddress } from '@base/types/primitives';
 import type { Provider as EthersProviderType } from 'ethers';
 import type { KmsEIP712DomainType } from './kms/types';
+import type { IKMSVerifier } from './types';
 import { Contract } from 'ethers';
 import { isUint8 } from '@base/uint';
 import { assertIsChecksummedAddressArray } from '@base/address';
@@ -45,7 +46,7 @@ export class KMSVerifier {
     return this.#eip712Domain;
   }
 
-  public get gatewayChainId(): number {
+  public get gatewayChainId(): bigint {
     return this.#eip712Domain.chainId;
   }
 
@@ -65,20 +66,17 @@ export class KMSVerifier {
       params.kmsContractAddress,
       KMSVerifier.#abi,
       params.provider,
-    );
+    ) as unknown as IKMSVerifier;
 
     const res = await Promise.all([
-      // eslint-disable-next-line @typescript-eslint/dot-notation
-      contract['eip712Domain'](),
-      // eslint-disable-next-line @typescript-eslint/dot-notation
-      contract['getThreshold'](),
-      // eslint-disable-next-line @typescript-eslint/dot-notation
-      contract['getKmsSigners'](),
+      contract.eip712Domain(),
+      contract.getThreshold(),
+      contract.getKmsSigners(),
     ]);
 
-    const eip712DomainArray = res[0] as unknown[];
-    const threshold = res[1] as unknown;
-    const kmsSigners = res[2] as unknown;
+    const eip712DomainArray = res[0];
+    const threshold = res[1];
+    const kmsSigners = res[2];
 
     if (!isUint8(threshold)) {
       throw new Error(`Invalid KMSVerifier kms signers threshold.`);
