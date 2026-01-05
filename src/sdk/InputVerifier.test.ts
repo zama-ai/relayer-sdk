@@ -173,7 +173,7 @@ describeIfFetchMock('InputVerifier mock', () => {
       ).rejects.toThrow('Invalid InputVerifier EIP-712 domain.');
     });
 
-    it('xxx throws on invalid eip712Domain chainId (not uint256)', async () => {
+    it('throws on invalid eip712Domain chainId (not uint256)', async () => {
       const { Contract } = jest.requireMock('ethers');
       const invalidDomain = [...validEip712Domain];
       invalidDomain[3] = 'not-a-number';
