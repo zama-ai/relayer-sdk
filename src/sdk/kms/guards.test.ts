@@ -118,7 +118,7 @@ describe('assertKmsEIP712DomainType', () => {
     it('throws for missing version property', () => {
       const domain = {
         name: 'Decryption' as const,
-        chainId: 11155111,
+        chainId: 11155111n,
         verifyingContract: VALID_CHECKSUMMED_ADDRESS,
       };
 

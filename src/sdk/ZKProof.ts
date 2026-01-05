@@ -5,12 +5,17 @@ import type {
   ZKProofType,
   Uint64BigInt,
   Bytes,
+  FheTypeId,
 } from '@base/types/primitives';
 import { assertIsChecksummedAddress } from '@base/address';
 import { bytesToHexLarge, hexToBytesFaster, isBytes } from '@base/bytes';
 import { assertIsUint64 } from '@base/uint';
 import { ZKProofError } from '../errors/ZKProofError';
-import { assertIsEncryptionBitsArray } from './FheType';
+import {
+  assertIsEncryptionBitsArray,
+  fheTypeIdFromEncryptionBits,
+} from './FheType';
+import { TFHEProvenCompactCiphertextList } from './lowlevel/TFHEProvenCompactCiphertextList';
 
 ////////////////////////////////////////////////////////////////////////////////
 // ZKProof
@@ -23,6 +28,7 @@ export class ZKProof implements ZKProofType, ZKProofLike {
   readonly #userAddress: ChecksummedAddress;
   readonly #ciphertextWithZKProof: Bytes; // Never empty
   readonly #encryptionBits: readonly EncryptionBits[]; // Can be empty
+  readonly #fheTypeIds: readonly FheTypeId[]; // Can be empty
 
   private constructor(params: ZKProofType) {
     this.#chainId = params.chainId;
@@ -31,6 +37,7 @@ export class ZKProof implements ZKProofType, ZKProofLike {
     this.#userAddress = params.userAddress;
     this.#ciphertextWithZKProof = params.ciphertextWithZKProof;
     this.#encryptionBits = Object.freeze([...params.encryptionBits]);
+    this.#fheTypeIds = this.#encryptionBits.map(fheTypeIdFromEncryptionBits);
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -69,6 +76,10 @@ export class ZKProof implements ZKProofType, ZKProofLike {
     return this.#encryptionBits;
   }
 
+  public get fheTypeIds(): readonly FheTypeId[] {
+    return this.#fheTypeIds;
+  }
+
   //////////////////////////////////////////////////////////////////////////////
   // Static Factory Methods
   //////////////////////////////////////////////////////////////////////////////
@@ -100,10 +111,12 @@ export class ZKProof implements ZKProofType, ZKProofLike {
     assertIsChecksummedAddress(zkProofLike.aclContractAddress);
     assertIsChecksummedAddress(zkProofLike.contractAddress);
     assertIsChecksummedAddress(zkProofLike.userAddress);
-    assertIsEncryptionBitsArray(
-      zkProofLike.encryptionBits,
-      'zkProofLike.encryptionBits',
-    );
+    if ('encryptionBits' in zkProofLike) {
+      assertIsEncryptionBitsArray(
+        zkProofLike.encryptionBits,
+        'zkProofLike.encryptionBits',
+      );
+    }
 
     // Validate and normalize ciphertextWithZKProof
     let ciphertextWithZKProof: Uint8Array;
@@ -132,13 +145,36 @@ export class ZKProof implements ZKProofType, ZKProofLike {
       });
     }
 
+    const list = TFHEProvenCompactCiphertextList.fromCiphertextWithZKProof(
+      ciphertextWithZKProof,
+    );
+
+    if (zkProofLike.encryptionBits != null) {
+      const provenBits = list.encryptionBits;
+      const expectedBits = zkProofLike.encryptionBits;
+
+      if (provenBits.length !== expectedBits.length) {
+        throw new ZKProofError({
+          message: `Encryption count mismatch: ciphertextWithZKProof contains ${provenBits.length} encrypted value(s), but encryptionBits specifies ${expectedBits.length}.`,
+        });
+      }
+
+      for (let i = 0; i < provenBits.length; ++i) {
+        if (provenBits[i] !== expectedBits[i]) {
+          throw new ZKProofError({
+            message: `Encryption type mismatch at index ${i}.`,
+          });
+        }
+      }
+    }
+
     return new ZKProof({
       chainId,
       aclContractAddress: zkProofLike.aclContractAddress,
       contractAddress: zkProofLike.contractAddress,
       userAddress: zkProofLike.userAddress,
       ciphertextWithZKProof,
-      encryptionBits: zkProofLike.encryptionBits,
+      encryptionBits: list.encryptionBits,
     });
   }
 
@@ -146,7 +182,10 @@ export class ZKProof implements ZKProofType, ZKProofLike {
   // JSON
   //////////////////////////////////////////////////////////////////////////////
 
-  public toJSON(): ZKProofLike {
+  public toJSON(): Omit<ZKProofLike, 'encryptionBits'> & {
+    fheTypeIds: readonly FheTypeId[];
+    encryptionBits: readonly EncryptionBits[];
+  } {
     return {
       chainId:
         this.#chainId <= Number.MAX_SAFE_INTEGER
@@ -157,6 +196,7 @@ export class ZKProof implements ZKProofType, ZKProofLike {
       userAddress: this.#userAddress,
       ciphertextWithZKProof: bytesToHexLarge(this.#ciphertextWithZKProof),
       encryptionBits: this.#encryptionBits,
+      fheTypeIds: this.#fheTypeIds,
     };
   }
 }

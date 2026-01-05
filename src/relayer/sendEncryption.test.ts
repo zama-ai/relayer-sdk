@@ -192,6 +192,50 @@ describeIfFetchMock('sendEncryption', () => {
   });
 
   //////////////////////////////////////////////////////////////////////////////
+
+  it('v1: encrypt zero handles', async () => {
+    const version = 1;
+    setupAllFetchMockRoutes({
+      enableInputProofRoutes: true,
+    });
+    const fhevm = await createFhevm(version);
+
+    const input = createRelayerEncryptedInput({
+      fhevm,
+      capacity: 2048,
+    })(
+      '0x8ba1f109551bD432803012645Ac136ddd64DBA72',
+      '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
+    );
+
+    await expect(input.encrypt()).rejects.toThrow(
+      `Encrypted input must contain at least one value`,
+    );
+  });
+
+  //////////////////////////////////////////////////////////////////////////////
+
+  it('v2: encrypt zero handles', async () => {
+    const version = 2;
+    setupAllFetchMockRoutes({
+      enableInputProofRoutes: true,
+    });
+    const fhevm = await createFhevm(version);
+
+    const input = createRelayerEncryptedInput({
+      fhevm,
+      capacity: 2048,
+    })(
+      '0x8ba1f109551bD432803012645Ac136ddd64DBA72',
+      '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
+    );
+
+    await expect(input.encrypt()).rejects.toThrow(
+      `Encrypted input must contain at least one value`,
+    );
+  });
+
+  //////////////////////////////////////////////////////////////////////////////
   // Throws errors
   //////////////////////////////////////////////////////////////////////////////
 
@@ -303,14 +347,10 @@ describeIfFetchMock('sendEncryption', () => {
       '0x8ba1f109551bD432803012645Ac136ddd64DBA72',
       '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
     );
-    input.add256(242);
-    input.add256(242);
-    input.add256(242);
-    input.add256(242);
-    input.add256(242);
-    input.add256(242);
-    input.add256(242);
-    input.add256(242);
+
+    for (let i = 0; i < 8; ++i) {
+      input.add256(242);
+    }
     expect(() => input.addBool(false)).toThrow(
       'Packing more than 2048 bits in a single input ciphertext is unsupported',
     );
@@ -330,14 +370,9 @@ describeIfFetchMock('sendEncryption', () => {
       '0x8ba1f109551bD432803012645Ac136ddd64DBA72',
       '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
     );
-    input.add256(242);
-    input.add256(242);
-    input.add256(242);
-    input.add256(242);
-    input.add256(242);
-    input.add256(242);
-    input.add256(242);
-    input.add256(242);
+    for (let i = 0; i < 8; ++i) {
+      input.add256(242);
+    }
     expect(() => input.addBool(false)).toThrow(
       'Packing more than 2048 bits in a single input ciphertext is unsupported',
     );

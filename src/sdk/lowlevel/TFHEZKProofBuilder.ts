@@ -1,15 +1,11 @@
 import type {
   ChecksummedAddress,
   EncryptionBits,
-  FheTypeId,
   FheTypeName,
   Uint64,
 } from '@base/types/primitives';
 import type { TFHEPkeParams } from './TFHEPkeParams';
-import type {
-  CompactCiphertextListBuilderWasmType,
-  ProvenCompactCiphertextListWasmType,
-} from './types';
+import type { CompactCiphertextListBuilderWasmType } from './types';
 import { EncryptionError } from '../../errors/EncryptionError';
 import { assertRelayer } from '../../errors/InternalError';
 import {
@@ -24,13 +20,9 @@ import {
   MAX_UINT8,
   uint256ToBytes32,
 } from '@base/uint';
-import {
-  encryptionBitsFromFheTypeId,
-  encryptionBitsFromFheTypeName,
-  isFheTypeId,
-} from '../FheType';
+import { encryptionBitsFromFheTypeName } from '../FheType';
 import { isChecksummedAddress } from '@base/address';
-import { hexToBytes, hexToBytesFaster } from '@base/bytes';
+import { hexToBytes } from '@base/bytes';
 import {
   SERIALIZED_SIZE_LIMIT_CIPHERTEXT,
   TFHE_CRS_BITS_CAPACITY,
@@ -293,38 +285,5 @@ export class TFHEZKProofBuilder {
     this.#checkLimit(encryptionBits);
     this.#totalBits += encryptionBits;
     this.#bits.push(encryptionBits);
-  }
-
-  public static parseProvenCompactCiphertextList(
-    ciphertextWithZKProof: Uint8Array | string,
-  ): { fheTypeIds: FheTypeId[]; encryptionBits: EncryptionBits[] } {
-    const ciphertext: Uint8Array =
-      typeof ciphertextWithZKProof === 'string'
-        ? hexToBytesFaster(ciphertextWithZKProof, { strict: true })
-        : ciphertextWithZKProof;
-
-    const listWasm: ProvenCompactCiphertextListWasmType =
-      TFHE.ProvenCompactCiphertextList.safe_deserialize(
-        ciphertext,
-        SERIALIZED_SIZE_LIMIT_CIPHERTEXT,
-      );
-
-    const len = listWasm.len();
-
-    const fheTypeIds: FheTypeId[] = [];
-    for (let i = 0; i < len; ++i) {
-      const v = listWasm.get_kind_of(i);
-      if (!isFheTypeId(v)) {
-        throw new EncryptionError({
-          message: `Invalid FheTypeId: ${v}`,
-        });
-      }
-      fheTypeIds.push(v);
-    }
-
-    return {
-      fheTypeIds,
-      encryptionBits: fheTypeIds.map(encryptionBitsFromFheTypeId),
-    };
   }
 }

@@ -132,11 +132,15 @@ export const createRelayerEncryptedInput =
         return input.getBits();
       },
       generateZKProof(): ZKProofType {
+        if (input.getBits().length === 0) {
+          throw new Error(`Encrypted input must contain at least one value`);
+        }
+
         return ZKProof.fromComponents({
           chainId: BigInt(chainId),
-          aclContractAddress: aclContractAddress as ChecksummedAddress,
-          userAddress: userAddress as ChecksummedAddress,
-          contractAddress: contractAddress as ChecksummedAddress,
+          aclContractAddress: aclContractAddress,
+          userAddress: userAddress,
+          contractAddress: contractAddress,
           ciphertextWithZKProof: input.encrypt(),
           encryptionBits: input.getBits(),
         });
@@ -153,7 +157,7 @@ export const createRelayerEncryptedInput =
         const zkProof = ZKProof.fromComponents({
           ciphertextWithZKProof: ciphertext,
           chainId: BigInt(chainId),
-          aclContractAddress: aclContractAddress as ChecksummedAddress,
+          aclContractAddress: aclContractAddress,
           encryptionBits: input.getBits(),
           userAddress,
           contractAddress,

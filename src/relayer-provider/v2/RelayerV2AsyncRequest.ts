@@ -422,7 +422,7 @@ export class RelayerV2AsyncRequest {
   // Post Loop
   //////////////////////////////////////////////////////////////////////////////
 
-  // POST : 202 | 400 | 429 | 500 | 503
+  // POST : 202 | 400 | 401 | 429 | 500 | 503
   private async _runPostLoop(): Promise<
     | RelayerPublicDecryptResult
     | RelayerUserDecryptResult
@@ -643,7 +643,7 @@ export class RelayerV2AsyncRequest {
   // Get Loop
   //////////////////////////////////////////////////////////////////////////////
 
-  // GET: 200 | 202 | 404 | 500 | 503
+  // GET: 200 | 202 | 401 | 404 | 500 | 503
   // GET is not rate-limited, therefore there is not 429 error
   private async _runGetLoop(): Promise<
     | RelayerInputProofResult

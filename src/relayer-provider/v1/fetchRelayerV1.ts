@@ -96,7 +96,6 @@ export async function fetchRelayerV1Get(
   try {
     response = await fetch(url, init);
   } catch (e) {
-    console.log(e);
     throwRelayerUnknownError(relayerOperation, e);
   }
 

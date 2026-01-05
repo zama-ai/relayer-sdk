@@ -19,3 +19,24 @@ export function ensureError(e: unknown): Error {
 export function assertNever(_value: never, message: string): never {
   throw new InternalError({ message });
 }
+
+export function getErrorMessage(e: unknown): string {
+  let msg: string;
+  if (typeof e === 'string') {
+    msg = e;
+  } else if (e instanceof Error) {
+    msg = e.message;
+  } else {
+    msg = String(e);
+  }
+
+  // Strip leading and trailing quotes (" or ')
+  while (msg.startsWith('"') || msg.startsWith("'")) {
+    msg = msg.slice(1);
+  }
+  while (msg.endsWith('"') || msg.endsWith("'")) {
+    msg = msg.slice(0, -1);
+  }
+
+  return msg;
+}

@@ -21,7 +21,6 @@ import { setupV2RoutesInputProof, setupV2RoutesKeyUrl } from './v2/mockRoutes';
 import { Contract, HDNodeWallet, Wallet } from 'ethers';
 import { FhevmHandle } from '../sdk/FhevmHandle';
 import { ZKProof } from '../sdk/ZKProof';
-import { TFHEZKProofBuilder } from '@sdk/lowlevel/TFHEZKProofBuilder';
 
 export function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -198,15 +197,11 @@ export async function fetchMockInputProof(args: {
     strict: true,
   });
 
-  const extract =
-    TFHEZKProofBuilder.parseProvenCompactCiphertextList(ciphertext);
-
   const zkProof = ZKProof.fromComponents({
     ciphertextWithZKProof: ciphertext,
     aclContractAddress: TEST_CONFIG.fhevmInstanceConfig
       .aclContractAddress as `0x{string}`,
     chainId: BigInt(TEST_CONFIG.fhevmInstanceConfig.chainId),
-    encryptionBits: extract.encryptionBits,
     userAddress: args.userAddress as ChecksummedAddress,
     contractAddress: args.contractAddress as ChecksummedAddress,
   });
