@@ -83,6 +83,19 @@ describe('FhevmHandle', () => {
       expect(handle).toBeInstanceOf(FhevmHandle);
     });
 
+    it.each([VALID_CHAIN_ID, BigInt(VALID_CHAIN_ID)])(
+      'creates handle with number or bigint chainId',
+      (chainId: number | bigint) => {
+        const params = {
+          ...createValidHandleParams(),
+          chainId,
+        };
+        const handle = FhevmHandle.fromComponents(params);
+
+        expect(handle.chainId).toBe(BigInt(VALID_CHAIN_ID));
+      },
+    );
+
     it('creates handle with bigint chainId', () => {
       const params = {
         ...createValidHandleParams(),
