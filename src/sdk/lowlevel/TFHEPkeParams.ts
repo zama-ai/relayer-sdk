@@ -91,6 +91,7 @@ export class TFHEPkeParams {
   public static fromFhevmPkeConfig(
     fhevmPkeConfig: FhevmPkeConfigType,
   ): TFHEPkeParams {
+    // FhevmPkeCrsByCapacityType is a 2048 capacity
     assertIsFhevmPkeCrsByCapacityType(
       fhevmPkeConfig.publicParams,
       'fhevmPkeConfig.publicParams',

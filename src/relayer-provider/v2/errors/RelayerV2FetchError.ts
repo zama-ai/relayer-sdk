@@ -15,15 +15,19 @@ export type RelayerV2FetchErrorType = RelayerV2FetchErrorBase & {
 export type RelayerV2FetchErrorParams = Prettify<
   Omit<RelayerV2FetchErrorBaseParams, keyof RelayerErrorBaseParams> & {
     cause?: unknown;
+    message: string;
   }
 >;
 
+/**
+ * If a network error occurs or JSON parsing fails.
+ */
 export class RelayerV2FetchError extends RelayerV2FetchErrorBase {
   constructor(params: RelayerV2FetchErrorParams) {
     super({
       ...params,
       name: 'RelayerV2FetchError',
-      message: `Fetch ${params.fetchMethod} error`,
+      message: params.message,
       cause: ensureError(params.cause),
     });
   }

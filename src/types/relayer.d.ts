@@ -6,6 +6,7 @@ import type {
 } from '@base/types/primitives';
 import type { Auth } from '@relayer-provider/types/public-api';
 import type { Eip1193Provider } from 'ethers';
+import type { Prettify } from '@base/types/utils';
 
 export type FhevmInstanceOptions = {
   auth?: Auth;
@@ -16,18 +17,20 @@ export type PublicParams<T> = {
   2048: { publicParams: T; publicParamsId: string };
 };
 
-export type FhevmInstanceConfig = {
-  verifyingContractAddressDecryption: string;
-  verifyingContractAddressInputVerification: string;
-  kmsContractAddress: string;
-  inputVerifierContractAddress: string;
-  aclContractAddress: string;
-  gatewayChainId: number;
-  relayerUrl: string;
-  network: Eip1193Provider | string;
-  chainId?: number;
-} & Partial<FhevmPkeConfigType> &
-  FhevmInstanceOptions;
+export type FhevmInstanceConfig = Prettify<
+  {
+    verifyingContractAddressDecryption: string;
+    verifyingContractAddressInputVerification: string;
+    kmsContractAddress: string;
+    inputVerifierContractAddress: string;
+    aclContractAddress: string;
+    gatewayChainId: number;
+    relayerUrl: string;
+    network: Eip1193Provider | string;
+    chainId?: number;
+  } & Partial<FhevmPkeConfigType> &
+    FhevmInstanceOptions
+>;
 
 /**
  * The FHEVM TFHE Compact public key.

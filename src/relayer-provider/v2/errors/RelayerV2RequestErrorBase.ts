@@ -25,7 +25,19 @@ export abstract class RelayerV2RequestErrorBase extends RelayerErrorBase {
   private readonly _jobId?: string | undefined;
 
   constructor(params: RelayerV2RequestErrorBaseParams) {
-    super({ ...params, name: params.name ?? 'RelayerV2RequestErrorBase' });
+    const metaMessages = [
+      ...(params.metaMessages ?? []),
+      `url: ${params.url}`,
+      `operation: ${params.operation}`,
+      ...(params.jobId !== undefined ? [`jobId: ${params.jobId}`] : []),
+    ];
+
+    super({
+      ...params,
+      name: params.name ?? 'RelayerV2RequestErrorBase',
+      metaMessages,
+    });
+
     this._url = params.url;
     this._operation = params.operation;
     this._jobId = params.jobId;

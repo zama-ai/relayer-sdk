@@ -18,12 +18,15 @@ export type RelayerV2ResponseStatusErrorParams = Prettify<
   }
 >;
 
+/**
+ * The response status is unexpected.
+ */
 export class RelayerV2ResponseStatusError extends RelayerV2ResponseErrorBase {
   constructor(params: RelayerV2ResponseStatusErrorParams) {
     super({
       ...params,
       name: 'RelayerV2ResponseStatusError',
-      message: `fetchMethod: ${params.fetchMethod} status:${params.status} url:${params.url} operation:${params.operation}`,
+      message: `Unexpected response status ${params.status}`,
     });
   }
 }

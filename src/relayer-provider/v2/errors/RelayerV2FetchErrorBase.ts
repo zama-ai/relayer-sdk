@@ -34,8 +34,17 @@ export abstract class RelayerV2FetchErrorBase extends RelayerErrorBase {
   private readonly _state: RelayerV2AsyncRequestState;
 
   constructor(params: RelayerV2FetchErrorBaseParams) {
+    const metaMessages = [
+      ...(params.metaMessages ?? []),
+      `url: ${params.url}`,
+      `method: ${params.fetchMethod}`,
+      `operation: ${params.operation}`,
+      `retryCount: ${params.retryCount}`,
+      ...(params.jobId !== undefined ? [`jobId: ${params.jobId}`] : []),
+    ];
     super({
       ...params,
+      metaMessages,
       name: params.name ?? 'RelayerV2FetchErrorBase',
     });
     this._fetchMethod = params.fetchMethod;

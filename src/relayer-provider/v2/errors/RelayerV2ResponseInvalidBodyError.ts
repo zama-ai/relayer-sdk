@@ -21,13 +21,24 @@ export type RelayerV2ResponseInvalidBodyErrorParams = Prettify<
   }
 >;
 
+/**
+ * When the response body does not match the expected schema.
+ */
 export class RelayerV2ResponseInvalidBodyError extends RelayerV2ResponseErrorBase {
+  private readonly _bodyJson: string;
+
   constructor(params: RelayerV2ResponseInvalidBodyErrorParams) {
     super({
       ...params,
       cause: ensureError(params.cause),
       name: 'RelayerV2ResponseInvalidBodyError',
-      message: `fetchMethod: ${params.fetchMethod} status:${params.status} url:${params.url} operation:${params.operation}`,
+      message: 'Response body does not match the expected schema',
     });
+
+    this._bodyJson = params.bodyJson;
+  }
+
+  public get bodyJson(): string {
+    return this._bodyJson;
   }
 }

@@ -19,6 +19,9 @@ export type RelayerV2ResponseInputProofRejectedErrorParams = Prettify<
   }
 >;
 
+/**
+ * The input proof is rejected.
+ */
 export class RelayerV2ResponseInputProofRejectedError extends RelayerV2ResponseErrorBase {
   private readonly _result: RelayerV2ResultInputProofRejected;
 

@@ -17,12 +17,23 @@ export type RelayerV2TimeoutErrorParams = Prettify<
   }
 >;
 
+/**
+ * The request timed out.
+ */
 export class RelayerV2TimeoutError extends RelayerV2RequestErrorBase {
+  private readonly _timeoutMs: number;
+
   constructor(params: RelayerV2TimeoutErrorParams) {
     super({
       ...params,
       name: 'RelayerV2TimeoutError',
       message: `Request timed out after ${params.timeoutMs}ms`,
     });
+
+    this._timeoutMs = params.timeoutMs;
+  }
+
+  public get timeoutMs(): number {
+    return this._timeoutMs;
   }
 }

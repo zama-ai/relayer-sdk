@@ -15,6 +15,9 @@ export type RelayerV2AbortErrorParams = Prettify<
   Omit<RelayerV2RequestErrorBaseParams, keyof RelayerErrorBaseParams>
 >;
 
+/**
+ * Request was aborted.
+ */
 export class RelayerV2AbortError extends RelayerV2RequestErrorBase {
   constructor(params: RelayerV2AbortErrorParams) {
     super({

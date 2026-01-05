@@ -48,7 +48,7 @@ export class RelayerV2Fhevm extends AbstractRelayerFhevm {
   ): Promise<RelayerV2Fhevm> {
     const relayerProvider = new RelayerV2Provider(config.relayerVersionUrl);
 
-    const relayerPublicKey =
+    const tfhePkeParams =
       TFHEPkeParams.tryFromFhevmPkeConfig(config) ??
       (await relayerProvider.fetchTFHEPkeParams());
 
@@ -59,7 +59,7 @@ export class RelayerV2Fhevm extends AbstractRelayerFhevm {
 
     return new RelayerV2Fhevm({
       relayerProvider,
-      tfhePkeParams: relayerPublicKey,
+      tfhePkeParams,
       fhevmHostChain,
     });
   }

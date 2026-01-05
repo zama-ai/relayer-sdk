@@ -18,12 +18,26 @@ export type RelayerV2ResponseApiErrorParams = Prettify<
   }
 >;
 
+/**
+ * If the relayer API returns an error response.
+ */
 export class RelayerV2ResponseApiError extends RelayerV2ResponseErrorBase {
+  private readonly _relayerApiError: RelayerApiErrorType;
+
   constructor(params: RelayerV2ResponseApiErrorParams) {
+    const metaMessages = [`label: ${params.relayerApiError.label}`];
+
     super({
       ...params,
+      metaMessages,
       name: 'RelayerV2ResponseApiError',
       message: params.relayerApiError.message,
     });
+
+    this._relayerApiError = params.relayerApiError;
+  }
+
+  public get relayerApiError(): RelayerApiErrorType {
+    return this._relayerApiError;
   }
 }
