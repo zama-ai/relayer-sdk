@@ -20,8 +20,11 @@ export abstract class RelayerV2ResponseErrorBase extends RelayerV2FetchErrorBase
   private readonly _status: number;
 
   constructor(params: RelayerV2ResponseErrorBaseParams) {
+    const metaMessages = [`status: ${params.status}`];
+
     super({
       ...params,
+      metaMessages,
       name: params.name ?? 'RelayerV2ResponseErrorBase',
     });
     this._status = params.status;

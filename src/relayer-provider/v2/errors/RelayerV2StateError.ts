@@ -15,6 +15,9 @@ export type RelayerV2StateErrorParams = {
   message: string;
 };
 
+/**
+ * The request cannot run (already terminated, canceled, succeeded, failed, aborted, or running).
+ */
 export class RelayerV2StateError extends RelayerErrorBase {
   private readonly _state: RelayerV2AsyncRequestState;
 

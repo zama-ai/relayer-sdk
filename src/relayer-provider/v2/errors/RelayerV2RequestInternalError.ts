@@ -19,15 +19,25 @@ export type RelayerV2InternalRequestErrorParams = Prettify<
   }
 >;
 
+/**
+ * Internal error
+ */
 export class RelayerV2RequestInternalError extends RelayerV2RequestErrorBase {
   private readonly _status?: number | undefined;
   private readonly _state?: string | undefined;
 
   constructor(params: RelayerV2InternalRequestErrorParams) {
+    const metaMessages = [
+      ...(params.metaMessages ?? []),
+      ...(params.status !== undefined ? [`status: ${params.status}`] : []),
+      ...(params.state !== undefined ? [`state: ${params.state}`] : []),
+    ];
+
     super({
       ...params,
+      metaMessages,
       name: 'RelayerV2RequestInternalError',
-      message: params.message ?? 'internal error',
+      message: params.message ?? 'Internal error',
     });
     this._status = params.status;
     this._state = params.state;

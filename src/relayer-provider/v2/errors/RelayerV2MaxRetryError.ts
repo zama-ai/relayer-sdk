@@ -15,12 +15,15 @@ export type RelayerV2MaxRetryErrorParams = Prettify<
   Omit<RelayerV2FetchErrorBaseParams, keyof RelayerErrorBaseParams>
 >;
 
+/**
+ * The maximum number of retries is exceeded.
+ */
 export class RelayerV2MaxRetryError extends RelayerV2FetchErrorBase {
   constructor(params: RelayerV2MaxRetryErrorParams) {
     super({
       ...params,
       name: 'RelayerV2MaxRetryError',
-      message: 'max retry error',
+      message: `Maximum retry limit exceeded (retried ${params.retryCount} times)`,
     });
   }
 }

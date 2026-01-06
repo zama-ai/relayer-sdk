@@ -114,7 +114,8 @@ describeIfFetchMock('RelayerV2Provider', () => {
   //////////////////////////////////////////////////////////////////////////////
 
   it('v2:input-proof: 202 - empty json', async () => {
-    mockV2Post202('input-proof', {});
+    const body = {};
+    mockV2Post202('input-proof', body);
     await expect(() =>
       relayerProvider.fetchPostInputProof(DEADBEEF_INPUT_PROOF_PAYLOAD),
     ).rejects.toThrow(
@@ -125,7 +126,7 @@ describeIfFetchMock('RelayerV2Provider', () => {
           expectedType: 'string',
           expectedValue: 'queued',
         }),
-        bodyJson: '',
+        bodyJson: JSON.stringify(body),
       }),
     );
   });
@@ -133,7 +134,8 @@ describeIfFetchMock('RelayerV2Provider', () => {
   //////////////////////////////////////////////////////////////////////////////
 
   it('v2:input-proof: 202 - status:failed', async () => {
-    mockV2Post202('input-proof', { status: 'failed' });
+    const body = { status: 'failed' };
+    mockV2Post202('input-proof', body);
     await expect(() =>
       relayerProvider.fetchPostInputProof(DEADBEEF_INPUT_PROOF_PAYLOAD),
     ).rejects.toThrow(
@@ -146,7 +148,7 @@ describeIfFetchMock('RelayerV2Provider', () => {
           type: 'string',
           value: 'failed',
         }),
-        bodyJson: '',
+        bodyJson: JSON.stringify(body),
       }),
     );
   });
@@ -154,7 +156,8 @@ describeIfFetchMock('RelayerV2Provider', () => {
   //////////////////////////////////////////////////////////////////////////////
 
   it('v2:input-proof: 202 - status:succeeded', async () => {
-    mockV2Post202('input-proof', { status: 'succeeded' });
+    const body = { status: 'succeeded' };
+    mockV2Post202('input-proof', body);
     await expect(() =>
       relayerProvider.fetchPostInputProof(DEADBEEF_INPUT_PROOF_PAYLOAD),
     ).rejects.toThrow(
@@ -167,7 +170,7 @@ describeIfFetchMock('RelayerV2Provider', () => {
           type: 'string',
           value: 'succeeded',
         }),
-        bodyJson: '',
+        bodyJson: JSON.stringify(body),
       }),
     );
   });
@@ -236,10 +239,11 @@ describeIfFetchMock('RelayerV2Provider', () => {
       new RelayerV2ResponseInputProofRejectedError({
         fetchMethod: 'GET',
         status: 200,
-        url: `${TEST_CONFIG.v2.urls.inputProof}/123`,
+        url: `${TEST_CONFIG.v2.urls.inputProof}`,
+        jobId: '123',
         operation: 'INPUT_PROOF',
         elapsed: 0,
-        retryCount: 0,
+        retryCount: 1,
         state: RUNNING_REQ_STATE,
         result: {
           accepted: false,

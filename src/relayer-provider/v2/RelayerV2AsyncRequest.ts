@@ -24,7 +24,7 @@ import type {
   RelayerFailureStatus,
   RelayerProgressSucceededType,
   RelayerProgressQueuedType,
-  RelayerProgressRateLimitedType,
+  RelayerProgressThrottledType,
   RelayerProgressTimeoutType,
   RelayerProgressFailedType,
   RelayerProgressAbortType,
@@ -56,7 +56,7 @@ import {
   assertIsRelayerV2GetResponseQueued,
   assertIsRelayerV2PostResponseQueued,
 } from './guards/RelayerV2ResponseQueued';
-import { safeJSONstringify } from '@base/string';
+import { isNonEmptyString, safeJSONstringify } from '@base/string';
 import { sdkName, version } from '../../_version';
 import { RelayerV2TimeoutError } from './errors/RelayerV2TimeoutError';
 import { RelayerV2AbortError } from './errors/RelayerV2AbortError';
@@ -233,7 +233,25 @@ export class RelayerV2AsyncRequest {
   // Public API: run
   //////////////////////////////////////////////////////////////////////////////
 
-  public async run(): Promise<
+  /**
+   * Executes the async request and returns the result.
+   * @param params - Optional parameters.
+   * @param params.existingJobId - An existing job ID to resume polling instead of starting a new request.
+   * @returns The result of the operation (UserDecrypt, PublicDecrypt, or InputProof).
+   * @throws {RelayerV2StateError} If the request cannot run (already terminated, canceled, succeeded, failed, aborted, or running).
+   * @throws {RelayerV2TimeoutError} If the request times out.
+   * @throws {RelayerV2AbortError} If the request was aborted.
+   * @throws {RelayerV2FetchError} If a network error occurs or JSON parsing fails.
+   * @throws {RelayerV2MaxRetryError} If the maximum number of retries is exceeded.
+   * @throws {RelayerV2ResponseApiError} If the relayer API returns an error response.
+   * @throws {RelayerV2ResponseStatusError} If the response status is unexpected.
+   * @throws {RelayerV2ResponseInvalidBodyError} If the response body does not match the expected schema.
+   * @throws {RelayerV2ResponseInputProofRejectedError} If the input proof is rejected.
+   * @throws {RelayerV2RequestInternalError} If an internal error occurs.
+   */
+  public async run(params?: {
+    existingJobId: string;
+  }): Promise<
     | RelayerUserDecryptResult
     | RelayerPublicDecryptResult
     | RelayerInputProofResult
@@ -306,7 +324,7 @@ export class RelayerV2AsyncRequest {
     this._setGlobalRequestTimeout(this._requestMaxDurationInMs);
 
     try {
-      const json = await this._runPostLoop();
+      const json = await this._runPostLoop(params);
 
       this._state.succeeded = true;
 
@@ -423,7 +441,9 @@ export class RelayerV2AsyncRequest {
   //////////////////////////////////////////////////////////////////////////////
 
   // POST : 202 | 400 | 401 | 429 | 500 | 503
-  private async _runPostLoop(): Promise<
+  private async _runPostLoop(params?: {
+    existingJobId: string;
+  }): Promise<
     | RelayerPublicDecryptResult
     | RelayerUserDecryptResult
     | RelayerInputProofResult
@@ -437,6 +457,13 @@ export class RelayerV2AsyncRequest {
     // Until it is implemented. Silence linter.
     this._totalSteps = 1;
     this._step = 0;
+
+    // Continue an existing jobId
+    if (isNonEmptyString(params?.existingJobId)) {
+      // Debug: will throw an assert failed error if jobId has already been set
+      this._setJobIdOnce(params.existingJobId);
+      return await this._runGetLoop();
+    }
 
     // No infinite loop!
     let i = 0;
@@ -538,6 +565,7 @@ export class RelayerV2AsyncRequest {
         case 429: {
           // Retry
           // Rate Limit error (Cloudflare/Kong/Relayer), reason in message
+          // Protocol Overload error
           const bodyJson = await this._getResponseJson(response);
 
           try {
@@ -554,7 +582,7 @@ export class RelayerV2AsyncRequest {
 
           // Async onProgress callback
           this._postAsyncOnProgressCallback({
-            type: 'ratelimited',
+            type: 'throttled',
             operation: this._relayerOperation,
             url: this._url,
             method: 'POST',
@@ -565,7 +593,7 @@ export class RelayerV2AsyncRequest {
             relayerApiError: bodyJson.error,
             step: this._step,
             totalSteps: this._totalSteps,
-          } satisfies RelayerProgressRateLimitedType<RelayerPostOperation>);
+          } satisfies RelayerProgressThrottledType<RelayerPostOperation>);
 
           // Wait if needed (minimum 1s)
           await this._setRetryAfterTimeout(retryAfterMs);
@@ -981,6 +1009,10 @@ export class RelayerV2AsyncRequest {
 
   //////////////////////////////////////////////////////////////////////////////
 
+  /**
+   * Parses the response body as JSON.
+   * @throws {RelayerV2FetchError} If the body is not valid JSON (e.g., Cloudflare HTML error page).
+   */
   private async _getResponseJson(response: Response): Promise<unknown> {
     try {
       // This situation usually happens when Cloudflare overrides the relayer's reply body.
@@ -992,6 +1024,7 @@ export class RelayerV2AsyncRequest {
       return bodyJson;
     } catch (e) {
       this._throwFetchError({
+        message: 'JSON parsing failed.',
         cause: e,
       });
     }
@@ -1063,6 +1096,10 @@ export class RelayerV2AsyncRequest {
   // Fetch functions
   //////////////////////////////////////////////////////////////////////////////
 
+  /**
+   * Performs a POST request to initiate a new job
+   * @throws {RelayerV2FetchError} If the fetch fails (network error, etc.)
+   */
   private async _fetchPost(): Promise<Response> {
     // Debug state-check guards:
     // - the fetchMethod is guaranteed to be 'POST'.
@@ -1110,6 +1147,7 @@ export class RelayerV2AsyncRequest {
         throw cause;
       } else {
         this._throwFetchError({
+          message: 'Fetch POST failed.',
           cause,
         });
       }
@@ -1132,6 +1170,10 @@ export class RelayerV2AsyncRequest {
 
   //////////////////////////////////////////////////////////////////////////////
 
+  /**
+   * Performs a GET request to poll the job status.
+   * @throws {RelayerV2FetchError} If the fetch fails (network error, etc.)
+   */
   private async _fetchGet(): Promise<Response> {
     // Debug state-check guards:
     // - the fetchMethod is guaranteed to be 'GET'.
@@ -1175,6 +1217,7 @@ export class RelayerV2AsyncRequest {
         throw cause;
       } else {
         this._throwFetchError({
+          message: 'Fetch GET failed.',
           cause,
         });
       }
@@ -1517,7 +1560,13 @@ export class RelayerV2AsyncRequest {
   // Errors
   //////////////////////////////////////////////////////////////////////////////
 
-  private _throwUnauthorizedError(status: 401): never {
+  /**
+   * Throws an unauthorized error for 401 responses.
+   * @throws {RelayerV2ResponseApiError} Always throws with 'unauthorized' label.
+   */
+  private _throwUnauthorizedError(
+    status: Extract<RelayerFailureStatus, 401>,
+  ): never {
     this._throwRelayerV2ResponseApiError({
       status,
       relayerApiError: {
@@ -1527,6 +1576,10 @@ export class RelayerV2AsyncRequest {
     });
   }
 
+  /**
+   * Throws a relayer API error with the given status and error details.
+   * @throws {RelayerV2ResponseApiError} Always throws with the provided error details.
+   */
   private _throwRelayerV2ResponseApiError(params: {
     status: RelayerFailureStatus;
     relayerApiError: RelayerApiErrorType;
@@ -1578,6 +1631,10 @@ export class RelayerV2AsyncRequest {
     }
   }
 
+  /**
+   * Throws an internal error
+   * @throws {RelayerV2RequestInternalError}
+   */
   private _throwInternalError(message: string): never {
     throw new RelayerV2RequestInternalError({
       operation: this._relayerOperation,
@@ -1588,6 +1645,10 @@ export class RelayerV2AsyncRequest {
     });
   }
 
+  /**
+   * Throws a max retry error when the request has exceeded the retry limit.
+   * @throws {RelayerV2MaxRetryError} Always throws.
+   */
   private _throwMaxRetryError(params: { fetchMethod: 'GET' | 'POST' }): never {
     const elapsed =
       this._jobIdTimestamp !== undefined
@@ -1604,6 +1665,10 @@ export class RelayerV2AsyncRequest {
     });
   }
 
+  /**
+   * Throws an error when the response body does not match the expected schema.
+   * @throws {RelayerV2ResponseInvalidBodyError} Always throws.
+   */
   private _throwResponseInvalidBodyError(params: {
     status: number;
     cause: InvalidPropertyError;
@@ -1621,7 +1686,11 @@ export class RelayerV2AsyncRequest {
     });
   }
 
-  private _throwFetchError(params: { cause: unknown }): never {
+  /**
+   * Throws an error when a fetch operation fails (network error, JSON parse error, etc.).
+   * @throws {RelayerV2FetchError} Always throws.
+   */
+  private _throwFetchError(params: { message: string; cause: unknown }): never {
     throw new RelayerV2FetchError({
       ...params,
       elapsed: this._elapsed,

@@ -73,7 +73,10 @@ export function assertIsRelayerV2ApiError(
   }
   // 429
   else if (
-    value.label === ('rate_limited' satisfies RelayerApiError429Type['label'])
+    value.label ===
+      ('rate_limited' satisfies RelayerApiError429Type['label']) ||
+    value.label ===
+      ('protocol_overload' satisfies RelayerApiError429Type['label'])
   ) {
     assertIsRelayerApiError429Type(value, name);
   }
@@ -92,8 +95,6 @@ export function assertIsRelayerV2ApiError(
       ('response_timedout' satisfies RelayerApiError503Type['label']) ||
     value.label ===
       ('protocol_paused' satisfies RelayerApiError503Type['label']) ||
-    value.label ===
-      ('protocol_overwhelmed' satisfies RelayerApiError503Type['label']) ||
     value.label ===
       ('gateway_not_reachable' satisfies RelayerApiError503Type['label'])
   ) {
@@ -114,7 +115,7 @@ export function assertIsRelayerV2ApiError(
         'rate_limited',
         'internal_server_error',
         'protocol_paused',
-        'protocol_overwhelmed',
+        'protocol_overload',
         'gateway_not_reachable',
         'readiness_check_timedout',
         'response_timedout',

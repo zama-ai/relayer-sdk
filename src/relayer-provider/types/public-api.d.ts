@@ -8,6 +8,23 @@ import type { Prettify } from '@base/types/utils';
 import type { FhevmInstanceOptions } from '../../types/relayer';
 
 ////////////////////////////////////////////////////////////////////////////////
+// V2 Public Errors
+////////////////////////////////////////////////////////////////////////////////
+
+export type {
+  RelayerV2AbortError,
+  RelayerV2FetchError,
+  RelayerV2MaxRetryError,
+  RelayerV2RequestInternalError,
+  RelayerV2ResponseApiError,
+  RelayerV2ResponseInputProofRejectedError,
+  RelayerV2ResponseInvalidBodyError,
+  RelayerV2ResponseStatusError,
+  RelayerV2StateError,
+  RelayerV2TimeoutError,
+} from '../v2/errors/public-types';
+
+////////////////////////////////////////////////////////////////////////////////
 
 export type RelayerEncryptedInput = {
   addBool: (value: boolean | number | bigint) => RelayerEncryptedInput;
@@ -85,11 +102,11 @@ export type RelayerProgressTypeValue =
   | 'failed'
   | 'timeout'
   | 'succeeded'
-  | 'ratelimited';
+  | 'throttled';
 
 export type RelayerProgressArgsType<O extends RelayerPostOperation> =
   | RelayerProgressQueuedType<O>
-  | RelayerProgressRateLimitedType<O>
+  | RelayerProgressThrottledType<O>
   | RelayerProgressSucceededType<O>
   | RelayerProgressTimeoutType<O>
   | RelayerProgressAbortType<O>
@@ -147,11 +164,10 @@ export type RelayerProgressQueuedType<O extends RelayerPostOperation> =
     }
   >;
 
-export type RelayerProgressRateLimitedType<O extends RelayerPostOperation> =
+export type RelayerProgressThrottledType<O extends RelayerPostOperation> =
   Prettify<
-    RelayerProgressStatusBaseType<'ratelimited', O, 429> & {
+    RelayerProgressStatusBaseType<'throttled', O, 429> & {
       method: 'POST';
-      // rest
       retryAfterMs: number;
       elapsed: number;
       relayerApiError: RelayerApiError429Type;
@@ -303,13 +319,12 @@ export type RelayerApiError503Type = {
     | 'protocol_paused'
     | 'gateway_not_reachable'
     | 'readiness_check_timedout'
-    | 'protocol_overwhelmed'
     | 'response_timedout';
   message: string;
 };
 
 export type RelayerApiError429Type = {
-  label: 'rate_limited';
+  label: 'rate_limited' | 'protocol_overload';
   message: string;
 };
 

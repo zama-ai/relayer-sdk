@@ -5,20 +5,18 @@ import { assertRecordStringProperty } from '@base/string';
 
 /*
   export type RelayerApiError429Type = {
-    label: 'rate_limited';
+    label: 'rate_limited' | 'protocol_overload';
     message: string;
   };
 */
 export function assertIsRelayerApiError429Type(
-  value: unknown,
+  error: unknown,
   name: string,
-): asserts value is RelayerApiError429Type {
+): asserts error is RelayerApiError429Type {
   type T = RelayerApiError429Type;
-  assertRecordStringProperty(
-    value,
-    'label' satisfies keyof T,
-    name,
+  assertRecordStringProperty(error, 'label' satisfies keyof T, name, [
     'rate_limited' satisfies T['label'],
-  );
-  assertRecordStringProperty(value, 'message' satisfies keyof T, name);
+    'protocol_overload' satisfies T['label'],
+  ]);
+  assertRecordStringProperty(error, 'message' satisfies keyof T, name);
 }
