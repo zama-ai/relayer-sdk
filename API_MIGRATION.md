@@ -9,121 +9,111 @@ With Async HTTP API, the backend now uses POST to submit requests and GET to pol
 All three APIs add an optional third parameter for async options. Return types remain unchanged.
 
 ```typescript
-// Before
-encrypt(contractAddress: string, encryptedInput: EncryptedInput)
-userDecrypt(handles, privateKey, publicKey, signature, contractAddresses, userAddress, startTimestamp, durationDays)
-publicDecrypt(handle: string, contractAddress: string)
+// RelayerEncryptedInput
+encrypt: (options?: RelayerInputProofOptionsType) =>
+  Promise<{
+    handles: Uint8Array[];
+    inputProof: Uint8Array;
+  }>;
 
-// After
-encrypt(contractAddress: string, encryptedInput: EncryptedInput, options?: AsyncOptions)
-userDecrypt(handles, privateKey, publicKey, signature, contractAddresses, userAddress, startTimestamp, durationDays, options?: AsyncOptions)
-publicDecrypt(handle: string, contractAddress: string, options?: AsyncOptions)
+// FhevmInstance
+publicDecrypt: (
+  handles: (string | Uint8Array)[],
+  options?: RelayerPublicDecryptOptionsType,
+) => Promise<PublicDecryptResults>;
 
-continueEncrypt(requestID, options?: AsyncOptions)
-continueUserDecrypt(requestID, options?: AsyncOptions)
-continuePublicDecrypt(requestID, options?: AsyncOptions)
-```
-
-## Usage
-
-```typescript
-const result = await instance.encrypt(contractAddress, encryptedInput, {
-  timeout: 60000,
-  onProgress: (status) => {
-    console.log(`${status.phase}: ${status.elapsedMs}ms`);
-  },
-});
+userDecrypt: (
+  handles: HandleContractPair[],
+  privateKey: string,
+  publicKey: string,
+  signature: string,
+  contractAddresses: string[],
+  userAddress: string,
+  startTimestamp: string | number,
+  durationDays: string | number,
+  options?: RelayerUserDecryptOptionsType,
+) => Promise<UserDecryptResults>;
 ```
 
 ## Types
 
 ```typescript
-interface AsyncOptions {
-  timeout?: number;
-  onProgress?: (status: ProgressStatus) => void;
-}
+type RelayerInputProofOptionsType = {
+  auth?: Auth | undefined;
+  debug?: boolean | undefined;
+  signal?: AbortSignal | undefined;
+  timeout?: number | undefined;
+  onProgress?: ((args: RelayerInputProofProgressArgs) => void) | undefined;
+};
 
-interface ProgressStatus {
-  phase: 'submitting' | 'queued' | 'completed' | 'failed';
-  elapsedMs: number;
-  requestId?: string;
-  submitAttempts: number;
-  pollAttempts: number;
-  error?: RelayerError;
-}
+type RelayerPublicDecryptOptionsType = {
+  auth?: Auth | undefined;
+  debug?: boolean | undefined;
+  signal?: AbortSignal | undefined;
+  timeout?: number | undefined;
+  onProgress?: ((args: RelayerPublicDecryptProgressArgs) => void) | undefined;
+};
 
-interface RelayerError extends Error {
-  message: string;
-  code: string;
-  operation: 'encrypt' | 'userDecrypt' | 'publicDecrypt';
-}
+type RelayerUserDecryptOptionsType = {
+  auth?: Auth | undefined;
+  debug?: boolean | undefined;
+  signal?: AbortSignal | undefined;
+  timeout?: number | undefined;
+  onProgress?: ((args: RelayerUserDecryptProgressArgs) => void) | undefined;
+};
 ```
 
-## Error codes
+## Usage
 
-Errors now include structured codes instead of only message strings:
-
-- `MISSING_FIELD` / `MALFORMED_VALUE` - Request validation failed
-- `PERMISSION_DENIED` - Authentication required
-- `INVALID_VALUE` - Handle or signature validation failed
-- `INVALID_VALUE_FROM_GATEWAY` - Backend processing failed
-- `KMS_SIGNATURE_VERIFICATION_FAILED` - KMS signature failed
-- `SERVER_ERROR` - Internal server error
-
-## Example
+## Encryption
 
 ```typescript
-try {
-  const result = await instance.userDecrypt(
-    handles,
-    privateKey,
-    publicKey,
-    signature,
-    contractAddresses,
-    userAddress,
-    startTimestamp,
-    durationDays,
-    {
-      timeout: 45000,
-      onProgress: (status) => {
-        switch (status.phase) {
-          case 'submitting':
-            setStatus(`Submitting request (attempt ${status.submitAttempts})`);
-            break;
-          case 'queued':
-            setStatus(
-              `Processing (${Math.round(status.elapsedMs / 1000)}s elapsed)`,
-            );
-            break;
-          case 'failed':
-            if (status.error?.code === 'PERMISSION_DENIED') {
-              setError('Authentication required');
-            }
-            break;
-        }
-      },
-    },
-  );
+const builder = instance.createEncryptedInput(contractAddress, userAddress);
+builder.add8(12);
+builder.add32(34);
 
-  setResult(result);
-} catch (error: RelayerError) {
-  switch (error.code) {
-    case 'PERMISSION_DENIED':
-      redirectToLogin();
-      break;
-    case 'INVALID_VALUE':
-      showValidationErrors(error.message);
-      break;
-    case 'INVALID_VALUE_FROM_GATEWAY':
-      showRetryDialog('Processing failed, try again');
-      break;
-    case 'SERVER_ERROR':
-      showNotification('Service temporarily unavailable');
-      break;
-    default:
-      showGenericError(error.message);
-  }
-}
+const result = await builder.encrypt({
+  timeout: 60000,
+  onProgress: (args: RelayerInputProofProgressArgs) => {
+    console.log(`${args.type}: ${args.elapsedMs}ms`);
+  },
+});
+```
+
+## User Decryption
+
+```typescript
+const result = await instance.userDecrypt(
+  handleContractPairs,
+  keypair.privateKey,
+  keypair.publicKey,
+  signature,
+  contractAddresses,
+  signer.address,
+  startTimeStamp,
+  durationDays,
+  {
+    timeout,
+    //signal: abortController.signal,
+    onProgress: (args: RelayerUserDecryptProgressArgs) => {
+      console.log(`${args.type}: ${args.elapsedMs}ms`);
+    },
+    auth: { __type: 'ApiKeyHeader', value: zamaFhevmApiKey },
+  },
+);
+```
+
+## Public Decryption
+
+```typescript
+const result = await instance.publicDecrypt(handles, {
+  timeout,
+  //signal: abortController.signal,
+  onProgress: (args: RelayerPublicDecryptProgressArgs) => {
+    console.log(`${args.type}: ${args.elapsedMs}ms`);
+  },
+  auth: { __type: 'ApiKeyHeader', value: zamaFhevmApiKey },
+});
 ```
 
 ## Backward compatibility

@@ -35,7 +35,6 @@ describe('RelayerV2ApiError503', () => {
         property: 'label',
         expectedType: 'string',
         expectedValue: [
-          'protocol_overwhelmed',
           'protocol_paused',
           'gateway_not_reachable',
           'readiness_check_timedout',
@@ -145,7 +144,6 @@ describe('RelayerV2ApiError503', () => {
         property: 'label',
         expectedType: 'string',
         expectedValue: [
-          'protocol_overwhelmed',
           'protocol_paused',
           'gateway_not_reachable',
           'readiness_check_timedout',

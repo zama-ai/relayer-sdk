@@ -24,7 +24,7 @@ import type {
   RelayerFailureStatus,
   RelayerProgressSucceededType,
   RelayerProgressQueuedType,
-  RelayerProgressRateLimitedType,
+  RelayerProgressThrottledType,
   RelayerProgressTimeoutType,
   RelayerProgressFailedType,
   RelayerProgressAbortType,
@@ -565,6 +565,7 @@ export class RelayerV2AsyncRequest {
         case 429: {
           // Retry
           // Rate Limit error (Cloudflare/Kong/Relayer), reason in message
+          // Protocol Overload error
           const bodyJson = await this._getResponseJson(response);
 
           try {
@@ -581,7 +582,7 @@ export class RelayerV2AsyncRequest {
 
           // Async onProgress callback
           this._postAsyncOnProgressCallback({
-            type: 'ratelimited',
+            type: 'throttled',
             operation: this._relayerOperation,
             url: this._url,
             method: 'POST',
@@ -592,7 +593,7 @@ export class RelayerV2AsyncRequest {
             relayerApiError: bodyJson.error,
             step: this._step,
             totalSteps: this._totalSteps,
-          } satisfies RelayerProgressRateLimitedType<RelayerPostOperation>);
+          } satisfies RelayerProgressThrottledType<RelayerPostOperation>);
 
           // Wait if needed (minimum 1s)
           await this._setRetryAfterTimeout(retryAfterMs);
