@@ -11,7 +11,18 @@ import type { FhevmInstanceOptions } from '../../types/relayer';
 // V2 Public Errors
 ////////////////////////////////////////////////////////////////////////////////
 
-export type * from '../v2/errors/public-types';
+export type {
+  RelayerV2AbortError,
+  RelayerV2FetchError,
+  RelayerV2MaxRetryError,
+  RelayerV2RequestInternalError,
+  RelayerV2ResponseApiError,
+  RelayerV2ResponseInputProofRejectedError,
+  RelayerV2ResponseInvalidBodyError,
+  RelayerV2ResponseStatusError,
+  RelayerV2StateError,
+  RelayerV2TimeoutError,
+} from '../v2/errors/public-types';
 
 ////////////////////////////////////////////////////////////////////////////////
 
