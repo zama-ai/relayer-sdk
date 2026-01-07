@@ -245,10 +245,6 @@ describeIfFetchMock('RelayerV2Provider', () => {
         elapsed: 0,
         retryCount: 1,
         state: RUNNING_REQ_STATE,
-        result: {
-          accepted: false,
-          extraData: `0x00`,
-        },
       }),
     );
   });

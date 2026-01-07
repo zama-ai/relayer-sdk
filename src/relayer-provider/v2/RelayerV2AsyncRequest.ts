@@ -18,7 +18,6 @@ import type {
   RelayerV2ResultInputProofAccepted,
   RelayerV2ResultPublicDecrypt,
   RelayerV2ResultInputProof,
-  RelayerV2ResultInputProofRejected,
 } from './types';
 import type {
   RelayerFailureStatus,
@@ -719,9 +718,6 @@ export class RelayerV2AsyncRequest {
                 bodyJson.result;
 
               if (!inputProofBodyResult.accepted) {
-                const inputProofRejected: RelayerV2ResultInputProofRejected =
-                  inputProofBodyResult;
-
                 const e = new RelayerV2ResponseInputProofRejectedError({
                   url: this._url,
                   fetchMethod: 'GET',
@@ -731,7 +727,6 @@ export class RelayerV2AsyncRequest {
                   status: responseStatus,
                   state: { ...this._state },
                   elapsed: this._elapsed,
-                  result: inputProofRejected,
                 });
                 throw e;
               }

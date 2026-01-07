@@ -148,10 +148,6 @@ describe('RelayerV2ResponseInputProofRejectedError', () => {
       retryCount: 0,
       elapsed: 100,
       state: TEST_STATE,
-      result: {
-        accepted: false,
-        extraData: '0x1234',
-      },
     });
 
     expect(error.name).toBe('RelayerV2ResponseInputProofRejectedError');
