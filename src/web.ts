@@ -23,8 +23,6 @@ import {
 
 import type { TFHEType, TKMSType } from './sdk/lowlevel/types';
 
-export type * from './sdk/lowlevel/types';
-
 window.TFHE = {
   default: initTFHE,
   initThreadPool,
@@ -82,7 +80,10 @@ export type {
   FheTypeEncryptionBitwidthToIdMap,
   FheTypeNameToIdMap,
 } from './base/types/primitives';
+
 export type * from './relayer-provider/types/public-api';
+export type * from './relayer-provider/v2/errors/public-types';
+export type * from './sdk/lowlevel/types';
 
 export {
   SepoliaConfig,
