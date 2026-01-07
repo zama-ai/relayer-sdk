@@ -21,7 +21,9 @@ export async function createRelayerFhevm(
   const resolved = parseRelayerUrl(
     config.relayerUrl,
     config.defaultRelayerVersion,
+    config.relayerRouteVersion as unknown as 1 | 2 | undefined,
   );
+
   if (
     !resolved ||
     ((resolved.version as unknown) !== 1 && (resolved.version as unknown) !== 2)

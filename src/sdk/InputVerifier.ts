@@ -6,6 +6,7 @@ import { Contract } from 'ethers';
 import { isUint8, isUintBigInt } from '@base/uint';
 import { assertIsChecksummedAddressArray } from '@base/address';
 import { assertCoprocessorEIP712DomainType } from './coprocessor/guards';
+import { executeWithBatching } from '@base/promise';
 
 export class InputVerifier {
   static readonly #abi = [
@@ -65,6 +66,7 @@ export class InputVerifier {
   public static async loadFromChain(params: {
     inputVerifierContractAddress: ChecksummedAddress;
     provider: EthersProviderType;
+    batchRpcCalls?: boolean;
   }): Promise<InputVerifier> {
     const contract = new Contract(
       params.inputVerifierContractAddress,
@@ -72,15 +74,33 @@ export class InputVerifier {
       params.provider,
     ) as unknown as IInputVerifier;
 
-    const res = await Promise.all([
-      contract.eip712Domain(),
-      contract.getThreshold(),
-      contract.getCoprocessorSigners(),
-    ]);
+    // To be removed
+    if (params.batchRpcCalls === true) {
+      throw new Error(`Batch RPC Calls not supported!`);
+    }
 
-    const eip712DomainArray = res[0];
+    ////////////////////////////////////////////////////////////////////////////
+    //
+    // Important remark:
+    // =================
+    // Do NOTE USE `Promise.all` here!
+    // You may get a server response 500 Internal Server Error
+    // "Batch of more than 3 requests are not allowed on free tier, to use this
+    // feature register paid account at drpc.org"
+    //
+    ////////////////////////////////////////////////////////////////////////////
+
+    const rpcCalls = [
+      () => contract.eip712Domain(),
+      () => contract.getThreshold(),
+      () => contract.getCoprocessorSigners(),
+    ];
+
+    const res = await executeWithBatching(rpcCalls, params.batchRpcCalls);
+
+    const eip712DomainArray = res[0] as unknown[];
     const threshold = res[1];
-    const coprocessorSigners = res[2];
+    const coprocessorSigners = res[2] as unknown[];
 
     if (!isUint8(threshold)) {
       throw new Error(`Invalid InputVerifier Coprocessor signers threshold.`);

@@ -319,7 +319,7 @@ export class FhevmHandle {
     // Extract version (byte 31)
     const version = bytes[31];
 
-    return new FhevmHandle({
+    const h = new FhevmHandle({
       hash21,
       chainId,
       fheTypeId: fheTypeIdByte,
@@ -328,6 +328,8 @@ export class FhevmHandle {
       index,
       handleBytes32: handle,
     });
+
+    return h;
   }
 
   public static fromBytes32Hex(handle: unknown): FhevmHandle {
@@ -338,6 +340,15 @@ export class FhevmHandle {
     const bytes: Uint8Array = hexToBytes(handle);
 
     const h = FhevmHandle.fromBytes32(bytes);
+
+    // Debug
+    const hex = h.toBytes32Hex();
+    if (hex !== handle) {
+      throw new FhevmHandleError({
+        message: 'FhevmHandle verification failed!',
+      });
+    }
+
     h.#handleBytes32Hex = handle;
 
     return h;
@@ -390,16 +401,9 @@ export class FhevmHandle {
   // Static Parsing
   //////////////////////////////////////////////////////////////////////////////
 
-  public static parse(handle: unknown): FhevmHandle {
-    if (isBytes(handle)) {
-      return FhevmHandle.fromBytes32(handle);
-    }
-    return FhevmHandle.fromBytes32Hex(handle);
-  }
-
   public static canParse(handle: unknown): boolean {
     try {
-      FhevmHandle.parse(handle);
+      FhevmHandle.from(handle);
       return true;
     } catch {
       return false;

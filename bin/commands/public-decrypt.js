@@ -1,10 +1,8 @@
 'use strict';
 
 import { safeJSONstringify } from '../../lib/internal.js';
-import { getInstance } from '../instance.js';
-import { loadFhevmPublicKeyConfig } from '../pubkeyCache.js';
 import { publicDecrypt } from '../publicDecrypt.js';
-import { logCLI, parseCommonOptions, parseHandles } from '../utils.js';
+import { parseCommonOptions, parseHandles } from '../utils.js';
 
 // Old devnet handles publicly decryptable
 // =======================================

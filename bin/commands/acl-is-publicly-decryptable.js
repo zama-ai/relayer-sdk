@@ -11,7 +11,7 @@ export async function testFHETestIsPubliclyDecryptableCommand(options) {
 
   const aclContractAddress = config.fhevmInstanceConfig.aclContractAddress;
 
-  const acl = new ACL(aclContractAddress, provider);
+  const acl = new ACL({ aclContractAddress, provider });
 
   const ok = await acl.isAllowedForDecryption([options.handle]);
 

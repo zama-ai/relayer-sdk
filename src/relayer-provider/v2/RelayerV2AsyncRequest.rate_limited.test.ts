@@ -7,7 +7,7 @@ import type {
 import type { RelayerV2ResponseFailed } from './types';
 import fetchMock from 'fetch-mock';
 import { RelayerV2AsyncRequest } from './RelayerV2AsyncRequest';
-import { SepoliaConfig } from '../..';
+import { SepoliaConfig } from '../../configs';
 import { TEST_CONFIG } from '../../test/config';
 
 // Jest Command line

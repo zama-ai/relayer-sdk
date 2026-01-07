@@ -1,19 +1,26 @@
 import type { ethers as EthersT } from 'ethers';
 import type { Bytes65Hex, ChecksummedAddress } from '@base/types/primitives';
 import type {
-  KmsDelegateEIP712Type,
-  KmsDelegateEIP712TypesType,
-  KmsDelegateEIP712UserArgsType,
+  KmsDelegateUserDecryptEIP712Type,
+  KmsDelegateUserDecryptEIP712TypesType,
+  KmsDelegateUserDecryptEIP712UserArgsType,
   KmsEIP712DomainType,
-  KmsEIP712Type,
-  KmsEIP712TypesType,
-  KmsEIP712UserArgsType,
+  KmsPublicDecryptEIP712Type,
+  KmsPublicDecryptEIP712TypesType,
+  KmsPublicDecryptEIP712UserArgsType,
+  KmsUserDecryptEIP712Type,
+  KmsUserDecryptEIP712TypesType,
+  KmsUserDecryptEIP712UserArgsType,
 } from './types';
 import {
   assertIsChecksummedAddress,
   assertIsChecksummedAddressArray,
 } from '@base/address';
-import { assertIsBytes65HexArray, assertIsBytesHex } from '@base/bytes';
+import {
+  assertIsBytes32HexArray,
+  assertIsBytes65HexArray,
+  assertIsBytesHex,
+} from '@base/bytes';
 import { verifySignature } from '@base/signature';
 import { assertIsUint256, assertIsUint32 } from '@base/uint';
 
@@ -24,7 +31,7 @@ import { assertIsUint256, assertIsUint32 } from '@base/uint';
 export class KmsEIP712 {
   public readonly domain: KmsEIP712DomainType;
 
-  static readonly #types: KmsEIP712TypesType = {
+  static readonly #userDecryptTypes: KmsUserDecryptEIP712TypesType = {
     EIP712Domain: [
       { name: 'name', type: 'string' },
       { name: 'version', type: 'string' },
@@ -40,33 +47,53 @@ export class KmsEIP712 {
     ] as const,
   } as const;
 
-  static readonly #delegateTypes: KmsDelegateEIP712TypesType = {
+  static readonly #delegateUserDecryptTypes: KmsDelegateUserDecryptEIP712TypesType =
+    {
+      EIP712Domain: [
+        { name: 'name', type: 'string' },
+        { name: 'version', type: 'string' },
+        { name: 'chainId', type: 'uint256' },
+        { name: 'verifyingContract', type: 'address' },
+      ] as const,
+      DelegatedUserDecryptRequestVerification: [
+        { name: 'publicKey', type: 'bytes' },
+        { name: 'contractAddresses', type: 'address[]' },
+        { name: 'startTimestamp', type: 'uint256' },
+        { name: 'durationDays', type: 'uint256' },
+        { name: 'extraData', type: 'bytes' },
+        { name: 'delegatedAccount', type: 'address' },
+      ] as const,
+    } as const;
+
+  static readonly #publicDecryptTypes: KmsPublicDecryptEIP712TypesType = {
     EIP712Domain: [
       { name: 'name', type: 'string' },
       { name: 'version', type: 'string' },
       { name: 'chainId', type: 'uint256' },
       { name: 'verifyingContract', type: 'address' },
     ] as const,
-    DelegatedUserDecryptRequestVerification: [
-      { name: 'publicKey', type: 'bytes' },
-      { name: 'contractAddresses', type: 'address[]' },
-      { name: 'startTimestamp', type: 'uint256' },
-      { name: 'durationDays', type: 'uint256' },
+    PublicDecryptVerification: [
+      { name: 'ctHandles', type: 'bytes32[]' },
+      { name: 'decryptedResult', type: 'bytes' },
       { name: 'extraData', type: 'bytes' },
-      { name: 'delegatedAccount', type: 'address' },
     ] as const,
   } as const;
 
   static {
-    Object.freeze(KmsEIP712.#types);
-    Object.freeze(KmsEIP712.#types.EIP712Domain);
-    Object.freeze(KmsEIP712.#types.UserDecryptRequestVerification);
+    Object.freeze(KmsEIP712.#userDecryptTypes);
+    Object.freeze(KmsEIP712.#userDecryptTypes.EIP712Domain);
+    Object.freeze(KmsEIP712.#userDecryptTypes.UserDecryptRequestVerification);
 
-    Object.freeze(KmsEIP712.#delegateTypes);
-    Object.freeze(KmsEIP712.#delegateTypes.EIP712Domain);
+    Object.freeze(KmsEIP712.#delegateUserDecryptTypes);
+    Object.freeze(KmsEIP712.#delegateUserDecryptTypes.EIP712Domain);
     Object.freeze(
-      KmsEIP712.#delegateTypes.DelegatedUserDecryptRequestVerification,
+      KmsEIP712.#delegateUserDecryptTypes
+        .DelegatedUserDecryptRequestVerification,
     );
+
+    Object.freeze(KmsEIP712.#publicDecryptTypes);
+    Object.freeze(KmsEIP712.#publicDecryptTypes.EIP712Domain);
+    Object.freeze(KmsEIP712.#publicDecryptTypes.PublicDecryptVerification);
   }
 
   // Important remark concerning the chainId argument:
@@ -99,13 +126,13 @@ export class KmsEIP712 {
     return this.domain.verifyingContract;
   }
 
-  public createEIP712({
+  public createUserDecryptEIP712({
     publicKey,
     contractAddresses,
     startTimestamp,
     durationDays,
     extraData,
-  }: KmsEIP712UserArgsType): KmsEIP712Type {
+  }: KmsUserDecryptEIP712UserArgsType): KmsUserDecryptEIP712Type {
     assertIsBytesHex(publicKey);
     assertIsChecksummedAddressArray(contractAddresses);
     assertIsUint256(startTimestamp);
@@ -119,7 +146,7 @@ export class KmsEIP712 {
       { name: 'verifyingContract', type: 'address' },
     ] as const;
 
-    const eip712: KmsEIP712Type = {
+    const eip712: KmsUserDecryptEIP712Type = {
       types: {
         EIP712Domain: EIP712DomainType,
         UserDecryptRequestVerification: [
@@ -152,14 +179,14 @@ export class KmsEIP712 {
     return eip712;
   }
 
-  public createDelegateEIP712({
+  public createDelegateUserDecryptEIP712({
     publicKey,
     contractAddresses,
     startTimestamp,
     durationDays,
     extraData,
     delegatedAccount,
-  }: KmsDelegateEIP712UserArgsType): KmsDelegateEIP712Type {
+  }: KmsDelegateUserDecryptEIP712UserArgsType): KmsDelegateUserDecryptEIP712Type {
     assertIsBytesHex(publicKey);
     assertIsChecksummedAddressArray(contractAddresses);
     assertIsUint256(startTimestamp);
@@ -174,7 +201,7 @@ export class KmsEIP712 {
       { name: 'verifyingContract', type: 'address' },
     ] as const;
 
-    const eip712: KmsDelegateEIP712Type = {
+    const eip712: KmsDelegateUserDecryptEIP712Type = {
       types: {
         EIP712Domain: EIP712DomainType,
         DelegatedUserDecryptRequestVerification: [
@@ -209,16 +236,88 @@ export class KmsEIP712 {
     return eip712;
   }
 
-  public verify(
+  public createPublicDecryptEIP712({
+    ctHandles,
+    decryptedResult,
+    extraData,
+  }: KmsPublicDecryptEIP712UserArgsType): KmsPublicDecryptEIP712Type {
+    assertIsBytes32HexArray(ctHandles);
+    assertIsBytesHex(decryptedResult);
+    assertIsBytesHex(extraData);
+
+    const EIP712DomainType = [
+      { name: 'name', type: 'string' },
+      { name: 'version', type: 'string' },
+      { name: 'chainId', type: 'uint256' },
+      { name: 'verifyingContract', type: 'address' },
+    ] as const;
+
+    const eip712: KmsPublicDecryptEIP712Type = {
+      types: {
+        EIP712Domain: EIP712DomainType,
+        PublicDecryptVerification: [
+          { name: 'ctHandles', type: 'bytes32[]' },
+          { name: 'decryptedResult', type: 'bytes' },
+          { name: 'extraData', type: 'bytes' },
+        ] as const,
+      },
+      primaryType: 'PublicDecryptVerification' as const,
+      domain: { ...this.domain },
+      message: {
+        ctHandles,
+        decryptedResult,
+        extraData,
+      },
+    };
+
+    Object.freeze(eip712);
+    Object.freeze(eip712.domain);
+    Object.freeze(eip712.types);
+    Object.freeze(eip712.types.EIP712Domain);
+    Object.freeze(eip712.types.PublicDecryptVerification);
+    Object.freeze(eip712.message);
+    Object.freeze(eip712.message.ctHandles);
+
+    return eip712;
+  }
+
+  public verifyPublicDecrypt({
+    signatures,
+    message,
+  }: {
+    signatures: readonly Bytes65Hex[];
+    message: KmsPublicDecryptEIP712UserArgsType;
+  }): ChecksummedAddress[] {
+    assertIsBytes65HexArray(signatures);
+    const recoveredAddresses = signatures.map((signature: Bytes65Hex) => {
+      const recoveredAddress = verifySignature({
+        signature,
+        domain: this.domain,
+        types: KmsEIP712.#publicDecryptTypes as unknown as Record<
+          string,
+          EthersT.TypedDataField[]
+        >,
+        message,
+        primaryType: 'PublicDecryptVerification',
+      });
+      return recoveredAddress;
+    });
+    console.log('=================================');
+    console.log(JSON.stringify(recoveredAddresses, null, 2));
+    console.log('=================================');
+    return recoveredAddresses;
+  }
+
+  public verifyUserDecrypt(
     signatures: Bytes65Hex[],
-    message: KmsEIP712UserArgsType,
+    message: KmsUserDecryptEIP712UserArgsType,
   ): ChecksummedAddress[] {
     assertIsBytes65HexArray(signatures);
     const recoveredAddresses = signatures.map((signature: Bytes65Hex) => {
       const recoveredAddress = verifySignature({
         signature,
         domain: this.domain,
-        types: KmsEIP712.#types as unknown as Record<
+        types: KmsEIP712.#userDecryptTypes as unknown as Record<
           string,
           EthersT.TypedDataField[]
         >,
@@ -230,16 +329,16 @@ export class KmsEIP712 {
     return recoveredAddresses;
   }
 
-  public verifyDelegate(
+  public verifyDelegateUserDecrypt(
     signatures: Bytes65Hex[],
-    message: KmsDelegateEIP712UserArgsType,
+    message: KmsDelegateUserDecryptEIP712UserArgsType,
   ): ChecksummedAddress[] {
     assertIsBytes65HexArray(signatures);
     const recoveredAddresses = signatures.map((signature: Bytes65Hex) => {
       const recoveredAddress = verifySignature({
         signature,
         domain: this.domain,
-        types: KmsEIP712.#delegateTypes as unknown as Record<
+        types: KmsEIP712.#delegateUserDecryptTypes as unknown as Record<
           string,
           EthersT.TypedDataField[]
         >,

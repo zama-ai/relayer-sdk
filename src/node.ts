@@ -44,13 +44,20 @@ export type * from './relayer-provider/types/public-api';
 export type * from './sdk/lowlevel/types';
 
 export {
-  SepoliaConfig,
-  MainnetConfig,
   createInstance,
   generateKeypair,
   createEIP712,
   getErrorCauseCode,
   getErrorCauseStatus,
 } from './index';
+
+export {
+  SepoliaConfig,
+  SepoliaConfigV1,
+  SepoliaConfigV2,
+  MainnetConfig,
+  MainnetConfigV1,
+  MainnetConfigV2,
+} from './configs';
 
 export { createTfheKeypair, createTfhePublicKey } from './node_tfhe';

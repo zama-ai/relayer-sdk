@@ -1,7 +1,6 @@
 'use strict';
 
 import { logCLI, parseCommonOptions } from '../utils.js';
-import { FHETestAddresses } from '../fheTest.js';
 
 // npx . acl address
 export async function testACLAddressCommand(options) {

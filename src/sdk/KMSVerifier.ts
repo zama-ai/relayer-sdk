@@ -6,6 +6,7 @@ import { Contract } from 'ethers';
 import { isUint8 } from '@base/uint';
 import { assertIsChecksummedAddressArray } from '@base/address';
 import { assertKmsEIP712DomainType } from './kms/guards';
+import { executeWithBatching } from '@base/promise';
 
 export class KMSVerifier {
   static readonly #abi = [
@@ -61,6 +62,7 @@ export class KMSVerifier {
   public static async loadFromChain(params: {
     kmsContractAddress: ChecksummedAddress;
     provider: EthersProviderType;
+    batchRpcCalls?: boolean;
   }): Promise<KMSVerifier> {
     const contract = new Contract(
       params.kmsContractAddress,
@@ -68,15 +70,33 @@ export class KMSVerifier {
       params.provider,
     ) as unknown as IKMSVerifier;
 
-    const res = await Promise.all([
-      contract.eip712Domain(),
-      contract.getThreshold(),
-      contract.getKmsSigners(),
-    ]);
+    // To be removed
+    if (params.batchRpcCalls === true) {
+      throw new Error(`Batch RPC Calls not supported!`);
+    }
 
-    const eip712DomainArray = res[0];
+    ////////////////////////////////////////////////////////////////////////////
+    //
+    // Important remark:
+    // =================
+    // Do NOTE USE `Promise.all` here!
+    // You may get a server response 500 Internal Server Error
+    // "Batch of more than 3 requests are not allowed on free tier, to use this
+    // feature register paid account at drpc.org"
+    //
+    ////////////////////////////////////////////////////////////////////////////
+
+    const rpcCalls = [
+      () => contract.eip712Domain(),
+      () => contract.getThreshold(),
+      () => contract.getKmsSigners(),
+    ];
+
+    const res = await executeWithBatching(rpcCalls, params.batchRpcCalls);
+
+    const eip712DomainArray = res[0] as unknown[];
     const threshold = res[1];
-    const kmsSigners = res[2];
+    const kmsSigners = res[2] as unknown[];
 
     if (!isUint8(threshold)) {
       throw new Error(`Invalid KMSVerifier kms signers threshold.`);

@@ -1,6 +1,7 @@
 import type {
   Eip1193Provider as EthersEip1193ProviderType,
   Provider as EthersProviderType,
+  Network,
 } from 'ethers';
 import type { ChecksummedAddress, Uint64 } from '@base/types/primitives';
 import type { FhevmInstanceConfig } from '../types/relayer';
@@ -10,6 +11,7 @@ import { isUint64 } from '@base/uint';
 import { FhevmConfigError } from '../errors/FhevmConfigError';
 import { InputVerifier } from './InputVerifier';
 import { KMSVerifier } from './KMSVerifier';
+import { executeWithBatching } from '@base/promise';
 
 ////////////////////////////////////////////////////////////////////////////////
 // FhevmHostChainConfig
@@ -39,6 +41,8 @@ export class FhevmHostChainConfig {
   readonly #gatewayVerifyingContractAddressInputVerification: ChecksummedAddress;
   // Gateway chainId (Uint64)
   readonly #gatewayChainId: bigint;
+  // Use parallel RPC Calls
+  readonly #batchRpcCalls: boolean;
 
   private constructor(params: {
     hostChainId: bigint;
@@ -49,6 +53,7 @@ export class FhevmHostChainConfig {
     gatewayVerifyingContractAddressDecryption: ChecksummedAddress;
     gatewayVerifyingContractAddressInputVerification: ChecksummedAddress;
     gatewayChainId: bigint;
+    batchRpcCalls: boolean;
   }) {
     // Host
     this.#hostChainId = params.hostChainId;
@@ -77,6 +82,7 @@ export class FhevmHostChainConfig {
     this.#gatewayVerifyingContractAddressInputVerification =
       params.gatewayVerifyingContractAddressInputVerification;
     this.#gatewayChainId = params.gatewayChainId;
+    this.#batchRpcCalls = params.batchRpcCalls;
   }
 
   // Host
@@ -112,6 +118,10 @@ export class FhevmHostChainConfig {
   }
   public get gatewayChainId(): bigint {
     return this.#gatewayChainId;
+  }
+
+  public get batchRpcCalls(): boolean {
+    return this.#batchRpcCalls;
   }
 
   public static fromUserConfig(
@@ -197,6 +207,7 @@ export class FhevmHostChainConfig {
       gatewayVerifyingContractAddressInputVerification:
         verifyingContractAddressInputVerification,
       gatewayChainId: BigInt(gatewayChainId),
+      batchRpcCalls: instanceConfig.batchRpcCalls === true,
     });
   }
 
@@ -227,26 +238,38 @@ export class FhevmHostChain {
   public static async loadFromChain(
     config: FhevmHostChainConfig,
   ): Promise<FhevmHostChain> {
-    const res = await Promise.all([
-      config.ethersProvider.getNetwork(),
-      InputVerifier.loadFromChain({
-        inputVerifierContractAddress: config.inputVerifierContractAddress,
-        provider: config.ethersProvider,
-      }),
-      KMSVerifier.loadFromChain({
-        kmsContractAddress: config.kmsContractAddress,
-        provider: config.ethersProvider,
-      }),
-    ]);
+    // To be removed
+    if (config.batchRpcCalls) {
+      throw new Error(`Batch RPC Calls not supported!`);
+    }
 
-    const inputVerifier: InputVerifier = res[1];
-    const kmsVerifier: KMSVerifier = res[2];
+    const rpcCalls = [
+      () => config.ethersProvider.getNetwork(),
+      () =>
+        InputVerifier.loadFromChain({
+          inputVerifierContractAddress: config.inputVerifierContractAddress,
+          provider: config.ethersProvider,
+        }),
+      () =>
+        KMSVerifier.loadFromChain({
+          kmsContractAddress: config.kmsContractAddress,
+          provider: config.ethersProvider,
+        }),
+    ];
+
+    const res = await executeWithBatching<unknown>(
+      rpcCalls,
+      config.batchRpcCalls,
+    );
+
+    const network: Network = res[0] as Network;
+    const inputVerifier: InputVerifier = res[1] as InputVerifier;
+    const kmsVerifier: KMSVerifier = res[2] as KMSVerifier;
 
     // Ethers Network
-    const ethersNetworkChainId: bigint = res[0].chainId;
-    if (ethersNetworkChainId !== config.chainId) {
+    if (network.chainId !== config.chainId) {
       throw new FhevmConfigError({
-        message: `Invalid config chainId ${String(config.chainId)}. Expecting ${String(ethersNetworkChainId)}.`,
+        message: `Invalid config chainId ${String(config.chainId)}. Expecting ${String(network.chainId)}.`,
       });
     }
 

@@ -42,4 +42,6 @@ export { AbstractRelayerFhevm } from '@relayer-provider/AbstractRelayerFhevm';
 export { AbstractRelayerProvider } from '@relayer-provider/AbstractRelayerProvider';
 
 // Re-export public API for convenience
-export { SepoliaConfig, MainnetConfig, createInstance } from './index';
+export { createInstance } from './index';
+
+export { SepoliaConfig, MainnetConfig } from './configs';

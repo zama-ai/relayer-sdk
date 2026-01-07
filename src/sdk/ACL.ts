@@ -6,6 +6,7 @@ import {
   assertIsChecksummedAddress,
   isChecksummedAddress,
 } from '@base/address';
+import { executeWithBatching } from '@base/promise';
 import {
   ACLPublicDecryptionError,
   ACLUserDecryptionError,
@@ -29,6 +30,7 @@ interface IACL {
 export class ACL {
   readonly #aclAddress: ChecksummedAddress;
   readonly #contract: IACL;
+  readonly #batchRpcCalls: boolean;
 
   static readonly #abi = [
     'function persistAllowed(bytes32 handle, address account) view returns (bool)',
@@ -42,26 +44,33 @@ export class ACL {
   /**
    * Creates an ACL instance for checking decryption permissions.
    *
-   * @param aclAddress - The checksummed address of the ACL contract
+   * @param aclContractAddress - The checksummed address of the ACL contract
    * @param provider - An ethers ContractRunner (provider or signer) for contract interactions
+   * @param batchRpcCalls - Optional, execute RPC calls in parallel
    * @throws {ChecksummedAddressError} If aclAddress is not a valid checksummed address
    * @throws {ContractError} If provider is not provided
    */
-  public constructor(
-    aclAddress: ChecksummedAddress,
-    provider: EthersT.ContractRunner,
-  ) {
-    if (!isChecksummedAddress(aclAddress)) {
-      throw new ChecksummedAddressError({ address: aclAddress });
+  public constructor({
+    aclContractAddress,
+    provider,
+    batchRpcCalls,
+  }: {
+    aclContractAddress: ChecksummedAddress;
+    provider: EthersT.ContractRunner;
+    batchRpcCalls?: boolean;
+  }) {
+    if (!isChecksummedAddress(aclContractAddress)) {
+      throw new ChecksummedAddressError({ address: aclContractAddress });
     }
     if ((provider as unknown) === undefined || (provider as unknown) === null) {
       throw new ContractError({
-        contractAddress: aclAddress,
+        contractAddress: aclContractAddress,
         contractName: 'ACL',
         message: 'Invalid provider.',
       });
     }
-    this.#aclAddress = aclAddress;
+    this.#batchRpcCalls = batchRpcCalls === true;
+    this.#aclAddress = aclContractAddress;
     this.#contract = new Contract(
       this.#aclAddress,
       ACL.#abi,
@@ -99,11 +108,10 @@ export class ACL {
       }
     }
 
-    const results: boolean[] = (await Promise.all(
-      handlesArray.map((h) => {
-        return this.#contract.isAllowedForDecryption(toHandleBytes32Hex(h));
-      }),
-    )) as unknown[] as boolean[];
+    const rpcCalls = handlesArray.map(
+      (h) => () => this.#contract.isAllowedForDecryption(toHandleBytes32Hex(h)),
+    );
+    const results = await executeWithBatching(rpcCalls, this.#batchRpcCalls);
 
     return isArray ? results : results[0];
   }
@@ -178,11 +186,11 @@ export class ACL {
       }
     }
 
-    const results = (await Promise.all(
-      handleAddressPairsArray.map((p) =>
+    const rpcCalls = handleAddressPairsArray.map(
+      (p) => () =>
         this.#contract.persistAllowed(toHandleBytes32Hex(p.handle), p.address),
-      ),
-    )) as unknown[] as boolean[];
+    );
+    const results = await executeWithBatching(rpcCalls, this.#batchRpcCalls);
 
     return isArray ? results : results[0];
   }

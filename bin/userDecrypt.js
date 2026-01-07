@@ -77,6 +77,8 @@ export async function userDecrypt({
     );
 
     console.log(safeJSONstringify(res, 2));
+
+    return res;
   } catch (e) {
     console.log('');
     console.log('===================== ❌ ERROR ❌ ========================');
