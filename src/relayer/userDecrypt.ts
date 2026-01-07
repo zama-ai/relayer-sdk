@@ -56,7 +56,8 @@ function buildUserDecryptResults(
     typesList.push(typeDiscriminant);
   }
 
-  const results: UserDecryptResults = {} as UserDecryptResults;
+  const results: Record<string, ClearValueType> = {};
+
   handles.forEach(
     (handle, idx) =>
       (results[handle] = formatAccordingToType(

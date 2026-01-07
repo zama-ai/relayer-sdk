@@ -1,4 +1,4 @@
-import { SepoliaConfig } from '../..';
+import { SepoliaConfig } from '../../configs';
 import { createRelayerProvider } from '../createRelayerProvider';
 import fetchMock from 'fetch-mock';
 import { AbstractRelayerProvider } from '../AbstractRelayerProvider';

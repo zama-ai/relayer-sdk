@@ -20,6 +20,7 @@ import { CoprocessorEIP712 } from './CoprocessorEIP712';
 import { RelayerThresholdCoprocessorSignerError } from '../../errors/RelayerThresholdCoprocessorSignerError';
 import { InputProof } from './InputProof';
 import { Contract } from 'ethers';
+import { executeWithBatching } from '@base/promise';
 
 ////////////////////////////////////////////////////////////////////////////////
 // CoprocessorSignersVerifier
@@ -58,6 +59,7 @@ export class CoprocessorSignersVerifier implements ICoprocessorSignersVerifier {
       {
         readonly inputVerifierContractAddress: ChecksummedAddress;
         readonly provider: EthersT.Provider;
+        readonly batchRpcCalls?: boolean;
       } & ICoprocessorEIP712
     >,
   ): Promise<CoprocessorSignersVerifier> {
@@ -74,10 +76,13 @@ export class CoprocessorSignersVerifier implements ICoprocessorSignersVerifier {
       params.provider,
     ) as unknown as IInputVerifier;
 
-    const res = await Promise.all([
-      inputContract.getCoprocessorSigners(),
-      inputContract.getThreshold(),
-    ]);
+    const res = await executeWithBatching(
+      [
+        () => inputContract.getCoprocessorSigners(),
+        () => inputContract.getThreshold(),
+      ],
+      params.batchRpcCalls,
+    );
 
     const coprocessorSignersAddresses = res[0] as ChecksummedAddress[];
     const threshold = res[1] as number;

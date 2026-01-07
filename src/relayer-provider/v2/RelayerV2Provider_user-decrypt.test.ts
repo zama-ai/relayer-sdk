@@ -311,7 +311,7 @@ describeIfFetch('FhevmInstance.userDecrypot:sepolia:', () => {
         TEST_CONFIG.fhevmInstanceConfig.verifyingContractAddressDecryption,
     });
 
-    const new_eip = kmsEIP712.createEIP712({
+    const new_eip = kmsEIP712.createUserDecryptEIP712({
       publicKey,
       contractAddresses,
       durationDays,
@@ -413,7 +413,7 @@ describe('FhevmInstance.createEIP712', () => {
         TEST_CONFIG.fhevmInstanceConfig.verifyingContractAddressDecryption,
     });
 
-    const new_eip = kmsEIP712.createEIP712({
+    const new_eip = kmsEIP712.createUserDecryptEIP712({
       publicKey,
       contractAddresses,
       durationDays,
@@ -429,7 +429,7 @@ describe('FhevmInstance.createEIP712', () => {
     const signature: Bytes65Hex = await userSigner.sign(new_eip);
     assertIsBytes65Hex(signature);
 
-    const recoveredAddresses = kmsEIP712.verify([signature], {
+    const recoveredAddresses = kmsEIP712.verifyUserDecrypt([signature], {
       contractAddresses,
       durationDays,
       startTimestamp,
@@ -481,7 +481,7 @@ describe('FhevmInstance.createEIP712', () => {
         TEST_CONFIG.fhevmInstanceConfig.verifyingContractAddressDecryption,
     });
 
-    const new_eip = kmsEIP712.createDelegateEIP712({
+    const new_eip = kmsEIP712.createDelegateUserDecryptEIP712({
       publicKey,
       contractAddresses,
       durationDays,
@@ -498,14 +498,17 @@ describe('FhevmInstance.createEIP712', () => {
     const signature: Bytes65Hex = await userSigner.sign(new_eip);
     assertIsBytes65Hex(signature);
 
-    const recoveredAddresses = kmsEIP712.verifyDelegate([signature], {
-      contractAddresses,
-      durationDays,
-      startTimestamp,
-      extraData,
-      publicKey,
-      delegatedAccount,
-    });
+    const recoveredAddresses = kmsEIP712.verifyDelegateUserDecrypt(
+      [signature],
+      {
+        contractAddresses,
+        durationDays,
+        startTimestamp,
+        extraData,
+        publicKey,
+        delegatedAccount,
+      },
+    );
 
     expect(recoveredAddresses.length).toBe(1);
     expect(recoveredAddresses[0]).toBe(userSigner.address);

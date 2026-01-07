@@ -1,7 +1,7 @@
 import type {
-  KmsDelegateEIP712Type,
+  KmsDelegateUserDecryptEIP712Type,
   KmsEIP712Params,
-  KmsEIP712Type,
+  KmsUserDecryptEIP712Type,
 } from '../../sdk/kms/types';
 import type { Prettify } from '../../base/types/utils';
 import type { BytesHex } from '../../base/types/primitives';
@@ -23,7 +23,7 @@ type KmsSignersParams = Prettify<
 
 export class KmsSigners extends EIP712Signers<
   KmsSigner,
-  KmsEIP712Type | KmsDelegateEIP712Type
+  KmsUserDecryptEIP712Type | KmsDelegateUserDecryptEIP712Type
 > {
   private static readonly DEFAULT_KMS_SIGNER_BASE_PATH = "m/44'/60'/2'/0";
 

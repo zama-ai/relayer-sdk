@@ -169,7 +169,7 @@ describe('KmsEIP712', () => {
     });
 
     it('creates EIP712 object with valid message', () => {
-      const eip712 = kms.createEIP712(createValidMessage());
+      const eip712 = kms.createUserDecryptEIP712(createValidMessage());
 
       expect(eip712).toBeDefined();
       expect(eip712.domain).toBeDefined();
@@ -179,7 +179,7 @@ describe('KmsEIP712', () => {
     });
 
     it('copies domain to EIP712 object', () => {
-      const eip712 = kms.createEIP712(createValidMessage());
+      const eip712 = kms.createUserDecryptEIP712(createValidMessage());
 
       expect(eip712.domain.name).toBe('Decryption');
       expect(eip712.domain.version).toBe('1');
@@ -189,7 +189,7 @@ describe('KmsEIP712', () => {
 
     it('includes message fields in EIP712 object', () => {
       const message = createValidMessage();
-      const eip712 = kms.createEIP712(message);
+      const eip712 = kms.createUserDecryptEIP712(message);
 
       expect(eip712.message.publicKey).toBe(VALID_PUBLIC_KEY);
       expect(eip712.message.contractAddresses).toEqual([
@@ -203,7 +203,7 @@ describe('KmsEIP712', () => {
     });
 
     it('freezes EIP712 object and its properties', () => {
-      const eip712 = kms.createEIP712(createValidMessage());
+      const eip712 = kms.createUserDecryptEIP712(createValidMessage());
 
       expect(Object.isFrozen(eip712)).toBe(true);
       expect(Object.isFrozen(eip712.domain)).toBe(true);
@@ -221,7 +221,7 @@ describe('KmsEIP712', () => {
         contractAddresses: [] as ChecksummedAddress[],
       };
 
-      const eip712 = kms.createEIP712(message);
+      const eip712 = kms.createUserDecryptEIP712(message);
 
       expect(eip712.message.contractAddresses).toEqual([]);
     });
@@ -232,7 +232,7 @@ describe('KmsEIP712', () => {
         contractAddresses: [VALID_CONTRACT_ADDRESS, VALID_DELEGATED_ACCOUNT],
       };
 
-      const eip712 = kms.createEIP712(message);
+      const eip712 = kms.createUserDecryptEIP712(message);
 
       expect(eip712.message.contractAddresses).toEqual([
         VALID_CONTRACT_ADDRESS,
@@ -246,7 +246,7 @@ describe('KmsEIP712', () => {
         extraData: '0x' as BytesHex,
       };
 
-      const eip712 = kms.createEIP712(message);
+      const eip712 = kms.createUserDecryptEIP712(message);
 
       expect(eip712.message.extraData).toBe('0x');
     });
@@ -257,7 +257,7 @@ describe('KmsEIP712', () => {
         startTimestamp: BigInt(VALID_START_TIMESTAMP),
       };
 
-      const eip712 = kms.createEIP712(message);
+      const eip712 = kms.createUserDecryptEIP712(message);
 
       expect(eip712.message.startTimestamp).toBe(
         VALID_START_TIMESTAMP.toString(),
@@ -270,7 +270,7 @@ describe('KmsEIP712', () => {
         durationDays: BigInt(VALID_DURATION_DAYS),
       };
 
-      const eip712 = kms.createEIP712(message);
+      const eip712 = kms.createUserDecryptEIP712(message);
 
       expect(eip712.message.durationDays).toBe(VALID_DURATION_DAYS.toString());
     });
@@ -293,7 +293,9 @@ describe('KmsEIP712', () => {
         publicKey: 'invalid',
       };
 
-      expect(() => kms.createEIP712(message as any)).toThrow(InvalidTypeError);
+      expect(() => kms.createUserDecryptEIP712(message as any)).toThrow(
+        InvalidTypeError,
+      );
     });
 
     it('throws for invalid contractAddresses', () => {
@@ -302,7 +304,9 @@ describe('KmsEIP712', () => {
         contractAddresses: ['0xinvalid'] as any,
       };
 
-      expect(() => kms.createEIP712(message)).toThrow(ChecksummedAddressError);
+      expect(() => kms.createUserDecryptEIP712(message)).toThrow(
+        ChecksummedAddressError,
+      );
     });
 
     it('throws for negative startTimestamp', () => {
@@ -311,7 +315,9 @@ describe('KmsEIP712', () => {
         startTimestamp: -1,
       };
 
-      expect(() => kms.createEIP712(message)).toThrow(InvalidTypeError);
+      expect(() => kms.createUserDecryptEIP712(message)).toThrow(
+        InvalidTypeError,
+      );
     });
 
     it('throws for negative durationDays', () => {
@@ -320,7 +326,9 @@ describe('KmsEIP712', () => {
         durationDays: -1,
       };
 
-      expect(() => kms.createEIP712(message)).toThrow(InvalidTypeError);
+      expect(() => kms.createUserDecryptEIP712(message)).toThrow(
+        InvalidTypeError,
+      );
     });
 
     it('throws for invalid extraData', () => {
@@ -329,7 +337,9 @@ describe('KmsEIP712', () => {
         extraData: 'invalid',
       };
 
-      expect(() => kms.createEIP712(message as any)).toThrow(InvalidTypeError);
+      expect(() => kms.createUserDecryptEIP712(message as any)).toThrow(
+        InvalidTypeError,
+      );
     });
   });
 
@@ -345,7 +355,9 @@ describe('KmsEIP712', () => {
     });
 
     it('creates delegate EIP712 object with valid message', () => {
-      const eip712 = kms.createDelegateEIP712(createValidDelegateMessage());
+      const eip712 = kms.createDelegateUserDecryptEIP712(
+        createValidDelegateMessage(),
+      );
 
       expect(eip712).toBeDefined();
       expect(eip712.domain).toBeDefined();
@@ -357,7 +369,9 @@ describe('KmsEIP712', () => {
     });
 
     it('copies domain to delegate EIP712 object', () => {
-      const eip712 = kms.createDelegateEIP712(createValidDelegateMessage());
+      const eip712 = kms.createDelegateUserDecryptEIP712(
+        createValidDelegateMessage(),
+      );
 
       expect(eip712.domain.name).toBe('Decryption');
       expect(eip712.domain.version).toBe('1');
@@ -366,13 +380,17 @@ describe('KmsEIP712', () => {
     });
 
     it('includes delegatedAccount in delegate EIP712 message', () => {
-      const eip712 = kms.createDelegateEIP712(createValidDelegateMessage());
+      const eip712 = kms.createDelegateUserDecryptEIP712(
+        createValidDelegateMessage(),
+      );
 
       expect(eip712.message.delegatedAccount).toBe(VALID_DELEGATED_ACCOUNT);
     });
 
     it('freezes delegate EIP712 object and its properties', () => {
-      const eip712 = kms.createDelegateEIP712(createValidDelegateMessage());
+      const eip712 = kms.createDelegateUserDecryptEIP712(
+        createValidDelegateMessage(),
+      );
 
       expect(Object.isFrozen(eip712)).toBe(true);
       expect(Object.isFrozen(eip712.domain)).toBe(true);
@@ -402,7 +420,7 @@ describe('KmsEIP712', () => {
         delegatedAccount: '0xinvalid',
       };
 
-      expect(() => kms.createDelegateEIP712(message as any)).toThrow(
+      expect(() => kms.createDelegateUserDecryptEIP712(message as any)).toThrow(
         ChecksummedAddressError,
       );
     });
@@ -413,7 +431,7 @@ describe('KmsEIP712', () => {
         delegatedAccount: '0x37ac010c1c566696326813b840319b58bb5840e4',
       };
 
-      expect(() => kms.createDelegateEIP712(message as any)).toThrow(
+      expect(() => kms.createDelegateUserDecryptEIP712(message as any)).toThrow(
         ChecksummedAddressError,
       );
     });
@@ -432,12 +450,12 @@ describe('KmsEIP712', () => {
 
     it('throws for invalid signatures array', () => {
       expect(() =>
-        kms.verify(['0xinvalid'] as any, createValidMessage()),
+        kms.verifyUserDecrypt(['0xinvalid'] as any, createValidMessage()),
       ).toThrow(InvalidTypeError);
     });
 
     it('accepts empty signatures array', () => {
-      const result = kms.verify([], createValidMessage());
+      const result = kms.verifyUserDecrypt([], createValidMessage());
 
       expect(result).toEqual([]);
     });
@@ -456,12 +474,18 @@ describe('KmsEIP712', () => {
 
     it('throws for invalid signatures array', () => {
       expect(() =>
-        kms.verifyDelegate(['0xinvalid'] as any, createValidDelegateMessage()),
+        kms.verifyDelegateUserDecrypt(
+          ['0xinvalid'] as any,
+          createValidDelegateMessage(),
+        ),
       ).toThrow(InvalidTypeError);
     });
 
     it('accepts empty signatures array', () => {
-      const result = kms.verifyDelegate([], createValidDelegateMessage());
+      const result = kms.verifyDelegateUserDecrypt(
+        [],
+        createValidDelegateMessage(),
+      );
 
       expect(result).toEqual([]);
     });
@@ -489,7 +513,7 @@ describe('KmsEIP712', () => {
         contractAddresses: addresses,
       };
 
-      const eip712 = kms.createEIP712(message);
+      const eip712 = kms.createUserDecryptEIP712(message);
 
       addresses.push(VALID_DELEGATED_ACCOUNT);
 
@@ -506,7 +530,7 @@ describe('KmsEIP712', () => {
         contractAddresses: addresses,
       };
 
-      const eip712 = kms.createDelegateEIP712(message);
+      const eip712 = kms.createDelegateUserDecryptEIP712(message);
 
       addresses.push(VALID_DELEGATED_ACCOUNT);
 

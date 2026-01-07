@@ -85,11 +85,18 @@ export type {
 export type * from './relayer-provider/types/public-api';
 
 export {
+  SepoliaConfig,
+  SepoliaConfigV1,
+  SepoliaConfigV2,
+  MainnetConfig,
+  MainnetConfigV1,
+  MainnetConfigV2,
+} from './configs';
+
+export {
   createInstance,
   generateKeypair,
   createEIP712,
-  MainnetConfig,
-  SepoliaConfig,
   getErrorCauseCode,
   getErrorCauseStatus,
 } from './index';

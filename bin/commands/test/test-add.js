@@ -63,6 +63,16 @@ export async function testFHETestAddCommand(options) {
   const handle = await contract[getFuncName]();
   logCLI(`🏈 handle: ${handle}`);
 
+  const current = await userDecrypt({
+    handleContractPairs: [{ handle, contractAddress }],
+    contractAddresses: [contractAddress],
+    signer,
+    config,
+    options,
+  });
+
+  logCLI(`🏀 handle clear value: ${current[handle]}`);
+
   logCLI(`💥 FHE.add(${handle}, ${o.handles[0]}) ...`);
 
   /** @type {import('ethers').ContractTransactionResponse} */
@@ -80,11 +90,21 @@ export async function testFHETestAddCommand(options) {
   const newHandle = await contract[getFuncName]();
   logCLI(`🏈 new handle: ${newHandle}`);
 
-  await userDecrypt({
+  const next = await userDecrypt({
     handleContractPairs: [{ handle: newHandle, contractAddress }],
     contractAddresses: [contractAddress],
     signer,
     config,
     options,
   });
+
+  if (
+    BigInt(next[newHandle]) !==
+    BigInt(current[handle]) + fheTypedValues[0].value
+  ) {
+    logCLI(`❌ Test Failed!`);
+    throw new Error(`Test Failed!`);
+  } else {
+    logCLI(`✅ Test Succeeded!`);
+  }
 }

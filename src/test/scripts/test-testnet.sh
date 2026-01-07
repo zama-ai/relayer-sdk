@@ -79,13 +79,13 @@ echo ""
 echo "========================================================================="
 echo "= $((++STEP))/${STEPS} Run: test public-decrypt --network testnet --type euint32 --version 1 ..."
 echo "========================================================================="
-npx . test public-decrypt --network testnet --type euint32 --version 1
+npx . test public-decrypt --network testnet --types euint32 --version 1
 
 echo ""
 echo "========================================================================="
 echo "= $((++STEP))/${STEPS} Run: test public-decrypt --network testnet --type euint32 --version 2 ..."
 echo "========================================================================="
-npx . test public-decrypt --network testnet --type euint32 --version 2
+npx . test public-decrypt --network testnet --types euint32 --version 2
 
 echo ""
 echo "========================================================================="

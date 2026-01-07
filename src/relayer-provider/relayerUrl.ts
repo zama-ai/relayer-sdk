@@ -1,8 +1,18 @@
 import { removeSuffix } from '@base/string';
+import {
+  MainnetRelayerBaseUrl,
+  MainnetRelayerUrlV1,
+  MainnetRelayerUrlV2,
+  SepoliaRelayerBaseUrl,
+  SepoliaRelayerUrlV1,
+  SepoliaRelayerUrlV2,
+} from '../configs';
 
 /**
  * Parses a relayer URL and extracts or applies the API version.
  *
+ * - If the URL is a predefined url, returns the predefined version.
+ * - If `relayerRouteVersion` is specified, returns the `relayerRouteVersion`.
  * - If the URL ends with `/v1`, returns version 1 and the URL unchanged.
  * - If the URL ends with `/v2`, returns version 2 and the URL unchanged.
  * - Otherwise, appends the fallback version to the URL.
@@ -11,11 +21,13 @@ import { removeSuffix } from '@base/string';
  *
  * @param relayerUrl - The relayer URL to parse
  * @param fallbackVersion - Version to use if URL doesn't specify one
+ * @param relayerRouteVersion - Version to use if specified
  * @returns The normalized URL and version, or null if invalid
  */
 export function parseRelayerUrl(
   relayerUrl: unknown,
   fallbackVersion: 1 | 2,
+  relayerRouteVersion?: 1 | 2,
 ): { url: string; version: 1 | 2 } | null {
   if (
     relayerUrl === undefined ||
@@ -28,6 +40,24 @@ export function parseRelayerUrl(
   const urlNoSlash = removeSuffix(relayerUrl, '/');
   if (!URL.canParse(urlNoSlash)) {
     return null;
+  }
+
+  const stdUlrs = [
+    SepoliaRelayerBaseUrl,
+    SepoliaRelayerUrlV1,
+    SepoliaRelayerUrlV2,
+    MainnetRelayerBaseUrl,
+    MainnetRelayerUrlV1,
+    MainnetRelayerUrlV2,
+  ];
+  const isStdUrl = stdUlrs.includes(urlNoSlash);
+  if (!isStdUrl) {
+    if (relayerRouteVersion === 1 || relayerRouteVersion === 2) {
+      return {
+        url: urlNoSlash,
+        version: relayerRouteVersion,
+      };
+    }
   }
 
   if (urlNoSlash.endsWith('/v1')) {

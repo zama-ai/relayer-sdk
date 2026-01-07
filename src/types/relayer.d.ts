@@ -28,6 +28,8 @@ export type FhevmInstanceConfig = Prettify<
     relayerUrl: string;
     network: Eip1193Provider | string;
     chainId?: number;
+    batchRpcCalls?: boolean;
+    relayerRouteVersion?: 1 | 2;
   } & Partial<FhevmPkeConfigType> &
     FhevmInstanceOptions
 >;
@@ -88,13 +90,13 @@ export type FhevmPkeConfigType = {
 ////////////////////////////////////////////////////////////////////////////////
 
 export type ClearValueType = bigint | boolean | `0x${string}`;
-export type ClearValues = Record<`0x${string}`, ClearValueType>;
+export type ClearValues = Readonly<Record<`0x${string}`, ClearValueType>>;
 export type UserDecryptResults = ClearValues;
-export type PublicDecryptResults = {
+export type PublicDecryptResults = Readonly<{
   clearValues: ClearValues;
   abiEncodedClearValues: `0x${string}`;
   decryptionProof: `0x${string}`;
-};
+}>;
 
 export type HandleContractPair = {
   handle: Uint8Array | string;

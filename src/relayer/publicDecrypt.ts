@@ -3,7 +3,11 @@ import type {
   RelayerPublicDecryptPayload,
   RelayerPublicDecryptResult,
 } from '@relayer-provider/types/public-api';
-import type { Bytes32Hex, FheTypeId } from '@base/types/primitives';
+import type {
+  Bytes32Hex,
+  ChecksummedAddress,
+  FheTypeId,
+} from '@base/types/primitives';
 import type {
   ClearValues,
   ClearValueType,
@@ -11,24 +15,16 @@ import type {
   PublicDecryptResults,
 } from '../types/relayer';
 import type { Provider as EthersProviderType } from 'ethers';
-import {
-  solidityPacked,
-  concat,
-  AbiCoder,
-  Contract,
-  verifyTypedData,
-} from 'ethers';
-import { bytesToHex, hexToBytes } from '@base/bytes';
+import { solidityPacked, concat, AbiCoder, verifyTypedData } from 'ethers';
 import { ensure0x } from '@base/string';
 import { assertNever } from '../errors/utils';
 import { AbstractRelayerProvider } from '@relayer-provider/AbstractRelayerProvider';
 import { solidityPrimitiveTypeNameFromFheTypeId } from '@sdk/FheType';
 import { FhevmHandle } from '@sdk/FhevmHandle';
-import { check2048EncryptedBits } from './decryptUtils';
+import { fhevmHandleCheck2048EncryptedBits } from './decryptUtils';
+import { ACL } from '@sdk/ACL';
 
-const aclABI = [
-  'function isAllowedForDecryption(bytes32 handle) view returns (bool)',
-];
+////////////////////////////////////////////////////////////////////////////////
 
 function isThresholdReached(
   kmsSigners: string[],
@@ -57,15 +53,18 @@ function isThresholdReached(
   return recoveredAddresses.length >= threshold;
 }
 
-function abiEncodeClearValues(clearValues: ClearValues) {
-  const handlesBytes32Hex = Object.keys(clearValues) as `0x${string}`[];
+////////////////////////////////////////////////////////////////////////////////
 
+function abiEncodeClearValues(
+  handlesBytes32Hex: `0x${string}`[],
+  clearValues: ClearValues,
+) {
   const abiTypes: string[] = [];
   const abiValues: (string | bigint)[] = [];
 
   for (let i = 0; i < handlesBytes32Hex.length; ++i) {
     const handle = handlesBytes32Hex[i];
-    const handleType: FheTypeId = FhevmHandle.parse(handle).fheTypeId;
+    const handleType: FheTypeId = FhevmHandle.from(handle).fheTypeId;
 
     let clearTextValue: ClearValueType =
       clearValues[handle as keyof typeof clearValues];
@@ -137,6 +136,8 @@ function abiEncodeClearValues(clearValues: ClearValues) {
   };
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
 function buildDecryptionProof(
   kmsSignatures: `0x${string}`[],
   extraData: `0x${string}`,
@@ -155,14 +156,15 @@ function buildDecryptionProof(
   return decryptionProof;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
 function deserializeClearValues(
-  handles: Bytes32Hex[],
+  orderedFhevmHandles: FhevmHandle[],
   decryptedResult: `0x${string}`,
 ): ClearValues {
   let fheTypeIdList: FheTypeId[] = [];
-  for (const handle of handles) {
-    const typeDiscriminant = FhevmHandle.parse(handle).fheTypeId;
-    fheTypeIdList.push(typeDiscriminant);
+  for (const fhevmHandle of orderedFhevmHandles) {
+    fheTypeIdList.push(fhevmHandle.fheTypeId);
   }
 
   const restoredEncoded =
@@ -185,19 +187,25 @@ function deserializeClearValues(
   // strip dummy first/last element
   const rawValues = decoded.slice(1, 1 + fheTypeIdList.length);
 
-  const results: ClearValues = {} as ClearValues;
-  handles.forEach((handle, idx) => (results[handle] = rawValues[idx]));
+  const results: Record<string, ClearValueType> = {};
+
+  orderedFhevmHandles.forEach(
+    (fhevmHandle, idx) =>
+      (results[fhevmHandle.toBytes32Hex()] = rawValues[idx]),
+  );
 
   return results;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
 export const publicDecryptRequest =
   (
-    kmsSigners: string[],
+    kmsSigners: ChecksummedAddress[],
     thresholdSigners: number,
     gatewayChainId: number,
-    verifyingContractAddress: string,
-    aclContractAddress: string,
+    verifyingContractAddressDecryption: ChecksummedAddress,
+    aclContractAddress: ChecksummedAddress,
     relayerProvider: AbstractRelayerProvider,
     provider: EthersProviderType,
     defaultOptions?: FhevmInstanceOptions,
@@ -207,37 +215,25 @@ export const publicDecryptRequest =
     options?: RelayerPublicDecryptOptionsType,
   ): Promise<PublicDecryptResults> => {
     const extraData: `0x${string}` = '0x00';
-    const acl = new Contract(aclContractAddress, aclABI, provider);
 
-    // This will be replaced by new sanitize classes
-    let handles: `0x${string}`[];
-    try {
-      handles = await Promise.all(
-        _handles.map(async (_handle) => {
-          const handle =
-            typeof _handle === 'string'
-              ? bytesToHex(hexToBytes(_handle))
-              : bytesToHex(_handle);
+    const orderedFhevmHandles: FhevmHandle[] = _handles.map(FhevmHandle.from);
+    const orderedHandlesBytes32Hex: Bytes32Hex[] = orderedFhevmHandles.map(
+      (h) => h.toBytes32Hex(),
+    );
 
-          const isAllowedForDecryption =
-            await acl.isAllowedForDecryption(handle);
-          if (!isAllowedForDecryption) {
-            throw new Error(
-              `Handle ${handle} is not allowed for public decryption!`,
-            );
-          }
-          return handle;
-        }),
-      );
-    } catch (e) {
-      throw e;
-    }
+    // Check 2048 bits limit
+    fhevmHandleCheck2048EncryptedBits(orderedFhevmHandles);
 
-    // check 2048 bits limit
-    check2048EncryptedBits(handles);
+    // Check ACL permissions
+    const acl = new ACL({
+      aclContractAddress: aclContractAddress as ChecksummedAddress,
+      provider,
+    });
+    await acl.checkAllowedForDecryption(orderedFhevmHandles);
 
+    // Call relayer
     const payloadForRequest: RelayerPublicDecryptPayload = {
-      ciphertextHandles: handles,
+      ciphertextHandles: orderedHandlesBytes32Hex,
       extraData,
     };
 
@@ -247,12 +243,46 @@ export const publicDecryptRequest =
         ...options,
       });
 
+    // Sanitize relayer response
+    const decryptedResult: `0x${string}` = ensure0x(json.decryptedValue);
+    const kmsSignatures: `0x${string}`[] = json.signatures.map(ensure0x);
+
+    ////////////////////////////////////////////////////////////////////////////
+    //
+    // Warning!!!! Do not use '0x00' here!! Only '0x' is permitted!
+    //
+    ////////////////////////////////////////////////////////////////////////////
+    const signedExtraData = '0x';
+
+    ////////////////////////////////////////////////////////////////////////////
+    // Compute the PublicDecryptionProof
+    ////////////////////////////////////////////////////////////////////////////
+
+    /*
+    const kmsVerifier = KmsSignersVerifier.fromAddresses({
+      chainId: BigInt(gatewayChainId),
+      kmsSigners,
+      threshold: thresholdSigners,
+      verifyingContractAddressDecryption,
+    });
+
+    const publicDecryptionProof: PublicDecryptionProof =
+      kmsVerifier.verifyAndComputePublicDecryptionProof({
+        orderedHandles: orderedFhevmHandles,
+        orderedDecryptedResult: decryptedResult as BytesHex,
+        signatures: kmsSignatures,
+        extraData: signedExtraData,
+      });
+    */
+
+    ////////////////////////////////////////////////////////////////////////////
+
     // verify signatures on decryption:
     const domain = {
       name: 'Decryption',
       version: '1',
       chainId: gatewayChainId,
-      verifyingContract: verifyingContractAddress,
+      verifyingContract: verifyingContractAddressDecryption,
     };
     const types = {
       PublicDecryptVerification: [
@@ -261,20 +291,17 @@ export const publicDecryptRequest =
         { name: 'extraData', type: 'bytes' },
       ],
     };
-    //const result = json.response[0];
-    const result = json;
-    const decryptedResult: `0x${string}` = ensure0x(result.decryptedValue);
-    const kmsSignatures: `0x${string}`[] = result.signatures.map(ensure0x);
-
-    // TODO result.extraData (RelayerPublicDecryptJsonResponse)
-    const signedExtraData = '0x';
 
     const recoveredAddresses: `0x${string}`[] = kmsSignatures.map(
       (kmsSignature: `0x${string}`) => {
         const recoveredAddress = verifyTypedData(
           domain,
           types,
-          { ctHandles: handles, decryptedResult, extraData: signedExtraData },
+          {
+            ctHandles: orderedHandlesBytes32Hex,
+            decryptedResult,
+            extraData: signedExtraData,
+          },
           kmsSignature,
         ) as `0x${string}`;
         return recoveredAddress;
@@ -292,11 +319,11 @@ export const publicDecryptRequest =
     }
 
     const clearValues: ClearValues = deserializeClearValues(
-      handles,
+      orderedFhevmHandles,
       decryptedResult,
     );
 
-    const abiEnc = abiEncodeClearValues(clearValues);
+    const abiEnc = abiEncodeClearValues(orderedHandlesBytes32Hex, clearValues);
     const decryptionProof = buildDecryptionProof(
       kmsSignatures,
       signedExtraData,

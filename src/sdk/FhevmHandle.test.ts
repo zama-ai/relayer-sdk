@@ -471,14 +471,14 @@ describe('FhevmHandle', () => {
 
   describe('parse', () => {
     it('parses hex string', () => {
-      const handle = FhevmHandle.parse(VALID_HANDLE_HEX);
+      const handle = FhevmHandle.from(VALID_HANDLE_HEX);
 
       expect(handle).toBeInstanceOf(FhevmHandle);
     });
 
     it('parses Uint8Array', () => {
       const bytes = hexToBytes(VALID_HANDLE_HEX);
-      const handle = FhevmHandle.parse(bytes);
+      const handle = FhevmHandle.from(bytes);
 
       expect(handle).toBeInstanceOf(FhevmHandle);
     });

@@ -1,4 +1,4 @@
-import { SepoliaConfig } from '../..';
+import { SepoliaConfig } from '../../configs';
 import { createRelayerFhevm } from '../createRelayerFhevm';
 import fetchMock from 'fetch-mock';
 import { RelayerV2Fhevm } from './RelayerV2Fhevm';

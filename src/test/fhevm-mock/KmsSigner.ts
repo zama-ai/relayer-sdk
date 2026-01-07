@@ -1,5 +1,8 @@
 import type { ethers as EthersT } from 'ethers';
-import type { KmsDelegateEIP712Type, KmsEIP712Type } from '../../sdk/kms/types';
+import type {
+  KmsDelegateUserDecryptEIP712Type,
+  KmsUserDecryptEIP712Type,
+} from '../../sdk/kms/types';
 import type { ChecksummedAddress } from '../../base/types/primitives';
 import { EIP712Signer } from './EIP712Signer';
 
@@ -8,7 +11,7 @@ import { EIP712Signer } from './EIP712Signer';
 ////////////////////////////////////////////////////////////////////////////////
 
 export class KmsSigner extends EIP712Signer<
-  KmsEIP712Type | KmsDelegateEIP712Type
+  KmsUserDecryptEIP712Type | KmsDelegateUserDecryptEIP712Type
 > {
   constructor(signer: EthersT.Signer, address: ChecksummedAddress) {
     super(signer, address);

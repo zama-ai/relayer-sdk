@@ -54,6 +54,7 @@ export async function inputProof(
     };
     return o;
   } catch (e) {
+    console.log(e.name);
     console.log(e.message);
     console.log(e);
     console.log(JSON.stringify(e.cause, null, 2));

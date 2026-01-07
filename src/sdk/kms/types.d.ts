@@ -1,9 +1,18 @@
-import type { BytesHex, ChecksummedAddress } from '@base/types/primitives';
+import type {
+  Bytes32Hex,
+  BytesHex,
+  ChecksummedAddress,
+} from '@base/types/primitives';
 import type { Prettify } from '@base/types/utils';
 
 ////////////////////////////////////////////////////////////////////////////////
 // KmsEIP712 Types
 ////////////////////////////////////////////////////////////////////////////////
+
+export interface IKmsEIP712 {
+  readonly chainId: bigint;
+  readonly verifyingContractAddressDecryption: ChecksummedAddress;
+}
 
 export type KmsEIP712Params = Readonly<{
   chainId: bigint;
@@ -17,7 +26,11 @@ export type KmsEIP712DomainType = Readonly<{
   verifyingContract: ChecksummedAddress;
 }>;
 
-export type KmsEIP712UserArgsType = Readonly<{
+////////////////////////////////////////////////////////////////////////////////
+// UserDecryptRequestVerification
+////////////////////////////////////////////////////////////////////////////////
+
+export type KmsUserDecryptEIP712UserArgsType = Readonly<{
   publicKey: BytesHex;
   contractAddresses: readonly ChecksummedAddress[];
   startTimestamp: number | bigint;
@@ -25,7 +38,7 @@ export type KmsEIP712UserArgsType = Readonly<{
   extraData: BytesHex;
 }>;
 
-export type KmsEIP712MessageType = Readonly<{
+export type KmsUserDecryptEIP712MessageType = Readonly<{
   publicKey: BytesHex;
   contractAddresses: readonly ChecksummedAddress[];
   startTimestamp: string;
@@ -33,19 +46,48 @@ export type KmsEIP712MessageType = Readonly<{
   extraData: BytesHex;
 }>;
 
-export type KmsDelegateEIP712UserArgsType = Prettify<
-  KmsEIP712UserArgsType & {
+export type KmsUserDecryptEIP712TypesType = {
+  readonly EIP712Domain: readonly [
+    { readonly name: 'name'; readonly type: 'string' },
+    { readonly name: 'version'; readonly type: 'string' },
+    { readonly name: 'chainId'; readonly type: 'uint256' },
+    { readonly name: 'verifyingContract'; readonly type: 'address' },
+  ];
+  readonly UserDecryptRequestVerification: readonly [
+    { readonly name: 'publicKey'; readonly type: 'bytes' },
+    { readonly name: 'contractAddresses'; readonly type: 'address[]' },
+    { readonly name: 'startTimestamp'; readonly type: 'uint256' },
+    { readonly name: 'durationDays'; readonly type: 'uint256' },
+    { readonly name: 'extraData'; readonly type: 'bytes' },
+  ];
+};
+
+export type KmsUserDecryptEIP712Type = Readonly<
+  Prettify<{
+    types: KmsUserDecryptEIP712TypesType;
+    primaryType: 'UserDecryptRequestVerification';
+    domain: KmsEIP712DomainType;
+    message: KmsUserDecryptEIP712MessageType;
+  }>
+>;
+
+////////////////////////////////////////////////////////////////////////////////
+// DelegatedUserDecryptRequestVerification
+////////////////////////////////////////////////////////////////////////////////
+
+export type KmsDelegateUserDecryptEIP712UserArgsType = Prettify<
+  KmsUserDecryptEIP712UserArgsType & {
     readonly delegatedAccount: ChecksummedAddress;
   }
 >;
 
-export type KmsDelegateEIP712MessageType = Prettify<
-  KmsEIP712MessageType & {
+export type KmsDelegateUserDecryptEIP712MessageType = Prettify<
+  KmsUserDecryptEIP712MessageType & {
     readonly delegatedAccount: ChecksummedAddress;
   }
 >;
 
-export type KmsDelegateEIP712TypesType = {
+export type KmsDelegateUserDecryptEIP712TypesType = {
   readonly EIP712Domain: readonly [
     { readonly name: 'name'; readonly type: 'string' },
     { readonly name: 'version'; readonly type: 'string' },
@@ -62,34 +104,48 @@ export type KmsDelegateEIP712TypesType = {
   ];
 };
 
-export type KmsEIP712TypesType = {
+export type KmsDelegateUserDecryptEIP712Type = Readonly<{
+  types: KmsDelegateUserDecryptEIP712TypesType;
+  primaryType: 'DelegatedUserDecryptRequestVerification';
+  domain: KmsEIP712DomainType;
+  message: KmsDelegateUserDecryptEIP712MessageType;
+}>;
+
+////////////////////////////////////////////////////////////////////////////////
+// PublicDecryptVerification
+////////////////////////////////////////////////////////////////////////////////
+
+export type KmsPublicDecryptEIP712UserArgsType = Readonly<{
+  ctHandles: readonly Bytes32Hex[];
+  decryptedResult: BytesHex;
+  extraData: BytesHex;
+}>;
+
+export type KmsPublicDecryptEIP712MessageType = Readonly<{
+  ctHandles: readonly Bytes32Hex[];
+  decryptedResult: BytesHex;
+  extraData: BytesHex;
+}>;
+
+export type KmsPublicDecryptEIP712TypesType = {
   readonly EIP712Domain: readonly [
     { readonly name: 'name'; readonly type: 'string' },
     { readonly name: 'version'; readonly type: 'string' },
     { readonly name: 'chainId'; readonly type: 'uint256' },
     { readonly name: 'verifyingContract'; readonly type: 'address' },
   ];
-  readonly UserDecryptRequestVerification: readonly [
-    { readonly name: 'publicKey'; readonly type: 'bytes' },
-    { readonly name: 'contractAddresses'; readonly type: 'address[]' },
-    { readonly name: 'startTimestamp'; readonly type: 'uint256' },
-    { readonly name: 'durationDays'; readonly type: 'uint256' },
+  readonly PublicDecryptVerification: readonly [
+    { readonly name: 'ctHandles'; readonly type: 'bytes32[]' },
+    { readonly name: 'decryptedResult'; readonly type: 'bytes' },
     { readonly name: 'extraData'; readonly type: 'bytes' },
   ];
 };
 
-export type KmsDelegateEIP712Type = Readonly<{
-  types: KmsDelegateEIP712TypesType;
-  primaryType: 'DelegatedUserDecryptRequestVerification';
-  domain: KmsEIP712DomainType;
-  message: KmsDelegateEIP712MessageType;
-}>;
-
-export type KmsEIP712Type = Readonly<
+export type KmsPublicDecryptEIP712Type = Readonly<
   Prettify<{
-    types: KmsEIP712TypesType;
-    primaryType: 'UserDecryptRequestVerification';
+    types: KmsPublicDecryptEIP712TypesType;
+    primaryType: 'PublicDecryptVerification';
     domain: KmsEIP712DomainType;
-    message: KmsEIP712MessageType;
+    message: KmsPublicDecryptEIP712MessageType;
   }>
 >;

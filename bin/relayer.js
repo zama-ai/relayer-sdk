@@ -218,8 +218,8 @@ addCommonOptions(test.command('public-decrypt'))
     'Execute a public decryption of the handle returned by FHETest.get<Type>()',
   )
   .requiredOption(
-    '--type <ebool|euint8|euint16|euint32|euint64|euint128|euint256|eaddress>',
-    'The encrypted type',
+    '--types <ebool|euint8|euint16|euint32|euint64|euint128|euint256|eaddress...>',
+    'A list of encrypted types',
   )
   .action(async (options) => {
     const mod = await import('./commands/test/test-public-decrypt.js');

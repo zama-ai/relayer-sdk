@@ -72,14 +72,21 @@ describe('ACL', () => {
 
   describe('constructor', () => {
     it('creates ACL instance with valid address and provider', () => {
-      const acl = new ACL(VALID_ACL_ADDRESS, createMockProvider());
+      const acl = new ACL({
+        aclContractAddress: VALID_ACL_ADDRESS,
+        provider: createMockProvider(),
+      });
 
       expect(acl).toBeInstanceOf(ACL);
     });
 
     it('throws ChecksummedAddressError for invalid address', () => {
       expect(
-        () => new ACL('0xinvalid' as ChecksummedAddress, createMockProvider()),
+        () =>
+          new ACL({
+            aclContractAddress: '0xinvalid' as ChecksummedAddress,
+            provider: createMockProvider(),
+          }),
       ).toThrow(ChecksummedAddressError);
     });
 
@@ -87,23 +94,32 @@ describe('ACL', () => {
       // lowercase address (not checksummed)
       expect(
         () =>
-          new ACL(
-            '0x339ece85b9e11a3a3aa557582784a15d7f82aaf2' as ChecksummedAddress,
-            createMockProvider(),
-          ),
+          new ACL({
+            aclContractAddress:
+              '0x339ece85b9e11a3a3aa557582784a15d7f82aaf2' as ChecksummedAddress,
+            provider: createMockProvider(),
+          }),
       ).toThrow(ChecksummedAddressError);
     });
 
     it('throws ContractError for undefined provider', () => {
-      expect(() => new ACL(VALID_ACL_ADDRESS, undefined as any)).toThrow(
-        ContractError,
-      );
+      expect(
+        () =>
+          new ACL({
+            aclContractAddress: VALID_ACL_ADDRESS,
+            provider: undefined as any,
+          }),
+      ).toThrow(ContractError);
     });
 
     it('throws ContractError for null provider', () => {
-      expect(() => new ACL(VALID_ACL_ADDRESS, null as any)).toThrow(
-        ContractError,
-      );
+      expect(
+        () =>
+          new ACL({
+            aclContractAddress: VALID_ACL_ADDRESS,
+            provider: null as any,
+          }),
+      ).toThrow(ContractError);
     });
   });
 
@@ -115,7 +131,11 @@ describe('ACL', () => {
     it('returns true for single allowed handle', async () => {
       mockIsAllowedForDecryption.mockResolvedValueOnce(true);
 
-      const acl = new ACL(VALID_ACL_ADDRESS, createMockProvider());
+      const acl = new ACL({
+        aclContractAddress: VALID_ACL_ADDRESS,
+        provider: createMockProvider(),
+      });
+
       const result = await acl.isAllowedForDecryption(VALID_HANDLE_HEX);
 
       expect(result).toBe(true);
@@ -125,7 +145,11 @@ describe('ACL', () => {
     it('returns false for single disallowed handle', async () => {
       mockIsAllowedForDecryption.mockResolvedValueOnce(false);
 
-      const acl = new ACL(VALID_ACL_ADDRESS, createMockProvider());
+      const acl = new ACL({
+        aclContractAddress: VALID_ACL_ADDRESS,
+        provider: createMockProvider(),
+      });
+
       const result = await acl.isAllowedForDecryption(VALID_HANDLE_HEX);
 
       expect(result).toBe(false);
@@ -136,7 +160,11 @@ describe('ACL', () => {
         .mockResolvedValueOnce(true)
         .mockResolvedValueOnce(false);
 
-      const acl = new ACL(VALID_ACL_ADDRESS, createMockProvider());
+      const acl = new ACL({
+        aclContractAddress: VALID_ACL_ADDRESS,
+        provider: createMockProvider(),
+      });
+
       const result = await acl.isAllowedForDecryption([
         VALID_HANDLE_HEX,
         ANOTHER_HANDLE_HEX,
@@ -150,7 +178,11 @@ describe('ACL', () => {
       mockIsAllowedForDecryption.mockResolvedValueOnce(true);
 
       const handle = FhevmHandle.fromBytes32Hex(VALID_HANDLE_HEX);
-      const acl = new ACL(VALID_ACL_ADDRESS, createMockProvider());
+      const acl = new ACL({
+        aclContractAddress: VALID_ACL_ADDRESS,
+        provider: createMockProvider(),
+      });
+
       const result = await acl.isAllowedForDecryption(handle);
 
       expect(result).toBe(true);
@@ -163,7 +195,11 @@ describe('ACL', () => {
         .mockResolvedValueOnce(false);
 
       const handle1 = FhevmHandle.fromBytes32Hex(VALID_HANDLE_HEX);
-      const acl = new ACL(VALID_ACL_ADDRESS, createMockProvider());
+      const acl = new ACL({
+        aclContractAddress: VALID_ACL_ADDRESS,
+        provider: createMockProvider(),
+      });
+
       const result = await acl.isAllowedForDecryption([
         handle1,
         ANOTHER_HANDLE_HEX,
@@ -173,7 +209,10 @@ describe('ACL', () => {
     });
 
     it('throws FhevmHandleError for invalid handle when checkArguments is true', async () => {
-      const acl = new ACL(VALID_ACL_ADDRESS, createMockProvider());
+      const acl = new ACL({
+        aclContractAddress: VALID_ACL_ADDRESS,
+        provider: createMockProvider(),
+      });
 
       await expect(
         acl.isAllowedForDecryption('0xinvalid' as Bytes32Hex),
@@ -183,7 +222,11 @@ describe('ACL', () => {
     it('skips validation when checkArguments is false', async () => {
       mockIsAllowedForDecryption.mockResolvedValueOnce(false);
 
-      const acl = new ACL(VALID_ACL_ADDRESS, createMockProvider());
+      const acl = new ACL({
+        aclContractAddress: VALID_ACL_ADDRESS,
+        provider: createMockProvider(),
+      });
+
       // This would normally throw, but validation is skipped
       const result = await acl.isAllowedForDecryption(VALID_HANDLE_HEX, {
         checkArguments: false,
@@ -201,7 +244,10 @@ describe('ACL', () => {
     it('does not throw when handle is allowed', async () => {
       mockIsAllowedForDecryption.mockResolvedValueOnce(true);
 
-      const acl = new ACL(VALID_ACL_ADDRESS, createMockProvider());
+      const acl = new ACL({
+        aclContractAddress: VALID_ACL_ADDRESS,
+        provider: createMockProvider(),
+      });
 
       await expect(
         acl.checkAllowedForDecryption(VALID_HANDLE_HEX),
@@ -211,7 +257,10 @@ describe('ACL', () => {
     it('throws ACLPublicDecryptionError when handle is not allowed', async () => {
       mockIsAllowedForDecryption.mockResolvedValueOnce(false);
 
-      const acl = new ACL(VALID_ACL_ADDRESS, createMockProvider());
+      const acl = new ACL({
+        aclContractAddress: VALID_ACL_ADDRESS,
+        provider: createMockProvider(),
+      });
 
       await expect(
         acl.checkAllowedForDecryption(VALID_HANDLE_HEX),
@@ -223,7 +272,10 @@ describe('ACL', () => {
         .mockResolvedValueOnce(true)
         .mockResolvedValueOnce(false);
 
-      const acl = new ACL(VALID_ACL_ADDRESS, createMockProvider());
+      const acl = new ACL({
+        aclContractAddress: VALID_ACL_ADDRESS,
+        provider: createMockProvider(),
+      });
 
       await expect(
         acl.checkAllowedForDecryption([VALID_HANDLE_HEX, ANOTHER_HANDLE_HEX]),
@@ -235,7 +287,10 @@ describe('ACL', () => {
         .mockResolvedValueOnce(true)
         .mockResolvedValueOnce(true);
 
-      const acl = new ACL(VALID_ACL_ADDRESS, createMockProvider());
+      const acl = new ACL({
+        aclContractAddress: VALID_ACL_ADDRESS,
+        provider: createMockProvider(),
+      });
 
       await expect(
         acl.checkAllowedForDecryption([VALID_HANDLE_HEX, ANOTHER_HANDLE_HEX]),
@@ -246,7 +301,10 @@ describe('ACL', () => {
       mockIsAllowedForDecryption.mockResolvedValueOnce(true);
 
       const handle = FhevmHandle.fromBytes32Hex(VALID_HANDLE_HEX);
-      const acl = new ACL(VALID_ACL_ADDRESS, createMockProvider());
+      const acl = new ACL({
+        aclContractAddress: VALID_ACL_ADDRESS,
+        provider: createMockProvider(),
+      });
 
       await expect(
         acl.checkAllowedForDecryption(handle),
@@ -257,7 +315,10 @@ describe('ACL', () => {
       mockIsAllowedForDecryption.mockResolvedValueOnce(false);
 
       const handle = FhevmHandle.fromBytes32Hex(VALID_HANDLE_HEX);
-      const acl = new ACL(VALID_ACL_ADDRESS, createMockProvider());
+      const acl = new ACL({
+        aclContractAddress: VALID_ACL_ADDRESS,
+        provider: createMockProvider(),
+      });
 
       try {
         await acl.checkAllowedForDecryption(handle);
@@ -279,7 +340,11 @@ describe('ACL', () => {
     it('returns true for allowed address/handle pair', async () => {
       mockPersistAllowed.mockResolvedValueOnce(true);
 
-      const acl = new ACL(VALID_ACL_ADDRESS, createMockProvider());
+      const acl = new ACL({
+        aclContractAddress: VALID_ACL_ADDRESS,
+        provider: createMockProvider(),
+      });
+
       const result = await acl.persistAllowed({
         handle: VALID_HANDLE_HEX,
         address: VALID_USER_ADDRESS,
@@ -295,7 +360,11 @@ describe('ACL', () => {
     it('returns false for disallowed address/handle pair', async () => {
       mockPersistAllowed.mockResolvedValueOnce(false);
 
-      const acl = new ACL(VALID_ACL_ADDRESS, createMockProvider());
+      const acl = new ACL({
+        aclContractAddress: VALID_ACL_ADDRESS,
+        provider: createMockProvider(),
+      });
+
       const result = await acl.persistAllowed({
         handle: VALID_HANDLE_HEX,
         address: VALID_USER_ADDRESS,
@@ -309,7 +378,11 @@ describe('ACL', () => {
         .mockResolvedValueOnce(true)
         .mockResolvedValueOnce(false);
 
-      const acl = new ACL(VALID_ACL_ADDRESS, createMockProvider());
+      const acl = new ACL({
+        aclContractAddress: VALID_ACL_ADDRESS,
+        provider: createMockProvider(),
+      });
+
       const result = await acl.persistAllowed([
         { handle: VALID_HANDLE_HEX, address: VALID_USER_ADDRESS },
         { handle: ANOTHER_HANDLE_HEX, address: VALID_CONTRACT_ADDRESS },
@@ -323,7 +396,11 @@ describe('ACL', () => {
       mockPersistAllowed.mockResolvedValueOnce(true);
 
       const handle = FhevmHandle.fromBytes32Hex(VALID_HANDLE_HEX);
-      const acl = new ACL(VALID_ACL_ADDRESS, createMockProvider());
+      const acl = new ACL({
+        aclContractAddress: VALID_ACL_ADDRESS,
+        provider: createMockProvider(),
+      });
+
       const result = await acl.persistAllowed({
         handle,
         address: VALID_USER_ADDRESS,
@@ -337,7 +414,10 @@ describe('ACL', () => {
     });
 
     it('throws FhevmHandleError for invalid handle when checkArguments is true', async () => {
-      const acl = new ACL(VALID_ACL_ADDRESS, createMockProvider());
+      const acl = new ACL({
+        aclContractAddress: VALID_ACL_ADDRESS,
+        provider: createMockProvider(),
+      });
 
       await expect(
         acl.persistAllowed({
@@ -348,7 +428,10 @@ describe('ACL', () => {
     });
 
     it('throws ChecksummedAddressError for invalid address when checkArguments is true', async () => {
-      const acl = new ACL(VALID_ACL_ADDRESS, createMockProvider());
+      const acl = new ACL({
+        aclContractAddress: VALID_ACL_ADDRESS,
+        provider: createMockProvider(),
+      });
 
       await expect(
         acl.persistAllowed({
@@ -361,7 +444,11 @@ describe('ACL', () => {
     it('skips validation when checkArguments is false', async () => {
       mockPersistAllowed.mockResolvedValueOnce(false);
 
-      const acl = new ACL(VALID_ACL_ADDRESS, createMockProvider());
+      const acl = new ACL({
+        aclContractAddress: VALID_ACL_ADDRESS,
+        provider: createMockProvider(),
+      });
+
       const result = await acl.persistAllowed(
         { handle: VALID_HANDLE_HEX, address: VALID_USER_ADDRESS },
         { checkArguments: false },
@@ -379,7 +466,10 @@ describe('ACL', () => {
     it('does not throw when user and contract are both allowed', async () => {
       mockPersistAllowed.mockResolvedValue(true);
 
-      const acl = new ACL(VALID_ACL_ADDRESS, createMockProvider());
+      const acl = new ACL({
+        aclContractAddress: VALID_ACL_ADDRESS,
+        provider: createMockProvider(),
+      });
 
       await expect(
         acl.checkUserAllowedForDecryption({
@@ -398,7 +488,10 @@ describe('ACL', () => {
         .mockResolvedValueOnce(false) // user
         .mockResolvedValueOnce(true); // contract
 
-      const acl = new ACL(VALID_ACL_ADDRESS, createMockProvider());
+      const acl = new ACL({
+        aclContractAddress: VALID_ACL_ADDRESS,
+        provider: createMockProvider(),
+      });
 
       await expect(
         acl.checkUserAllowedForDecryption({
@@ -417,7 +510,10 @@ describe('ACL', () => {
         .mockResolvedValueOnce(true) // user
         .mockResolvedValueOnce(false); // contract
 
-      const acl = new ACL(VALID_ACL_ADDRESS, createMockProvider());
+      const acl = new ACL({
+        aclContractAddress: VALID_ACL_ADDRESS,
+        provider: createMockProvider(),
+      });
 
       await expect(
         acl.checkUserAllowedForDecryption({
@@ -431,7 +527,10 @@ describe('ACL', () => {
     });
 
     it('throws ACLUserDecryptionError when userAddress equals contractAddress', async () => {
-      const acl = new ACL(VALID_ACL_ADDRESS, createMockProvider());
+      const acl = new ACL({
+        aclContractAddress: VALID_ACL_ADDRESS,
+        provider: createMockProvider(),
+      });
 
       await expect(
         acl.checkUserAllowedForDecryption({
@@ -447,7 +546,10 @@ describe('ACL', () => {
     it('handles multiple handle/contract pairs', async () => {
       mockPersistAllowed.mockResolvedValue(true);
 
-      const acl = new ACL(VALID_ACL_ADDRESS, createMockProvider());
+      const acl = new ACL({
+        aclContractAddress: VALID_ACL_ADDRESS,
+        provider: createMockProvider(),
+      });
 
       await expect(
         acl.checkUserAllowedForDecryption({
@@ -469,7 +571,10 @@ describe('ACL', () => {
     it('deduplicates RPC calls for same address/handle pairs', async () => {
       mockPersistAllowed.mockResolvedValue(true);
 
-      const acl = new ACL(VALID_ACL_ADDRESS, createMockProvider());
+      const acl = new ACL({
+        aclContractAddress: VALID_ACL_ADDRESS,
+        provider: createMockProvider(),
+      });
 
       await acl.checkUserAllowedForDecryption({
         userAddress: VALID_USER_ADDRESS,
@@ -487,7 +592,10 @@ describe('ACL', () => {
       mockPersistAllowed.mockResolvedValue(true);
 
       const handle = FhevmHandle.fromBytes32Hex(VALID_HANDLE_HEX);
-      const acl = new ACL(VALID_ACL_ADDRESS, createMockProvider());
+      const acl = new ACL({
+        aclContractAddress: VALID_ACL_ADDRESS,
+        provider: createMockProvider(),
+      });
 
       await expect(
         acl.checkUserAllowedForDecryption({
@@ -501,7 +609,10 @@ describe('ACL', () => {
     });
 
     it('throws FhevmHandleError for invalid handle when checkArguments is true', async () => {
-      const acl = new ACL(VALID_ACL_ADDRESS, createMockProvider());
+      const acl = new ACL({
+        aclContractAddress: VALID_ACL_ADDRESS,
+        provider: createMockProvider(),
+      });
 
       await expect(
         acl.checkUserAllowedForDecryption({
@@ -515,7 +626,10 @@ describe('ACL', () => {
     });
 
     it('throws ChecksummedAddressError for invalid userAddress when checkArguments is true', async () => {
-      const acl = new ACL(VALID_ACL_ADDRESS, createMockProvider());
+      const acl = new ACL({
+        aclContractAddress: VALID_ACL_ADDRESS,
+        provider: createMockProvider(),
+      });
 
       await expect(
         acl.checkUserAllowedForDecryption({
@@ -529,7 +643,10 @@ describe('ACL', () => {
     });
 
     it('throws ChecksummedAddressError for invalid contractAddress when checkArguments is true', async () => {
-      const acl = new ACL(VALID_ACL_ADDRESS, createMockProvider());
+      const acl = new ACL({
+        aclContractAddress: VALID_ACL_ADDRESS,
+        provider: createMockProvider(),
+      });
 
       await expect(
         acl.checkUserAllowedForDecryption({
@@ -545,7 +662,10 @@ describe('ACL', () => {
     it('skips validation when checkArguments is false', async () => {
       mockPersistAllowed.mockResolvedValue(true);
 
-      const acl = new ACL(VALID_ACL_ADDRESS, createMockProvider());
+      const acl = new ACL({
+        aclContractAddress: VALID_ACL_ADDRESS,
+        provider: createMockProvider(),
+      });
 
       await expect(
         acl.checkUserAllowedForDecryption(

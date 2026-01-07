@@ -1,4 +1,4 @@
-import { SepoliaConfig } from '../index';
+import { SepoliaConfig } from '../configs';
 import { TEST_CONFIG } from '../test/config';
 import { createRelayerProvider } from './createRelayerProvider';
 

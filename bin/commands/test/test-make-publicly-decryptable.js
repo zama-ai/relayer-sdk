@@ -38,7 +38,10 @@ export async function testFHETestMakePubliclyDecryptableCommand(options) {
   const handle = await contract[getFuncName]();
   logCLI(`🏈 handle: ${handle}`);
 
-  const acl = new ACL(config.fhevmInstanceConfig.aclContractAddress, provider);
+  const acl = new ACL({
+    aclContractAddress: config.fhevmInstanceConfig.aclContractAddress,
+    provider,
+  });
   const ok = await acl.isAllowedForDecryption([handle]);
   if (ok[0] === true) {
     logCLI(`🚨 handle is already publicly decryptable.`);
