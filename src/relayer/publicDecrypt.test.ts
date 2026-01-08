@@ -10,6 +10,7 @@ import { ChecksummedAddress } from 'src/node';
 
 // Jest Command line
 // =================
+// npx jest --colors --passWithNoTests ./src/relayer/publicDecrypt.test.ts
 // npx jest --colors --passWithNoTests --coverage ./src/relayer/publicDecrypt.test.ts --collectCoverageFrom=./src/relayer/publicDecrypt.ts --testNamePattern=xxx
 // npx jest --colors --passWithNoTests --coverage ./src/relayer/publicDecrypt.test.ts --collectCoverageFrom=./src/relayer/publicDecrypt.ts
 
@@ -35,9 +36,9 @@ describeIfFetchMock('publicDecrypt', () => {
 
   it('relayerProvider', async () => {
     expect(relayerProvider.version).toStrictEqual(1);
-    expect(relayerProvider.url).toStrictEqual('https://test-fhevm-relayer/v1');
+    expect(relayerProvider.url).toStrictEqual('https://test-fhevm-relayer');
     expect(RELAYER_PUBLIC_DECRYPT_URL).toStrictEqual(
-      'https://test-fhevm-relayer/v1/public-decrypt',
+      'https://test-fhevm-relayer/public-decrypt',
     );
   });
 

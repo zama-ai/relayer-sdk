@@ -50,12 +50,15 @@ export type TestConfig = {
   fhevmInstanceConfig: Prettify<
     Omit<FhevmInstanceConfig, 'relayerUrl' | 'chainId'> & { chainId: number }
   >;
+  relayerUrlBase: string;
   v1: TestRelayerConfig<1>;
   v2: TestRelayerConfig<2>;
   mnemonic: string;
   signerAddress: ChecksummedAddress;
 };
 
+const relayerUrlBase = (global as any).JEST_FHEVM_CONFIG.fhevmInstanceConfig
+  .relayerUrl;
 const relayerUrlV1 =
   (global as any).JEST_FHEVM_CONFIG.fhevmInstanceConfig.relayerUrl + '/v1';
 const relayerUrlV2 =
@@ -72,6 +75,7 @@ export const TEST_CONFIG: TestConfig = {
     ...(global as any).JEST_FHEVM_CONFIG.fhevmInstanceConfig,
     relayerUrl: undefined,
   },
+  relayerUrlBase,
   v1: {
     version: 1,
     fhevmInstanceConfig: {
