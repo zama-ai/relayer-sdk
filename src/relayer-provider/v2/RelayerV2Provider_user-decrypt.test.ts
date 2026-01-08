@@ -26,6 +26,8 @@ import type {
 import type { RelayerUserDecryptPayload } from '../types/public-api';
 import type { FhevmInstanceConfig } from '../../types/relayer';
 
+////////////////////////////////////////////////////////////////////////////////
+//
 // Jest Command line
 // =================
 // npx jest --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_user-decrypt.test.ts --testNamePattern=xxx
@@ -40,6 +42,13 @@ import type { FhevmInstanceConfig } from '../../types/relayer';
 // Testnet:
 // =======
 // npx jest --config jest.testnet.config.cjs --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_user-decrypt.test.ts
+//
+////////////////////////////////////////////////////////////////////////////////
+
+jest.mock('ethers', () => {
+  const { setupEthersJestMock } = jest.requireActual('../../test/config');
+  return setupEthersJestMock();
+});
 
 const payload: RelayerUserDecryptPayload = {
   handleContractPairs: [
@@ -532,7 +541,7 @@ describe('FhevmInstance.createEIP712', () => {
     expect(recoveredAddresses[0]).toBe(userSigner.address);
   }
 
-  it('xxx v1: createEIP712 succeeded', async () => {
+  it('v1: createEIP712 succeeded', async () => {
     setupAllFetchMockRoutes({
       enableInputProofRoutes: false,
     });
