@@ -16,6 +16,11 @@ export async function userDecrypt({
     options,
   );
 
+  const instanceOptions = {
+    ...(options.verbose === true ? { debug: true } : {}),
+    auth: { __type: 'ApiKeyHeader', value: zamaFhevmApiKey },
+  };
+
   const timeout =
     options.timeout !== undefined ? Number(options.timeout) : undefined;
 
@@ -25,6 +30,7 @@ export async function userDecrypt({
         ...config.fhevmInstanceConfig,
         publicKey,
         publicParams,
+        ...instanceOptions,
       },
       options,
     );

@@ -70,17 +70,20 @@ export class TKMSPkeKeypair implements KeypairType<BytesHexNo0x> {
       throw new Error(`Invalid TKMSPkeKeypair privateKey`);
     }
 
-    if (
-      (skWasm as unknown as { constructor: { name: string } }).constructor
-        .name !== 'PrivateEncKeyMlKem512'
-    ) {
-      throw new Error(
-        `Invalid PrivateEncKeyMlKem512. Got '${
-          (skWasm as unknown as { constructor: { name: string } }).constructor
-            .name
-        }'`,
-      );
-    }
+    // if (!inBundle) {
+    //   if (
+    //     (skWasm as unknown as { constructor: { name: string } }).constructor
+    //       .name !== 'PrivateEncKeyMlKem512'
+    //   ) {
+    //     throw new Error(
+    //       `Invalid PrivateEncKeyMlKem512. Got '${
+    //         (skWasm as unknown as { constructor: { name: string } }).constructor
+    //           .name
+    //       }'`,
+    //     );
+    //   }
+    // }
+
     const pkWasm = TKMS.ml_kem_pke_get_pk(skWasm);
     const pkBytes = TKMS.ml_kem_pke_pk_to_u8vec(pkWasm);
     const skBytes = TKMS.ml_kem_pke_sk_to_u8vec(skWasm);
