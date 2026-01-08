@@ -48,7 +48,7 @@ const relayerV2ResponseGetKeyUrl = {
   },
 };
 
-const fetchGetKeyUrlReturn = {
+const relayerV1ResponseGetKeyUrl = {
   response: {
     fhe_key_info: [
       {
@@ -100,7 +100,7 @@ describeIfFetchMock('RelayerV2Provider', () => {
     fetchMock.get(`${relayerUrlV2}/keyurl`, relayerV2ResponseGetKeyUrl);
 
     const response = await relayerProvider.fetchGetKeyUrl();
-    expect(response).toEqual(fetchGetKeyUrlReturn);
+    expect(response).toEqual(relayerV1ResponseGetKeyUrl);
   });
 
   it("v2:keyurl: fetchGetKeyUrl - response = { hello: '123' }", async () => {
@@ -251,7 +251,7 @@ describeIfFetchMock('RelayerV2Provider', () => {
 ////////////////////////////////////////////////////////////////////////////////
 
 describeIfFetchMock('RelayerV2Provider - TFHEPkeParams Caching', () => {
-  const testRelayerUrl = 'https://test-caching-relayer.example.com/v2';
+  const testRelayerUrlV1 = TEST_CONFIG.v1.fhevmInstanceConfig.relayerUrl;
   let mockTFHEPkeParamsFetch: jest.SpyInstance;
 
   beforeEach(() => {
@@ -273,13 +273,13 @@ describeIfFetchMock('RelayerV2Provider - TFHEPkeParams Caching', () => {
     let fetchCount = 0;
 
     // Mock the keyurl endpoint
-    fetchMock.get(`${testRelayerUrl}/keyurl`, () => {
+    fetchMock.get(`${testRelayerUrlV1}/keyurl`, () => {
       fetchCount++;
-      return relayerV2ResponseGetKeyUrl;
+      return relayerV1ResponseGetKeyUrl;
     });
 
     const provider = createRelayerProvider(
-      testRelayerUrl,
+      testRelayerUrlV1,
       1,
     ) as RelayerV2Provider;
 
@@ -304,13 +304,13 @@ describeIfFetchMock('RelayerV2Provider - TFHEPkeParams Caching', () => {
   it('returns cached result on subsequent calls', async () => {
     let fetchCount = 0;
 
-    fetchMock.get(`${testRelayerUrl}/keyurl`, () => {
+    fetchMock.get(`${testRelayerUrlV1}/keyurl`, () => {
       fetchCount++;
-      return relayerV2ResponseGetKeyUrl;
+      return relayerV1ResponseGetKeyUrl;
     });
 
     const provider = createRelayerProvider(
-      testRelayerUrl,
+      testRelayerUrlV1,
       1,
     ) as RelayerV2Provider;
 
@@ -332,16 +332,16 @@ describeIfFetchMock('RelayerV2Provider - TFHEPkeParams Caching', () => {
   it('removes cache entry on failure and allows retry', async () => {
     let fetchCount = 0;
 
-    fetchMock.get(`${testRelayerUrl}/keyurl`, () => {
+    fetchMock.get(`${testRelayerUrlV1}/keyurl`, () => {
       fetchCount++;
       if (fetchCount === 1) {
         return { status: 500 };
       }
-      return relayerV2ResponseGetKeyUrl;
+      return relayerV1ResponseGetKeyUrl;
     });
 
     const provider = createRelayerProvider(
-      testRelayerUrl,
+      testRelayerUrlV1,
       1,
     ) as RelayerV2Provider;
 
@@ -360,16 +360,16 @@ describeIfFetchMock('RelayerV2Provider - TFHEPkeParams Caching', () => {
   });
 
   it('caches separately for different relayer URLs', async () => {
-    const testRelayerUrl2 = 'https://test-caching-relayer-2.example.com/v2';
+    const testRelayerUrlV2 = TEST_CONFIG.v2.fhevmInstanceConfig.relayerUrl;
     let fetchCount1 = 0;
     let fetchCount2 = 0;
 
-    fetchMock.get(`${testRelayerUrl}/keyurl`, () => {
+    fetchMock.get(`${testRelayerUrlV1}/keyurl`, () => {
       fetchCount1++;
-      return relayerV2ResponseGetKeyUrl;
+      return relayerV1ResponseGetKeyUrl;
     });
 
-    fetchMock.get(`${testRelayerUrl2}/keyurl`, () => {
+    fetchMock.get(`${testRelayerUrlV2}/keyurl`, () => {
       fetchCount2++;
       return relayerV2ResponseGetKeyUrl;
     });
@@ -380,14 +380,16 @@ describeIfFetchMock('RelayerV2Provider - TFHEPkeParams Caching', () => {
     );
 
     const provider1 = createRelayerProvider(
-      testRelayerUrl,
-      1,
-    ) as RelayerV2Provider;
-    const provider2 = createRelayerProvider(
-      testRelayerUrl2,
+      testRelayerUrlV1,
       1,
     ) as RelayerV2Provider;
 
+    const provider2 = createRelayerProvider(
+      testRelayerUrlV2,
+      1,
+    ) as RelayerV2Provider;
+
+    provider1.fetchTFHEPkeParams();
     // Fetch from both providers
     const [result1, result2] = await Promise.all([
       provider1.fetchTFHEPkeParams(),

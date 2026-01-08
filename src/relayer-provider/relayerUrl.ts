@@ -11,11 +11,15 @@ import {
 /**
  * Parses a relayer URL and extracts or applies the API version.
  *
- * - If the URL is a predefined url, returns the predefined version.
- * - If `relayerRouteVersion` is specified, returns the `relayerRouteVersion`.
- * - If the URL ends with `/v1`, returns version 1 and the URL unchanged.
- * - If the URL ends with `/v2`, returns version 2 and the URL unchanged.
- * - Otherwise, appends the fallback version to the URL.
+ * If the URL is not a Zama URL:
+ *  - Returns the `relayerRouteVersion` if specified.
+ *  - Otherwise returns the `fallbackVersion`.
+ *
+ * If the URL is a Zama URL:
+ *  - If the URL ends with `/v1`, returns version 1 and the URL unchanged.
+ *  - If the URL ends with `/v2`, returns version 2 and the URL unchanged.
+ *  - If the URL does not end with a version suffix, appends the `relayerRouteVersion` if specified.
+ *  - Otherwise, appends the `fallbackVersion` to the URL.
  *
  * Trailing slashes are removed from the URL before processing.
  *
@@ -42,7 +46,7 @@ export function parseRelayerUrl(
     return null;
   }
 
-  const stdUlrs = [
+  const zamaUrls = [
     SepoliaRelayerBaseUrl,
     SepoliaRelayerUrlV1,
     SepoliaRelayerUrlV2,
@@ -50,14 +54,24 @@ export function parseRelayerUrl(
     MainnetRelayerUrlV1,
     MainnetRelayerUrlV2,
   ];
-  const isStdUrl = stdUlrs.includes(urlNoSlash);
-  if (!isStdUrl) {
+  const isZamaUrl = zamaUrls.includes(urlNoSlash);
+  if (!isZamaUrl) {
     if (relayerRouteVersion === 1 || relayerRouteVersion === 2) {
       return {
         url: urlNoSlash,
         version: relayerRouteVersion,
       };
     }
+
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (fallbackVersion !== 1 && fallbackVersion !== 2) {
+      return null;
+    }
+
+    return {
+      url: urlNoSlash,
+      version: fallbackVersion,
+    };
   }
 
   if (urlNoSlash.endsWith('/v1')) {
@@ -74,13 +88,19 @@ export function parseRelayerUrl(
     };
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-  if (fallbackVersion !== 1 && fallbackVersion !== 2) {
-    return null;
+  let version: 1 | 2;
+  if (relayerRouteVersion === 1 || relayerRouteVersion === 2) {
+    version = relayerRouteVersion;
+  } else {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (fallbackVersion !== 1 && fallbackVersion !== 2) {
+      return null;
+    }
+    version = fallbackVersion;
   }
 
   return {
-    url: `${urlNoSlash}/v${fallbackVersion}`,
-    version: fallbackVersion,
+    url: `${urlNoSlash}/v${version}`,
+    version,
   };
 }

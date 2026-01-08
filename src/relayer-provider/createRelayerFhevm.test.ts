@@ -34,9 +34,7 @@ describeIfFetchMock('createRelayerProvider', () => {
       defaultRelayerVersion,
     );
     expect(relayerProvider.version).toBe(defaultRelayerVersion);
-    expect(relayerProvider.url).toBe(
-      `https://foo-relayer.org/v${defaultRelayerVersion}`,
-    );
+    expect(relayerProvider.url).toBe(`https://foo-relayer.org`);
   });
 
   it('v1: https://foo-relayer.org/v1', () => {
@@ -53,7 +51,7 @@ describeIfFetchMock('createRelayerProvider', () => {
       'https://foo-relayer.org/v2',
       1,
     );
-    expect(relayerProvider.version).toBe(2);
+    expect(relayerProvider.version).toBe(1);
     expect(relayerProvider.url).toBe('https://foo-relayer.org/v2');
   });
 

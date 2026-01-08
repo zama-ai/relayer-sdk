@@ -130,10 +130,15 @@ export const createInstance = async (
 ): Promise<FhevmInstance> => {
   const relayerFhevm = await createRelayerFhevm({
     ...config,
-    defaultRelayerVersion: 1,
+    defaultRelayerVersion: 2,
   });
 
   const auth = config.auth;
+  const defaultOptions = {
+    ...(auth != null && { auth }),
+    debug: config.debug,
+  };
+
   const aclContractAddress = relayerFhevm.fhevmHostChain.aclContractAddress;
   const verifyingContractAddressInputVerification =
     relayerFhevm.fhevmHostChain.verifyingContractAddressInputVerification;
@@ -154,7 +159,7 @@ export const createInstance = async (
     createEncryptedInput: createRelayerEncryptedInput({
       fhevm: relayerFhevm,
       capacity: 2048,
-      defaultOptions: auth ? { auth } : undefined,
+      defaultOptions,
     }),
     requestZKProofVerification: async (
       zkProof: ZKProofLike,
@@ -166,19 +171,26 @@ export const createInstance = async (
       ) {
         throw new Error('Invalid ZKProof');
       }
-      const ip = await requestCiphertextWithZKProofVerification({
-        zkProof: ZKProof.fromComponents(zkProof, {
-          copy: false /* the ZKProof behaves as a validator and is not meant to be shared */,
-        }),
-        coprocessorSignersVerifier: CoprocessorSignersVerifier.fromAddresses({
+
+      const coprocessorSignersVerifier =
+        CoprocessorSignersVerifier.fromAddresses({
           coprocessorSigners: coprocessorSigners,
           gatewayChainId: BigInt(gatewayChainId),
           coprocessorSignerThreshold: thresholdCoprocessorSigners,
           verifyingContractAddressInputVerification,
+        });
+
+      const ip = await requestCiphertextWithZKProofVerification({
+        zkProof: ZKProof.fromComponents(zkProof, {
+          copy: false /* the ZKProof behaves as a validator and is not meant to be shared */,
         }),
+        coprocessorSignersVerifier,
         extraData: '0x00' as BytesHex,
         relayerProvider: relayerFhevm.relayerProvider,
-        options,
+        options: {
+          ...defaultOptions,
+          ...options,
+        },
       });
 
       return ip.toBytes();
@@ -212,7 +224,7 @@ export const createInstance = async (
       aclContractAddress,
       relayerProvider: relayerFhevm.relayerProvider,
       provider,
-      defaultOptions: auth && { auth },
+      defaultOptions,
     }),
     userDecrypt: userDecryptRequest({
       kmsSigners,
@@ -222,7 +234,7 @@ export const createInstance = async (
       aclContractAddress,
       relayerProvider: relayerFhevm.relayerProvider,
       provider,
-      defaultOptions: auth && { auth },
+      defaultOptions,
     }),
     getPublicKey: () => {
       const pk = relayerFhevm.getPublicKeyBytes();

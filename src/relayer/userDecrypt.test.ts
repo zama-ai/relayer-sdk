@@ -20,7 +20,7 @@ import { fetchRelayerV1Post } from '../relayer-provider/v1/fetchRelayerV1';
 
 const defaultRelayerVersion = 1;
 const relayerProvider = createRelayerProvider(
-  'https://test-fhevm-relayer',
+  TEST_CONFIG.relayerUrlBase,
   defaultRelayerVersion,
 );
 const RELAYER_USER_DECRYPT_URL = relayerProvider.userDecryptUrl;
@@ -134,7 +134,7 @@ describeIfFetchMock('fetchRelayerUserDecrypt', () => {
     });
 
     expect(RELAYER_USER_DECRYPT_URL).toBe(
-      'https://test-fhevm-relayer/v1/user-decrypt',
+      `${TEST_CONFIG.relayerUrlBase}/v1/user-decrypt`,
     );
 
     fetchMock.postOnce(RELAYER_USER_DECRYPT_URL, response);
