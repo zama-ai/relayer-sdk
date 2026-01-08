@@ -4,9 +4,10 @@ import { RelayerErrorBase } from './RelayerErrorBase';
 // RelayerDuplicateKmsSignerError
 ////////////////////////////////////////////////////////////////////////////////
 
-export type RelayerDuplicateKmsSignerErrorType = RelayerErrorBase & {
-  name: 'RelayerDuplicateKmsSignerError';
-};
+export type RelayerDuplicateKmsSignerErrorType =
+  RelayerDuplicateKmsSignerError & {
+    name: 'RelayerDuplicateKmsSignerError';
+  };
 
 export type RelayerDuplicateKmsSignerErrorParams = {
   duplicateAddress: string;

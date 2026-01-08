@@ -1,6 +1,8 @@
-import type { TFHEPkeUrlsType } from './types';
+import type { TFHEPkeUrlsType } from './public-api';
 import type { FhevmPkeConfigType } from '../../types/relayer';
 import type { PartialWithUndefined } from '@base/types/utils';
+import type { TFHEPksCrsWasmType } from './public-api';
+import type { TFHEPublicKeyWasmType } from './public-api';
 import { TFHEPkeCrs } from './TFHEPkeCrs';
 import { TFHEPublicKey } from './TFHEPublicKey';
 import { isRecordNonNullableProperty } from '@base/record';
@@ -53,7 +55,7 @@ export class TFHEPkeParams {
    *
    * @param fhevmPkeConfig - a {@link FhevmPkeConfigType} configuration object to validate and parse
    * @returns A new {@link TFHEPkeParams} instance, or undefined if the config is incomplete
-   * @throws {TFHEError} If the config contains invalid data
+   * @throws A {@link TFHEError} if the config contains invalid data
    */
   public static tryFromFhevmPkeConfig(
     fhevmPkeConfig: PartialWithUndefined<FhevmPkeConfigType>,
@@ -80,13 +82,13 @@ export class TFHEPkeParams {
   /**
    * Creates a {@link TFHEPkeParams} instance from a FHEVM public key encryption (PKE) configuration.
    *
-   * Unlike {@link tryFromFhevmPkeConfig}, this method requires a complete configuration
+   * Unlike {@link TFHEPkeParams.tryFromFhevmPkeConfig}, this method requires a complete configuration
    * and throws if the data is invalid.
    *
    * @param fhevmPkeConfig - a {@link FhevmPkeConfigType} configuration object
    * @returns A new {@link TFHEPkeParams} instance
-   * @throws {TFHEError} If the config contains invalid data
-   * @see {@link tryFromFhevmPkeConfig} for a non-throwing alternative
+   * @throws A {@link TFHEError} if the config contains invalid data
+   * @see {@link TFHEPkeParams.tryFromFhevmPkeConfig} for a non-throwing alternative
    */
   public static fromFhevmPkeConfig(
     fhevmPkeConfig: FhevmPkeConfigType,
@@ -119,6 +121,22 @@ export class TFHEPkeParams {
   }
 
   //////////////////////////////////////////////////////////////////////////////
+  // fromWasm - internal use only
+  //////////////////////////////////////////////////////////////////////////////
+
+  public static fromWasm(params: {
+    publicKey: TFHEPublicKeyWasmType;
+    pkeCrs2048: TFHEPksCrsWasmType;
+  }): TFHEPkeParams {
+    const publicKey = TFHEPublicKey.fromWasm(params.publicKey);
+    const pkeCrs2048 = TFHEPkeCrs.fromWasm(params.pkeCrs2048);
+    return new TFHEPkeParams({
+      publicKey,
+      pkeCrs2048,
+    });
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
   // fetch
   //////////////////////////////////////////////////////////////////////////////
 
@@ -127,7 +145,7 @@ export class TFHEPkeParams {
    *
    * @param urls - a {@link TFHEPkeUrlsType} Object containing the URLs to fetch
    * @returns A new {@link TFHEPkeParams} instance
-   * @throws {TFHEError} If pkeCrs capacity is not 2048 or if fetching fails
+   * @throws A {@link TFHEError} if pkeCrs capacity is not 2048 or if fetching fails
    */
   static async fetch(urls: TFHEPkeUrlsType): Promise<TFHEPkeParams> {
     if (urls.pkeCrsUrl.capacity !== 2048) {

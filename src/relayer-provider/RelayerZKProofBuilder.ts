@@ -1,14 +1,14 @@
 import type { RelayerInputProofOptionsType } from './types/public-api';
 import type {
-  Bytes,
-  Bytes32,
   ChecksummedAddress,
   EncryptionBits,
   ZKProofType,
 } from '@base/types/primitives';
-import type { TFHEPkeParams } from '@sdk/lowlevel/TFHEPkeParams';
-import type { FhevmHostChainConfig } from '@sdk/fhevmHostChain';
-import { TFHEZKProofBuilder } from '@sdk/lowlevel/TFHEZKProofBuilder';
+import type { TFHEZKProofBuilder } from '@sdk/lowlevel/TFHEZKProofBuilder';
+import type { ZKProof } from '@sdk/ZKProof';
+import type { AbstractRelayerProvider } from './AbstractRelayerProvider';
+import type { InputProof } from '@sdk/coprocessor/InputProof';
+import { CoprocessorSignersVerifier } from '@sdk/coprocessor/CoprocessorSignersVerifier';
 
 ////////////////////////////////////////////////////////////////////////////////
 // RelayerZKProofBuilder
@@ -20,24 +20,22 @@ export class RelayerZKProofBuilder {
   //////////////////////////////////////////////////////////////////////////////
 
   readonly #builder: TFHEZKProofBuilder;
-  readonly #config: FhevmHostChainConfig;
-  readonly #contractAddress: ChecksummedAddress;
-  readonly #userAddress: ChecksummedAddress;
+  readonly #coprocessorSignersVerifier: CoprocessorSignersVerifier;
 
   //////////////////////////////////////////////////////////////////////////////
   // Constructor
   //////////////////////////////////////////////////////////////////////////////
 
   constructor(params: {
-    pkeParams: TFHEPkeParams;
-    config: FhevmHostChainConfig;
-    contractAddress: ChecksummedAddress;
-    userAddress: ChecksummedAddress;
+    builder: TFHEZKProofBuilder;
+    coprocessorSigners: ChecksummedAddress[];
+    coprocessorSignerThreshold: number;
+    gatewayChainId: bigint;
+    verifyingContractAddressInputVerification: ChecksummedAddress;
   }) {
-    this.#builder = new TFHEZKProofBuilder({ pkeParams: params.pkeParams });
-    this.#config = params.config;
-    this.#contractAddress = params.contractAddress;
-    this.#userAddress = params.userAddress;
+    this.#builder = params.builder;
+    this.#coprocessorSignersVerifier =
+      CoprocessorSignersVerifier.fromAddresses(params);
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -96,23 +94,69 @@ export class RelayerZKProofBuilder {
   // ZKProof Generation
   //////////////////////////////////////////////////////////////////////////////
 
-  public generateZKProof(): ZKProofType {
-    return this.#builder.generateZKProof({
-      contractAddress: this.#contractAddress,
-      userAddress: this.#userAddress,
-      chainId: this.#config.chainId,
-      aclContractAddress: this.#config.aclContractAddress,
+  public generateZKProof(params: {
+    chainId: bigint;
+    contractAddress: ChecksummedAddress;
+    userAddress: ChecksummedAddress;
+    aclContractAddress: ChecksummedAddress;
+  }): ZKProofType {
+    return this.#builder.generateZKProof(params);
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+
+  public async requestCiphertextWithZKProofVerification({
+    zkProof,
+    relayerProvider,
+    options,
+  }: {
+    zkProof: ZKProof;
+    relayerProvider: AbstractRelayerProvider;
+    options?: RelayerInputProofOptionsType | undefined;
+  }): Promise<InputProof> {
+    const extraData: `0x${string}` = '0x00';
+
+    const relayerResult = await relayerProvider.fetchPostInputProofWithZKProof(
+      { zkProof, extraData },
+      options,
+    );
+
+    return this.#coprocessorSignersVerifier.verifyAndComputeInputProof({
+      zkProof,
+      handles: relayerResult.fhevmHandles,
+      signatures: relayerResult.result.signatures,
+      extraData,
     });
   }
 
   //////////////////////////////////////////////////////////////////////////////
-  // Missing implementations. Planned for alpha.4
-  //////////////////////////////////////////////////////////////////////////////
 
-  public async encrypt(
-    _options?: RelayerInputProofOptionsType,
-  ): Promise<{ handles: Bytes32[]; inputProof: Bytes }> {
-    await Promise.resolve();
-    throw new Error('To be implemented');
+  public async encrypt({
+    chainId,
+    contractAddress,
+    userAddress,
+    aclContractAddress,
+    relayerProvider,
+    options,
+  }: {
+    chainId: bigint;
+    contractAddress: ChecksummedAddress;
+    userAddress: ChecksummedAddress;
+    aclContractAddress: ChecksummedAddress;
+    relayerProvider: AbstractRelayerProvider;
+    options?: RelayerInputProofOptionsType | undefined;
+  }): Promise<InputProof> {
+    const zkProof = this.#builder.generateZKProof({
+      contractAddress,
+      userAddress,
+      chainId,
+      aclContractAddress,
+    });
+
+    return await this.requestCiphertextWithZKProofVerification({
+      zkProof,
+      relayerProvider,
+      options,
+    });
   }
 }

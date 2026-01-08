@@ -1,5 +1,5 @@
 import type { EncryptionBits, FheTypeId } from '@base/types/primitives';
-import type { ProvenCompactCiphertextListWasmType } from './types';
+import type { ProvenCompactCiphertextListWasmType } from './public-api';
 import { hexToBytesFaster } from '@base/bytes';
 import { SERIALIZED_SIZE_LIMIT_CIPHERTEXT } from './constants';
 import { encryptionBitsFromFheTypeId, isFheTypeId } from '@sdk/FheType';

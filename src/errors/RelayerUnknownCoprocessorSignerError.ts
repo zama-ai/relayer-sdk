@@ -4,9 +4,10 @@ import { RelayerErrorBase } from './RelayerErrorBase';
 // RelayerUnknownCoprocessorSignerError
 ////////////////////////////////////////////////////////////////////////////////
 
-export type RelayerUnknownCoprocessorSignerErrorType = RelayerErrorBase & {
-  name: 'RelayerUnknownCoprocessorSignerError';
-};
+export type RelayerUnknownCoprocessorSignerErrorType =
+  RelayerUnknownCoprocessorSignerError & {
+    name: 'RelayerUnknownCoprocessorSignerError';
+  };
 
 export type RelayerUnknownCoprocessorSignerErrorParams = {
   unknownAddress: string;

@@ -35,8 +35,8 @@ export async function userDecrypt({
 
     logCLI('Running user decrypt...', options);
 
-    const startTimeStamp = Math.floor(Date.now() / 1000).toString();
-    const durationDays = '1'; // String for consistency
+    const startTimeStamp = Math.floor(Date.now() / 1000);
+    const durationDays = 1;
 
     const eip712 = instance.createEIP712(
       keypair.publicKey,

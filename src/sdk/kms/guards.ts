@@ -1,4 +1,4 @@
-import type { KmsEIP712DomainType } from './types';
+import type { KmsEIP712DomainType } from './public-api';
 import { assertRecordStringProperty } from '@base/string';
 import { assertRecordChecksummedAddressProperty } from '@base/address';
 import { assertRecordUintBigIntProperty } from '@base/uint';

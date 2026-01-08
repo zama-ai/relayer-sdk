@@ -1,7 +1,7 @@
 import type {
   CompactPkeCrsWasmType,
   TfheCompactPublicKeyWasmType,
-} from './lowlevel/types';
+} from './lowlevel/public-api';
 import type { EncryptionBits } from '@base/types/primitives';
 import { isChecksummedAddress } from '@base/address';
 import { hexToBytes } from '@base/bytes';

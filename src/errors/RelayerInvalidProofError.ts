@@ -4,7 +4,7 @@ import { RelayerErrorBase } from './RelayerErrorBase';
 // RelayerInvalidProofError
 ////////////////////////////////////////////////////////////////////////////////
 
-export type RelayerInvalidProofErrorType = RelayerErrorBase & {
+export type RelayerInvalidProofErrorType = RelayerInvalidProofError & {
   name: 'RelayerInvalidProofError';
 };
 

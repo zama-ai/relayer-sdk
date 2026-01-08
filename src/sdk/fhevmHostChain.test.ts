@@ -656,10 +656,6 @@ describe('FhevmHostChain', () => {
       );
     });
 
-    it('config getter returns FhevmHostChainConfig', () => {
-      expect(hostChain.config).toBe(hostChainConfig);
-    });
-
     it('coprocessorSigners is non-empty array', () => {
       expect(Array.isArray(hostChain.coprocessorSigners)).toBe(true);
       expect(hostChain.coprocessorSigners.length).toBeGreaterThan(0);

@@ -3,7 +3,7 @@ import type {
   TFHEPksCrsBytesType,
   TFHEPublicKeyBytesType,
   TFHEPublicKeyUrlType,
-} from './types';
+} from './public-api';
 import { assertRecordUint8ArrayProperty } from '@base/bytes';
 import { assertRecordStringProperty } from '@base/string';
 import { assertRecordUintProperty } from '@base/uint';

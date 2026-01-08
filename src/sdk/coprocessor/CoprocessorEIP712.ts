@@ -9,7 +9,7 @@ import type {
   CoprocessorEIP712MessageType,
   CoprocessorEIP712Type,
   CoprocessorEIP712TypesType,
-} from './types';
+} from './public-api';
 import type { Prettify } from '@base/types/utils';
 import type { FhevmHandleLike } from '../FhevmHandle';
 import { assertIsChecksummedAddress } from '@base/address';

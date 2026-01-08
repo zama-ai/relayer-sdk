@@ -1,4 +1,4 @@
-import type { TFHEPkeUrlsType } from '@sdk/lowlevel/types';
+import type { TFHEPkeUrlsType } from '@sdk/lowlevel/public-api';
 import type { BytesHex } from '@base/types/primitives';
 import type { RelayerGetResponseKeyUrlSnakeCase } from './types/private';
 import type { ZKProof } from '@sdk/ZKProof';
@@ -84,6 +84,7 @@ export abstract class AbstractRelayerProvider {
 
   public abstract get version(): number;
 
+  /** @internal */
   public fetchTFHEPkeParams(): Promise<TFHEPkeParams> {
     const cached = privateKeyurlCache.get(this._relayerUrl);
     if (cached !== undefined) {
@@ -107,6 +108,7 @@ export abstract class AbstractRelayerProvider {
     return TFHEPkeParams.fetch(urls);
   }
 
+  /** @internal */
   public async fetchTFHEPkeUrls(): Promise<TFHEPkeUrlsType> {
     const response = await this.fetchGetKeyUrl();
 
@@ -136,6 +138,7 @@ export abstract class AbstractRelayerProvider {
     };
   }
 
+  /** @internal */
   public async fetchGetKeyUrl(): Promise<RelayerGetResponseKeyUrlSnakeCase> {
     const response = await AbstractRelayerProvider._fetchRelayerGet(
       'KEY_URL',
@@ -179,6 +182,7 @@ export abstract class AbstractRelayerProvider {
     return responseSnakeCase;
   }
 
+  /** @internal */
   public async fetchPostInputProofWithZKProof(
     params: { zkProof: ZKProof; extraData: BytesHex },
     options?: RelayerInputProofOptionsType,
@@ -226,21 +230,25 @@ export abstract class AbstractRelayerProvider {
     };
   }
 
+  /** @internal */
   public abstract fetchPostInputProof(
     payload: RelayerInputProofPayload,
     options?: RelayerInputProofOptionsType,
   ): Promise<RelayerInputProofResult>;
 
+  /** @internal */
   public abstract fetchPostPublicDecrypt(
     payload: RelayerPublicDecryptPayload,
     options?: RelayerPublicDecryptOptionsType,
   ): Promise<RelayerPublicDecryptResult>;
 
+  /** @internal */
   public abstract fetchPostUserDecrypt(
     payload: RelayerUserDecryptPayload,
     options?: RelayerUserDecryptOptionsType,
   ): Promise<RelayerUserDecryptResult>;
 
+  /** @internal */
   private static async _fetchRelayerGet(
     relayerOperation: RelayerGetOperation,
     url: string,
@@ -283,6 +291,7 @@ export abstract class AbstractRelayerProvider {
   }
 }
 
+/** @internal */
 export function assertIsRelayerInputProofResult(
   value: unknown,
   name: string,
@@ -291,6 +300,7 @@ export function assertIsRelayerInputProofResult(
   assertRecordBytes65HexArrayProperty(value, 'signatures', name);
 }
 
+/** @internal */
 export function assertIsRelayerPublicDecryptResult(
   value: unknown,
   name: string,
@@ -300,6 +310,7 @@ export function assertIsRelayerPublicDecryptResult(
   assertRecordBytesHexProperty(value, 'extraData', name);
 }
 
+/** @internal */
 export function assertIsRelayerUserDecryptResult(
   value: unknown,
   name: string,
@@ -318,6 +329,7 @@ export function assertIsRelayerUserDecryptResult(
   }
 }
 
+/** @internal */
 function _assertIsRelayerFetchResponseJson(
   json: unknown,
 ): asserts json is { response: unknown } {

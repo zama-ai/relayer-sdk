@@ -11,7 +11,7 @@ if [ ! -d ".github" ]; then
   exit 1
 fi
 
-STEPS=16
+STEPS=18
 STEP=0
 
 echo ""
@@ -89,15 +89,15 @@ npx . test public-decrypt --network testnet --types euint32 --version 2
 
 echo ""
 echo "========================================================================="
-echo "= $((++STEP))/${STEPS} Run: test user-decrypt --network testnet --type euint32 --version 1 ..."
+echo "= $((++STEP))/${STEPS} Run: test user-decrypt --network testnet --types euint32 --version 1 ..."
 echo "========================================================================="
-npx . test user-decrypt --network testnet --type euint32 --version 1
+npx . test user-decrypt --network testnet --types euint32 --version 1
 
 echo ""
 echo "========================================================================="
-echo "= $((++STEP))/${STEPS} Run: user-decrypt --network testnet --type euint32 --version 2 ..."
+echo "= $((++STEP))/${STEPS} Run: user-decrypt --network testnet --types euint32 --version 2 ..."
 echo "========================================================================="
-npx . test user-decrypt --network testnet --type euint32 --version 2
+npx . test user-decrypt --network testnet --types euint32 --version 2
 
 echo ""
 echo "========================================================================="
@@ -113,9 +113,45 @@ npx . test add --network testnet --type euint32 --value 123 --version 2
 
 echo ""
 echo "=================================================="
-echo "= $((++STEP))/${STEPS} Run: test make-publicly-decryptable --type euint32 --network testnet --version 2 ..."
+echo "= $((++STEP))/${STEPS} Run: test make-publicly-decryptable --types euint32 --network testnet --version 2 ..."
 echo "=================================================="
 npx . test make-publicly-decryptable --type euint32 --network testnet --version 2
+
+echo ""
+echo "========================================================================="
+echo "= $((++STEP))/${STEPS} Run: test public-decrypt --network testnet --types ebool euint32 --version 1 ..."
+echo "========================================================================="
+npx . test public-decrypt --network testnet --types ebool euint32 --version 1
+
+echo ""
+echo "========================================================================="
+echo "= $((++STEP))/${STEPS} Run: test public-decrypt --network testnet --types ebool euint32 --version 2 ..."
+echo "========================================================================="
+npx . test public-decrypt --network testnet --types ebool euint32 --version 2
+
+echo ""
+echo "========================================================================="
+echo "= $((++STEP))/${STEPS} Run: test public-decrypt --network testnet --types ebool euint8 euint16 euint32 euint64 euint128 --version 1 ..."
+echo "========================================================================="
+npx . test public-decrypt --network testnet --types ebool euint8 euint16 euint32 euint64 euint128 --version 1
+
+echo ""
+echo "========================================================================="
+echo "= $((++STEP))/${STEPS} Run: test public-decrypt --network testnet --types ebool euint8 euint16 euint32 euint64 euint128 --version 2 ..."
+echo "========================================================================="
+npx . test public-decrypt --network testnet --types ebool euint8 euint16 euint32 euint64 euint128 --version 2
+
+echo ""
+echo "========================================================================="
+echo "= $((++STEP))/${STEPS} Run: test user-decrypt --network testnet --types ebool euint8 euint16 euint32 euint64 euint128 --version 1 ..."
+echo "========================================================================="
+npx . test user-decrypt --network testnet --types ebool euint8 euint16 euint32 euint64 euint128 --version 1
+
+echo ""
+echo "========================================================================="
+echo "= $((++STEP))/${STEPS} Run: test user-decrypt --network testnet --types ebool euint8 euint16 euint32 euint64 euint128 --version 2 ..."
+echo "========================================================================="
+npx . test user-decrypt --network testnet --types ebool euint8 euint16 euint32 euint64 euint128 --version 2
 
 echo ""
 echo "=========================="

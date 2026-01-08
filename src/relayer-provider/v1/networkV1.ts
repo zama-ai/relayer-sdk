@@ -2,7 +2,7 @@ import type { RelayerGetResponseKeyUrlSnakeCase } from '../types/private';
 import type {
   CompactPkeCrsWasmType,
   TfheCompactPublicKeyWasmType,
-} from '@sdk/lowlevel/types';
+} from '@sdk/lowlevel/public-api';
 import type { PublicParams } from '../../types/relayer';
 import {
   SERIALIZED_SIZE_LIMIT_PK,

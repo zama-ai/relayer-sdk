@@ -1,6 +1,98 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-
 import type { BytesHex } from '@base/types/primitives';
+
+/**
+ * TFHE Public Key Encryption (PKE) Common Reference String (CRS) compact data with
+ * raw bytes representation.
+ */
+export type TFHEPksCrsBytesType = {
+  /** Unique identifier for the public key provided by the relayer */
+  id: string;
+  /** The CRS capacity (always 2048 in the current configuration). */
+  capacity: number;
+  /** Serialized TFHE compact PKE CRS bytes */
+  bytes: Uint8Array;
+  /** Optional URL from which the CRS bytes were fetched */
+  srcUrl?: string | undefined;
+};
+
+/**
+ * TFHE Public Key Encryption (PKE) Common Reference String (CRS) compact data
+ * with 0x-prefixed hex-encoded bytes representation.
+ */
+export type TFHEPkeCrsBytesHexType = {
+  /** Unique identifier for the public key provided by the relayer */
+  id: string;
+  /** The CRS capacity (always 2048 in the current configuration). */
+  capacity: number;
+  /** 0x-prefixed hex-encoded serialized TFHE compact PKE CRS bytes */
+  bytesHex: BytesHex;
+  /** Optional URL from which the CRS bytes were fetched */
+  srcUrl?: string | undefined;
+};
+
+/**
+ * Configuration for fetching a TFHE Public Key Encryption (PKE) Common Reference
+ * String (CRS) from a remote URL.
+ *
+ * Typically obtained from the <relayer-url>/keyurl response, which provides
+ * the URLs for fetching the data.
+ */
+export type TFHEPkeCrsUrlType = {
+  /** Unique identifier for the CRS provided by the relayer */
+  id: string;
+  /** The CRS capacity (always 2048 in the current configuration). */
+  capacity: number;
+  /** URL from which to fetch the CRS bytes */
+  srcUrl: string;
+};
+
+/**
+ * TFHE public key data with raw bytes representation.
+ */
+export type TFHEPublicKeyBytesType = {
+  /** Unique identifier for the public key provided by the relayer */
+  id: string;
+  /** Serialized TFHE compact public key bytes */
+  bytes: Uint8Array;
+  /** Optional URL from which the public key bytes were fetched */
+  srcUrl?: string | undefined;
+};
+
+/**
+ * TFHE public key data with 0x-prefixed hex-encoded bytes representation.
+ */
+export type TFHEPublicKeyBytesHexType = {
+  /** Unique identifier for the public key provided by the relayer */
+  id: string;
+  /** 0x-prefixed hex-encoded serialized TFHE compact public key bytes */
+  bytesHex: BytesHex;
+  /** Optional URL from which the public key bytes were fetched */
+  srcUrl?: string | undefined;
+};
+
+/**
+ * Configuration for fetching a TFHE public key from a remote URL.
+ *
+ * Typically obtained from the <relayer-url>/keyurl response, which provides
+ * the URLs for fetching the data.
+ */
+export type TFHEPublicKeyUrlType = {
+  /** Unique identifier for the public key provided by the relayer */
+  id: string;
+  /** URL from which to fetch the public key bytes */
+  srcUrl: string;
+};
+
+/**
+ * URL configuration for fetching TFHE PKE (Public Key Encryption) parameters.
+ */
+export type TFHEPkeUrlsType = {
+  /** URL configuration for the TFHE compact public key */
+  publicKeyUrl: TFHEPublicKeyUrlType;
+  /** URL configuration for the PKE CRS (Common Reference String) */
+  pkeCrsUrl: TFHEPkeCrsUrlType;
+};
 
 export type WasmObject = object;
 
@@ -110,95 +202,15 @@ export interface TypedPlaintextWasmType {
   fhe_type: number;
 }
 
-/**
- * TFHE Public Key Encryption (PKE) Common Reference String (CRS) compact data with
- * raw bytes representation.
- */
-export type TFHEPksCrsBytesType = {
-  /** Unique identifier for the public key provided by the relayer */
+export type TFHEPksCrsWasmType = {
   id: string;
-  /** The CRS capacity (always 2048 in the current configuration). */
   capacity: number;
-  /** Serialized TFHE compact PKE CRS bytes */
-  bytes: Uint8Array;
-  /** Optional URL from which the CRS bytes were fetched */
+  wasm: CompactPkeCrsWasmType;
   srcUrl?: string | undefined;
 };
 
-/**
- * TFHE Public Key Encryption (PKE) Common Reference String (CRS) compact data
- * with 0x-prefixed hex-encoded bytes representation.
- */
-export type TFHEPkeCrsBytesHexType = {
-  /** Unique identifier for the public key provided by the relayer */
+export type TFHEPublicKeyWasmType = {
   id: string;
-  /** The CRS capacity (always 2048 in the current configuration). */
-  capacity: number;
-  /** 0x-prefixed hex-encoded serialized TFHE compact PKE CRS bytes */
-  bytesHex: BytesHex;
-  /** Optional URL from which the CRS bytes were fetched */
+  wasm: TfheCompactPublicKeyWasmType;
   srcUrl?: string | undefined;
-};
-
-/**
- * Configuration for fetching a TFHE Public Key Encryption (PKE) Common Reference
- * String (CRS) from a remote URL.
- *
- * Typically obtained from the <relayer-url>/keyurl response, which provides
- * the URLs for fetching the data.
- */
-export type TFHEPkeCrsUrlType = {
-  /** Unique identifier for the CRS provided by the relayer */
-  id: string;
-  /** The CRS capacity (always 2048 in the current configuration). */
-  capacity: number;
-  /** URL from which to fetch the CRS bytes */
-  srcUrl: string;
-};
-
-/**
- * TFHE public key data with raw bytes representation.
- */
-export type TFHEPublicKeyBytesType = {
-  /** Unique identifier for the public key provided by the relayer */
-  id: string;
-  /** Serialized TFHE compact public key bytes */
-  bytes: Uint8Array;
-  /** Optional URL from which the public key bytes were fetched */
-  srcUrl?: string | undefined;
-};
-
-/**
- * TFHE public key data with 0x-prefixed hex-encoded bytes representation.
- */
-export type TFHEPublicKeyBytesHexType = {
-  /** Unique identifier for the public key provided by the relayer */
-  id: string;
-  /** 0x-prefixed hex-encoded serialized TFHE compact public key bytes */
-  bytesHex: BytesHex;
-  /** Optional URL from which the public key bytes were fetched */
-  srcUrl?: string | undefined;
-};
-
-/**
- * Configuration for fetching a TFHE public key from a remote URL.
- *
- * Typically obtained from the <relayer-url>/keyurl response, which provides
- * the URLs for fetching the data.
- */
-export type TFHEPublicKeyUrlType = {
-  /** Unique identifier for the public key provided by the relayer */
-  id: string;
-  /** URL from which to fetch the public key bytes */
-  srcUrl: string;
-};
-
-/**
- * URL configuration for fetching TFHE PKE (Public Key Encryption) parameters.
- */
-export type TFHEPkeUrlsType = {
-  /** URL configuration for the TFHE compact public key */
-  publicKeyUrl: TFHEPublicKeyUrlType;
-  /** URL configuration for the PKE CRS (Common Reference String) */
-  pkeCrsUrl: TFHEPkeCrsUrlType;
 };

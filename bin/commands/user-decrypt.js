@@ -8,6 +8,7 @@ export async function userDecryptCommand(options) {
   const { config, signer, zamaFhevmApiKey } = parseCommonOptions(options);
 
   logCLI('🚚 network: ' + config.name, options);
+  logCLI('🚀 route: v' + config.version, options);
   logCLI(`🍔 signer: ${signer.address}`);
 
   const handle = options.handle;

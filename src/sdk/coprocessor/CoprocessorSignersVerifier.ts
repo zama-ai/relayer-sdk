@@ -1,11 +1,15 @@
-import type { CoprocessorEIP712MessageType, ICoprocessorEIP712 } from './types';
+import type {
+  CoprocessorEIP712MessageType,
+  ICoprocessorEIP712,
+  ICoprocessorSignersVerifier,
+} from './public-api';
 import type {
   Bytes32,
   Bytes65Hex,
   BytesHex,
   ChecksummedAddress,
 } from '@base/types/primitives';
-import type { IInputVerifier } from '../types';
+import type { IInputVerifier } from '../types/private';
 import type { Prettify } from '@base/types/utils';
 import type { ethers as EthersT } from 'ethers';
 import type { ZKProof } from '../ZKProof';
@@ -26,21 +30,16 @@ import { executeWithBatching } from '@base/promise';
 // CoprocessorSignersVerifier
 ////////////////////////////////////////////////////////////////////////////////
 
-export interface ICoprocessorSignersVerifier extends ICoprocessorEIP712 {
-  readonly coprocessorSigners: readonly ChecksummedAddress[];
-  readonly threshold: number;
-}
-
 export class CoprocessorSignersVerifier implements ICoprocessorSignersVerifier {
   readonly #coprocessorSigners: readonly ChecksummedAddress[];
   readonly #coprocessorSignersSet: Set<string>;
-  readonly #threshold: number;
+  readonly #coprocessorSignerThreshold: number;
   readonly #eip712: CoprocessorEIP712;
 
   private constructor(params: ICoprocessorSignersVerifier) {
     assertIsChecksummedAddressArray(params.coprocessorSigners);
     this.#coprocessorSigners = [...params.coprocessorSigners];
-    this.#threshold = params.threshold;
+    this.#coprocessorSignerThreshold = params.coprocessorSignerThreshold;
     Object.freeze(this.#coprocessorSigners);
     this.#coprocessorSignersSet = new Set(
       this.#coprocessorSigners.map((addr) => addr.toLowerCase()),
@@ -90,7 +89,7 @@ export class CoprocessorSignersVerifier implements ICoprocessorSignersVerifier {
     return new CoprocessorSignersVerifier({
       ...params,
       coprocessorSigners: coprocessorSignersAddresses,
-      threshold,
+      coprocessorSignerThreshold: threshold,
     });
   }
 
@@ -102,8 +101,8 @@ export class CoprocessorSignersVerifier implements ICoprocessorSignersVerifier {
     return this.#coprocessorSigners;
   }
 
-  public get threshold(): number {
-    return this.#threshold;
+  public get coprocessorSignerThreshold(): number {
+    return this.#coprocessorSignerThreshold;
   }
 
   public get gatewayChainId(): bigint {
@@ -133,7 +132,7 @@ export class CoprocessorSignersVerifier implements ICoprocessorSignersVerifier {
       }
     }
 
-    return recoveredAddresses.length >= this.#threshold;
+    return recoveredAddresses.length >= this.#coprocessorSignerThreshold;
   }
 
   public verifyZKProof(params: {

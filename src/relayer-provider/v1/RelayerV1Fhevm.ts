@@ -1,7 +1,7 @@
 import type {
   CompactPkeCrsWasmType,
   TfheCompactPublicKeyWasmType,
-} from '@sdk/lowlevel/types';
+} from '@sdk/lowlevel/public-api';
 import type { FhevmHostChain } from '@sdk/fhevmHostChain';
 import type { FhevmInstanceConfig, PublicParams } from '../../types/relayer';
 import { getPublicParams, getTfheCompactPublicKey } from './networkV1';
@@ -12,6 +12,7 @@ import {
   SERIALIZED_SIZE_LIMIT_CRS,
   SERIALIZED_SIZE_LIMIT_PK,
 } from '@sdk/lowlevel/constants';
+import { TFHEPkeParams } from '@sdk/lowlevel/TFHEPkeParams';
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 type RelayerV1PublicKeyDataType = {
@@ -25,6 +26,7 @@ export class RelayerV1Fhevm extends AbstractRelayerFhevm {
   private readonly _relayerProvider: RelayerV1Provider;
   private readonly _publicKeyData: RelayerV1PublicKeyDataType;
   private readonly _publicParamsData: RelayerV1PublicParamsDataType;
+  private readonly _tfhePkeParams: TFHEPkeParams;
 
   private constructor(params: {
     relayerProvider: RelayerV1Provider;
@@ -37,14 +39,26 @@ export class RelayerV1Fhevm extends AbstractRelayerFhevm {
     this._relayerProvider = params.relayerProvider;
     this._publicKeyData = params.publicKeyData;
     this._publicParamsData = params.publicParamsData;
+
+    this._tfhePkeParams = TFHEPkeParams.fromWasm({
+      publicKey: {
+        id: this._publicKeyData.publicKeyId,
+        wasm: this._publicKeyData.publicKey,
+      },
+      pkeCrs2048: {
+        id: this._publicParamsData[2048].publicParamsId,
+        wasm: this._publicParamsData[2048].publicParams,
+        capacity: 2048,
+      },
+    });
   }
 
   public override get version(): 1 | 2 {
     return 1;
   }
 
-  public get relayerVersionUrl(): string {
-    return this.relayerProvider.url;
+  public override get tfhePkeParams(): TFHEPkeParams {
+    return this._tfhePkeParams;
   }
 
   public static async fromConfig(

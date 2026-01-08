@@ -1,9 +1,10 @@
 import type {
   CompactPkeCrsWasmType,
   TfheCompactPublicKeyWasmType,
-} from '@sdk/lowlevel/types';
+} from '@sdk/lowlevel/public-api';
 import type { AbstractRelayerProvider } from './AbstractRelayerProvider';
 import type { FhevmHostChain } from '@sdk/fhevmHostChain';
+import type { TFHEPkeParams } from '@sdk/lowlevel/TFHEPkeParams';
 
 export abstract class AbstractRelayerFhevm {
   readonly #fhevmHostChain: FhevmHostChain;
@@ -17,8 +18,11 @@ export abstract class AbstractRelayerFhevm {
   }
 
   public abstract get version(): 1 | 2;
-  public abstract get relayerVersionUrl(): string;
+  public get relayerVersionUrl(): string {
+    return this.relayerProvider.url;
+  }
   public abstract get relayerProvider(): AbstractRelayerProvider;
+  public abstract get tfhePkeParams(): TFHEPkeParams;
   public abstract getPublicKeyBytes(): {
     id: string;
     bytes: Uint8Array;

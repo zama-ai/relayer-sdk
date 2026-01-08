@@ -1,6 +1,6 @@
 'use strict';
 
-import { InputVerifier } from '../../lib/internal.js';
+import { InputVerifier, KMSVerifier } from '../../lib/internal.js';
 import { parseCommonOptions } from '../utils.js';
 
 // npx . config
@@ -17,9 +17,20 @@ export async function configCommand(options) {
     provider,
   });
 
+  const kv = await KMSVerifier.loadFromChain({
+    kmsContractAddress: config.fhevmInstanceConfig.kmsContractAddress,
+    provider,
+  });
+
   console.log(
     JSON.stringify(
-      { ...config, coprocessorSigners: iv.coprocessorSigners },
+      {
+        ...config,
+        coprocessorSigners: iv.coprocessorSigners,
+        coprocessorSignerThreshold: iv.coprocessorSignerThreshold,
+        kmsSigners: kv.kmsSigners,
+        kmsSignerThreshold: kv.kmsSignerThreshold,
+      },
       null,
       2,
     ),

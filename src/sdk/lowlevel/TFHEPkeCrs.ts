@@ -1,9 +1,10 @@
 import type {
-  CompactPkeCrsWasmType,
   TFHEPkeCrsBytesHexType,
   TFHEPkeCrsUrlType,
   TFHEPksCrsBytesType,
-} from './types';
+  TFHEPksCrsWasmType,
+} from './public-api';
+import type { CompactPkeCrsWasmType } from './public-api';
 import { SERIALIZED_SIZE_LIMIT_CRS } from './constants';
 import { assertRecordStringProperty } from '@base/string';
 import { bytesToHexLarge, hexToBytesFaster } from '@base/bytes';
@@ -84,6 +85,25 @@ export class TFHEPkeCrs {
       id: this.#id,
       bytes: this.toBytes().bytes,
     };
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  // serialize/deserialize: fromWasm
+  //////////////////////////////////////////////////////////////////////////////
+
+  public static fromWasm(params: TFHEPksCrsWasmType): TFHEPkeCrs {
+    return this._fromWasm(params);
+  }
+
+  private static _fromWasm(params: TFHEPksCrsWasmType): TFHEPkeCrs {
+    const crs = new TFHEPkeCrs();
+
+    crs.#id = params.id;
+    crs.#tfheCompactPkeCrsWasm = params.wasm;
+    crs.#srcUrl = params.srcUrl;
+    crs.#capacity = params.capacity;
+
+    return crs;
   }
 
   //////////////////////////////////////////////////////////////////////////////

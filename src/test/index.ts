@@ -6,7 +6,7 @@ import type {
 import type {
   TFHEPksCrsBytesType,
   TFHEPublicKeyBytesType,
-} from '../sdk/lowlevel/types';
+} from '../sdk/lowlevel/public-api';
 import { CompactPkeCrs, TfheClientKey, TfheCompactPublicKey } from 'node-tfhe';
 import fs from 'fs';
 import {

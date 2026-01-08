@@ -200,16 +200,25 @@ function deserializeClearValues(
 ////////////////////////////////////////////////////////////////////////////////
 
 export const publicDecryptRequest =
-  (
-    kmsSigners: ChecksummedAddress[],
-    thresholdSigners: number,
-    gatewayChainId: number,
-    verifyingContractAddressDecryption: ChecksummedAddress,
-    aclContractAddress: ChecksummedAddress,
-    relayerProvider: AbstractRelayerProvider,
-    provider: EthersProviderType,
-    defaultOptions?: FhevmInstanceOptions,
-  ) =>
+  ({
+    kmsSigners,
+    thresholdSigners,
+    gatewayChainId,
+    verifyingContractAddressDecryption,
+    aclContractAddress,
+    relayerProvider,
+    provider,
+    defaultOptions,
+  }: {
+    kmsSigners: ChecksummedAddress[];
+    thresholdSigners: number;
+    gatewayChainId: number;
+    verifyingContractAddressDecryption: ChecksummedAddress;
+    aclContractAddress: ChecksummedAddress;
+    relayerProvider: AbstractRelayerProvider;
+    provider: EthersProviderType;
+    defaultOptions?: FhevmInstanceOptions;
+  }) =>
   async (
     _handles: (Uint8Array | string)[],
     options?: RelayerPublicDecryptOptionsType,

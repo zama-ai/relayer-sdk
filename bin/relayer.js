@@ -215,7 +215,7 @@ addCommonOptions(test.command('random'))
 // npx . test public-decrypt --type euint32 --network testnet
 addCommonOptions(test.command('public-decrypt'))
   .description(
-    'Execute a public decryption of the handle returned by FHETest.get<Type>()',
+    'Execute a public decryption of the handles returned by FHETest.get<Type>()',
   )
   .requiredOption(
     '--types <ebool|euint8|euint16|euint32|euint64|euint128|euint256|eaddress...>',
@@ -229,11 +229,11 @@ addCommonOptions(test.command('public-decrypt'))
 // npx . test user-decrypt --type euint32 --network testnet
 addCommonOptions(test.command('user-decrypt'))
   .description(
-    'Execute a user decryption of the handle returned by FHETest.get<Type>()',
+    'Execute a user decryption of the handles returned by FHETest.get<Type>()',
   )
   .requiredOption(
-    '--type <ebool|euint8|euint16|euint32|euint64|euint128|euint256|eaddress>',
-    'The encrypted type',
+    '--types <ebool|euint8|euint16|euint32|euint64|euint128|euint256|eaddress...>',
+    'A list of encrypted types',
   )
   .action(async (options) => {
     const mod = await import('./commands/test/test-user-decrypt.js');

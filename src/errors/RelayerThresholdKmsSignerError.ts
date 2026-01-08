@@ -4,9 +4,10 @@ import { RelayerErrorBase } from './RelayerErrorBase';
 // RelayerThresholdKmsSignerError
 ////////////////////////////////////////////////////////////////////////////////
 
-export type RelayerThresholdKmsSignerErrorType = RelayerErrorBase & {
-  name: 'RelayerThresholdKmsSignerError';
-};
+export type RelayerThresholdKmsSignerErrorType =
+  RelayerThresholdKmsSignerError & {
+    name: 'RelayerThresholdKmsSignerError';
+  };
 
 export class RelayerThresholdKmsSignerError extends RelayerErrorBase {
   constructor() {

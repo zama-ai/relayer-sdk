@@ -5,4 +5,11 @@ module.exports = {
   ...baseConfig,
 
   setupFiles: ['./setupJestTestnet.cjs'],
+  coverageThreshold: {
+    global: {
+      branches: 50,
+      functions: 50,
+      lines: 60,
+    },
+  },
 };

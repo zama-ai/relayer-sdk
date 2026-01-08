@@ -571,18 +571,48 @@ export function bytes32ToHex(bytes: Uint8Array | undefined): Bytes32Hex {
   return `0x${bytesToHexNo0x(bytes)}`;
 }
 
-export function bytesToHexLarge(bytes: Uint8Array): BytesHex {
-  const out = new Uint8Array(2 + bytes.length * 2);
-  out[0] = 48; // '0'
-  out[1] = 120; // 'x'
+/**
+ * Converts a Uint8Array to a hex string, optimized for large byte arrays.
+ *
+ * Unlike {@link bytesToHex}, this function avoids `Array.from` and string
+ * concatenation, making it more efficient for large inputs.
+ *
+ * @param bytes - The byte array to convert
+ * @param no0x - If `true`, returns the hex string without the `0x` prefix
+ * @returns The hex string representation of the bytes
+ * @example bytesToHexLarge(new Uint8Array([255, 0]), false) // '0xff00'
+ * @example bytesToHexLarge(new Uint8Array([255, 0]), true) // 'ff00'
+ */
+export function bytesToHexLarge(bytes: Uint8Array, no0x: true): BytesHexNo0x;
+export function bytesToHexLarge(bytes: Uint8Array, no0x?: false): BytesHex;
+export function bytesToHexLarge(
+  bytes: Uint8Array,
+  no0x?: boolean,
+  // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
+): BytesHex | BytesHexNo0x {
+  const len = no0x === true ? bytes.length * 2 : bytes.length * 2 + 2;
+  const out = new Uint8Array(len);
+
+  let i0 = 0;
+  if (no0x !== true) {
+    out[0] = 48; // '0'
+    out[1] = 120; // 'x'
+    i0 = 2;
+  }
 
   for (let i = 0; i < bytes.length; i++) {
-    const j = 2 + i * 2;
+    const j = i0 + i * 2;
     out[j] = HEX_CHARS_CODES[bytes[i] >> 4];
     out[j + 1] = HEX_CHARS_CODES[bytes[i] & 0xf];
   }
 
-  return new TextDecoder().decode(out) as BytesHex;
+  const txt = new TextDecoder().decode(out);
+  if (no0x === true) {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+    return txt as BytesHexNo0x;
+  } else {
+    return txt as BytesHex;
+  }
 }
 
 /**

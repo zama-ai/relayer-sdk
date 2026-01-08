@@ -1,4 +1,4 @@
-import type { CoprocessorEIP712DomainType } from './types';
+import type { CoprocessorEIP712DomainType } from './public-api';
 import { assertRecordChecksummedAddressProperty } from '@base/address';
 import { assertRecordStringProperty } from '@base/string';
 import { assertRecordUintBigIntProperty } from '@base/uint';

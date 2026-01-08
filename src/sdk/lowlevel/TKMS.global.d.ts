@@ -1,4 +1,4 @@
-import type { TKMSType } from './types';
+import type { TKMSType } from './public-api';
 
 declare global {
   var TKMS: TKMSType;
