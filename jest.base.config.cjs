@@ -36,9 +36,9 @@ module.exports = {
   testPathIgnorePatterns: ['/node_modules/', '/e2e/'],
   coverageThreshold: {
     global: {
-      branches: 45,
-      functions: 58,
-      lines: 60,
+      branches: 70,
+      functions: 62,
+      lines: 75,
     },
   },
   testRegex: '\\.test\\.ts$',
