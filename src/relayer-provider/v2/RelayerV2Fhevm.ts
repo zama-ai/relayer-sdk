@@ -1,7 +1,7 @@
 import type {
   CompactPkeCrsWasmType,
   TfheCompactPublicKeyWasmType,
-} from '@sdk/lowlevel/types';
+} from '@sdk/lowlevel/public-api';
 import type { FhevmInstanceConfig } from '../../types/relayer';
 import type { FhevmHostChain } from '@sdk/fhevmHostChain';
 import { TFHEPkeParams } from '@sdk/lowlevel/TFHEPkeParams';
@@ -28,8 +28,8 @@ export class RelayerV2Fhevm extends AbstractRelayerFhevm {
     return 2;
   }
 
-  public get relayerVersionUrl(): string {
-    return this.relayerProvider.url;
+  public override get tfhePkeParams(): TFHEPkeParams {
+    return this.#tfhePkeParams;
   }
 
   /**

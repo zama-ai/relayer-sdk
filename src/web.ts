@@ -1,4 +1,5 @@
 // ESM explicit named re-export is required.
+import type { TFHEType, TKMSType } from './sdk/lowlevel/public-api';
 import initTFHE, {
   initThreadPool,
   init_panic_hook,
@@ -20,8 +21,6 @@ import {
   ml_kem_pke_sk_to_u8vec,
   ml_kem_pke_get_pk,
 } from 'tkms';
-
-import type { TFHEType, TKMSType } from './sdk/lowlevel/types';
 
 window.TFHE = {
   default: initTFHE,
@@ -50,41 +49,22 @@ window.TKMS = {
 export { InitInput as TFHEInput } from 'tfhe';
 export { InitInput as KMSInput } from 'tkms';
 
-export type {
-  RelayerEncryptedInput,
-  PublicParams,
-  HandleContractPair,
-  FhevmInstance,
-  EncryptionBits,
-  UserDecryptResults,
-  PublicDecryptResults,
-  ClearValueType,
-  ClearValues,
-  EIP712,
-  EIP712Type,
-  FhevmInstanceConfig,
-  FhevmInstanceOptions,
-  ZKProofLike,
-  FhevmPkeCrsType,
-  FhevmPkeConfigType,
-  FhevmPublicKeyType,
-  FhevmPkeCrsByCapacityType,
-  Prettify,
-} from './index';
+// Re-export everything from main entry point
+export * from './index';
 
-export type {
-  Bytes32Hex,
-  BytesHex,
-  BytesHexNo0x,
-  FheTypeEncryptionBitwidth,
-  FheTypeEncryptionBitwidthToIdMap,
-  FheTypeNameToIdMap,
-} from './base/types/primitives';
-
+// Additional type exports for node consumers
+export type * from './base/types/primitives';
+export type * from './base/types/utils';
 export type * from './relayer-provider/types/public-api';
 export type * from './relayer-provider/v2/errors/public-types';
-export type * from './sdk/lowlevel/types';
 
+// Error types
+export type * from './errors';
+
+// SDK classes, constants and types
+export * from './sdk';
+
+// Constant Configs
 export {
   SepoliaConfig,
   SepoliaConfigV1,
@@ -94,12 +74,5 @@ export {
   MainnetConfigV2,
 } from './configs';
 
-export {
-  createInstance,
-  generateKeypair,
-  createEIP712,
-  getErrorCauseCode,
-  getErrorCauseStatus,
-} from './index';
-
+// Web-specific functions
 export { initSDK } from './web_init';

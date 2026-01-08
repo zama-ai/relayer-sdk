@@ -4,7 +4,7 @@ import { RelayerErrorBase } from './RelayerErrorBase';
 // InternalError
 ////////////////////////////////////////////////////////////////////////////////
 
-export type InternalErrorType = RelayerErrorBase & {
+export type InternalErrorType = InternalError & {
   name: 'InternalError';
 };
 

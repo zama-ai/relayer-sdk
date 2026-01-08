@@ -10,7 +10,7 @@ export type InvalidPropertyErrorType = InvalidPropertyError & {
   name: 'InvalidPropertyError';
 };
 
-type ExpectedPropertyType =
+export type ExpectedPropertyType =
   | 'non-nullable'
   | 'string'
   | 'boolean'

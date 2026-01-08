@@ -92,16 +92,25 @@ function checkDeadlineValidity(startTimestamp: bigint, durationDays: bigint) {
 }
 
 export const userDecryptRequest =
-  (
-    kmsSigners: string[],
-    gatewayChainId: number,
-    chainId: number,
-    verifyingContractAddress: string,
-    aclContractAddress: string,
-    relayerProvider: AbstractRelayerProvider,
-    provider: EthersProviderType,
-    defaultOptions?: FhevmInstanceOptions,
-  ) =>
+  ({
+    kmsSigners,
+    gatewayChainId,
+    chainId,
+    verifyingContractAddressDecryption,
+    aclContractAddress,
+    relayerProvider,
+    provider,
+    defaultOptions,
+  }: {
+    kmsSigners: string[];
+    gatewayChainId: number;
+    chainId: number;
+    verifyingContractAddressDecryption: string;
+    aclContractAddress: string;
+    relayerProvider: AbstractRelayerProvider;
+    provider: EthersProviderType;
+    defaultOptions?: FhevmInstanceOptions;
+  }) =>
   async (
     _handles: HandleContractPair[],
     privateKey: string,
@@ -216,7 +225,7 @@ export const userDecryptRequest =
         name: 'Decryption',
         version: '1',
         chain_id: chainIdArrayBE,
-        verifying_contract: verifyingContractAddress,
+        verifying_contract: verifyingContractAddressDecryption,
         salt: null,
       };
 
@@ -227,7 +236,7 @@ export const userDecryptRequest =
         ciphertext_handles: handleContractPairs.map((h) =>
           h.handle.replace(/^0x/, ''),
         ),
-        eip712_verifying_contract: verifyingContractAddress,
+        eip712_verifying_contract: verifyingContractAddressDecryption,
       };
 
       const decryption = TKMS.process_user_decryption_resp_from_js(

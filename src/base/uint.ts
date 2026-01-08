@@ -216,6 +216,15 @@ export function assertIsUint(value: unknown): asserts value is Uint {
   }
 }
 
+export function assertIsUintNumber(value: unknown): asserts value is Uint {
+  if (!isUintNumber(value)) {
+    throw new InvalidTypeError({
+      type: typeof value,
+      expectedType: 'UintNumber',
+    });
+  }
+}
+
 export function assertIsUint8(value: unknown): asserts value is Uint32 {
   if (!isUint8(value)) {
     throw new InvalidTypeError({

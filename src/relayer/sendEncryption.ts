@@ -75,14 +75,14 @@ export const createRelayerEncryptedInput =
     }
 
     const aclContractAddress: ChecksummedAddress =
-      fhevm.fhevmHostChain.config.aclContractAddress;
-    const chainId: bigint = fhevm.fhevmHostChain.config.chainId;
+      fhevm.fhevmHostChain.aclContractAddress;
+    const chainId: bigint = fhevm.fhevmHostChain.chainId;
     const relayerProvider = fhevm.relayerProvider;
     const coprocessorSigners = fhevm.fhevmHostChain.coprocessorSigners;
     const gatewayChainId = fhevm.fhevmHostChain.gatewayChainId;
     const threshold = fhevm.fhevmHostChain.coprocessorSignerThreshold;
     const verifyingContractAddressInputVerification =
-      fhevm.fhevmHostChain.config.verifyingContractAddressInputVerification;
+      fhevm.fhevmHostChain.verifyingContractAddressInputVerification;
 
     const input = createEncryptedInput({
       aclContractAddress,
@@ -167,7 +167,7 @@ export const createRelayerEncryptedInput =
           CoprocessorSignersVerifier.fromAddresses({
             coprocessorSigners,
             gatewayChainId,
-            threshold,
+            coprocessorSignerThreshold: threshold,
             verifyingContractAddressInputVerification,
           });
 

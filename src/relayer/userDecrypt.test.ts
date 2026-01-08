@@ -4,7 +4,7 @@ import fetchMock from 'fetch-mock';
 import { ethers } from 'ethers';
 import { getErrorCause, getErrorCauseErrorMessage } from './error';
 import { createRelayerProvider } from '../relayer-provider/createRelayerProvider';
-import { TEST_CONFIG } from '../test/config';
+import { TEST_CONFIG, TEST_KMS } from '../test/config';
 import { fetchRelayerV1Post } from '../relayer-provider/v1/fetchRelayerV1';
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -60,15 +60,16 @@ describeIfFetchMock('userDecrypt', () => {
       status: 'success',
     });
 
-    userDecryptRequest(
-      [],
-      54321,
-      9000,
-      '0x8ba1f109551bd432803012645ac136ddd64dba72',
-      '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
+    userDecryptRequest({
+      kmsSigners: TEST_KMS.addresses,
+      gatewayChainId: TEST_CONFIG.fhevmInstanceConfig.gatewayChainId,
+      chainId: TEST_CONFIG.fhevmInstanceConfig.chainId,
+      verifyingContractAddressDecryption:
+        TEST_CONFIG.fhevmInstanceConfig.verifyingContractAddressDecryption,
+      aclContractAddress: TEST_CONFIG.fhevmInstanceConfig.aclContractAddress,
       relayerProvider,
-      new ethers.JsonRpcProvider('https://devnet.zama.ai'),
-    );
+      provider: new ethers.JsonRpcProvider('https://devnet.zama.ai'),
+    });
   });
 });
 

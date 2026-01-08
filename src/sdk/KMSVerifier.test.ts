@@ -239,8 +239,8 @@ describe('KMSVerifier', () => {
     });
 
     it('address getter returns the contract address', () => {
-      expect(kmsVerifier.address).toBe(
-        TEST_CONFIG.fhevmInstanceConfig.kmsContractAddress,
+      expect(kmsVerifier.verifyingContractAddressDecryption).toBe(
+        TEST_CONFIG.fhevmInstanceConfig.verifyingContractAddressDecryption,
       );
     });
 
@@ -274,12 +274,12 @@ describe('KMSVerifier', () => {
     });
 
     it('threshold is a positive number', () => {
-      expect(typeof kmsVerifier.threshold).toBe('number');
-      expect(kmsVerifier.threshold).toBeGreaterThan(0);
+      expect(typeof kmsVerifier.kmsSignerThreshold).toBe('number');
+      expect(kmsVerifier.kmsSignerThreshold).toBeGreaterThan(0);
     });
 
     it('threshold is less than or equal to kmsSigners length', () => {
-      expect(kmsVerifier.threshold).toBeLessThanOrEqual(
+      expect(kmsVerifier.kmsSignerThreshold).toBeLessThanOrEqual(
         kmsVerifier.kmsSigners.length,
       );
     });
@@ -343,13 +343,13 @@ describe('KMSVerifier', () => {
     });
 
     it('threshold is a primitive and cannot be reassigned via getter', () => {
-      const threshold = kmsVerifier.threshold;
+      const threshold = kmsVerifier.kmsSignerThreshold;
       expect(typeof threshold).toBe('number');
 
       // Primitives are immutable by nature
       // Attempting to modify via getter returns a copy
-      const originalThreshold = kmsVerifier.threshold;
-      expect(kmsVerifier.threshold).toBe(originalThreshold);
+      const originalThreshold = kmsVerifier.kmsSignerThreshold;
+      expect(kmsVerifier.kmsSignerThreshold).toBe(originalThreshold);
     });
 
     it('getter returns same frozen object reference', () => {

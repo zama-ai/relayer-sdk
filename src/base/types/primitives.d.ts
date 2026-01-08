@@ -137,6 +137,7 @@ export type BytesHexNo0xTypeName =
   | 'Bytes65HexNo0x';
 
 export type ChecksummedAddress = `0x${string}`;
+export type Address = `0x${string}`;
 
 /**
  * **FHE Type Mapping for Input Builders**

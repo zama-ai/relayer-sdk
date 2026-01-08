@@ -4,7 +4,7 @@ import { RelayerErrorBase } from './RelayerErrorBase';
 // RelayerUnknownKmsSignerError
 ////////////////////////////////////////////////////////////////////////////////
 
-export type RelayerUnknownKmsSignerErrorType = RelayerErrorBase & {
+export type RelayerUnknownKmsSignerErrorType = RelayerUnknownKmsSignerError & {
   name: 'RelayerUnknownKmsSignerError';
 };
 

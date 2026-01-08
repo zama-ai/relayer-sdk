@@ -8,7 +8,7 @@ export type RelayerProviderErrorType = RelayerProviderError & {
   name: 'RelayerProviderError';
 };
 
-type RelayerProviderErrorParams = RelayerErrorBaseParams & {
+export type RelayerProviderErrorParams = RelayerErrorBaseParams & {
   operation?: RelayerOperation | undefined;
 };
 

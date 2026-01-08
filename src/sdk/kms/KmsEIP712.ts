@@ -1,5 +1,9 @@
 import type { ethers as EthersT } from 'ethers';
-import type { Bytes65Hex, ChecksummedAddress } from '@base/types/primitives';
+import type {
+  Bytes65Hex,
+  BytesHex,
+  ChecksummedAddress,
+} from '@base/types/primitives';
 import type {
   KmsDelegateUserDecryptEIP712Type,
   KmsDelegateUserDecryptEIP712TypesType,
@@ -11,18 +15,21 @@ import type {
   KmsUserDecryptEIP712Type,
   KmsUserDecryptEIP712TypesType,
   KmsUserDecryptEIP712UserArgsType,
-} from './types';
+} from './public-api';
 import {
+  assertIsAddress,
+  assertIsAddressArray,
   assertIsChecksummedAddress,
-  assertIsChecksummedAddressArray,
 } from '@base/address';
 import {
   assertIsBytes32HexArray,
   assertIsBytes65HexArray,
   assertIsBytesHex,
+  bytesToHexLarge,
 } from '@base/bytes';
 import { verifySignature } from '@base/signature';
-import { assertIsUint256, assertIsUint32 } from '@base/uint';
+import { assertIsUint32, assertIsUintNumber } from '@base/uint';
+import { ensure0x } from '@base/string';
 
 ////////////////////////////////////////////////////////////////////////////////
 // KmsEIP712 Class
@@ -133,10 +140,11 @@ export class KmsEIP712 {
     durationDays,
     extraData,
   }: KmsUserDecryptEIP712UserArgsType): KmsUserDecryptEIP712Type {
-    assertIsBytesHex(publicKey);
-    assertIsChecksummedAddressArray(contractAddresses);
-    assertIsUint256(startTimestamp);
-    assertIsUint256(durationDays);
+    const publicKeyBytesHex = _verifyPublicKeyArg(publicKey);
+
+    assertIsAddressArray(contractAddresses);
+    assertIsUintNumber(startTimestamp);
+    assertIsUintNumber(durationDays);
     assertIsBytesHex(extraData);
 
     const EIP712DomainType = [
@@ -160,7 +168,7 @@ export class KmsEIP712 {
       primaryType: 'UserDecryptRequestVerification' as const,
       domain: { ...this.domain },
       message: {
-        publicKey,
+        publicKey: publicKeyBytesHex,
         contractAddresses: [...contractAddresses],
         startTimestamp: startTimestamp.toString(),
         durationDays: durationDays.toString(),
@@ -187,12 +195,13 @@ export class KmsEIP712 {
     extraData,
     delegatedAccount,
   }: KmsDelegateUserDecryptEIP712UserArgsType): KmsDelegateUserDecryptEIP712Type {
-    assertIsBytesHex(publicKey);
-    assertIsChecksummedAddressArray(contractAddresses);
-    assertIsUint256(startTimestamp);
-    assertIsUint256(durationDays);
+    const publicKeyBytesHex = _verifyPublicKeyArg(publicKey);
+
+    assertIsAddressArray(contractAddresses);
+    assertIsUintNumber(startTimestamp);
+    assertIsUintNumber(durationDays);
     assertIsBytesHex(extraData);
-    assertIsChecksummedAddress(delegatedAccount);
+    assertIsAddress(delegatedAccount);
 
     const EIP712DomainType = [
       { name: 'name', type: 'string' },
@@ -216,7 +225,7 @@ export class KmsEIP712 {
       primaryType: 'DelegatedUserDecryptRequestVerification' as const,
       domain: { ...this.domain },
       message: {
-        publicKey,
+        publicKey: publicKeyBytesHex,
         contractAddresses: [...contractAddresses],
         startTimestamp: startTimestamp.toString(),
         durationDays: durationDays.toString(),
@@ -302,9 +311,6 @@ export class KmsEIP712 {
       });
       return recoveredAddress;
     });
-    console.log('=================================');
-    console.log(JSON.stringify(recoveredAddresses, null, 2));
-    console.log('=================================');
     return recoveredAddresses;
   }
 
@@ -349,4 +355,30 @@ export class KmsEIP712 {
     });
     return recoveredAddresses;
   }
+}
+
+function _verifyPublicKeyArg(value: unknown): BytesHex {
+  if (value === null || value === undefined) {
+    throw new Error(`Missing publicKey argument.`);
+  }
+
+  let publicKeyBytesHex: BytesHex;
+
+  let pk;
+  if (typeof value === 'object' && 'publicKey' in value) {
+    pk = value.publicKey;
+  } else {
+    pk = value;
+  }
+
+  if (typeof pk === 'string') {
+    publicKeyBytesHex = ensure0x(pk);
+    assertIsBytesHex(publicKeyBytesHex);
+  } else if (pk instanceof Uint8Array) {
+    publicKeyBytesHex = bytesToHexLarge(pk);
+  } else {
+    throw new Error(`Invalid publicKey argument.`);
+  }
+
+  return publicKeyBytesHex;
 }

@@ -1,7 +1,7 @@
 import type { ChecksummedAddress } from '@base/types/primitives';
 import type { Provider as EthersProviderType } from 'ethers';
-import type { CoprocessorEIP712DomainType } from './coprocessor/types';
-import type { IInputVerifier } from './types';
+import type { CoprocessorEIP712DomainType } from './coprocessor/public-api';
+import type { IInputVerifier } from './types/private';
 import { Contract } from 'ethers';
 import { isUint8, isUintBigInt } from '@base/uint';
 import { assertIsChecksummedAddressArray } from '@base/address';
@@ -22,18 +22,18 @@ export class InputVerifier {
   readonly #address: ChecksummedAddress;
   readonly #eip712Domain: CoprocessorEIP712DomainType;
   readonly #coprocessorSigners: ChecksummedAddress[];
-  readonly #threshold: number;
+  readonly #coprocessorSignerThreshold: number;
 
   private constructor(params: {
     address: ChecksummedAddress;
     eip712Domain: CoprocessorEIP712DomainType;
     coprocessorSigners: ChecksummedAddress[];
-    threshold: number;
+    coprocessorSignerThreshold: number;
   }) {
     this.#address = params.address;
     this.#eip712Domain = { ...params.eip712Domain };
     this.#coprocessorSigners = [...params.coprocessorSigners];
-    this.#threshold = params.threshold;
+    this.#coprocessorSignerThreshold = params.coprocessorSignerThreshold;
 
     Object.freeze(this.#eip712Domain);
     Object.freeze(this.#coprocessorSigners);
@@ -55,8 +55,8 @@ export class InputVerifier {
     return this.#coprocessorSigners;
   }
 
-  public get threshold(): number {
-    return this.#threshold;
+  public get coprocessorSignerThreshold(): number {
+    return this.#coprocessorSignerThreshold;
   }
 
   public get verifyingContractAddressInputVerification(): ChecksummedAddress {
@@ -135,10 +135,19 @@ export class InputVerifier {
       throw new Error(`Invalid InputVerifier EIP-712 domain.`, { cause: e });
     }
 
+    if (
+      eip712Domain.verifyingContract.toLowerCase() ===
+      params.inputVerifierContractAddress.toLowerCase()
+    ) {
+      throw new Error(
+        `Invalid InputVerifier EIP-712 domain. Unexpected verifyingContract.`,
+      );
+    }
+
     const inputVerifier = new InputVerifier({
       address: params.inputVerifierContractAddress,
       eip712Domain: eip712Domain,
-      threshold: Number(threshold),
+      coprocessorSignerThreshold: Number(threshold),
       coprocessorSigners,
     });
 

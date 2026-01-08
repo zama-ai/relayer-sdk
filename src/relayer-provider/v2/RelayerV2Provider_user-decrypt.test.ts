@@ -12,7 +12,7 @@ import {
   TEST_CONFIG,
   timestampNow,
 } from '../../test/config';
-import { createEIP712, createInstance, UserDecryptResults } from '../..';
+import { createInstance, UserDecryptResults } from '../..';
 import { KmsSigner } from '../../test/fhevm-mock/KmsSigner';
 import { KmsEIP712 } from '../../sdk/kms/KmsEIP712';
 import { assertIsBytes65Hex, assertIsBytesHexNo0x } from '../../base/bytes';
@@ -384,6 +384,13 @@ describe('FhevmInstance.createEIP712', () => {
       throw new Error(`Missing MNEMONIC env variable in .env file!`);
     }
 
+    if (
+      config.verifyingContractAddressDecryption !==
+      TEST_CONFIG.fhevmInstanceConfig.verifyingContractAddressDecryption
+    ) {
+      throw new Error('verifyingContractAddressDecryption missmatch');
+    }
+
     const userSigner = KmsSigner.fromMnemonic({ mnemonic });
 
     const startTimestamp = timestampNow();
@@ -393,6 +400,14 @@ describe('FhevmInstance.createEIP712', () => {
     const contractAddresses = [contractAddress];
 
     const instance = await createInstance(config);
+
+    if (
+      instance.config.verifyingContractAddressDecryption !==
+      TEST_CONFIG.fhevmInstanceConfig.verifyingContractAddressDecryption
+    ) {
+      throw new Error('verifyingContractAddressDecryption missmatch');
+    }
+
     const keypairNo0x = instance.generateKeypair();
 
     assertIsBytesHexNo0x(keypairNo0x.publicKey);
@@ -463,25 +478,28 @@ describe('FhevmInstance.createEIP712', () => {
     assertIsBytesHexNo0x(keypairNo0x.privateKey);
 
     const publicKey: BytesHex = ensure0x(keypairNo0x.publicKey);
+    const kmsEIP712 = new KmsEIP712({
+      chainId: BigInt(config.chainId!),
+      verifyingContractAddressDecryption:
+        config.verifyingContractAddressDecryption,
+    });
 
-    const eip = createEIP712(
-      config.verifyingContractAddressDecryption,
-      config.chainId!,
-    )(
+    const eip = kmsEIP712.createDelegateUserDecryptEIP712({
       publicKey,
       contractAddresses,
       startTimestamp,
       durationDays,
       delegatedAccount,
-    );
+      extraData: '0x00',
+    });
 
-    const kmsEIP712 = new KmsEIP712({
+    const newKmsEIP712 = new KmsEIP712({
       chainId: BigInt(TEST_CONFIG.fhevmInstanceConfig.chainId!),
       verifyingContractAddressDecryption:
         TEST_CONFIG.fhevmInstanceConfig.verifyingContractAddressDecryption,
     });
 
-    const new_eip = kmsEIP712.createDelegateUserDecryptEIP712({
+    const new_eip = newKmsEIP712.createDelegateUserDecryptEIP712({
       publicKey,
       contractAddresses,
       durationDays,
@@ -514,7 +532,7 @@ describe('FhevmInstance.createEIP712', () => {
     expect(recoveredAddresses[0]).toBe(userSigner.address);
   }
 
-  it('v1: createEIP712 succeeded', async () => {
+  it('xxx v1: createEIP712 succeeded', async () => {
     setupAllFetchMockRoutes({
       enableInputProofRoutes: false,
     });

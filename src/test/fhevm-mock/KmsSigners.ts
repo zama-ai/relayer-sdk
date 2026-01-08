@@ -2,7 +2,7 @@ import type {
   KmsDelegateUserDecryptEIP712Type,
   KmsEIP712Params,
   KmsUserDecryptEIP712Type,
-} from '../../sdk/kms/types';
+} from '../../sdk/kms/public-api';
 import type { Prettify } from '../../base/types/utils';
 import type { BytesHex } from '../../base/types/primitives';
 

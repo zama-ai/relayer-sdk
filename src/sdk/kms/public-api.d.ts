@@ -5,9 +5,19 @@ import type {
 } from '@base/types/primitives';
 import type { Prettify } from '@base/types/utils';
 
+export interface KeypairType<T> {
+  publicKey: T;
+  privateKey: T;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // KmsEIP712 Types
 ////////////////////////////////////////////////////////////////////////////////
+
+export interface IKmsSignersVerifier extends IKmsEIP712 {
+  readonly kmsSigners: readonly ChecksummedAddress[];
+  readonly threshold: number;
+}
 
 export interface IKmsEIP712 {
   readonly chainId: bigint;
@@ -31,10 +41,14 @@ export type KmsEIP712DomainType = Readonly<{
 ////////////////////////////////////////////////////////////////////////////////
 
 export type KmsUserDecryptEIP712UserArgsType = Readonly<{
-  publicKey: BytesHex;
-  contractAddresses: readonly ChecksummedAddress[];
-  startTimestamp: number | bigint;
-  durationDays: number | bigint;
+  publicKey:
+    | string
+    | Uint8Array
+    | KeypairType<string>
+    | KeypairType<Uint8Array>;
+  contractAddresses: readonly string[];
+  startTimestamp: number;
+  durationDays: number;
   extraData: BytesHex;
 }>;
 
@@ -77,7 +91,7 @@ export type KmsUserDecryptEIP712Type = Readonly<
 
 export type KmsDelegateUserDecryptEIP712UserArgsType = Prettify<
   KmsUserDecryptEIP712UserArgsType & {
-    readonly delegatedAccount: ChecksummedAddress;
+    readonly delegatedAccount: string;
   }
 >;
 

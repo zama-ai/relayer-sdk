@@ -47,8 +47,8 @@ export class ACL {
    * @param aclContractAddress - The checksummed address of the ACL contract
    * @param provider - An ethers ContractRunner (provider or signer) for contract interactions
    * @param batchRpcCalls - Optional, execute RPC calls in parallel
-   * @throws {ChecksummedAddressError} If aclAddress is not a valid checksummed address
-   * @throws {ContractError} If provider is not provided
+   * @throws A {@link ChecksummedAddressError} If aclAddress is not a valid checksummed address
+   * @throws A {@link ContractError} If provider is not provided
    */
   public constructor({
     aclContractAddress,
@@ -81,7 +81,7 @@ export class ACL {
   /**
    * Returns whether each handle is allowed for decryption.
    *
-   * @throws {FhevmHandleError} If checkArguments is true and any handle is not a valid Bytes32Hex
+   * @throws A {@link FhevmHandleError} If checkArguments is true and any handle is not a valid Bytes32Hex
    */
   public async isAllowedForDecryption(
     handles: FhevmHandleLike[],
@@ -119,8 +119,8 @@ export class ACL {
   /**
    * Throws ACLPublicDecryptionError if any handle is not allowed for decryption.
    *
-   * @throws {FhevmHandleError} If checkArguments is true and any handle is not a valid Bytes32Hex
-   * @throws {ACLPublicDecryptionError} If any handle is not allowed for public decryption
+   * @throws A {@link FhevmHandleError} If checkArguments is true and any handle is not a valid Bytes32Hex
+   * @throws A {@link ACLPublicDecryptionError} If any handle is not allowed for public decryption
    */
   public async checkAllowedForDecryption(
     handles: FhevmHandleLike[] | FhevmHandleLike,
@@ -147,8 +147,8 @@ export class ACL {
   /**
    * Returns whether account is allowed to decrypt handle.
    *
-   * @throws {FhevmHandleError} If checkArguments is true and any handle is not a valid Bytes32Hex
-   * @throws {ChecksummedAddressError} If checkArguments is true and any address is not a valid checksummed address
+   * @throws A {@link FhevmHandleError} If checkArguments is true and any handle is not a valid Bytes32Hex
+   * @throws A {@link ChecksummedAddressError} If checkArguments is true and any address is not a valid checksummed address
    */
   public async persistAllowed(
     handleAddressPairs: Array<{
@@ -203,11 +203,11 @@ export class ACL {
    * 2. The contractAddress has permission to decrypt the handle
    * 3. The userAddress is not equal to any contractAddress
    *
-   * @throws {FhevmHandleError} If checkArguments is true and any handle is not a valid Bytes32Hex
-   * @throws {ChecksummedAddressError} If checkArguments is true and any address is not a valid checksummed address
-   * @throws {ACLUserDecryptionError} If userAddress equals any contractAddress
-   * @throws {ACLUserDecryptionError} If user is not authorized to decrypt any handle
-   * @throws {ACLUserDecryptionError} If any contract is not authorized to decrypt its handle
+   * @throws A {@link FhevmHandleError} If checkArguments is true and any handle is not a valid Bytes32Hex
+   * @throws A {@link ChecksummedAddressError} If checkArguments is true and any address is not a valid checksummed address
+   * @throws A {@link ACLUserDecryptionError} If userAddress equals any contractAddress
+   * @throws A {@link ACLUserDecryptionError} If user is not authorized to decrypt any handle
+   * @throws A {@link ACLUserDecryptionError} If any contract is not authorized to decrypt its handle
    */
   public async checkUserAllowedForDecryption(
     params: {

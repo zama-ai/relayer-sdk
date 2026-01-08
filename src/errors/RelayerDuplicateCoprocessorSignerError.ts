@@ -4,9 +4,10 @@ import { RelayerErrorBase } from './RelayerErrorBase';
 // RelayerDuplicateCoprocessorSignerError
 ////////////////////////////////////////////////////////////////////////////////
 
-export type RelayerDuplicateCoprocessorSignerErrorType = RelayerErrorBase & {
-  name: 'RelayerDuplicateCoprocessorSignerError';
-};
+export type RelayerDuplicateCoprocessorSignerErrorType =
+  RelayerDuplicateCoprocessorSignerError & {
+    name: 'RelayerDuplicateCoprocessorSignerError';
+  };
 
 export type RelayerDuplicateCoprocessorSignerErrorParams = {
   duplicateAddress: string;

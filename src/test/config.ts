@@ -134,6 +134,9 @@ export const TEST_COPROCESSORS = {
   get addresses() {
     return getTestCoprocessors().addresses;
   },
+  get coprocessorSignerThreshold() {
+    return Math.floor(getTestCoprocessors().addresses.length / 2) + 1;
+  },
   computeSignatures: (params: any) =>
     getTestCoprocessors().computeSignatures(params),
 };
@@ -182,6 +185,9 @@ export function getTestKms(): KmsSigners {
 export const TEST_KMS = {
   get addresses() {
     return getTestKms().addresses;
+  },
+  get kmsSignerThreshold() {
+    return Math.floor(getTestKms().addresses.length / 2) + 1;
   },
 };
 

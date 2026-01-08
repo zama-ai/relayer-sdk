@@ -1,4 +1,4 @@
-import type { ChecksummedAddress } from './types/primitives';
+import type { Address, ChecksummedAddress } from './types/primitives';
 import type {
   RecordChecksummedAddressArrayPropertyType,
   RecordChecksummedAddressPropertyType,
@@ -33,6 +33,26 @@ export function checksummedAddressToBytes20(
     bytes[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
   }
   return bytes;
+}
+
+export function toChecksummedAddress(
+  value: unknown,
+): ChecksummedAddress | undefined {
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+  if (!value.startsWith('0x')) {
+    return undefined;
+  }
+  if (value.length !== 42) {
+    return undefined;
+  }
+  try {
+    const a = ethersGetAddress(value);
+    return a as ChecksummedAddress;
+  } catch {
+    return undefined;
+  }
 }
 
 export function isChecksummedAddress(
@@ -79,7 +99,7 @@ export function assertIsChecksummedAddressArray(
   }
 }
 
-export function isAddress(value: unknown): value is `0x${string}` {
+export function isAddress(value: unknown): value is Address {
   if (typeof value !== 'string') {
     return false;
   }
@@ -95,11 +115,25 @@ export function isAddress(value: unknown): value is `0x${string}` {
   return true;
 }
 
-export function assertIsAddress(
-  value: unknown,
-): asserts value is `0x${string}` {
+export function assertIsAddress(value: unknown): asserts value is Address {
   if (!isAddress(value)) {
     throw new AddressError({ address: String(value) });
+  }
+}
+
+export function assertIsAddressArray(
+  value: unknown,
+): asserts value is Address[] {
+  if (!Array.isArray(value)) {
+    throw new InvalidTypeError({
+      type: typeof value,
+      expectedType: 'AddressArray',
+    });
+  }
+  for (let i = 0; i < value.length; ++i) {
+    if (!isAddress(value[i])) {
+      throw new AddressError({ address: String(value) });
+    }
   }
 }
 

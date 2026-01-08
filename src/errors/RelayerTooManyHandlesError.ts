@@ -4,7 +4,7 @@ import { RelayerErrorBase } from './RelayerErrorBase';
 // RelayerTooManyHandlesError
 ////////////////////////////////////////////////////////////////////////////////
 
-export type RelayerTooManyHandlesErrorType = RelayerErrorBase & {
+export type RelayerTooManyHandlesErrorType = RelayerTooManyHandlesError & {
   name: 'RelayerTooManyHandlesError';
 };
 

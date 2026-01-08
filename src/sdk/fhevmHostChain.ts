@@ -14,6 +14,24 @@ import { KMSVerifier } from './KMSVerifier';
 import { executeWithBatching } from '@base/promise';
 
 ////////////////////////////////////////////////////////////////////////////////
+// FhevmConfigType
+////////////////////////////////////////////////////////////////////////////////
+
+export interface FhevmConfigType {
+  chainId: bigint;
+  aclContractAddress: ChecksummedAddress;
+  kmsContractAddress: ChecksummedAddress;
+  verifyingContractAddressDecryption: ChecksummedAddress;
+  verifyingContractAddressInputVerification: ChecksummedAddress;
+  inputVerifierContractAddress: ChecksummedAddress;
+  gatewayChainId: bigint;
+  coprocessorSigners: ChecksummedAddress[];
+  coprocessorSignerThreshold: number;
+  kmsSigners: ChecksummedAddress[];
+  kmsSignerThreshold: number;
+}
+
+////////////////////////////////////////////////////////////////////////////////
 // FhevmHostChainConfig
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -220,7 +238,7 @@ export class FhevmHostChainConfig {
 // FhevmHostChain
 ////////////////////////////////////////////////////////////////////////////////
 
-export class FhevmHostChain {
+export class FhevmHostChain implements FhevmConfigType {
   readonly #config: FhevmHostChainConfig;
   readonly #inputVerifier: InputVerifier;
   readonly #kmsVerifier: KMSVerifier;
@@ -279,6 +297,24 @@ export class FhevmHostChain {
       });
     }
 
+    if (
+      inputVerifier.verifyingContractAddressInputVerification !==
+      config.verifyingContractAddressInputVerification
+    ) {
+      throw new FhevmConfigError({
+        message: `Invalid config.verifyingContractAddressInputVerification=${config.verifyingContractAddressInputVerification}. Expecting ${config.verifyingContractAddressInputVerification}.`,
+      });
+    }
+
+    if (
+      kmsVerifier.verifyingContractAddressDecryption !==
+      config.verifyingContractAddressDecryption
+    ) {
+      throw new FhevmConfigError({
+        message: `Invalid config.verifyingContractAddressDecryption=${config.verifyingContractAddressDecryption}. Expecting ${kmsVerifier.verifyingContractAddressDecryption}.`,
+      });
+    }
+
     return new FhevmHostChain({
       config,
       inputVerifier,
@@ -286,8 +322,24 @@ export class FhevmHostChain {
     });
   }
 
-  public get config(): FhevmHostChainConfig {
-    return this.#config;
+  public get chainId(): bigint {
+    return this.#config.chainId;
+  }
+
+  public get ethersProvider(): EthersProviderType {
+    return this.#config.ethersProvider;
+  }
+
+  public get aclContractAddress(): ChecksummedAddress {
+    return this.#config.aclContractAddress;
+  }
+
+  public get kmsContractAddress(): ChecksummedAddress {
+    return this.#config.kmsContractAddress;
+  }
+
+  public get inputVerifierContractAddress(): ChecksummedAddress {
+    return this.#config.inputVerifierContractAddress;
   }
 
   public get coprocessorSigners(): ChecksummedAddress[] {
@@ -295,7 +347,11 @@ export class FhevmHostChain {
   }
 
   public get coprocessorSignerThreshold(): number {
-    return this.#inputVerifier.threshold;
+    return this.#inputVerifier.coprocessorSignerThreshold;
+  }
+
+  public get verifyingContractAddressInputVerification(): ChecksummedAddress {
+    return this.#inputVerifier.verifyingContractAddressInputVerification;
   }
 
   public get kmsSigners(): ChecksummedAddress[] {
@@ -303,7 +359,11 @@ export class FhevmHostChain {
   }
 
   public get kmsSignerThreshold(): number {
-    return this.#kmsVerifier.threshold;
+    return this.#kmsVerifier.kmsSignerThreshold;
+  }
+
+  public get verifyingContractAddressDecryption(): ChecksummedAddress {
+    return this.#kmsVerifier.verifyingContractAddressDecryption;
   }
 
   public get gatewayChainId(): bigint {

@@ -1,4 +1,3 @@
-import { safeJSONstringify } from '../lib/internal.js';
 import { getInstance } from './instance.js';
 import { loadFhevmPublicKeyConfig } from './pubkeyCache.js';
 import { logCLI } from './utils.js';

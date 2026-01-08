@@ -4,10 +4,14 @@ import type {
   BytesHex,
   ChecksummedAddress,
 } from '@base/types/primitives';
-import type { IKMSVerifier } from '../types';
+import type { IKMSVerifier } from '../types/private';
 import type { Prettify } from '@base/types/utils';
 import type { ethers as EthersT } from 'ethers';
-import type { IKmsEIP712, KmsPublicDecryptEIP712MessageType } from './types';
+import type {
+  IKmsEIP712,
+  IKmsSignersVerifier,
+  KmsPublicDecryptEIP712MessageType,
+} from './public-api';
 import type { ClearValueType } from '../../types/relayer';
 import type { FhevmHandle } from '@sdk/FhevmHandle';
 import { RelayerDuplicateKmsSignerError } from '../../errors/RelayerDuplicateKmsSignerError';
@@ -37,11 +41,6 @@ export type OrderedAbiEncodedClearValues = {
   abiValues: Array<string | bigint>;
   abiEncodedClearValues: BytesHex;
 };
-
-export interface IKmsSignersVerifier extends IKmsEIP712 {
-  readonly kmsSigners: readonly ChecksummedAddress[];
-  readonly threshold: number;
-}
 
 export class KmsSignersVerifier implements IKmsSignersVerifier {
   readonly #kmsSigners: readonly ChecksummedAddress[];

@@ -94,11 +94,10 @@ export class ZKProof implements ZKProofType, ZKProofLike {
    * - With `copy: true`, a defensive copy is made, allowing the caller to retain the original.
    *
    * @param zkProofLike - The loose input to validate and normalize (see {@link ZKProofLike}).
-   * @param options - Optional settings.
-   * @param options.copy - If `true`, copies the `ciphertextWithZKProof` Uint8Array instead of
-   *   taking ownership. Defaults to `false`.
-   * @throws {ZKProofError} If ciphertextWithZKProof is invalid or empty.
-   * @throws {InvalidTypeError} If any field fails validation.
+   * @param options - Optional settings. Set `options.copy` to `true` to copy the
+   *   `ciphertextWithZKProof` Uint8Array instead of taking ownership. Defaults to `false`.
+   * @throws A {@link ZKProofError} if ciphertextWithZKProof is invalid or empty.
+   * @throws A {@link InvalidTypeError} if any field fails validation.
    */
   public static fromComponents(
     zkProofLike: ZKProofLike,

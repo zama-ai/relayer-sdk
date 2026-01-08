@@ -2,7 +2,7 @@ import {
   CompactCiphertextListBuilderWasmType,
   CompactPkeCrsWasmType,
   ProvenCompactCiphertextListWasmType,
-} from '@sdk/lowlevel/types';
+} from '@sdk/lowlevel/public-api';
 
 export enum ZkComputeLoadMock {
   Proof = 0,

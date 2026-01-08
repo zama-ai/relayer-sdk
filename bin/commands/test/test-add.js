@@ -14,6 +14,7 @@ export async function testFHETestAddCommand(options) {
   const { config, provider, signer } = parseCommonOptions(options);
 
   logCLI('🚚 network: ' + config.name, options);
+  logCLI('🚀 route: v' + config.version, options);
   logCLI(`🍔 signer: ${signer.address}`);
   logCLI(`🧀 value: ${BigInt(options.value)}`);
   logCLI(`🍉 type: ${options.type}`);
@@ -98,10 +99,23 @@ export async function testFHETestAddCommand(options) {
     options,
   });
 
+  const max = {
+    ebool: 1n,
+    euint8: 0xffn,
+    euint16: 0xffffn,
+    euint32: 0xffffffffn,
+    euint64: 0xffffffffffffffffn,
+    euint128: 0xffffffffffffffffffffffffffffffffn,
+  };
+
   if (
     BigInt(next[newHandle]) !==
-    BigInt(current[handle]) + fheTypedValues[0].value
+    BigInt(current[handle] + fheTypedValues[0].value) % (max[options.type] + 1n)
   ) {
+    logCLI(`clear: ${BigInt(next[newHandle])}`);
+    logCLI(
+      `expected: ${BigInt(current[handle] + fheTypedValues[0].value) % (max[options.type] + 1n)}`,
+    );
     logCLI(`❌ Test Failed!`);
     throw new Error(`Test Failed!`);
   } else {

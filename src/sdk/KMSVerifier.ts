@@ -1,7 +1,7 @@
 import type { ChecksummedAddress } from '@base/types/primitives';
 import type { Provider as EthersProviderType } from 'ethers';
-import type { KmsEIP712DomainType } from './kms/types';
-import type { IKMSVerifier } from './types';
+import type { KmsEIP712DomainType } from './kms/public-api';
+import type { IKMSVerifier } from './types/private';
 import { Contract } from 'ethers';
 import { isUint8 } from '@base/uint';
 import { assertIsChecksummedAddressArray } from '@base/address';
@@ -20,20 +20,23 @@ export class KMSVerifier {
   }
 
   readonly #address: ChecksummedAddress;
+  readonly #verifyingContractAddressDecryption: ChecksummedAddress;
   readonly #eip712Domain: KmsEIP712DomainType;
   readonly #kmsSigners: ChecksummedAddress[];
-  readonly #threshold: number;
+  readonly #kmsSignerThreshold: number;
 
   private constructor(params: {
     address: ChecksummedAddress;
     eip712Domain: KmsEIP712DomainType;
     kmsSigners: ChecksummedAddress[];
-    threshold: number;
+    kmsSignerThreshold: number;
   }) {
     this.#address = params.address;
+    this.#verifyingContractAddressDecryption =
+      params.eip712Domain.verifyingContract;
     this.#eip712Domain = { ...params.eip712Domain };
     this.#kmsSigners = [...params.kmsSigners];
-    this.#threshold = params.threshold;
+    this.#kmsSignerThreshold = params.kmsSignerThreshold;
 
     Object.freeze(this.#eip712Domain);
     Object.freeze(this.#kmsSigners);
@@ -55,8 +58,12 @@ export class KMSVerifier {
     return this.#kmsSigners;
   }
 
-  public get threshold(): number {
-    return this.#threshold;
+  public get kmsSignerThreshold(): number {
+    return this.#kmsSignerThreshold;
+  }
+
+  public get verifyingContractAddressDecryption(): ChecksummedAddress {
+    return this.#verifyingContractAddressDecryption;
   }
 
   public static async loadFromChain(params: {
@@ -95,10 +102,10 @@ export class KMSVerifier {
     const res = await executeWithBatching(rpcCalls, params.batchRpcCalls);
 
     const eip712DomainArray = res[0] as unknown[];
-    const threshold = res[1];
+    const kmsSignerThreshold = res[1];
     const kmsSigners = res[2] as unknown[];
 
-    if (!isUint8(threshold)) {
+    if (!isUint8(kmsSignerThreshold)) {
       throw new Error(`Invalid KMSVerifier kms signers threshold.`);
     }
 
@@ -123,10 +130,19 @@ export class KMSVerifier {
       throw new Error(`Invalid KMSVerifier EIP-712 domain.`, { cause: e });
     }
 
+    if (
+      eip712Domain.verifyingContract.toLowerCase() ===
+      params.kmsContractAddress.toLowerCase()
+    ) {
+      throw new Error(
+        `Invalid KMSVerifier EIP-712 domain. Unexpected verifyingContract.`,
+      );
+    }
+
     const kmsVerifier = new KMSVerifier({
       address: params.kmsContractAddress,
       eip712Domain: eip712Domain,
-      threshold: Number(threshold),
+      kmsSignerThreshold: Number(kmsSignerThreshold),
       kmsSigners: kmsSigners,
     });
 

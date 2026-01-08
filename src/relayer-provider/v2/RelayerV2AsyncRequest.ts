@@ -629,6 +629,15 @@ export class RelayerV2AsyncRequest {
           // Possible Reasons: Gateway has some internal error (unknown)
           const bodyJson = await this._getResponseJson(response);
 
+          //////////////////////////////////////////////////////////////////////
+          //
+          // readiness_check_timedout : only on GET for decryption points
+          // Exponential retry for GET / readiness_check_timedout
+          // 1. first attempt failed
+          // 2. an array of intervals
+          //
+          //////////////////////////////////////////////////////////////////////
+
           try {
             assertIsRelayerV2ResponseFailedWithError503(bodyJson, 'body');
           } catch (cause) {

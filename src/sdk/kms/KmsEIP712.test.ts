@@ -2,6 +2,7 @@ import type { BytesHex, ChecksummedAddress } from '../../base/types/primitives';
 import { KmsEIP712 } from './KmsEIP712';
 import { InvalidTypeError } from '../../errors/InvalidTypeError';
 import { ChecksummedAddressError } from '../../errors/ChecksummedAddressError';
+import { AddressError } from '../../errors/AddressError';
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -251,28 +252,26 @@ describe('KmsEIP712', () => {
       expect(eip712.message.extraData).toBe('0x');
     });
 
-    it('accepts bigint startTimestamp', () => {
+    it('throws for bigint startTimestamp', () => {
       const message = {
         ...createValidMessage(),
         startTimestamp: BigInt(VALID_START_TIMESTAMP),
       };
 
-      const eip712 = kms.createUserDecryptEIP712(message);
-
-      expect(eip712.message.startTimestamp).toBe(
-        VALID_START_TIMESTAMP.toString(),
+      expect(() => kms.createUserDecryptEIP712(message as any)).toThrow(
+        InvalidTypeError,
       );
     });
 
-    it('accepts bigint durationDays', () => {
+    it('throws for bigint durationDays', () => {
       const message = {
         ...createValidMessage(),
         durationDays: BigInt(VALID_DURATION_DAYS),
       };
 
-      const eip712 = kms.createUserDecryptEIP712(message);
-
-      expect(eip712.message.durationDays).toBe(VALID_DURATION_DAYS.toString());
+      expect(() => kms.createUserDecryptEIP712(message as any)).toThrow(
+        InvalidTypeError,
+      );
     });
   });
 
@@ -304,9 +303,7 @@ describe('KmsEIP712', () => {
         contractAddresses: ['0xinvalid'] as any,
       };
 
-      expect(() => kms.createUserDecryptEIP712(message)).toThrow(
-        ChecksummedAddressError,
-      );
+      expect(() => kms.createUserDecryptEIP712(message)).toThrow(AddressError);
     });
 
     it('throws for negative startTimestamp', () => {
@@ -421,7 +418,7 @@ describe('KmsEIP712', () => {
       };
 
       expect(() => kms.createDelegateUserDecryptEIP712(message as any)).toThrow(
-        ChecksummedAddressError,
+        AddressError,
       );
     });
 
@@ -431,9 +428,9 @@ describe('KmsEIP712', () => {
         delegatedAccount: '0x37ac010c1c566696326813b840319b58bb5840e4',
       };
 
-      expect(() => kms.createDelegateUserDecryptEIP712(message as any)).toThrow(
-        ChecksummedAddressError,
-      );
+      expect(() =>
+        kms.createDelegateUserDecryptEIP712(message as any),
+      ).not.toThrow();
     });
   });
 

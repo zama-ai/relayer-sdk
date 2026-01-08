@@ -41,7 +41,7 @@ function createValidParams() {
     gatewayChainId: VALID_GATEWAY_CHAIN_ID,
     verifyingContractAddressInputVerification: VALID_VERIFYING_CONTRACT,
     coprocessorSigners: [VALID_SIGNER_1, VALID_SIGNER_2],
-    threshold: 1,
+    coprocessorSignerThreshold: 1,
   };
 }
 
@@ -78,10 +78,10 @@ describe('CoprocessorSignersVerifier', () => {
     });
 
     it('sets threshold correctly', () => {
-      const params = { ...createValidParams(), threshold: 2 };
+      const params = { ...createValidParams(), coprocessorSignerThreshold: 2 };
       const verifier = CoprocessorSignersVerifier.fromAddresses(params);
 
-      expect(verifier.threshold).toBe(2);
+      expect(verifier.coprocessorSignerThreshold).toBe(2);
     });
 
     it('sets gatewayChainId correctly', () => {
@@ -115,7 +115,7 @@ describe('CoprocessorSignersVerifier', () => {
       const params = {
         ...createValidParams(),
         coprocessorSigners: [VALID_SIGNER_1, VALID_SIGNER_2, VALID_SIGNER_3],
-        threshold: 2,
+        coprocessorSignerThreshold: 2,
       };
       const verifier = CoprocessorSignersVerifier.fromAddresses(params);
 
@@ -240,7 +240,7 @@ describe('CoprocessorSignersVerifier', () => {
           gatewayChainId: PAYLOAD_GATEWAY_CHAIN_ID,
           verifyingContractAddressInputVerification: PAYLOAD_VERIFYING_CONTRACT,
           coprocessorSigners: EXPECTED_SIGNER_ADDRESSES,
-          threshold: PAYLOAD_THRESHOLD,
+          coprocessorSignerThreshold: PAYLOAD_THRESHOLD,
         });
 
         const zkProof = ZKProof.fromComponents({
@@ -273,7 +273,7 @@ describe('CoprocessorSignersVerifier', () => {
           gatewayChainId: PAYLOAD_GATEWAY_CHAIN_ID,
           verifyingContractAddressInputVerification: PAYLOAD_VERIFYING_CONTRACT,
           coprocessorSigners: EXPECTED_SIGNER_ADDRESSES,
-          threshold: PAYLOAD_THRESHOLD,
+          coprocessorSignerThreshold: PAYLOAD_THRESHOLD,
         });
 
         const zkProof = ZKProof.fromComponents({
@@ -309,7 +309,7 @@ describe('CoprocessorSignersVerifier', () => {
           gatewayChainId: PAYLOAD_GATEWAY_CHAIN_ID,
           verifyingContractAddressInputVerification: PAYLOAD_VERIFYING_CONTRACT,
           coprocessorSigners: [unknownSigner],
-          threshold: 1,
+          coprocessorSignerThreshold: 1,
         });
 
         const zkProof = ZKProof.fromComponents({
@@ -342,7 +342,7 @@ describe('CoprocessorSignersVerifier', () => {
           gatewayChainId: PAYLOAD_GATEWAY_CHAIN_ID,
           verifyingContractAddressInputVerification: PAYLOAD_VERIFYING_CONTRACT,
           coprocessorSigners: EXPECTED_SIGNER_ADDRESSES,
-          threshold: PAYLOAD_SIGNATURES.length + 1,
+          coprocessorSignerThreshold: PAYLOAD_SIGNATURES.length + 1,
         });
 
         const zkProof = ZKProof.fromComponents({

@@ -4,6 +4,7 @@ import type {
   Bytes65Hex,
   BytesHex,
 } from '@base/types/primitives';
+import type { InputProofBytesType } from './public-api';
 import { MAX_UINT8, uintToBytesHexNo0x } from '@base/uint';
 import {
   assertIsBytes65HexArray,
@@ -61,10 +62,7 @@ export class InputProof {
     return this.#extraData;
   }
 
-  public toBytes(): {
-    handles: Uint8Array[];
-    inputProof: Uint8Array;
-  } {
+  public toBytes(): InputProofBytesType {
     return {
       handles: this.#handles.map((h) => hexToBytes32(h)),
       inputProof: hexToBytes(this.#proof),

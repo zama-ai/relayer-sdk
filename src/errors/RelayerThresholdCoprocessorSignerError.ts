@@ -4,9 +4,10 @@ import { RelayerErrorBase } from './RelayerErrorBase';
 // RelayerThresholdCoprocessorSignerError
 ////////////////////////////////////////////////////////////////////////////////
 
-export type RelayerThresholdCoprocessorSignerErrorType = RelayerErrorBase & {
-  name: 'RelayerThresholdCoprocessorSignerError';
-};
+export type RelayerThresholdCoprocessorSignerErrorType =
+  RelayerThresholdCoprocessorSignerError & {
+    name: 'RelayerThresholdCoprocessorSignerError';
+  };
 
 export class RelayerThresholdCoprocessorSignerError extends RelayerErrorBase {
   constructor() {

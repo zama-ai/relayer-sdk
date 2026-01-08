@@ -143,7 +143,7 @@ export function isEncryptionBits(value: unknown): value is EncryptionBits {
 
 /**
  * Asserts that a value is a valid encryption bit width.
- * @throws {InvalidTypeError} If value is not a valid encryption bit width.
+ * @throws A {@link InvalidTypeError} If value is not a valid encryption bit width.
  * @example assertIsEncryptionBits(8) // passes
  * @example assertIsEncryptionBits(4) // throws (euint4 is deprecated)
  */
@@ -162,7 +162,7 @@ export function assertIsEncryptionBits(
 
 /**
  * Asserts that a value is a valid encryption bit width.
- * @throws {InvalidTypeError} If value is not a valid encryption bit width.
+ * @throws A {@link InvalidTypeError} If value is not a valid encryption bit width.
  * @example assertIsEncryptionBits(8) // passes
  * @example assertIsEncryptionBits(4) // throws (euint4 is deprecated)
  */
@@ -196,7 +196,7 @@ export function assertIsEncryptionBitsArray(
 /**
  * Converts an encryption bit width to its corresponding FheTypeId.
  * Accepts loose `number` input; validates internally via `isEncryptionBits`.
- * @throws {FheTypeError} If bitwidth is not a valid encryption bit width.
+ * @throws A {@link FheTypeError} If bitwidth is not a valid encryption bit width.
  * @example fheTypeIdFromEncryptionBits(8) // 2 (euint8)
  */
 export function fheTypeIdFromEncryptionBits(
@@ -214,7 +214,7 @@ export function fheTypeIdFromEncryptionBits(
 /**
  * Converts an FheTypeName to its corresponding FheTypeId.
  * Accepts loose `string` input; validates internally via `isFheTypeName`.
- * @throws {FheTypeError} If name is not a valid FheTypeName.
+ * @throws A {@link FheTypeError} If name is not a valid FheTypeName.
  * @example fheTypeIdFromName('euint8') // 2
  */
 // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
@@ -230,7 +230,7 @@ export function fheTypeIdFromName(name: string | FheTypeName): FheTypeId {
 /**
  * Converts an FheTypeId to its corresponding FheTypeName.
  * Accepts loose `number` input; validates internally via `isFheTypeId`.
- * @throws {FheTypeError} If id is not a valid FheTypeId.
+ * @throws A {@link FheTypeError} If id is not a valid FheTypeId.
  * @example fheTypeNameFromId(2) // 'euint8'
  */
 // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
@@ -273,7 +273,7 @@ export function solidityPrimitiveTypeNameFromFheTypeId(
 /**
  * Returns the encryption bit width for an FheTypeId.
  * @param typeId - The FHE type Id
- * @returns The encryption bit width (always >= 2)
+ * @returns The encryption bit width (always \>= 2)
  * @example encryptionBitsFromFheTypeId(2) // 8 (euint8)
  * @example encryptionBitsFromFheTypeId(7) // 160 (eaddress)
  */
@@ -295,7 +295,7 @@ export function encryptionBitsFromFheTypeId(typeId: FheTypeId): EncryptionBits {
 /**
  * Returns the encryption bit width for an FheType name.
  * @param name - The FHE type name (e.g., 'ebool', 'euint32', 'eaddress')
- * @returns The encryption bit width (always >= 2)
+ * @returns The encryption bit width (always \>= 2)
  * @example encryptionBitsFromFheTypeName('ebool') // 2
  * @example encryptionBitsFromFheTypeName('euint32') // 32
  * @example encryptionBitsFromFheTypeName('eaddress') // 160

@@ -4,8 +4,9 @@ import fetchMock from 'fetch-mock';
 import { ethers } from 'ethers';
 import { getErrorCause, getErrorCauseErrorMessage } from './error';
 import { createRelayerProvider } from '../relayer-provider/createRelayerProvider';
-import { TEST_CONFIG } from '../test/config';
+import { TEST_CONFIG, TEST_KMS } from '../test/config';
 import { fetchRelayerV1Post } from '../relayer-provider/v1/fetchRelayerV1';
+import { ChecksummedAddress } from 'src/node';
 
 // Jest Command line
 // =================
@@ -46,15 +47,17 @@ describeIfFetchMock('publicDecrypt', () => {
       response: {},
     });
 
-    publicDecryptRequest(
-      [],
-      1,
-      54321,
-      '0x8ba1f109551bd432803012645ac136ddd64dba72',
-      '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
+    publicDecryptRequest({
+      kmsSigners: TEST_KMS.addresses,
+      thresholdSigners: TEST_KMS.kmsSignerThreshold,
+      gatewayChainId: TEST_CONFIG.fhevmInstanceConfig.gatewayChainId,
+      verifyingContractAddressDecryption: TEST_CONFIG.fhevmInstanceConfig
+        .verifyingContractAddressDecryption as ChecksummedAddress,
+      aclContractAddress: TEST_CONFIG.fhevmInstanceConfig
+        .aclContractAddress as ChecksummedAddress,
       relayerProvider,
-      new ethers.JsonRpcProvider('https://devnet.zama.ai'),
-    );
+      provider: new ethers.JsonRpcProvider('https://devnet.zama.ai'),
+    });
   });
 });
 

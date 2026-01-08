@@ -5,9 +5,13 @@ export type ChecksummedAddressErrorType = ChecksummedAddressError & {
 };
 
 export class ChecksummedAddressError extends RelayerErrorBase {
-  constructor({ address }: { address: string }) {
+  constructor({ address, message }: { address?: string; message?: string }) {
     super({
-      message: `Checksummed address "${address}" is invalid.`,
+      message:
+        message ??
+        (address != null
+          ? `Checksummed address "${address}" is invalid.`
+          : 'Checksummed address is invalid.'),
       name: 'ChecksummedAddressError',
     });
   }

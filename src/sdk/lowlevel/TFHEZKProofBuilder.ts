@@ -5,7 +5,7 @@ import type {
   Uint64,
 } from '@base/types/primitives';
 import type { TFHEPkeParams } from './TFHEPkeParams';
-import type { CompactCiphertextListBuilderWasmType } from './types';
+import type { CompactCiphertextListBuilderWasmType } from './public-api';
 import { EncryptionError } from '../../errors/EncryptionError';
 import { assertRelayer } from '../../errors/InternalError';
 import {
@@ -181,6 +181,12 @@ export class TFHEZKProofBuilder {
     aclContractAddress: ChecksummedAddress;
     chainId: Uint64;
   }): ZKProof {
+    if (this.#totalBits === 0) {
+      throw new EncryptionError({
+        message: `Encrypted input must contain at least one value`,
+      });
+    }
+
     // should be guaranteed at this point
     assertRelayer(this.#totalBits <= this.#bitsCapacity);
 

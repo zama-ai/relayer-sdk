@@ -278,13 +278,20 @@ describe('InputVerfier', () => {
     });
 
     it('threshold is a positive number', () => {
-      expect(typeof inputVerifier.threshold).toBe('number');
-      expect(inputVerifier.threshold).toBeGreaterThan(0);
+      expect(typeof inputVerifier.coprocessorSignerThreshold).toBe('number');
+      expect(inputVerifier.coprocessorSignerThreshold).toBeGreaterThan(0);
     });
 
     it('threshold is less than or equal to coprocessorSigners length', () => {
-      expect(inputVerifier.threshold).toBeLessThanOrEqual(
+      expect(inputVerifier.coprocessorSignerThreshold).toBeLessThanOrEqual(
         inputVerifier.coprocessorSigners.length,
+      );
+    });
+
+    it('inputVerifier.verifyingContractAddressInputVerification is valid address', () => {
+      expect(inputVerifier.verifyingContractAddressInputVerification).toBe(
+        TEST_CONFIG.fhevmInstanceConfig
+          .verifyingContractAddressInputVerification,
       );
     });
   });
@@ -347,13 +354,13 @@ describe('InputVerfier', () => {
     });
 
     it('threshold is a primitive and cannot be reassigned via getter', () => {
-      const threshold = inputVerifier.threshold;
+      const threshold = inputVerifier.coprocessorSignerThreshold;
       expect(typeof threshold).toBe('number');
 
       // Primitives are immutable by nature
       // Attempting to modify via getter returns a copy
-      const originalThreshold = inputVerifier.threshold;
-      expect(inputVerifier.threshold).toBe(originalThreshold);
+      const originalThreshold = inputVerifier.coprocessorSignerThreshold;
+      expect(inputVerifier.coprocessorSignerThreshold).toBe(originalThreshold);
     });
 
     it('getter returns same frozen object reference', () => {

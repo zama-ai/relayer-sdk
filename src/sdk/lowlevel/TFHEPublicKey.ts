@@ -3,7 +3,8 @@ import type {
   TFHEPublicKeyBytesHexType,
   TFHEPublicKeyBytesType,
   TFHEPublicKeyUrlType,
-} from './types';
+  TFHEPublicKeyWasmType,
+} from './public-api';
 import { bytesToHexLarge, hexToBytesFaster } from '@base/bytes';
 import { fetchBytes } from '@base/fetch';
 import { assertRecordStringProperty } from '@base/string';
@@ -40,6 +41,24 @@ export class TFHEPublicKey {
 
   public get wasmClassName(): string {
     return this.#tfheCompactPublicKeyWasm.constructor.name;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  // serialize/deserialize: fromWasm
+  //////////////////////////////////////////////////////////////////////////////
+
+  public static fromWasm(params: TFHEPublicKeyWasmType): TFHEPublicKey {
+    return this._fromWasm(params);
+  }
+
+  private static _fromWasm(params: TFHEPublicKeyWasmType): TFHEPublicKey {
+    const pk = new TFHEPublicKey();
+
+    pk.#id = params.id;
+    pk.#tfheCompactPublicKeyWasm = params.wasm;
+    pk.#srcUrl = params.srcUrl;
+
+    return pk;
   }
 
   //////////////////////////////////////////////////////////////////////////////

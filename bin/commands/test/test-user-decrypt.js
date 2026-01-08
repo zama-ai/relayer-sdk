@@ -5,15 +5,16 @@ import { FHETestAddresses } from './fheTest.js';
 import { ethers } from 'ethers';
 import { userDecrypt } from '../../userDecrypt.js';
 
-// npx . test user-decrypt --type euint32 --network devnet --version 2
-// npx . test user-decrypt --type euint32 --network testnet --version 1
-// npx . test user-decrypt --type euint32 --network testnet --version 2
-// npx . test user-decrypt --type euint32 --network mainnet --version 2
+// npx . test user-decrypt --types euint32 --network devnet --version 2
+// npx . test user-decrypt --types euint32 --network testnet --version 1
+// npx . test user-decrypt --types euint32 --network testnet --version 2
+// npx . test user-decrypt --types euint32 --network mainnet --version 2
 export async function testFHETestUserDecryptCommand(options) {
   const { config, provider, signer, zamaFhevmApiKey } =
     parseCommonOptions(options);
 
   logCLI('🚚 network: ' + config.name, options);
+  logCLI('🚀 route: v' + config.version, options);
   logCLI(`🍔 signer: ${signer.address}`);
 
   if (!FHETestAddresses[config.name]) {
@@ -25,21 +26,32 @@ export async function testFHETestUserDecryptCommand(options) {
 
   logCLI(`🏈 FHETest contract address: ${contractAddress}`);
 
+  const abi = [];
+  const getFuncNames = [];
+
   // Turn 'euint32' into 'Euint32'
-  const t = 'E' + options.type.substring(1);
-  const getFuncName = `get${t}`;
+  for (let i = 0; i < options.types.length; ++i) {
+    const t = 'E' + options.types[i].substring(1);
+    const getFuncName = `get${t}`;
+    getFuncNames.push(getFuncName);
+    abi.push(`function ${getFuncName}() view returns (bytes32)`);
+  }
+  const contract = new ethers.Contract(contractAddress, abi, signer);
 
-  const contract = new ethers.Contract(
-    contractAddress,
-    [`function ${getFuncName}() view returns (bytes32)`],
-    signer,
-  );
-
-  const handle = await contract[getFuncName]();
-  logCLI(`🏈 handle: ${handle}`);
+  const handles = [];
+  for (let i = 0; i < getFuncNames.length; ++i) {
+    const handle = await contract[getFuncNames[i]]();
+    handles.push(handle);
+    logCLI(`🏈 handle: ${handle}`);
+  }
 
   await userDecrypt({
-    handleContractPairs: [{ handle, contractAddress }],
+    handleContractPairs: handles.map((h) => {
+      return {
+        handle: h,
+        contractAddress,
+      };
+    }),
     contractAddresses: [contractAddress],
     signer,
     config,

@@ -2,7 +2,7 @@ import type {
   CoprocessorEIP712MessageHexType,
   ICoprocessorEIP712,
   CoprocessorEIP712Type,
-} from '../../sdk/coprocessor/types';
+} from '../../sdk/coprocessor/public-api';
 import type { Prettify } from '../../base/types/utils';
 import type {
   Bytes32Hex,

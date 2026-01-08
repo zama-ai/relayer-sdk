@@ -10,6 +10,11 @@ import type {
 // CoprocessorEIP712 Types
 ////////////////////////////////////////////////////////////////////////////////
 
+export interface ICoprocessorSignersVerifier extends ICoprocessorEIP712 {
+  readonly coprocessorSigners: readonly ChecksummedAddress[];
+  readonly coprocessorSignerThreshold: number;
+}
+
 export interface ICoprocessorEIP712 {
   readonly gatewayChainId: bigint;
   readonly verifyingContractAddressInputVerification: ChecksummedAddress;
@@ -52,4 +57,9 @@ export type CoprocessorEIP712Type = Prettify<{
   readonly domain: CoprocessorEIP712DomainType;
   readonly types: CoprocessorEIP712TypesType;
   readonly message: CoprocessorEIP712MessageType;
+}>;
+
+export type InputProofBytesType = Readonly<{
+  handles: Uint8Array[];
+  inputProof: Uint8Array;
 }>;

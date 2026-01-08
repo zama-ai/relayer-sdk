@@ -23,6 +23,7 @@ export async function testFHETestPublicDecryptCommand(options) {
     parseCommonOptions(options);
 
   logCLI('🚚 network: ' + config.name, options);
+  logCLI('🚀 route: v' + config.version, options);
   logCLI(`🍔 signer: ${signer.address}`);
 
   if (!FHETestAddresses[config.name]) {
@@ -42,6 +43,7 @@ export async function testFHETestPublicDecryptCommand(options) {
     getFuncNames.push(getFuncName);
     abi.push(`function ${getFuncName}() view returns (bytes32)`);
   }
+  abi.push(`function verify(bytes32[] calldata, bytes memory, bytes memory)`);
 
   const contract = new ethers.Contract(contractAddress, abi, signer);
 
@@ -55,4 +57,15 @@ export async function testFHETestPublicDecryptCommand(options) {
   const res = await publicDecrypt(handles, config, zamaFhevmApiKey, options);
 
   console.log(safeJSONstringify(res, 2));
+
+  logCLI(`Verify ...`);
+
+  // Simulate the transaction using staticCall (dry run)
+  await contract.verify.staticCall(
+    handles,
+    res.abiEncodedClearValues,
+    res.decryptionProof,
+  );
+
+  logCLI(`✅ Verification succeeded!`);
 }
