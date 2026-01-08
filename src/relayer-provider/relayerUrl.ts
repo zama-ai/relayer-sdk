@@ -63,6 +63,11 @@ export function parseRelayerUrl(
       };
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (fallbackVersion !== 1 && fallbackVersion !== 2) {
+      return null;
+    }
+
     return {
       url: urlNoSlash,
       version: fallbackVersion,
@@ -83,10 +88,16 @@ export function parseRelayerUrl(
     };
   }
 
-  const version: 1 | 2 =
-    relayerRouteVersion === 1 || relayerRouteVersion === 2
-      ? relayerRouteVersion
-      : fallbackVersion;
+  let version: 1 | 2;
+  if (relayerRouteVersion === 1 || relayerRouteVersion === 2) {
+    version = relayerRouteVersion;
+  } else {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (fallbackVersion !== 1 && fallbackVersion !== 2) {
+      return null;
+    }
+    version = fallbackVersion;
+  }
 
   return {
     url: `${urlNoSlash}/v${version}`,
