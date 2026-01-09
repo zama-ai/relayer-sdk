@@ -9,7 +9,7 @@ export async function publicDecrypt(handles, config, zamaFhevmApiKey, options) {
   );
 
   const instanceOptions = {
-    ...(options.verbose === true ? { debug: true } : {}),
+    //...(options.verbose === true ? { debug: true } : {}),
     auth: { __type: 'ApiKeyHeader', value: zamaFhevmApiKey },
   };
 

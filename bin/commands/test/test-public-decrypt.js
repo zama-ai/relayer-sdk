@@ -24,7 +24,7 @@ export async function testFHETestPublicDecryptCommand(options) {
 
   logCLI('🚚 network: ' + config.name, options);
   logCLI('🚀 route: v' + config.version, options);
-  logCLI(`🍔 signer: ${signer.address}`);
+  logCLI(`🍔 signer: ${signer.address}`, options);
 
   if (!FHETestAddresses[config.name]) {
     logCLI(`❌ FHETest is not deployed on network ${config.name}`, options);
@@ -51,14 +51,14 @@ export async function testFHETestPublicDecryptCommand(options) {
   for (let i = 0; i < getFuncNames.length; ++i) {
     const handle = await contract[getFuncNames[i]]();
     handles.push(handle);
-    logCLI(`🏈 handle: ${handle}`);
+    logCLI(`🏈 handle: ${handle}`, options);
   }
 
   const res = await publicDecrypt(handles, config, zamaFhevmApiKey, options);
 
   console.log(safeJSONstringify(res, 2));
 
-  logCLI(`Verify ...`);
+  logCLI(`Verify ...`, options);
 
   // Simulate the transaction using staticCall (dry run)
   await contract.verify.staticCall(
@@ -67,5 +67,5 @@ export async function testFHETestPublicDecryptCommand(options) {
     res.decryptionProof,
   );
 
-  logCLI(`✅ Verification succeeded!`);
+  logCLI(`✅ Verification succeeded!`, options);
 }
