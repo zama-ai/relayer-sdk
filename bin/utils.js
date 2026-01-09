@@ -35,6 +35,9 @@ export function getEnv(envName, envFile) {
   if (!envFile) {
     throwError(`Missing env filename`);
   }
+  if (!fs.existsSync(envFile)) {
+    throwError(`Missing env file ${envFile}`);
+  }
   const parsedEnv = dotenv.parse(fs.readFileSync(envFile));
   return process.env[envName] ?? parsedEnv[envName];
 }

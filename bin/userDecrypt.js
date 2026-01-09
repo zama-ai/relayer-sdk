@@ -39,6 +39,9 @@ export async function userDecrypt({
 
     const keypair = instance.generateKeypair();
 
+    logCLI(`privateKey hex length:${keypair.privateKey.length}`);
+    logCLI(`publicKey hex length:${keypair.publicKey.length}`);
+
     logCLI('Running user decrypt...', options);
 
     const startTimeStamp = Math.floor(Date.now() / 1000);
