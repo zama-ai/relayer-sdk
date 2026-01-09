@@ -13,7 +13,7 @@ export async function inputProof(
   const arr = fheTypedValuesToBuilderFunctionWithArg(fheTypedValues);
 
   const instanceOptions = {
-    ...(options.verbose === true ? { debug: true } : {}),
+    ...(options?.verbose === true ? { debug: true } : {}),
     auth: { __type: 'ApiKeyHeader', value: zamaFhevmApiKey },
   };
 

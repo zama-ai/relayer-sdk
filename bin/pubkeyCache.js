@@ -2,9 +2,9 @@ import fs from 'fs';
 import path from 'path';
 import { homedir } from 'os';
 import {
-  createRelayerFhevm,
   TFHEPkeCrs,
   TFHEPublicKey,
+  createRelayerFhevm,
 } from '../lib/internal.js';
 import { logCLI } from './utils.js';
 

@@ -1,3 +1,4 @@
+import { TKMS as TKMSModule } from './wasm-modules';
 import type { Bytes, BytesHex, BytesHexNo0x } from '@base/types/primitives';
 import type { KeypairType } from '@sdk/kms/public-api';
 import { bytesEquals, bytesToHexLarge, hexToBytesFaster } from '@base/bytes';
@@ -51,11 +52,11 @@ export class TKMSPkeKeypair implements KeypairType<BytesHexNo0x> {
   }
 
   public static generate(): TKMSPkeKeypair {
-    const keypair = TKMS.ml_kem_pke_keygen();
-    const pkBytes = TKMS.ml_kem_pke_pk_to_u8vec(
-      TKMS.ml_kem_pke_get_pk(keypair),
+    const keypair = TKMSModule.ml_kem_pke_keygen();
+    const pkBytes = TKMSModule.ml_kem_pke_pk_to_u8vec(
+      TKMSModule.ml_kem_pke_get_pk(keypair),
     );
-    const skBytes = TKMS.ml_kem_pke_sk_to_u8vec(keypair);
+    const skBytes = TKMSModule.ml_kem_pke_sk_to_u8vec(keypair);
     return new TKMSPkeKeypair({
       mlKemPkePk: _toBytesAndBytesHexNo0xPair(pkBytes),
       mlKemPkeSk: _toBytesAndBytesHexNo0xPair(skBytes),
@@ -65,7 +66,7 @@ export class TKMSPkeKeypair implements KeypairType<BytesHexNo0x> {
   public verify(): void {
     let skWasm;
     try {
-      skWasm = TKMS.u8vec_to_ml_kem_pke_sk(this.#mlKemPkeSk.bytes);
+      skWasm = TKMSModule.u8vec_to_ml_kem_pke_sk(this.#mlKemPkeSk.bytes);
     } catch {
       throw new Error(`Invalid TKMSPkeKeypair privateKey`);
     }
@@ -84,9 +85,9 @@ export class TKMSPkeKeypair implements KeypairType<BytesHexNo0x> {
     //   }
     // }
 
-    const pkWasm = TKMS.ml_kem_pke_get_pk(skWasm);
-    const pkBytes = TKMS.ml_kem_pke_pk_to_u8vec(pkWasm);
-    const skBytes = TKMS.ml_kem_pke_sk_to_u8vec(skWasm);
+    const pkWasm = TKMSModule.ml_kem_pke_get_pk(skWasm);
+    const pkBytes = TKMSModule.ml_kem_pke_pk_to_u8vec(pkWasm);
+    const skBytes = TKMSModule.ml_kem_pke_sk_to_u8vec(skWasm);
     if (!bytesEquals(pkBytes, this.#mlKemPkePk.bytes)) {
       throw new Error(`Invalid TKMSPkeKeypair publicKey`);
     }

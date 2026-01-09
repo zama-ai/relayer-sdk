@@ -14,7 +14,14 @@ import { MAX_UINT64 } from '../base/uint';
 import { fheTypeIdFromEncryptionBits } from '../sdk/FheType';
 import { ZKProof } from '../sdk/ZKProof';
 
+////////////////////////////////////////////////////////////////////////////////
+//
+// Jest Command line
+// =================
 // npx jest --colors --passWithNoTests ./src/relayer/handles.test.ts
+// npx jest --colors --passWithNoTests --coverage ./src/relayer/handles.test.ts --collectCoverageFrom='./src/relayer/handles.ts'
+//
+////////////////////////////////////////////////////////////////////////////////
 
 const INPUT_PROOF_ASSET_1 = JSON.parse(
   fs.readFileSync(

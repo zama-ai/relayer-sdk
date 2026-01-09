@@ -1,3 +1,4 @@
+import { TFHE as TFHEModule } from './wasm-modules';
 import type { EncryptionBits, FheTypeId } from '@base/types/primitives';
 import type { ProvenCompactCiphertextListWasmType } from './public-api';
 import { hexToBytesFaster } from '@base/bytes';
@@ -73,7 +74,7 @@ export class TFHEProvenCompactCiphertextList {
 
     let listWasm: ProvenCompactCiphertextListWasmType;
     try {
-      listWasm = TFHE.ProvenCompactCiphertextList.safe_deserialize(
+      listWasm = TFHEModule.ProvenCompactCiphertextList.safe_deserialize(
         ciphertext,
         SERIALIZED_SIZE_LIMIT_CIPHERTEXT,
       );

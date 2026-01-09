@@ -154,12 +154,11 @@ export interface CompactPkeCrsStaticWasmType {
 }
 
 export interface TFHEType {
-  default?: unknown;
-  TFHEInput?: unknown;
+  default?: (module_or_path?: any) => Promise<any>;
   TfheCompactPublicKey: TfheCompactPublicKeyStaticWasmType;
   CompactPkeCrs: CompactPkeCrsStaticWasmType;
-  initThreadPool?: (size: number) => Promise<void>;
-  init_panic_hook(): void;
+  initThreadPool?: (num_threads: number) => Promise<any>;
+  init_panic_hook: () => void;
   CompactCiphertextList: {
     builder(
       publicKey: TfheCompactPublicKeyWasmType,
@@ -173,7 +172,7 @@ export interface TFHEType {
 }
 
 export interface TKMSType {
-  default?: unknown;
+  default?: (module_or_path?: any) => Promise<any>;
   u8vec_to_ml_kem_pke_pk(v: Uint8Array): WasmObject;
   u8vec_to_ml_kem_pke_sk(v: Uint8Array): WasmObject;
   new_client(

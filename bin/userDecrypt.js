@@ -17,7 +17,7 @@ export async function userDecrypt({
   );
 
   const instanceOptions = {
-    ...(options.verbose === true ? { debug: true } : {}),
+    //...(options.verbose === true ? { debug: true } : {}),
     auth: { __type: 'ApiKeyHeader', value: zamaFhevmApiKey },
   };
 
@@ -38,6 +38,9 @@ export async function userDecrypt({
     logCLI('Generating key pair...', options);
 
     const keypair = instance.generateKeypair();
+
+    logCLI(`privateKey hex length:${keypair.privateKey.length}`);
+    logCLI(`publicKey hex length:${keypair.publicKey.length}`);
 
     logCLI('Running user decrypt...', options);
 

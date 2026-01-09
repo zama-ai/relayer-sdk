@@ -1,5 +1,7 @@
 // ESM explicit named re-export is required.
 import type { TFHEType, TKMSType } from './sdk/lowlevel/public-api';
+import { setTFHE, setTKMS } from './sdk/lowlevel/wasm-modules';
+
 import initTFHE, {
   initThreadPool,
   init_panic_hook,
@@ -9,6 +11,7 @@ import initTFHE, {
   ZkComputeLoad,
   ProvenCompactCiphertextList,
 } from 'tfhe';
+
 import {
   default as initTKMS,
   u8vec_to_ml_kem_pke_pk,
@@ -22,7 +25,7 @@ import {
   ml_kem_pke_get_pk,
 } from 'tkms';
 
-window.TFHE = {
+setTFHE({
   default: initTFHE,
   initThreadPool,
   init_panic_hook,
@@ -31,9 +34,9 @@ window.TFHE = {
   CompactCiphertextList: CompactCiphertextList as any,
   ZkComputeLoad: ZkComputeLoad as any,
   ProvenCompactCiphertextList: ProvenCompactCiphertextList as any,
-} satisfies TFHEType;
+} satisfies TFHEType);
 
-window.TKMS = {
+setTKMS({
   default: initTKMS,
   u8vec_to_ml_kem_pke_pk,
   u8vec_to_ml_kem_pke_sk,
@@ -44,10 +47,34 @@ window.TKMS = {
   ml_kem_pke_pk_to_u8vec,
   ml_kem_pke_sk_to_u8vec,
   ml_kem_pke_get_pk,
-} satisfies TKMSType;
+} satisfies TKMSType);
 
-export { InitInput as TFHEInput } from 'tfhe';
-export { InitInput as KMSInput } from 'tkms';
+// window.TFHE = {
+//   default: initTFHE,
+//   initThreadPool,
+//   init_panic_hook,
+//   TfheCompactPublicKey: TfheCompactPublicKey as any,
+//   CompactPkeCrs: CompactPkeCrs as any,
+//   CompactCiphertextList: CompactCiphertextList as any,
+//   ZkComputeLoad: ZkComputeLoad as any,
+//   ProvenCompactCiphertextList: ProvenCompactCiphertextList as any,
+// } satisfies TFHEType;
+
+// window.TKMS = {
+//   default: initTKMS,
+//   u8vec_to_ml_kem_pke_pk,
+//   u8vec_to_ml_kem_pke_sk,
+//   new_client,
+//   new_server_id_addr,
+//   process_user_decryption_resp_from_js,
+//   ml_kem_pke_keygen,
+//   ml_kem_pke_pk_to_u8vec,
+//   ml_kem_pke_sk_to_u8vec,
+//   ml_kem_pke_get_pk,
+// } satisfies TKMSType;
+
+export type { InitInput as TFHEInput } from 'tfhe';
+export type { InitInput as KMSInput } from 'tkms';
 
 // Re-export everything from main entry point
 export * from './index';
@@ -60,6 +87,9 @@ export type * from './relayer-provider/v2/errors/public-types';
 
 // Error types
 export type * from './errors';
+
+// Base utils
+export { isChecksummedAddress, isAddress } from './base/address';
 
 // SDK classes, constants and types
 export * from './sdk';

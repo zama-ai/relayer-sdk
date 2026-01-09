@@ -1,3 +1,4 @@
+import { TFHE as TFHEModule } from './wasm-modules';
 import type {
   TfheCompactPublicKeyWasmType,
   TFHEPublicKeyBytesHexType,
@@ -105,10 +106,11 @@ export class TFHEPublicKey {
     const pk = new TFHEPublicKey();
 
     pk.#id = params.id;
-    pk.#tfheCompactPublicKeyWasm = TFHE.TfheCompactPublicKey.safe_deserialize(
-      params.bytes,
-      SERIALIZED_SIZE_LIMIT_PK,
-    );
+    pk.#tfheCompactPublicKeyWasm =
+      TFHEModule.TfheCompactPublicKey.safe_deserialize(
+        params.bytes,
+        SERIALIZED_SIZE_LIMIT_PK,
+      );
     pk.#srcUrl = params.srcUrl;
 
     return pk;

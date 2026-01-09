@@ -1,3 +1,4 @@
+import { TKMS as TKMSModule } from '../sdk/lowlevel/wasm-modules';
 import type {
   HandleContractPairRelayer,
   RelayerUserDecryptOptionsType,
@@ -126,8 +127,8 @@ export const userDecryptRequest =
     let pubKey;
     let privKey;
     try {
-      pubKey = TKMS.u8vec_to_ml_kem_pke_pk(hexToBytes(publicKey));
-      privKey = TKMS.u8vec_to_ml_kem_pke_sk(hexToBytes(privateKey));
+      pubKey = TKMSModule.u8vec_to_ml_kem_pke_pk(hexToBytes(publicKey));
+      privKey = TKMSModule.u8vec_to_ml_kem_pke_sk(hexToBytes(privateKey));
     } catch (e) {
       throw new Error('Invalid public or private key', { cause: e });
     }
@@ -211,10 +212,14 @@ export const userDecryptRequest =
 
     // assume the KMS Signers have the correct order
     let indexedKmsSigners = kmsSigners.map((signer, index) => {
-      return TKMS.new_server_id_addr(index + 1, signer);
+      return TKMSModule.new_server_id_addr(index + 1, signer);
     });
 
-    const client = TKMS.new_client(indexedKmsSigners, userAddress, 'default');
+    const client = TKMSModule.new_client(
+      indexedKmsSigners,
+      userAddress,
+      'default',
+    );
 
     try {
       const buffer = new ArrayBuffer(32);
@@ -239,7 +244,7 @@ export const userDecryptRequest =
         eip712_verifying_contract: verifyingContractAddressDecryption,
       };
 
-      const decryption = TKMS.process_user_decryption_resp_from_js(
+      const decryption = TKMSModule.process_user_decryption_resp_from_js(
         client,
         payloadForVerification,
         eip712Domain,

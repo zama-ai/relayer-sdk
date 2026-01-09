@@ -1,3 +1,4 @@
+import { TFHE as TFHEModule } from './lowlevel/wasm-modules';
 import type {
   CompactPkeCrsWasmType,
   TfheCompactPublicKeyWasmType,
@@ -68,7 +69,8 @@ export const createEncryptedInput = ({
     throw new Error('User address is not a valid address.');
   }
   const bits: EncryptionBits[] = [];
-  const builder = TFHE.CompactCiphertextList.builder(tfheCompactPublicKey);
+  const builder =
+    TFHEModule.CompactCiphertextList.builder(tfheCompactPublicKey);
   let ciphertextWithZKProof: Uint8Array = new Uint8Array(); // updated in `_prove`
   const checkLimit = (added: number): void => {
     if (bits.reduce((acc, val) => acc + Math.max(2, val), 0) + added > 2048) {
@@ -182,7 +184,7 @@ export const createEncryptedInput = ({
       const encrypted = builder.build_with_proof_packed(
         tfheCompactPkeCrs,
         metaData,
-        TFHE.ZkComputeLoad.Verify,
+        TFHEModule.ZkComputeLoadVerify,
       );
 
       ciphertextWithZKProof = encrypted.safe_serialize(

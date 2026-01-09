@@ -1,3 +1,4 @@
+import { TFHE as TFHEModule } from './wasm-modules';
 import type {
   TFHEPkeCrsBytesHexType,
   TFHEPkeCrsUrlType,
@@ -148,7 +149,7 @@ export class TFHEPkeCrs {
   private static _fromBytes(params: TFHEPksCrsBytesType): TFHEPkeCrs {
     const crs = new TFHEPkeCrs();
     crs.#id = params.id;
-    crs.#tfheCompactPkeCrsWasm = TFHE.CompactPkeCrs.safe_deserialize(
+    crs.#tfheCompactPkeCrsWasm = TFHEModule.CompactPkeCrs.safe_deserialize(
       params.bytes,
       SERIALIZED_SIZE_LIMIT_CRS,
     );
