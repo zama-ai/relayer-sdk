@@ -1,8 +1,14 @@
-import type { BytesHex, ChecksummedAddress } from '../../base/types/primitives';
+import type {
+  Bytes32Hex,
+  Bytes65Hex,
+  BytesHex,
+  ChecksummedAddress,
+} from '../../base/types/primitives';
 import { KmsEIP712 } from './KmsEIP712';
 import { InvalidTypeError } from '../../errors/InvalidTypeError';
 import { ChecksummedAddressError } from '../../errors/ChecksummedAddressError';
 import { AddressError } from '../../errors/AddressError';
+import { Wallet } from 'ethers';
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -534,6 +540,373 @@ describe('KmsEIP712', () => {
       expect(eip712.message.contractAddresses).toEqual([
         VALID_CONTRACT_ADDRESS,
       ]);
+    });
+  });
+
+  //////////////////////////////////////////////////////////////////////////////
+  // createPublicDecryptEIP712
+  //////////////////////////////////////////////////////////////////////////////
+
+  describe('createPublicDecryptEIP712', () => {
+    let kms: KmsEIP712;
+
+    beforeEach(() => {
+      kms = new KmsEIP712(createValidParams());
+    });
+
+    it('creates public decrypt EIP712 object with valid message', () => {
+      const message = {
+        ctHandles: [
+          '0x0000000000000000000000000000000000000000000000000000000000000001',
+        ] as Bytes32Hex[],
+        decryptedResult: '0xabcd' as BytesHex,
+        extraData: '0x1234' as BytesHex,
+      };
+
+      const eip712 = kms.createPublicDecryptEIP712(message);
+
+      expect(eip712).toBeDefined();
+      expect(eip712.primaryType).toBe('PublicDecryptVerification');
+      expect(eip712.message.ctHandles).toEqual(message.ctHandles);
+      expect(eip712.message.decryptedResult).toBe(message.decryptedResult);
+      expect(eip712.message.extraData).toBe(message.extraData);
+    });
+
+    it('freezes public decrypt EIP712 object and its properties', () => {
+      const message = {
+        ctHandles: [
+          '0x0000000000000000000000000000000000000000000000000000000000000001',
+        ] as Bytes32Hex[],
+        decryptedResult: '0xabcd' as BytesHex,
+        extraData: '0x1234' as BytesHex,
+      };
+
+      const eip712 = kms.createPublicDecryptEIP712(message);
+
+      expect(Object.isFrozen(eip712)).toBe(true);
+      expect(Object.isFrozen(eip712.domain)).toBe(true);
+      expect(Object.isFrozen(eip712.types)).toBe(true);
+      expect(Object.isFrozen(eip712.types.PublicDecryptVerification)).toBe(
+        true,
+      );
+      expect(Object.isFrozen(eip712.message)).toBe(true);
+      expect(Object.isFrozen(eip712.message.ctHandles)).toBe(true);
+    });
+
+    it('throws for invalid ctHandles', () => {
+      const message = {
+        ctHandles: ['0xinvalid'],
+        decryptedResult: '0xabcd' as BytesHex,
+        extraData: '0x1234' as BytesHex,
+      };
+
+      expect(() => kms.createPublicDecryptEIP712(message as any)).toThrow(
+        InvalidTypeError,
+      );
+    });
+
+    it('throws for invalid decryptedResult', () => {
+      const message = {
+        ctHandles: [
+          '0x0000000000000000000000000000000000000000000000000000000000000001',
+        ] as Bytes32Hex[],
+        decryptedResult: 'invalid',
+        extraData: '0x1234' as BytesHex,
+      };
+
+      expect(() => kms.createPublicDecryptEIP712(message as any)).toThrow(
+        InvalidTypeError,
+      );
+    });
+
+    it('throws for invalid extraData', () => {
+      const message = {
+        ctHandles: [
+          '0x0000000000000000000000000000000000000000000000000000000000000001',
+        ] as Bytes32Hex[],
+        decryptedResult: '0xabcd' as BytesHex,
+        extraData: 'invalid',
+      };
+
+      expect(() => kms.createPublicDecryptEIP712(message as any)).toThrow(
+        InvalidTypeError,
+      );
+    });
+
+    it('accepts empty ctHandles array', () => {
+      const message = {
+        ctHandles: [] as Bytes32Hex[],
+        decryptedResult: '0xabcd' as BytesHex,
+        extraData: '0x' as BytesHex,
+      };
+
+      const eip712 = kms.createPublicDecryptEIP712(message);
+
+      expect(eip712.message.ctHandles).toEqual([]);
+    });
+  });
+
+  //////////////////////////////////////////////////////////////////////////////
+  // verifyPublicDecrypt
+  //////////////////////////////////////////////////////////////////////////////
+
+  describe('verifyPublicDecrypt', () => {
+    let kms: KmsEIP712;
+
+    beforeEach(() => {
+      kms = new KmsEIP712(createValidParams());
+    });
+
+    it('accepts empty signatures array', () => {
+      const message = {
+        ctHandles: [
+          '0x0000000000000000000000000000000000000000000000000000000000000001',
+        ] as Bytes32Hex[],
+        decryptedResult: '0xabcd' as BytesHex,
+        extraData: '0x1234' as BytesHex,
+      };
+
+      const result = kms.verifyPublicDecrypt({ signatures: [], message });
+
+      expect(result).toEqual([]);
+    });
+
+    it('throws for invalid signatures array', () => {
+      const message = {
+        ctHandles: [
+          '0x0000000000000000000000000000000000000000000000000000000000000001',
+        ] as Bytes32Hex[],
+        decryptedResult: '0xabcd' as BytesHex,
+        extraData: '0x1234' as BytesHex,
+      };
+
+      expect(() =>
+        kms.verifyPublicDecrypt({
+          signatures: ['0xinvalid'] as any,
+          message,
+        }),
+      ).toThrow(InvalidTypeError);
+    });
+
+    it('recovers signer address from valid signature', async () => {
+      const wallet = Wallet.createRandom();
+      const message = {
+        ctHandles: [
+          '0x0000000000000000000000000000000000000000000000000000000000000001',
+        ] as Bytes32Hex[],
+        decryptedResult: '0xabcd' as BytesHex,
+        extraData: '0x1234' as BytesHex,
+      };
+
+      const domain = {
+        name: 'Decryption',
+        version: '1',
+        chainId: VALID_CHAIN_ID,
+        verifyingContract: VALID_VERIFYING_CONTRACT,
+      };
+
+      const types = {
+        PublicDecryptVerification: [
+          { name: 'ctHandles', type: 'bytes32[]' },
+          { name: 'decryptedResult', type: 'bytes' },
+          { name: 'extraData', type: 'bytes' },
+        ],
+      };
+
+      const signature = (await wallet.signTypedData(
+        domain,
+        types,
+        message,
+      )) as Bytes65Hex;
+
+      const result = kms.verifyPublicDecrypt({
+        signatures: [signature],
+        message,
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toBe(wallet.address);
+    });
+  });
+
+  //////////////////////////////////////////////////////////////////////////////
+  // verifyUserDecrypt with signatures
+  //////////////////////////////////////////////////////////////////////////////
+
+  describe('verifyUserDecrypt with signatures', () => {
+    let kms: KmsEIP712;
+
+    beforeEach(() => {
+      kms = new KmsEIP712(createValidParams());
+    });
+
+    it('recovers signer address from valid signature', async () => {
+      const wallet = Wallet.createRandom();
+      const message = createValidMessage();
+
+      const domain = {
+        name: 'Decryption',
+        version: '1',
+        chainId: VALID_CHAIN_ID,
+        verifyingContract: VALID_VERIFYING_CONTRACT,
+      };
+
+      const types = {
+        UserDecryptRequestVerification: [
+          { name: 'publicKey', type: 'bytes' },
+          { name: 'contractAddresses', type: 'address[]' },
+          { name: 'startTimestamp', type: 'uint256' },
+          { name: 'durationDays', type: 'uint256' },
+          { name: 'extraData', type: 'bytes' },
+        ],
+      };
+
+      const signature = (await wallet.signTypedData(domain, types, {
+        ...message,
+        startTimestamp: message.startTimestamp.toString(),
+        durationDays: message.durationDays.toString(),
+      })) as Bytes65Hex;
+
+      const result = kms.verifyUserDecrypt([signature], message);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toBe(wallet.address);
+    });
+  });
+
+  //////////////////////////////////////////////////////////////////////////////
+  // verifyDelegateUserDecrypt with signatures
+  //////////////////////////////////////////////////////////////////////////////
+
+  describe('verifyDelegateUserDecrypt with signatures', () => {
+    let kms: KmsEIP712;
+
+    beforeEach(() => {
+      kms = new KmsEIP712(createValidParams());
+    });
+
+    it('recovers signer address from valid signature', async () => {
+      const wallet = Wallet.createRandom();
+      const message = createValidDelegateMessage();
+
+      const domain = {
+        name: 'Decryption',
+        version: '1',
+        chainId: VALID_CHAIN_ID,
+        verifyingContract: VALID_VERIFYING_CONTRACT,
+      };
+
+      const types = {
+        DelegatedUserDecryptRequestVerification: [
+          { name: 'publicKey', type: 'bytes' },
+          { name: 'contractAddresses', type: 'address[]' },
+          { name: 'startTimestamp', type: 'uint256' },
+          { name: 'durationDays', type: 'uint256' },
+          { name: 'extraData', type: 'bytes' },
+          { name: 'delegatedAccount', type: 'address' },
+        ],
+      };
+
+      const signature = (await wallet.signTypedData(domain, types, {
+        ...message,
+        startTimestamp: message.startTimestamp.toString(),
+        durationDays: message.durationDays.toString(),
+      })) as Bytes65Hex;
+
+      const result = kms.verifyDelegateUserDecrypt([signature], message);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toBe(wallet.address);
+    });
+  });
+
+  //////////////////////////////////////////////////////////////////////////////
+  // _verifyPublicKeyArg edge cases (tested via createUserDecryptEIP712)
+  //////////////////////////////////////////////////////////////////////////////
+
+  describe('publicKey argument handling', () => {
+    let kms: KmsEIP712;
+
+    beforeEach(() => {
+      kms = new KmsEIP712(createValidParams());
+    });
+
+    it('throws for null publicKey', () => {
+      const message = {
+        ...createValidMessage(),
+        publicKey: null,
+      };
+
+      expect(() => kms.createUserDecryptEIP712(message as any)).toThrow(
+        'Missing publicKey argument.',
+      );
+    });
+
+    it('throws for undefined publicKey', () => {
+      const message = {
+        ...createValidMessage(),
+        publicKey: undefined,
+      };
+
+      expect(() => kms.createUserDecryptEIP712(message as any)).toThrow(
+        'Missing publicKey argument.',
+      );
+    });
+
+    it('accepts object with publicKey property', () => {
+      const message = {
+        ...createValidMessage(),
+        publicKey: { publicKey: VALID_PUBLIC_KEY },
+      };
+
+      const eip712 = kms.createUserDecryptEIP712(message as any);
+
+      expect(eip712.message.publicKey).toBe(VALID_PUBLIC_KEY);
+    });
+
+    it('accepts Uint8Array publicKey', () => {
+      const publicKeyBytes = new Uint8Array([0xab, 0xcd, 0xef]);
+      const message = {
+        ...createValidMessage(),
+        publicKey: publicKeyBytes,
+      };
+
+      const eip712 = kms.createUserDecryptEIP712(message as any);
+
+      expect(eip712.message.publicKey).toBe('0xabcdef');
+    });
+
+    it('accepts string publicKey without 0x prefix', () => {
+      const message = {
+        ...createValidMessage(),
+        publicKey: 'abcdef1234567890',
+      };
+
+      const eip712 = kms.createUserDecryptEIP712(message as any);
+
+      expect(eip712.message.publicKey).toBe('0xabcdef1234567890');
+    });
+
+    it('throws for invalid publicKey type (number)', () => {
+      const message = {
+        ...createValidMessage(),
+        publicKey: 12345,
+      };
+
+      expect(() => kms.createUserDecryptEIP712(message as any)).toThrow(
+        'Invalid publicKey argument.',
+      );
+    });
+
+    it('throws for invalid publicKey type (boolean)', () => {
+      const message = {
+        ...createValidMessage(),
+        publicKey: true,
+      };
+
+      expect(() => kms.createUserDecryptEIP712(message as any)).toThrow(
+        'Invalid publicKey argument.',
+      );
     });
   });
 });

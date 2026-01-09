@@ -1,11 +1,27 @@
-import * as TFHEPkg from 'node-tfhe';
-import * as TKMSPkg from 'node-tkms';
+import * as NodeTFHEPkg from 'node-tfhe';
+import * as NodeTKMSPkg from 'node-tkms';
 import type { TFHEType, TKMSType } from './sdk';
 import { setTFHE, setTKMS } from './sdk/lowlevel/wasm-modules';
 
 // Initialize module-scoped variables instead of globals
-setTFHE(TFHEPkg satisfies TFHEType);
-setTKMS(TKMSPkg satisfies TKMSType);
+export function initSDK({
+  TFHEPkg,
+  TKMSPkg,
+}: {
+  TFHEPkg?: TFHEType;
+  TKMSPkg?: TKMSType;
+}) {
+  if (TFHEPkg) {
+    setTFHE(TFHEPkg);
+  } else {
+    setTFHE(NodeTFHEPkg satisfies TFHEType);
+  }
+  if (TKMSPkg) {
+    setTKMS(TKMSPkg);
+  } else {
+    setTKMS(NodeTKMSPkg satisfies TKMSType);
+  }
+}
 
 // Re-export everything from main entry point
 export * from './index';

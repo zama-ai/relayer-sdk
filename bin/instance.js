@@ -1,4 +1,4 @@
-import { createInstance } from '../lib/node.cjs';
+import { createInstance } from '../lib/internal.js';
 import { logCLI } from './utils.js';
 
 let __instance;

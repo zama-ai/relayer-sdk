@@ -1,9 +1,12 @@
 const { setupGlobalJestFhevmConfig } = require('./setupJestBase.cjs');
+const { setTFHE, setTKMS } = require('./src/sdk/lowlevel/wasm-modules');
 
 const fetchMock = require('fetch-mock');
 
 global.fetch = fetchMock.default.fetchHandler;
-global.TFHE = require('node-tfhe');
-global.TKMS = require('node-tkms');
+
+// Initialize WASM modules
+setTFHE(require('node-tfhe'));
+setTKMS(require('node-tkms'));
 
 setupGlobalJestFhevmConfig('fetch-mock');

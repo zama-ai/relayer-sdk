@@ -1,5 +1,8 @@
 const { setupGlobalJestFhevmConfig } = require('./setupJestBase.cjs');
+const { setTFHE, setTKMS } = require('./src/sdk/lowlevel/wasm-modules');
 
-global.TFHE = require('node-tfhe');
-global.TKMS = require('node-tkms');
+// Initialize WASM modules
+setTFHE(require('node-tfhe'));
+setTKMS(require('node-tkms'));
+
 setupGlobalJestFhevmConfig('devnet', '.env.devnet');

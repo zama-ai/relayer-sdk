@@ -4,8 +4,8 @@ import { ethers } from 'ethers';
 import {
   encryptionBitsFromFheTypeName,
   FhevmHandle,
-  isChecksummedAddress,
   isFheTypeName,
+  isChecksummedAddress,
 } from '../lib/internal.js';
 import { FHETestAddresses } from './commands/test/fheTest.js';
 

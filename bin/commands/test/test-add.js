@@ -11,7 +11,8 @@ import { ethers } from 'ethers';
 // npx . test add --type euint32 --value 123 --network testnet
 // npx . test add --type euint32 --value 123 --network devnet
 export async function testFHETestAddCommand(options) {
-  const { config, provider, signer } = parseCommonOptions(options);
+  const { config, provider, signer, zamaFhevmApiKey } =
+    parseCommonOptions(options);
 
   logCLI('🚚 network: ' + config.name, options);
   logCLI('🚀 route: v' + config.version, options);
@@ -48,6 +49,7 @@ export async function testFHETestAddCommand(options) {
     config,
     publicKey,
     publicParams,
+    zamaFhevmApiKey,
     options,
   );
   console.log(safeJSONstringify(o, 2));

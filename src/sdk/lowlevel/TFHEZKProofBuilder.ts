@@ -1,3 +1,4 @@
+import { TFHE as TFHEModule } from './wasm-modules';
 import type {
   ChecksummedAddress,
   EncryptionBits,
@@ -45,7 +46,7 @@ export class TFHEZKProofBuilder {
   constructor(params: { pkeParams: TFHEPkeParams }) {
     this.#pkeParams = params.pkeParams;
     this.#fheCompactCiphertextListBuilderWasm =
-      TFHE.CompactCiphertextList.builder(
+      TFHEModule.CompactCiphertextList.builder(
         this.#pkeParams.getTFHEPublicKey().tfheCompactPublicKeyWasm,
       );
     assertRelayer(
@@ -247,7 +248,7 @@ export class TFHEZKProofBuilder {
         this.#pkeParams.getTFHEPkeCrs().getWasmForCapacity(this.#bitsCapacity)
           .wasm,
         metaData,
-        TFHE.ZkComputeLoad.Verify,
+        TFHEModule.ZkComputeLoadVerify,
       );
 
     const ciphertextWithZKProofBytes: Uint8Array =

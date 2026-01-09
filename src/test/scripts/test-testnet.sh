@@ -11,7 +11,7 @@ if [ ! -d ".github" ]; then
   exit 1
 fi
 
-STEPS=18
+STEPS=22
 STEP=0
 
 echo ""

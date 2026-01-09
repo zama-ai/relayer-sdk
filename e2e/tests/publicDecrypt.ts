@@ -1,4 +1,4 @@
-import type { TFHEType, TKMSType } from '../../src/sdk/lowlevel/types';
+import type { TFHEType, TKMSType } from '../../src/sdk/lowlevel/public-api';
 import type { PublicDecryptResults } from '../../bundle';
 
 declare global {

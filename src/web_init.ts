@@ -1,14 +1,12 @@
-import initTFHE, {
-  init_panic_hook,
-  initThreadPool,
-  InitInput as TFHEInput,
-} from 'tfhe';
+import type { InitInput as TFHEInput } from 'tfhe';
+import type { InitInput as KMSInput } from 'tkms';
 
-import initKMS, { InitInput as KMSInput } from 'tkms';
-// import wasmKMS from 'tkms/kms_lib_bg.wasm';
+import { TFHE as TFHEModule } from './sdk/lowlevel/wasm-modules';
+import { TKMS as TKMSModule } from './sdk/lowlevel/wasm-modules';
+
 import { threads } from 'wasm-feature-detect';
 
-export { KMSInput, TFHEInput };
+export type { KMSInput, TFHEInput };
 
 let initialized = false;
 
@@ -21,6 +19,14 @@ export const initSDK = async ({
   kmsParams?: KMSInput;
   thread?: number;
 } = {}) => {
+  if (
+    !TFHEModule.initTFHE ||
+    !TKMSModule.initTKMS ||
+    !TFHEModule.initThreadPool
+  ) {
+    throw new Error('Unable to load TFHE or TKMS web wasm modules');
+  }
+
   if (thread == null) thread = navigator.hardwareConcurrency;
   let supportsThreads = await threads();
   if (!supportsThreads) {
@@ -32,13 +38,13 @@ export const initSDK = async ({
     thread = undefined;
   }
   if (!initialized) {
-    await initTFHE({ module_or_path: tfheParams });
-    await initKMS({
+    await TFHEModule.initTFHE({ module_or_path: tfheParams });
+    await TKMSModule.initTKMS({
       module_or_path: kmsParams,
     });
     if (thread) {
-      init_panic_hook();
-      await initThreadPool(thread);
+      TFHEModule.init_panic_hook();
+      await TFHEModule.initThreadPool(thread);
     }
     initialized = true;
   }

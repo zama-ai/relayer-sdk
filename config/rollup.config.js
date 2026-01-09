@@ -91,6 +91,18 @@ export default [
     // https://rollupjs.org/troubleshooting/#warning-treating-module-as-external-dependency
     external: ['ethers', 'fetch-retry', 'node-tfhe', 'node-tkms', 'keccak'],
   },
+  {
+    input: 'src/node-mock.ts',
+    output: {
+      file: 'lib/node-mock.js',
+      name: 'relayer-sdk-js',
+      format: 'es',
+    },
+    plugins: [...nodePlugins],
+    // Suppress warning
+    // https://rollupjs.org/troubleshooting/#warning-treating-module-as-external-dependency
+    external: ['ethers', 'fetch-retry', 'node-tfhe', 'node-tkms', 'keccak'],
+  },
   // Internal entry point for bin/ scripts (not part of public API)
   {
     input: 'src/internal.ts',

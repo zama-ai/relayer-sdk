@@ -1,3 +1,4 @@
+import { TFHE as TFHEModule } from '../../sdk/lowlevel/wasm-modules';
 import type { RelayerGetResponseKeyUrlSnakeCase } from '../types/private';
 import type {
   CompactPkeCrsWasmType,
@@ -104,7 +105,7 @@ export async function getKeysFromRelayer(
 
     let pub_key;
     try {
-      pub_key = TFHE.TfheCompactPublicKey.safe_deserialize(
+      pub_key = TFHEModule.TfheCompactPublicKey.safe_deserialize(
         publicKey,
         SERIALIZED_SIZE_LIMIT_PK,
       );
@@ -116,7 +117,7 @@ export async function getKeysFromRelayer(
 
     let crs;
     try {
-      crs = TFHE.CompactPkeCrs.safe_deserialize(
+      crs = TFHEModule.CompactPkeCrs.safe_deserialize(
         new Uint8Array(publicParams2048),
         SERIALIZED_SIZE_LIMIT_CRS,
       );
@@ -168,7 +169,7 @@ export async function getTfheCompactPublicKey(config: {
     const buff = config.publicKey.data;
     try {
       return {
-        publicKey: TFHE.TfheCompactPublicKey.safe_deserialize(
+        publicKey: TFHEModule.TfheCompactPublicKey.safe_deserialize(
           buff,
           SERIALIZED_SIZE_LIMIT_PK,
         ),
@@ -200,7 +201,7 @@ export async function getPublicParams(config: {
     try {
       return {
         2048: {
-          publicParams: TFHE.CompactPkeCrs.safe_deserialize(
+          publicParams: TFHEModule.CompactPkeCrs.safe_deserialize(
             buff,
             SERIALIZED_SIZE_LIMIT_CRS,
           ),
