@@ -12,6 +12,7 @@ import {
   TEST_CONFIG,
 } from './test/config';
 import { FhevmConfigError } from './errors/FhevmConfigError';
+import { isBytesHexNo0x } from '@base/bytes';
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -278,6 +279,8 @@ describe('index', () => {
     const kp = instance.generateKeypair();
     expect(kp).not.toBeNull();
     expect(kp).not.toBeUndefined();
+    expect(isBytesHexNo0x(kp.privateKey)).toBe(true);
+    expect(isBytesHexNo0x(kp.publicKey)).toBe(true);
   });
 
   it('v2: generateKeypair', async () => {
@@ -285,5 +288,7 @@ describe('index', () => {
     const kp = instance.generateKeypair();
     expect(kp).not.toBeNull();
     expect(kp).not.toBeUndefined();
+    expect(isBytesHexNo0x(kp.privateKey)).toBe(true);
+    expect(isBytesHexNo0x(kp.publicKey)).toBe(true);
   });
 });
