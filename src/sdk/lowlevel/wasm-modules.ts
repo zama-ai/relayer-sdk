@@ -76,25 +76,6 @@ class TFHEModule {
     }
   }
 
-  //   reset(): void {
-  //     if (this.#initializing) {
-  //       throw new Error('Cannot reset TFHE module during initialization');
-  //     }
-  //     if (!this.#isMockMode) {
-  //       throw new Error('Cannot reset TFHE module outside of mock mode');
-  //     }
-  //     this.#default = null;
-  //     this.#TfheCompactPublicKey = null;
-  //     this.#CompactPkeCrs = null;
-  //     this.#CompactCiphertextList = null;
-  //     this.#ZkComputeLoadVerify = null;
-  //     this.#ZkComputeLoadProof = null;
-  //     this.#ProvenCompactCiphertextList = null;
-  //     this.#init_panic_hook = null;
-  //     this.#initThreadPool = null;
-  //     this.#initialized = false;
-  //   }
-
   #capture(tfhe: TFHEType): void {
     this.#default = tfhe.default;
     this.#TfheCompactPublicKey = tfhe.TfheCompactPublicKey;
@@ -240,26 +221,6 @@ class TKMSModule {
     }
   }
 
-  //   reset(): void {
-  //     if (this.#initializing) {
-  //       throw new Error('Cannot reset TKMS module during initialization');
-  //     }
-  //     if (!this.#isMockMode) {
-  //       throw new Error('Cannot reset TKMS module outside of mock mode');
-  //     }
-  //     this.#default = null;
-  //     this.#u8vecToMlKemPkePk = null;
-  //     this.#u8vecToMlKemPkeSk = null;
-  //     this.#newClient = null;
-  //     this.#newServerIdAddr = null;
-  //     this.#processUserDecryptionRespFromJs = null;
-  //     this.#mlKemPkeKeygen = null;
-  //     this.#mlKemPkePkToU8vec = null;
-  //     this.#mlKemPkeSkToU8vec = null;
-  //     this.#mlKemPkeGetPk = null;
-  //     this.#initialized = false;
-  //   }
-
   #capture(tkms: TKMSType): void {
     this.#default = tkms.default;
     // Bind methods to preserve 'this' context when called separately
@@ -364,8 +325,3 @@ export function setTKMS(tkms: TKMSType): void {
 export function setTKMSMock(tkms: TKMSType): void {
   TKMS.initMock(tkms);
 }
-
-// export function resetWasmModules(): void {
-//   TFHE.reset();
-//   TKMS.reset();
-// }
