@@ -60,6 +60,7 @@ import { sdkName, version } from '../../_version';
 import { RelayerV2TimeoutError } from './errors/RelayerV2TimeoutError';
 import { RelayerV2AbortError } from './errors/RelayerV2AbortError';
 import { assertNever } from '../../errors/utils';
+import { formatFetchErrorMetaMessages } from '@base/fetch';
 
 /*
     Actions:
@@ -143,6 +144,8 @@ export class RelayerV2AsyncRequest {
   private _terminateReason: RelayerV2TerminateReason | undefined;
   private _terminateError: unknown;
   private _retryCount: number;
+  private readonly _fetchRetries: number;
+  private readonly _fetchRetryDelayInMilliseconds: number;
   private _totalSteps: number;
   private _step: number;
   private _retryAfterTimeoutID: ReturnType<typeof setTimeout> | undefined;
@@ -165,11 +168,18 @@ export class RelayerV2AsyncRequest {
   private _requestGlobalTimeoutID: ReturnType<typeof setTimeout> | undefined;
   private readonly _throwErrorIfNoRetryAfter: boolean;
 
+  // Warning: the following condition should always stand!
+  // DEFAULT_RETRY_AFTER_MS >= MINIMUM_RETRY_AFTER_MS
   private static readonly DEFAULT_RETRY_AFTER_MS = 2500;
   private static readonly MINIMUM_RETRY_AFTER_MS = 1000;
+
   private static readonly DEFAULT_GLOBAL_REQUEST_TIMEOUT_MS = 60 * 60 * 1000; // 1 hour
   private static readonly MAX_GET_RETRY = 60 * 30; // number of default retries in 1 hour (30 retries/min)
   private static readonly MAX_POST_RETRY = RelayerV2AsyncRequest.MAX_GET_RETRY;
+
+  // Can be lower than MINIMUM_RETRY_AFTER_MS
+  private static readonly FETCH_RETRY_AFTER_MS = 1000;
+  private static readonly FETCH_RETRY = 3;
 
   constructor(params: RelayerV2AsyncRequestParams) {
     if (
@@ -185,6 +195,12 @@ export class RelayerV2AsyncRequest {
         expectedValue: 'INPUT_PROOF | PUBLIC_DECRYPT | USER_DECRYPT',
       });
     }
+
+    this._fetchRetries =
+      params.options?.fetchRetries ?? RelayerV2AsyncRequest.FETCH_RETRY;
+    this._fetchRetryDelayInMilliseconds =
+      params.options?.fetchRetryDelayInMilliseconds ??
+      RelayerV2AsyncRequest.FETCH_RETRY_AFTER_MS;
 
     this._step = 0;
     this._totalSteps = 1;
@@ -226,6 +242,11 @@ export class RelayerV2AsyncRequest {
     this._requestMaxDurationInMs =
       params.options?.timeout ??
       RelayerV2AsyncRequest.DEFAULT_GLOBAL_REQUEST_TIMEOUT_MS;
+
+    this._trace(
+      'constructor()',
+      `{ fetchRetries: ${this._fetchRetries}, fetchRetryDelayInMilliseconds: ${this._fetchRetryDelayInMilliseconds} }`,
+    );
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -255,6 +276,8 @@ export class RelayerV2AsyncRequest {
     | RelayerPublicDecryptResult
     | RelayerInputProofResult
   > {
+    this._trace('run', `existingJobId=${params?.existingJobId}`);
+
     if (this._state.terminated) {
       throw new RelayerV2StateError({
         message: `Relayer.run() failed. Request already terminated.`,
@@ -465,6 +488,7 @@ export class RelayerV2AsyncRequest {
     }
 
     // No infinite loop!
+    let fetchAttempts = 0;
     let i = 0;
     while (i < RelayerV2AsyncRequest.MAX_POST_RETRY) {
       ++i;
@@ -477,7 +501,60 @@ export class RelayerV2AsyncRequest {
       // next part of the function will never be executed (thrown error).
       this._elapsed =
         this._jobId !== undefined ? Date.now() - this._jobIdTimestamp! : 0;
-      const response = await this._fetchPost();
+
+      // =======================================================================
+      // Embedded Fetch retry mechanism
+      // =======================================================================
+      // Handles transient network failures by retrying the fetch call up to
+      // `FETCH_RETRY` times.
+      //
+      // Behavior:
+      // - Attempt 1: fetchAttempts = 1, on failure → wait `FETCH_RETRY_AFTER_MS` → retry
+      // - Attempt 2: fetchAttempts = 2, on failure → wait `FETCH_RETRY_AFTER_MS` → retry
+      // - ...
+      // - Attempt N: fetchAttempts = N, on failure → throw error (no more retries)
+      //
+      // On success: fetchAttempts resets to 0, allowing fresh retries if a later
+      // iteration of the outer loop (e.g., after a 202 response) encounters a
+      // network failure.
+      //
+      // Special cases:
+      // - AbortError: Propagates immediately without retry (user cancellation)
+      // - Uses _setRetryAfterTimeout for delays, which integrates with the state
+      //   machine's cancellation logic (can be interrupted by _terminate)
+      // =======================================================================
+      let response;
+      try {
+        fetchAttempts++;
+
+        response = await this._fetchPost();
+
+        // Success: reset counter for potential future network failures
+        fetchAttempts = 0;
+      } catch (fetchError) {
+        // AbortError indicates user/external cancellation - propagate immediately
+        if ((fetchError as { name: string }).name === 'AbortError') {
+          throw fetchError;
+        }
+
+        // At this point: fetchError is guaranteed to be RelayerV2FetchError
+
+        // Max retries exhausted - propagate the network error
+        if (fetchAttempts >= this._fetchRetries) {
+          throw fetchError;
+        }
+
+        // Wait before retry using state-machine-aware timeout
+        // This allows cancellation to interrupt the delay
+        // Skip incrementing _retryCount since fetch retries are separate from polling retries
+        await this._setRetryAfterTimeout(this._fetchRetryDelayInMilliseconds, {
+          skipIncrementRetryCount: true,
+        });
+        continue;
+      }
+      // =======================================================================
+      // End of fetch retry mechanism
+      // =======================================================================
 
       // At this stage: `terminated` is guaranteed to be `false`.
 
@@ -694,6 +771,7 @@ export class RelayerV2AsyncRequest {
     );
     this._fetchMethod = 'GET';
 
+    let fetchAttempts = 0;
     let i = 0;
     while (i < RelayerV2AsyncRequest.MAX_GET_RETRY) {
       ++i;
@@ -701,7 +779,42 @@ export class RelayerV2AsyncRequest {
       this._assertCanContinueAfterAwait();
 
       this._elapsed = Date.now() - this._jobIdTimestamp;
-      const response = await this._fetchGet();
+
+      // =======================================================================
+      // Embedded Fetch retry mechanism (see POST loop)
+      // =======================================================================
+      let response;
+      try {
+        fetchAttempts++;
+
+        response = await this._fetchGet();
+
+        // Success: reset counter for potential future network failures
+        fetchAttempts = 0;
+      } catch (fetchError) {
+        // AbortError indicates user/external cancellation - propagate immediately
+        if ((fetchError as { name: string }).name === 'AbortError') {
+          throw fetchError;
+        }
+
+        // At this point: fetchError is guaranteed to be RelayerV2FetchError
+
+        // Max retries exhausted - propagate the network error
+        if (fetchAttempts >= this._fetchRetries) {
+          throw fetchError;
+        }
+
+        // Wait before retry using state-machine-aware timeout
+        // This allows cancellation to interrupt the delay
+        // Skip incrementing _retryCount since fetch retries are separate from polling retries
+        await this._setRetryAfterTimeout(this._fetchRetryDelayInMilliseconds, {
+          skipIncrementRetryCount: true,
+        });
+        continue;
+      }
+      // =======================================================================
+      // End of fetch retry mechanism
+      // =======================================================================
 
       // At this stage: `terminated` is guaranteed to be `false`.
 
@@ -1117,6 +1230,7 @@ export class RelayerV2AsyncRequest {
 
     this._trace('_fetchPost', this._url);
 
+    // API key is required!
     const init = setAuth(
       {
         method: 'POST',
@@ -1130,7 +1244,7 @@ export class RelayerV2AsyncRequest {
           ? { signal: this._internalAbortSignal }
           : {}),
       } satisfies RequestInit,
-      this._fhevmAuth,
+      this._fhevmAuth, // -> the API key
     );
 
     this._state.fetching = true;
@@ -1144,7 +1258,7 @@ export class RelayerV2AsyncRequest {
       // Warning: `terminated` can be `true` here!
       // (ex: if `controller.abort()` has been called from the outside while still executing `fetch`)
 
-      this._trace('_fetchPost', `catch(e) + throw e: ${String(cause)}`);
+      this._trace('_fetchPost', formatFetchErrorMetaMessages(cause).join('. '));
 
       // Keep the standard 'AbortError'
       if ((cause as { name: string }).name === 'AbortError') {
@@ -1191,6 +1305,11 @@ export class RelayerV2AsyncRequest {
 
     this._trace('_fetchGet', `jobId=${this.jobId}`);
 
+    // Do not include API key here!
+    // API key is only required on POST (by design).
+    // This is necessary for future caching on gateway.
+    // It will be implemented in future releases on (relayer).
+    // See relayer team.
     const init: RequestInit = {
       method: 'GET',
       headers: {
@@ -1213,7 +1332,7 @@ export class RelayerV2AsyncRequest {
       // (ex: if `controller.abort()` has been called from the outside while still executing `fetch`)
       this._trace(
         '_fetchGet',
-        `jobId=${this.jobId}, catch(e) + throw e: ${cause}`,
+        `jobId=${this.jobId}, ${formatFetchErrorMetaMessages(cause).join('. ')}`,
       );
 
       // Keep the standard 'AbortError'
@@ -1395,16 +1514,17 @@ export class RelayerV2AsyncRequest {
   // Retry-After timeout
   //////////////////////////////////////////////////////////////////////////////
 
-  private async _setRetryAfterTimeout(delayMs: number): Promise<void> {
+  private async _setRetryAfterTimeout(
+    delayMs: number,
+    options?: { skipIncrementRetryCount?: boolean },
+  ): Promise<void> {
+    const { skipIncrementRetryCount = false } = options ?? {};
+
     // Debug
     this._assert(!this._state.terminated, '!this._state.terminated');
     this._assert(
       this._retryAfterTimeoutID === undefined,
       'this._retryAfterTimeoutID === undefined',
-    );
-    this._assert(
-      delayMs >= RelayerV2AsyncRequest.MINIMUM_RETRY_AFTER_MS,
-      `delayMs >= ${RelayerV2AsyncRequest.MINIMUM_RETRY_AFTER_MS}`,
     );
 
     this._trace('_setRetryAfterTimeout', `delayMs=${delayMs}`);
@@ -1423,7 +1543,9 @@ export class RelayerV2AsyncRequest {
         resolve();
       };
 
-      this._retryCount++;
+      if (!skipIncrementRetryCount) {
+        this._retryCount++;
+      }
       this._retryAfterTimeoutID = setTimeout(callback, delayMs);
     });
 

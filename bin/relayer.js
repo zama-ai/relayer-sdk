@@ -155,7 +155,17 @@ addCommonOptions(acl.command('is-publicly-decryptable'))
   .requiredOption('--handle <handle>', 'The handle as bytes 32 hex')
   .action(async (options) => {
     const mod = await import('./commands/acl-is-publicly-decryptable.js');
-    await mod.testFHETestIsPubliclyDecryptableCommand(options);
+    await mod.aclIsPubliclyDecryptable(options);
+  });
+
+// npx . acl is-allowed --handle 0x... --address 0x...
+addCommonOptions(acl.command('is-allowed'))
+  .description('Check if address is allowed to access handle')
+  .requiredOption('--handle <handle>', 'The handle as bytes 32 hex')
+  .requiredOption('--address <address>', 'The address as bytes 32 hex')
+  .action(async (options) => {
+    const mod = await import('./commands/acl-is-publicly-decryptable.js');
+    await mod.aclIsPubliclyDecryptable(options);
   });
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -182,6 +192,20 @@ addCommonOptions(test.command('get'))
   .action(async (options) => {
     const mod = await import('./commands/test/test-get.js');
     await mod.testFHETestGetCommand(options);
+  });
+
+// npx . test is-publicly-decryptable --type euint32
+addCommonOptions(test.command('is-publicly-decryptable'))
+  .description(
+    'Execute the transaction: FHETest.isAllowedForDecryption<Type>()',
+  )
+  .requiredOption(
+    '--type <ebool|euint8|euint16|euint32|euint64|euint128|euint256|eaddress>',
+    'The encrypted type',
+  )
+  .action(async (options) => {
+    const mod = await import('./commands/test/test-is-publicly-decryptable.js');
+    await mod.testFHETestIsPubliclyDecryptableCommand(options);
   });
 
 // npx . test make-publicly-decryptable --type euint32

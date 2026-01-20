@@ -7,9 +7,8 @@ import { ethers } from 'ethers';
 // npx . test get --type euint32 --network testnet --json
 // npx . test get --type euint32 --network mainnet --json
 export async function testFHETestGetCommand(options) {
-  const { config, provider, signer } = parseCommonOptions(options);
-
-  logCLI('🚚 network: ' + config.name, options);
+  const { config, provider, signer, zamaFhevmApiKey } =
+    parseCommonOptions(options);
 
   if (!FHETestAddresses[config.name]) {
     logCLI(`❌ FHETest is not deployed on network ${config.name}`, options);

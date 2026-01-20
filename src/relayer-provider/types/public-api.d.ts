@@ -52,28 +52,32 @@ export type RelayerPostOperationResult =
 
 ////////////////////////////////////////////////////////////////////////////////
 
+export type RelayerCommonOptionsType = {
+  fetchRetries?: number | undefined;
+  fetchRetryDelayInMilliseconds?: number | undefined;
+  signal?: AbortSignal;
+  timeout?: number;
+};
+
 export type RelayerInputProofOptionsType = Prettify<
-  FhevmInstanceOptions & {
-    signal?: AbortSignal;
-    timeout?: number;
-    onProgress?: (args: RelayerInputProofProgressArgs) => void;
-  }
+  FhevmInstanceOptions &
+    RelayerCommonOptionsType & {
+      onProgress?: (args: RelayerInputProofProgressArgs) => void;
+    }
 >;
 
 export type RelayerUserDecryptOptionsType = Prettify<
-  FhevmInstanceOptions & {
-    signal?: AbortSignal;
-    timeout?: number;
-    onProgress?: (args: RelayerUserDecryptProgressArgs) => void;
-  }
+  FhevmInstanceOptions &
+    RelayerCommonOptionsType & {
+      onProgress?: (args: RelayerUserDecryptProgressArgs) => void;
+    }
 >;
 
 export type RelayerPublicDecryptOptionsType = Prettify<
-  FhevmInstanceOptions & {
-    signal?: AbortSignal;
-    timeout?: number;
-    onProgress?: (args: RelayerPublicDecryptProgressArgs) => void;
-  }
+  FhevmInstanceOptions &
+    RelayerCommonOptionsType & {
+      onProgress?: (args: RelayerPublicDecryptProgressArgs) => void;
+    }
 >;
 
 export type RelayerFetchMethod = 'GET' | 'POST';

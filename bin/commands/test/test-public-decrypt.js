@@ -22,10 +22,6 @@ export async function testFHETestPublicDecryptCommand(options) {
   const { config, provider, signer, zamaFhevmApiKey } =
     parseCommonOptions(options);
 
-  logCLI('🚚 network: ' + config.name, options);
-  logCLI('🚀 route: v' + config.version, options);
-  logCLI(`🍔 signer: ${signer.address}`, options);
-
   if (!FHETestAddresses[config.name]) {
     logCLI(`❌ FHETest is not deployed on network ${config.name}`, options);
     process.exit(1);
@@ -54,7 +50,12 @@ export async function testFHETestPublicDecryptCommand(options) {
     logCLI(`🏈 handle: ${handle}`, options);
   }
 
-  const res = await publicDecrypt(handles, config, zamaFhevmApiKey, options);
+  const res = await publicDecrypt({
+    handles,
+    config,
+    zamaFhevmApiKey,
+    options,
+  });
 
   console.log(safeJSONstringify(res, 2));
 

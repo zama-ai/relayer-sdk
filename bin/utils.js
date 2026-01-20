@@ -103,7 +103,16 @@ export function addCommonOptions(command) {
     .option('--clear-cache', 'Clear the FHEVM public key cache')
     .option('--json', 'Ouput in JSON format')
     .option('--verbose', 'Verbose output')
-    .option('--timeout <duration in ms>', 'Timeout in milliseconds');
+    .option('--debug', 'Debug mode')
+    .option('--timeout <duration in ms>', 'Timeout in milliseconds')
+    .option(
+      '--fetch-retries <number of fetch retries>',
+      'Maximum number fetch retries in case of connection error',
+    )
+    .option(
+      '--fetch-retry-delay <number of milliseconds>',
+      'Number of milliseconds between 2 fetch retries',
+    );
 }
 
 /**
@@ -133,12 +142,12 @@ export function addCommonOptions(command) {
  * }}
  */
 export function parseCommonOptions(options) {
-  const name = options?.network ?? 'devnet';
+  const name = options?.network ?? 'testnet';
   if (name !== 'testnet' && name !== 'devnet' && name !== 'mainnet') {
     throwError(`Invalid network name '${name}'.`);
   }
 
-  let version = options?.version ?? 1;
+  let version = options?.version ?? 2;
   if (version === 'v1' || version === '1') {
     version = 1;
   }
@@ -294,6 +303,8 @@ export function parseCommonOptions(options) {
     },
   };
 
+  logCLICommandInfo({ config, signer, options });
+
   return { config, provider, wallet, signer, zamaFhevmApiKey };
 }
 
@@ -356,4 +367,30 @@ export function jsonParseFheTypedValues(text) {
     }
     return BigInt(value);
   });
+}
+
+export function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export function logError(commandName, e, { json, verbose } = {}) {
+  if (!json || (json == true && verbose === true)) {
+    console.error(`============== ❌ ${commandName} ERROR ❌ ================`);
+    console.error(e);
+    console.error('========================================================');
+  }
+}
+
+export function logCLICommandInfo({ config, options, signer }) {
+  logCLI('🚚 network: ' + config.name, options);
+  logCLI('🚀 route: v' + config.version, options);
+  if (signer?.address) {
+    logCLI(`🍔 signer: ${signer.address}`, options);
+  }
+  try {
+    logCLI(`🧀 value: ${BigInt(options.value)}`, options);
+  } catch {}
+  if (options?.type) {
+    logCLI(`🍉 type: ${options.type}`, options);
+  }
 }

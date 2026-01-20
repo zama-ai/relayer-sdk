@@ -7,16 +7,13 @@ import { ethers } from 'ethers';
 // npx . test random --type euint32 --network testnet
 // npx . test random --type euint32 --network devnet
 export async function testFHETestRandomCommand(options) {
-  const { config, provider, signer } = parseCommonOptions(options);
+  const { config, provider, signer, zamaFhevmApiKey } =
+    parseCommonOptions(options);
 
   if (options.type === 'eaddress') {
     logCLI(`❌ FHETest does not support random addresses`, options);
     process.exit(1);
   }
-
-  logCLI('🚚 network: ' + config.name, options);
-  logCLI('🚀 route: v' + config.version, options);
-  logCLI(`🍔 signer: ${signer.address}`);
 
   if (!FHETestAddresses[config.name]) {
     logCLI(`❌ FHETest is not deployed on network ${config.name}`, options);

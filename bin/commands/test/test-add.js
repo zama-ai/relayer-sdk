@@ -14,12 +14,6 @@ export async function testFHETestAddCommand(options) {
   const { config, provider, signer, zamaFhevmApiKey } =
     parseCommonOptions(options);
 
-  logCLI('🚚 network: ' + config.name, options);
-  logCLI('🚀 route: v' + config.version, options);
-  logCLI(`🍔 signer: ${signer.address}`);
-  logCLI(`🧀 value: ${BigInt(options.value)}`);
-  logCLI(`🍉 type: ${options.type}`);
-
   const fheTypedValues = [
     {
       value: BigInt(options.value),
@@ -44,14 +38,14 @@ export async function testFHETestAddCommand(options) {
     options,
   );
 
-  const o = await inputProof(
+  const o = await inputProof({
     fheTypedValues,
     config,
     publicKey,
     publicParams,
     zamaFhevmApiKey,
     options,
-  );
+  });
   console.log(safeJSONstringify(o, 2));
 
   const contract = new ethers.Contract(
@@ -71,6 +65,7 @@ export async function testFHETestAddCommand(options) {
     contractAddresses: [contractAddress],
     signer,
     config,
+    zamaFhevmApiKey,
     options,
   });
 
@@ -98,6 +93,7 @@ export async function testFHETestAddCommand(options) {
     contractAddresses: [contractAddress],
     signer,
     config,
+    zamaFhevmApiKey,
     options,
   });
 

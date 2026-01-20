@@ -34,6 +34,11 @@ import type { FhevmInstanceConfig } from '../../types/relayer';
 // npx jest --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_user-decrypt.test.ts
 // npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v2/RelayerV2Provider_user-decrypt.test.ts --collectCoverageFrom=./src/relayer-provider/v2/RelayerV2Provider.ts
 //
+// Testnet:
+// ========
+// npx jest --config jest.testnet.config.cjs --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_user-decrypt.test.ts
+// npx jest --config jest.testnet.config.cjs --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_user-decrypt.test.ts --testNamePattern=xxx
+//
 // Devnet:
 // =======
 // npx jest --config jest.devnet.config.cjs --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_user-decrypt.test.ts
@@ -44,6 +49,8 @@ import type { FhevmInstanceConfig } from '../../types/relayer';
 // npx jest --config jest.testnet.config.cjs --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_user-decrypt.test.ts
 //
 ////////////////////////////////////////////////////////////////////////////////
+
+jest.setTimeout(360000);
 
 jest.mock('ethers', () => {
   const { setupEthersJestMock } = jest.requireActual('../../test/config');
@@ -262,7 +269,7 @@ describeIfFetchMock('RelayerV2Provider', () => {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-describeIfFetch('FhevmInstance.userDecrypot:sepolia:', () => {
+describeIfFetch('FhevmInstance.userDecrypt:sepolia:', () => {
   let provider: EthersT.Provider;
   let fromAddress: ChecksummedAddress;
 
@@ -276,12 +283,14 @@ describeIfFetch('FhevmInstance.userDecrypot:sepolia:', () => {
     consoleLogSpy.mockRestore();
   });
 
-  async function testUserDecrypt(config: FhevmInstanceConfig) {
+  async function testUserDecrypt(version: 1 | 2, config: FhevmInstanceConfig) {
     const mnemonic = TEST_CONFIG.mnemonic;
     if (typeof mnemonic !== 'string' || mnemonic.length === 0) {
       throw new Error(`Missing MNEMONIC env variable in .env file!`);
     }
 
+    // For conveniance: use KmsSigner feature to create the signer.
+    // Should use an agnostic method instead
     const userSigner = KmsSigner.fromMnemonic({ mnemonic });
 
     const eCount = await fheTestGet(
@@ -307,6 +316,7 @@ describeIfFetch('FhevmInstance.userDecrypot:sepolia:', () => {
     const publicKey: BytesHex = ensure0x(keypairNo0x.publicKey);
     const privateKey: BytesHex = ensure0x(keypairNo0x.privateKey);
 
+    console.log(`[v${version} user-decrypt]: Create EIP712`);
     const eip = instance.createEIP712(
       publicKey,
       contractAddresses,
@@ -333,9 +343,13 @@ describeIfFetch('FhevmInstance.userDecrypot:sepolia:', () => {
     expect(new_eip.types).toStrictEqual(eip.types);
     expect(new_eip.message).toStrictEqual(eip.message);
 
+    console.log(`[v${version} user-decrypt]: sign EIP712`);
     const signature: Bytes65Hex = await userSigner.sign(new_eip);
     assertIsBytes65Hex(signature);
 
+    console.log(
+      `[v${version} user-decrypt]: instance.userDecrypt(handle: ${eCount})...`,
+    );
     const res: UserDecryptResults = await instance.userDecrypt(
       [
         {
@@ -359,21 +373,23 @@ describeIfFetch('FhevmInstance.userDecrypot:sepolia:', () => {
     expect(t === 'bigint' || t === 'number' || t === 'string').toBe(true);
 
     expect(res[eCount]).toBeGreaterThan(0);
+
+    console.log(`[v${version} user-decrypt]: done!`);
   }
 
   it('v2: FhevmInstance.userDecrypt succeeded', async () => {
     setupAllFetchMockRoutes({
       enableInputProofRoutes: false,
     });
-    await testUserDecrypt(TEST_CONFIG.v2.fhevmInstanceConfig);
-  }, 60000);
+    await testUserDecrypt(2, TEST_CONFIG.v2.fhevmInstanceConfig);
+  });
 
   it('v1: FhevmInstance.userDecrypt succeeded', async () => {
     setupAllFetchMockRoutes({
       enableInputProofRoutes: false,
     });
-    await testUserDecrypt(TEST_CONFIG.v1.fhevmInstanceConfig);
-  }, 60000);
+    await testUserDecrypt(1, TEST_CONFIG.v1.fhevmInstanceConfig);
+  });
 });
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -546,26 +562,26 @@ describe('FhevmInstance.createEIP712', () => {
       enableInputProofRoutes: false,
     });
     await testCreateEIP712(TEST_CONFIG.v1.fhevmInstanceConfig);
-  }, 60000);
+  });
 
   it('v2: createEIP712 succeeded', async () => {
     setupAllFetchMockRoutes({
       enableInputProofRoutes: false,
     });
     await testCreateEIP712(TEST_CONFIG.v2.fhevmInstanceConfig);
-  }, 60000);
+  });
 
   it('v1: createEIP712 delegate succeeded', async () => {
     setupAllFetchMockRoutes({
       enableInputProofRoutes: false,
     });
     await testDelegateCreateEIP712(TEST_CONFIG.v2.fhevmInstanceConfig);
-  }, 60000);
+  });
 
   it('v2: createEIP712 delegate succeeded', async () => {
     setupAllFetchMockRoutes({
       enableInputProofRoutes: false,
     });
     await testDelegateCreateEIP712(TEST_CONFIG.v2.fhevmInstanceConfig);
-  }, 60000);
+  });
 });

@@ -3,6 +3,7 @@ import type { RelayerErrorBaseParams } from '../../../errors/RelayerErrorBase';
 import type { Prettify } from '@base/types/utils';
 import { ensureError } from '../../../errors/utils';
 import { RelayerV2FetchErrorBase } from './RelayerV2FetchErrorBase';
+import { formatFetchErrorMetaMessages } from '@base/fetch';
 
 ////////////////////////////////////////////////////////////////////////////////
 // RelayerV2FetchError
@@ -29,6 +30,9 @@ export class RelayerV2FetchError extends RelayerV2FetchErrorBase {
       name: 'RelayerV2FetchError',
       message: params.message,
       cause: ensureError(params.cause),
+      ...(params.cause !== undefined
+        ? { metaMessages: formatFetchErrorMetaMessages(params.cause) }
+        : {}),
     });
   }
 }
