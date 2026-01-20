@@ -3,6 +3,7 @@ import type { RelayerV2AsyncRequestState } from '../RelayerV2AsyncRequest';
 import type { RelayerErrorBaseParams } from '../../../errors/RelayerErrorBase';
 import type { Prettify } from '@base/types/utils';
 import { RelayerV2ResponseErrorBase } from './RelayerV2ResponseErrorBase';
+import { humanReadableOperation } from './RelayerV2RequestErrorBase';
 
 ////////////////////////////////////////////////////////////////////////////////
 // RelayerV2ResponseStatusError
@@ -26,7 +27,8 @@ export class RelayerV2ResponseStatusError extends RelayerV2ResponseErrorBase {
     super({
       ...params,
       name: 'RelayerV2ResponseStatusError',
-      message: `Unexpected response status ${params.status}`,
+      message: `${humanReadableOperation(params.operation, true)}: Relayer returned unexpected response status: ${params.status}`,
+      details: `The Relayer server returned an unexpected response status (${params.status}). This status ${params.status} is not part of the expected API contract and may indicate a server configuration issue.`,
     });
   }
 }

@@ -1,7 +1,10 @@
 import type { Prettify } from '@base/types/utils';
 import type { RelayerErrorBaseParams } from '../../../errors/RelayerErrorBase';
 import type { RelayerV2RequestErrorBaseParams } from './RelayerV2RequestErrorBase';
-import { RelayerV2RequestErrorBase } from './RelayerV2RequestErrorBase';
+import {
+  humanReadableOperation,
+  RelayerV2RequestErrorBase,
+} from './RelayerV2RequestErrorBase';
 
 ////////////////////////////////////////////////////////////////////////////////
 // RelayerV2AbortError
@@ -23,7 +26,7 @@ export class RelayerV2AbortError extends RelayerV2RequestErrorBase {
     super({
       ...params,
       name: 'RelayerV2AbortError',
-      message: `Request aborted`,
+      message: `${humanReadableOperation(params.operation, true)}: Request aborted`,
     });
   }
 }

@@ -57,12 +57,6 @@ jest.mock('ethers', () => {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-const consoleLogSpy = jest
-  .spyOn(console, 'log')
-  .mockImplementation((message) => {
-    process.stdout.write(`${message}\n`);
-  });
-
 const describeIfFetchMock =
   TEST_CONFIG.type === 'fetch-mock' ? describe : describe.skip;
 
@@ -73,6 +67,13 @@ const [itIfFetchMock, itIfFetch] =
 
 describeIfFetchMock('RelayerV2Provider', () => {
   let relayerProvider: RelayerV2Provider;
+  let consoleLogSpy: jest.SpyInstance;
+
+  beforeAll(() => {
+    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((message) => {
+      process.stdout.write(`${message}\n`);
+    });
+  });
 
   beforeEach(() => {
     fetchMock.removeRoutes();
@@ -301,6 +302,14 @@ describeIfFetchMock('RelayerV2Provider', () => {
 ////////////////////////////////////////////////////////////////////////////////
 
 describe('createEncryptedInput', () => {
+  let consoleLogSpy: jest.SpyInstance;
+
+  beforeAll(() => {
+    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((message) => {
+      process.stdout.write(`${message}\n`);
+    });
+  });
+
   beforeEach(() => {
     removeAllFetchMockRoutes();
   });

@@ -197,6 +197,16 @@ export function assertRecordTimestampProperty<K extends string>(
   }
 }
 
+/**
+ * Capitalizes the first letter of a string.
+ */
+export function capitalizeFirstLetter(s: string): string {
+  if (s.length === 0) {
+    return s;
+  }
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
 export function safeJSONstringify(o: unknown, space?: string | number): string {
   try {
     return JSON.stringify(
