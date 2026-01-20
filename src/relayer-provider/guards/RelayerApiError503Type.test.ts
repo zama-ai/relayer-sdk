@@ -1,5 +1,5 @@
 import { InvalidPropertyError } from '../../errors/InvalidPropertyError';
-import { assertIsRelayerApiError503Type } from './RelayerApiError503';
+import { assertIsRelayerApiError503Type } from './RelayerApiError503Type';
 
 // npx jest --colors --passWithNoTests ./src/relayer-provider/v2/types/errors/RelayerV2ApiError503.test.ts
 // npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v2/types/errors/RelayerV2ApiError503.test.ts --collectCoverageFrom=./src/relayer-provider/v2/types/errors/RelayerV2ApiError503.ts

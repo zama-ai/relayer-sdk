@@ -4,6 +4,7 @@ import type { RelayerV2ResponseErrorBaseParams } from './RelayerV2ResponseErrorB
 import type { InvalidPropertyError } from '../../../errors/InvalidPropertyError';
 import { RelayerV2ResponseErrorBase } from './RelayerV2ResponseErrorBase';
 import { ensureError } from '../../../errors/utils';
+import { humanReadableOperation } from './RelayerV2RequestErrorBase';
 
 ////////////////////////////////////////////////////////////////////////////////
 // RelayerV2ResponseInvalidBodyError
@@ -32,7 +33,7 @@ export class RelayerV2ResponseInvalidBodyError extends RelayerV2ResponseErrorBas
       ...params,
       cause: ensureError(params.cause),
       name: 'RelayerV2ResponseInvalidBodyError',
-      message: 'Response body does not match the expected schema',
+      message: `${humanReadableOperation(params.operation, true)}: Relayer response body does not match the expected schema`,
     });
 
     this._bodyJson = params.bodyJson;

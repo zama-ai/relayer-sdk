@@ -1,4 +1,4 @@
-import { assertIsRelayerApiError404Type } from './RelayerApiError404';
+import { assertIsRelayerApiError404Type } from './RelayerApiError404Type';
 
 // npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v2/types/errors/RelayerV2ApiError404.test.ts --collectCoverageFrom=./src/relayer-provider/v2/types/errors/RelayerV2ApiError404.ts
 

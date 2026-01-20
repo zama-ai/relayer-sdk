@@ -31,7 +31,6 @@ import type { EncryptionBits } from '../../base/types/primitives';
 //
 // Jest Command line
 // =================
-//
 // npx jest --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_input-proof.test.ts
 // npx jest --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_input-proof.test.ts --testNamePattern=xxx
 // npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v2/RelayerV2Provider_input-proof.test.ts --collectCoverageFrom=./src/relayer-provider/v2/RelayerV2Provider.ts
@@ -39,17 +38,17 @@ import type { EncryptionBits } from '../../base/types/primitives';
 //
 // Devnet:
 // =======
-//
 // npx jest --config jest.devnet.config.cjs --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_input-proof.test.ts --testNamePattern=xxx
 //
 //
 // Testnet:
 // ========
-//
 // npx jest --config jest.testnet.config.cjs --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_input-proof.test.ts
 // npx jest --config jest.testnet.config.cjs --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_input-proof.test.ts --testNamePattern=xxx
 //
 ////////////////////////////////////////////////////////////////////////////////
+
+jest.setTimeout(360000);
 
 jest.mock('ethers', () => {
   const { setupEthersJestMock } = jest.requireActual('../../test/config');
@@ -57,12 +56,6 @@ jest.mock('ethers', () => {
 });
 
 ////////////////////////////////////////////////////////////////////////////////
-
-const consoleLogSpy = jest
-  .spyOn(console, 'log')
-  .mockImplementation((message) => {
-    process.stdout.write(`${message}\n`);
-  });
 
 const describeIfFetchMock =
   TEST_CONFIG.type === 'fetch-mock' ? describe : describe.skip;
@@ -74,6 +67,13 @@ const [itIfFetchMock, itIfFetch] =
 
 describeIfFetchMock('RelayerV2Provider', () => {
   let relayerProvider: RelayerV2Provider;
+  let consoleLogSpy: jest.SpyInstance;
+
+  beforeAll(() => {
+    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((message) => {
+      process.stdout.write(`${message}\n`);
+    });
+  });
 
   beforeEach(() => {
     fetchMock.removeRoutes();
@@ -302,6 +302,14 @@ describeIfFetchMock('RelayerV2Provider', () => {
 ////////////////////////////////////////////////////////////////////////////////
 
 describe('createEncryptedInput', () => {
+  let consoleLogSpy: jest.SpyInstance;
+
+  beforeAll(() => {
+    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation((message) => {
+      process.stdout.write(`${message}\n`);
+    });
+  });
+
   beforeEach(() => {
     removeAllFetchMockRoutes();
   });
@@ -344,6 +352,7 @@ describe('createEncryptedInput', () => {
   //////////////////////////////////////////////////////////////////////////////
 
   async function testCreateInstance(params: {
+    name: string;
     config: FhevmInstanceConfig;
     test: {
       values: number[];
@@ -357,8 +366,12 @@ describe('createEncryptedInput', () => {
     const test = params.test;
     const numHandles = test.values.length;
 
+    console.log(`[${params.name} input-proof]: createInstance...`);
     const instance = await createInstance(config);
 
+    console.log(
+      `[${params.name} input-proof]: instance.createEncryptedInput()`,
+    );
     const builder = instance.createEncryptedInput(
       TEST_CONFIG.testContracts.FHETestAddress,
       TEST_CONFIG.signerAddress,
@@ -369,6 +382,7 @@ describe('createEncryptedInput', () => {
       builder.add32(test.values[i]);
     }
 
+    console.log(`[${params.name} input-proof]: builder.encrypt()...`);
     const enc = await builder.encrypt();
 
     expect(Array.isArray(enc.handles)).toBe(true);
@@ -383,70 +397,65 @@ describe('createEncryptedInput', () => {
       1 + 1 + numHandles * 32 + 65 * verifier.count,
     );
 
+    console.log(`[${params.name} input-proof]: InputProof.fromProofBytes()...`);
     const inputProof = InputProof.fromProofBytes(enc.inputProof);
     expect(inputProof.handles.length).toBe(numHandles);
     expect(inputProof.signatures.length).toBe(verifier.count);
+
+    console.log(`[${params.name} input-proof]: done!`);
   }
 
   //////////////////////////////////////////////////////////////////////////////
 
   it('v1: succeeded', async () => {
     await testCreateInstance({
+      name: 'v1',
       config: TEST_CONFIG.v1.fhevmInstanceConfig,
       test: {
         values: [123],
         bitWidths: [32],
       },
     });
-  }, 60000);
+  });
 
   //////////////////////////////////////////////////////////////////////////////
 
-  itIfFetch(
-    'v2: succeeded',
-    async () => {
-      await testCreateInstance({
-        config: TEST_CONFIG.v2.fhevmInstanceConfig,
-        test: {
-          values: [123],
-          bitWidths: [32],
-        },
-      });
-    },
-    60000,
-  );
+  itIfFetch('v2: succeeded', async () => {
+    await testCreateInstance({
+      name: 'v2',
+      config: TEST_CONFIG.v2.fhevmInstanceConfig,
+      test: {
+        values: [123],
+        bitWidths: [32],
+      },
+    });
+  });
 
   //////////////////////////////////////////////////////////////////////////////
 
-  itIfFetchMock(
-    'v2: succeeded no retry',
-    async () => {
-      await testCreateInstance({
-        config: TEST_CONFIG.v2.fhevmInstanceConfig,
-        test: {
-          values: [123],
-          bitWidths: [32],
-          retry: 0,
-        },
-      });
-    },
-    60000,
-  );
+  itIfFetchMock('v2: succeeded no retry', async () => {
+    await testCreateInstance({
+      name: 'v2-no-retry',
+      config: TEST_CONFIG.v2.fhevmInstanceConfig,
+      test: {
+        values: [123],
+        bitWidths: [32],
+        retry: 0,
+      },
+    });
+  });
 
   //////////////////////////////////////////////////////////////////////////////
 
-  itIfFetchMock(
-    'v2: succeeded 1 retry',
-    async () => {
-      await testCreateInstance({
-        config: TEST_CONFIG.v2.fhevmInstanceConfig,
-        test: {
-          values: [123],
-          bitWidths: [32],
-          retry: 1,
-        },
-      });
-    },
-    60000,
-  );
+  itIfFetchMock('v2: succeeded 1 retry', async () => {
+    await testCreateInstance({
+      name: 'v2-one-retry',
+      config: TEST_CONFIG.v2.fhevmInstanceConfig,
+      test: {
+        values: [123],
+        bitWidths: [32],
+        retry: 1,
+      },
+    });
+  });
 });

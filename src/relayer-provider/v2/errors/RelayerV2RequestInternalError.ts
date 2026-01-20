@@ -1,6 +1,9 @@
 import type { RelayerV2RequestErrorBaseParams } from './RelayerV2RequestErrorBase';
 import type { Prettify } from '@base/types/utils';
-import { RelayerV2RequestErrorBase } from './RelayerV2RequestErrorBase';
+import {
+  humanReadableOperation,
+  RelayerV2RequestErrorBase,
+} from './RelayerV2RequestErrorBase';
 
 ////////////////////////////////////////////////////////////////////////////////
 // RelayerV2RequestInternalError
@@ -37,7 +40,9 @@ export class RelayerV2RequestInternalError extends RelayerV2RequestErrorBase {
       ...params,
       metaMessages,
       name: 'RelayerV2RequestInternalError',
-      message: params.message ?? 'Internal error',
+      message:
+        params.message ??
+        `${humanReadableOperation(params.operation, true)}: Relayer SDK internal error`,
     });
     this._status = params.status;
     this._state = params.state;

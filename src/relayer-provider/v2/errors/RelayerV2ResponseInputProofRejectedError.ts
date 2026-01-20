@@ -24,7 +24,7 @@ export class RelayerV2ResponseInputProofRejectedError extends RelayerV2ResponseE
     super({
       ...params,
       name: 'RelayerV2ResponseInputProofRejectedError',
-      message: `InputProof rejected`,
+      message: `Relayer rejected the input proof`,
     });
   }
 }

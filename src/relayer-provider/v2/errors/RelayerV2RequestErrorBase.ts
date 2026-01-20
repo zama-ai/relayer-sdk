@@ -2,6 +2,28 @@ import type { RelayerErrorBaseParams } from '../../../errors/RelayerErrorBase';
 import type { RelayerOperation } from '../../types/public-api';
 import type { Prettify } from '@base/types/utils';
 import { RelayerErrorBase } from '../../../errors/RelayerErrorBase';
+import { assertNever } from '../../../errors/utils';
+
+////////////////////////////////////////////////////////////////////////////////
+
+export function humanReadableOperation(
+  relayerOperation: RelayerOperation,
+  capitalize: boolean,
+): string {
+  switch (relayerOperation) {
+    case 'INPUT_PROOF':
+      return capitalize ? 'Input proof' : 'input proof';
+    case 'PUBLIC_DECRYPT':
+      return capitalize ? 'Public decryption' : 'public decryption';
+    case 'USER_DECRYPT':
+      return capitalize ? 'User decryption' : 'user decryption';
+    case 'KEY_URL':
+      return capitalize ? 'Key url' : 'key url';
+    default: {
+      assertNever(relayerOperation, `Unkown operation: ${relayerOperation}`);
+    }
+  }
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // RelayerV2RequestErrorBase

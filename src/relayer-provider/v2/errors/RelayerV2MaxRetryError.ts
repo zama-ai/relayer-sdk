@@ -2,6 +2,7 @@ import type { RelayerErrorBaseParams } from '../../../errors/RelayerErrorBase';
 import type { RelayerV2FetchErrorBaseParams } from './RelayerV2FetchErrorBase';
 import type { Prettify } from '@base/types/utils';
 import { RelayerV2FetchErrorBase } from './RelayerV2FetchErrorBase';
+import { humanReadableOperation } from './RelayerV2RequestErrorBase';
 
 ////////////////////////////////////////////////////////////////////////////////
 // RelayerV2MaxRetryError
@@ -23,7 +24,8 @@ export class RelayerV2MaxRetryError extends RelayerV2FetchErrorBase {
     super({
       ...params,
       name: 'RelayerV2MaxRetryError',
-      message: `Maximum retry limit exceeded (retried ${params.retryCount} times)`,
+      message: `${humanReadableOperation(params.operation, true)}: Maximum polling retry limit exceeded (${params.retryCount} attempts)`,
+      details: `After ${params.retryCount} polling attempts, the retry limit was exceeded. The operation may still complete on the server - consider checking the result later.`,
     });
   }
 }

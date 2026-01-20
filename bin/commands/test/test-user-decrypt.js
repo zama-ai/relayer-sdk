@@ -13,10 +13,6 @@ export async function testFHETestUserDecryptCommand(options) {
   const { config, provider, signer, zamaFhevmApiKey } =
     parseCommonOptions(options);
 
-  logCLI('🚚 network: ' + config.name, options);
-  logCLI('🚀 route: v' + config.version, options);
-  logCLI(`🍔 signer: ${signer.address}`);
-
   if (!FHETestAddresses[config.name]) {
     logCLI(`❌ FHETest is not deployed on network ${config.name}`, options);
     process.exit(1);

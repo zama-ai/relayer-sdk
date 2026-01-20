@@ -14,12 +14,12 @@ import type { RelayerV2ResponseFailed } from '../types';
 import { InvalidPropertyError } from '../../../errors/InvalidPropertyError';
 import { assertRecordNonNullableProperty } from '@base/record';
 import { assertRecordStringProperty } from '@base/string';
-import { assertIsRelayerApiError400NoDetailsType } from '../../errors/RelayerApiError400NoDetails';
-import { assertIsRelayerApiError400WithDetailsType } from '../../errors/RelayerApiError400WithDetails';
-import { assertIsRelayerApiError429Type } from '../../errors/RelayerApiError429';
-import { assertIsRelayerApiError500Type } from '../../errors/RelayerApiError500';
-import { assertIsRelayerApiError404Type } from '../../errors/RelayerApiError404';
-import { assertIsRelayerApiError503Type } from '../../errors/RelayerApiError503';
+import { assertIsRelayerApiError400NoDetailsType } from '../../guards/RelayerApiError400NoDetailsType';
+import { assertIsRelayerApiError400WithDetailsType } from '../../guards/RelayerApiError400WithDetailsType';
+import { assertIsRelayerApiError429Type } from '../../guards/RelayerApiError429Type';
+import { assertIsRelayerApiError500Type } from '../../guards/RelayerApiError500Type';
+import { assertIsRelayerApiError404Type } from '../../guards/RelayerApiError404Type';
+import { assertIsRelayerApiError503Type } from '../../guards/RelayerApiError503Type';
 
 ////////////////////////////////////////////////////////////////////////////////
 

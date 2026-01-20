@@ -1,7 +1,10 @@
 import type { RelayerV2RequestErrorBaseParams } from './RelayerV2RequestErrorBase';
 import type { RelayerErrorBaseParams } from '../../../errors/RelayerErrorBase';
 import type { Prettify } from '@base/types/utils';
-import { RelayerV2RequestErrorBase } from './RelayerV2RequestErrorBase';
+import {
+  humanReadableOperation,
+  RelayerV2RequestErrorBase,
+} from './RelayerV2RequestErrorBase';
 
 ////////////////////////////////////////////////////////////////////////////////
 // RelayerV2TimeoutError
@@ -18,7 +21,7 @@ export type RelayerV2TimeoutErrorParams = Prettify<
 >;
 
 /**
- * The request timed out.
+ * The request timed out. (Global)
  */
 export class RelayerV2TimeoutError extends RelayerV2RequestErrorBase {
   private readonly _timeoutMs: number;
@@ -27,7 +30,7 @@ export class RelayerV2TimeoutError extends RelayerV2RequestErrorBase {
     super({
       ...params,
       name: 'RelayerV2TimeoutError',
-      message: `Request timed out after ${params.timeoutMs}ms`,
+      message: `${humanReadableOperation(params.operation, true)}: Request timed out after ${params.timeoutMs}ms`,
     });
 
     this._timeoutMs = params.timeoutMs;

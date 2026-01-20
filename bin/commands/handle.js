@@ -17,7 +17,9 @@ import { parseCommonOptions, parseHandles } from '../utils.js';
 */
 // npx . handle "0x36a1f452f2c26d7cbf329d23220d92c342062fa7f7000000000000aa36a70000 0xce6f699529292547e11ad7635537997fef29519ecf010000000000aa36a70200 0x9162215c0789609fb2132615c76e80af78209797d9020000000000aa36a70600 0xa8225e1781cab16dedf1b9a5f5c0ed0f03b64d1fb3030000000000aa36a70700"
 export async function handleCommand(args, options) {
-  const { config } = parseCommonOptions(options);
+  const { config, provider, signer, zamaFhevmApiKey } =
+    parseCommonOptions(options);
+
   const fhevmHandles = parseHandles(args);
   console.log(safeJSONstringify(fhevmHandles, 2));
 }

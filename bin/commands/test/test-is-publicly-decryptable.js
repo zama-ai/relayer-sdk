@@ -5,10 +5,10 @@ import { logCLI, parseCommonOptions } from '../../utils.js';
 import { FHETestAddresses } from './fheTest.js';
 import { ethers } from 'ethers';
 
-// npx . test make-publicly-decryptable --type euint32 --network devnet
-// npx . test make-publicly-decryptable --type euint32 --network testnet
-// npx . test make-publicly-decryptable --type euint32 --network mainnet
-export async function testFHETestMakePubliclyDecryptableCommand(options) {
+// npx . test is-publicly-decryptable --type euint32 --network devnet
+// npx . test is-publicly-decryptable --type euint32 --network testnet
+// npx . test is-publicly-decryptable --type euint32 --network mainnet
+export async function testFHETestIsPubliclyDecryptableCommand(options) {
   const { config, provider, signer, zamaFhevmApiKey } =
     parseCommonOptions(options);
 
@@ -42,20 +42,6 @@ export async function testFHETestMakePubliclyDecryptableCommand(options) {
   });
 
   const ok = await acl.isAllowedForDecryption([handle]);
-  if (ok[0] === true) {
-    logCLI(`🚨 handle is already publicly decryptable.`);
-    return;
-  }
 
-  /** @type {import('ethers').ContractTransactionResponse} */
-  const tx = await contract[funcName]();
-
-  logCLI(`🚚 tx: ${tx.hash} ...`);
-
-  /** @type {import('ethers').ContractTransactionReceipt} */
-  const txReceipt = await tx.wait();
-
-  logCLI(`- tx status: ${txReceipt.status}`);
-  logCLI(`- tx gas used: ${txReceipt.gasUsed}`);
-  logCLI(`- tx gas price: ${txReceipt.gasPrice}`);
+  console.log(ok[0]);
 }

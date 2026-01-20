@@ -21,24 +21,25 @@ import { safeJSONstringify } from '../../base/string';
 //
 // Jest Command line
 // =================
-//
 // npx jest --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_public-decrypt.test.ts
 // npx jest --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_public-decrypt.test.ts --testNamePattern=xxx
 // npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v2/RelayerV2Provider_public-decrypt.test.ts --collectCoverageFrom=./src/relayer-provider/v2/RelayerV2Provider.ts
 //
+// Testnet:
+// ========
+// npx jest --config jest.testnet.config.cjs --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_public-decrypt.test.ts
 //
 // Devnet:
 // =======
-//
 // npx jest --config jest.devnet.config.cjs --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_public-decrypt.test.ts --testNamePattern=xxx
-//
 //
 // Curl Devnet:
 // ============
-//
 // curl https://relayer.dev.zama.cloud/v2/public-decrypt/<jobId>
 //
 ////////////////////////////////////////////////////////////////////////////////
+
+jest.setTimeout(360000);
 
 const ciphertextHandles: `0x${string}`[] = [
   '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
@@ -261,22 +262,31 @@ describeIfFetch('RelayerV2Provider:public-decrypt:sepolia:', () => {
     });
 
     const config = TEST_CONFIG.v2.fhevmInstanceConfig;
+
+    console.log('[v2 public-decrypt]: Getting FHETest euint32...');
     const handle = await fheTestGet(
       'euint32',
       TEST_CONFIG.testContracts.FHETestAddress,
       provider,
       fromAddress,
     );
+    console.log(`[v2 public-decrypt]: FHETest euint32: ${handle}`);
 
+    console.log(`[v2 public-decrypt]: createInstance()...`);
     const instance = await createInstance(config);
+
+    console.log(`[v2 public-decrypt]: instance.publicDecrypt([${handle}])...`);
     await instance.publicDecrypt([handle]);
-  }, 60000);
+
+    console.log(`[v2 public-decrypt]: done!`);
+  });
 
   it('v1: succeeded', async () => {
     setupAllFetchMockRoutes({
       enableInputProofRoutes: false,
     });
 
+    console.log('[v1 public-decrypt]: Getting FHETest euint32...');
     const config = TEST_CONFIG.v1.fhevmInstanceConfig;
     const handle = await fheTestGet(
       'euint32',
@@ -284,8 +294,14 @@ describeIfFetch('RelayerV2Provider:public-decrypt:sepolia:', () => {
       provider,
       fromAddress,
     );
+    console.log(`[v1 public-decrypt]: FHETest euint32: ${handle}`);
 
+    console.log(`[v1 public-decrypt]: createInstance()...`);
     const instance = await createInstance(config);
+
+    console.log(`[v1 public-decrypt]: instance.publicDecrypt([${handle}])...`);
     await instance.publicDecrypt([handle]);
-  }, 60000);
+
+    console.log(`[v1 public-decrypt]: done!`);
+  });
 });

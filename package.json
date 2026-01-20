@@ -48,7 +48,7 @@
     "./package.json": "./package.json"
   },
   "scripts": {
-    "pr-check": "npm run clean && npm run prettier:check && npm run lint && npm run build:strict && npm run build && npm run test && npm run test:testnet && npm run test:cli && npm run test:playwright",
+    "pr-check": "npm run clean && npm run prettier:check && npm run lint && npm run build:strict && npm run build && npm run test && npm run test:playwright && npm run test:testnet && npm run test:cli && npm run test:cli:mainnet",
     "rebuild:cdn:test": "npm run clean && BASE_PATH=http://test.cdn.zama.ai:5173/libs/relayer-sdk-js/ npm run build && mkdir -p ./e2e/servers/cdn/libs && cp -R ./bundle ./e2e/servers/cdn/libs/relayer-sdk-js",
     "test:playwright": "npm run rebuild:cdn:test && cd ./e2e && npm run test:playwright",
     "playwright:install": "playwright install",
@@ -63,6 +63,7 @@
     "build:strict": "npm run build:strict:base && npm run build:strict:sdk && npm run build:strict:relayer-provider",
     "test": "jest --colors --passWithNoTests --coverage",
     "test:cli": "./src/test/scripts/test-testnet.sh",
+    "test:cli:mainnet": "./src/test/scripts/test-mainnet.sh",
     "test:testnet": "jest --colors --passWithNoTests --coverage --config jest.testnet.config.cjs",
     "test:devnet": "jest --colors --passWithNoTests --coverage --config jest.devnet.config.cjs",
     "test:mock": "jest --colors --passWithNoTests --coverage --config jest.mock.config.cjs",

@@ -2,7 +2,7 @@ import { InvalidPropertyError } from '../../errors/InvalidPropertyError';
 import {
   assertIsRelayerApiError400NoDetailsType,
   isRelayerApiError400NoDetailsType,
-} from './RelayerApiError400NoDetails';
+} from './RelayerApiError400NoDetailsType';
 
 // npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v2/types/RelayerV2ApiError400NoDetails.test.ts --collectCoverageFrom=./src/relayer-provider/v2/types/RelayerV2ApiError400NoDetails.ts
 
