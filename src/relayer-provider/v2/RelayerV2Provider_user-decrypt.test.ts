@@ -290,7 +290,7 @@ describeIfFetch('FhevmInstance.userDecrypt:sepolia:', () => {
     }
 
     // For conveniance: use KmsSigner feature to create the signer.
-    // Should use an agnostic method instead
+    // TODO: Should use an agnostic method instead
     const userSigner = KmsSigner.fromMnemonic({ mnemonic });
 
     const eCount = await fheTestGet(

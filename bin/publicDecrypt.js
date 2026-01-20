@@ -46,8 +46,6 @@ export async function publicDecrypt({
     //   abortController.abort();
     // }, 3000);
 
-    //await sleep(10000);
-
     const res = await instance.publicDecrypt(handles, {
       timeout,
       fetchRetries,
