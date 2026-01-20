@@ -101,7 +101,7 @@ export type KmsDelegateUserDecryptEIP712MessageType = Prettify<
   }
 >;
 
-export type KmsDelegateUserDecryptEIP712TypesType = {
+export type KmsDelegatedUserDecryptEIP712TypesType = {
   readonly EIP712Domain: readonly [
     { readonly name: 'name'; readonly type: 'string' },
     { readonly name: 'version'; readonly type: 'string' },
@@ -118,8 +118,8 @@ export type KmsDelegateUserDecryptEIP712TypesType = {
   ];
 };
 
-export type KmsDelegateUserDecryptEIP712Type = Readonly<{
-  types: KmsDelegateUserDecryptEIP712TypesType;
+export type KmsDelegatedUserDecryptEIP712Type = Readonly<{
+  types: KmsDelegatedUserDecryptEIP712TypesType;
   primaryType: 'DelegatedUserDecryptRequestVerification';
   domain: KmsEIP712DomainType;
   message: KmsDelegateUserDecryptEIP712MessageType;

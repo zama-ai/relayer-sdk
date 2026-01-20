@@ -5,8 +5,8 @@ import type {
   ChecksummedAddress,
 } from '@base/types/primitives';
 import type {
-  KmsDelegateUserDecryptEIP712Type,
-  KmsDelegateUserDecryptEIP712TypesType,
+  KmsDelegatedUserDecryptEIP712Type,
+  KmsDelegatedUserDecryptEIP712TypesType,
   KmsDelegateUserDecryptEIP712UserArgsType,
   KmsEIP712DomainType,
   KmsPublicDecryptEIP712Type,
@@ -54,7 +54,7 @@ export class KmsEIP712 {
     ] as const,
   } as const;
 
-  static readonly #delegateUserDecryptTypes: KmsDelegateUserDecryptEIP712TypesType =
+  static readonly #delegateUserDecryptTypes: KmsDelegatedUserDecryptEIP712TypesType =
     {
       EIP712Domain: [
         { name: 'name', type: 'string' },
@@ -194,7 +194,7 @@ export class KmsEIP712 {
     startTimestamp,
     durationDays,
     extraData,
-  }: KmsDelegateUserDecryptEIP712UserArgsType): KmsDelegateUserDecryptEIP712Type {
+  }: KmsDelegateUserDecryptEIP712UserArgsType): KmsDelegatedUserDecryptEIP712Type {
     const publicKeyBytesHex = _verifyPublicKeyArg(publicKey);
 
     assertIsAddressArray(contractAddresses);
@@ -210,7 +210,7 @@ export class KmsEIP712 {
       { name: 'verifyingContract', type: 'address' },
     ] as const;
 
-    const eip712: KmsDelegateUserDecryptEIP712Type = {
+    const eip712: KmsDelegatedUserDecryptEIP712Type = {
       types: {
         EIP712Domain: EIP712DomainType,
         DelegatedUserDecryptRequestVerification: [

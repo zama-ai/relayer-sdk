@@ -29,7 +29,7 @@ import type {
   InputProofBytesType,
   KeypairType,
   KmsUserDecryptEIP712Type,
-  KmsDelegateUserDecryptEIP712Type,
+  KmsDelegatedUserDecryptEIP712Type,
 } from './sdk';
 import {
   userDecryptRequest,
@@ -109,7 +109,7 @@ export interface FhevmInstance {
     delegatorAddress: string,
     startTimestamp: number,
     durationDays: number,
-  ): KmsDelegateUserDecryptEIP712Type;
+  ): KmsDelegatedUserDecryptEIP712Type;
   publicDecrypt(
     handles: (string | Uint8Array)[],
     options?: RelayerPublicDecryptOptionsType,
@@ -245,7 +245,7 @@ export const createInstance = async (
       delegatorAddress: string,
       startTimestamp: number,
       durationDays: number,
-    ): KmsDelegateUserDecryptEIP712Type => {
+    ): KmsDelegatedUserDecryptEIP712Type => {
       const kmsEIP712 = new KmsEIP712({
         chainId: BigInt(chainId),
         verifyingContractAddressDecryption,
