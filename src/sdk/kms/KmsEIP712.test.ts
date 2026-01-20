@@ -29,7 +29,7 @@ const VALID_VERIFYING_CONTRACT =
   '0xf0Ffdc93b7E186bC2f8CB3dAA75D86d1930A433D' as ChecksummedAddress;
 const VALID_CONTRACT_ADDRESS =
   '0x9aF5773d8dC3d9A57c92e08EF024804eC39FD3b3' as ChecksummedAddress;
-const VALID_DELEGATED_ACCOUNT =
+const VALID_DELEGATOR_ADDRESS =
   '0x37AC010c1c566696326813b840319B58Bb5840E4' as ChecksummedAddress;
 const VALID_PUBLIC_KEY = '0xabcdef1234567890' as BytesHex;
 const VALID_EXTRA_DATA = '0xabcdef' as BytesHex;
@@ -56,7 +56,7 @@ function createValidMessage() {
 function createValidDelegateMessage() {
   return {
     ...createValidMessage(),
-    delegatedAccount: VALID_DELEGATED_ACCOUNT,
+    delegatorAddress: VALID_DELEGATOR_ADDRESS,
   };
 }
 
@@ -236,14 +236,14 @@ describe('KmsEIP712', () => {
     it('accepts multiple contractAddresses', () => {
       const message = {
         ...createValidMessage(),
-        contractAddresses: [VALID_CONTRACT_ADDRESS, VALID_DELEGATED_ACCOUNT],
+        contractAddresses: [VALID_CONTRACT_ADDRESS, VALID_DELEGATOR_ADDRESS],
       };
 
       const eip712 = kms.createUserDecryptEIP712(message);
 
       expect(eip712.message.contractAddresses).toEqual([
         VALID_CONTRACT_ADDRESS,
-        VALID_DELEGATED_ACCOUNT,
+        VALID_DELEGATOR_ADDRESS,
       ]);
     });
 
@@ -382,12 +382,12 @@ describe('KmsEIP712', () => {
       expect(eip712.domain.verifyingContract).toBe(VALID_VERIFYING_CONTRACT);
     });
 
-    it('includes delegatedAccount in delegate EIP712 message', () => {
+    it('includes delegatorAddress in delegate EIP712 message', () => {
       const eip712 = kms.createDelegateUserDecryptEIP712(
         createValidDelegateMessage(),
       );
 
-      expect(eip712.message.delegatedAccount).toBe(VALID_DELEGATED_ACCOUNT);
+      expect(eip712.message.delegatorAddress).toBe(VALID_DELEGATOR_ADDRESS);
     });
 
     it('freezes delegate EIP712 object and its properties', () => {
@@ -417,10 +417,10 @@ describe('KmsEIP712', () => {
       kms = new KmsEIP712(createValidParams());
     });
 
-    it('throws for invalid delegatedAccount', () => {
+    it('throws for invalid delegatorAddress', () => {
       const message = {
         ...createValidDelegateMessage(),
-        delegatedAccount: '0xinvalid',
+        delegatorAddress: '0xinvalid',
       };
 
       expect(() => kms.createDelegateUserDecryptEIP712(message as any)).toThrow(
@@ -428,10 +428,10 @@ describe('KmsEIP712', () => {
       );
     });
 
-    it('throws for lowercase delegatedAccount', () => {
+    it('throws for lowercase delegatorAddress', () => {
       const message = {
         ...createValidDelegateMessage(),
-        delegatedAccount: '0x37ac010c1c566696326813b840319b58bb5840e4',
+        delegatorAddress: '0x37ac010c1c566696326813b840319b58bb5840e4',
       };
 
       expect(() =>
@@ -518,7 +518,7 @@ describe('KmsEIP712', () => {
 
       const eip712 = kms.createUserDecryptEIP712(message);
 
-      addresses.push(VALID_DELEGATED_ACCOUNT);
+      addresses.push(VALID_DELEGATOR_ADDRESS);
 
       expect(eip712.message.contractAddresses).toEqual([
         VALID_CONTRACT_ADDRESS,
@@ -535,7 +535,7 @@ describe('KmsEIP712', () => {
 
       const eip712 = kms.createDelegateUserDecryptEIP712(message);
 
-      addresses.push(VALID_DELEGATED_ACCOUNT);
+      addresses.push(VALID_DELEGATOR_ADDRESS);
 
       expect(eip712.message.contractAddresses).toEqual([
         VALID_CONTRACT_ADDRESS,
@@ -800,10 +800,10 @@ describe('KmsEIP712', () => {
         DelegatedUserDecryptRequestVerification: [
           { name: 'publicKey', type: 'bytes' },
           { name: 'contractAddresses', type: 'address[]' },
+          { name: 'delegatorAddress', type: 'address' },
           { name: 'startTimestamp', type: 'uint256' },
           { name: 'durationDays', type: 'uint256' },
           { name: 'extraData', type: 'bytes' },
-          { name: 'delegatedAccount', type: 'address' },
         ],
       };
 

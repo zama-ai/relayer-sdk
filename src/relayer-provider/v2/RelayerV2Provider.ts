@@ -7,6 +7,7 @@ import type {
   RelayerPublicDecryptPayload,
   RelayerPublicDecryptResult,
   RelayerUserDecryptPayload,
+  RelayerDelegatedUserDecryptPayload,
   RelayerUserDecryptResult,
 } from '../types/public-api';
 import {
@@ -64,6 +65,21 @@ export class RelayerV2Provider extends AbstractRelayerProvider {
     });
     const result = (await request.run()) as RelayerUserDecryptResult;
     assertIsRelayerUserDecryptResult(result, 'fetchPostUserDecrypt()');
+    return result;
+  }
+
+  public override async fetchPostDelegatedUserDecrypt(
+    payload: RelayerDelegatedUserDecryptPayload,
+    options?: RelayerUserDecryptOptionsType,
+  ): Promise<RelayerUserDecryptResult> {
+    const request = new RelayerV2AsyncRequest({
+      relayerOperation: 'DELEGATED_USER_DECRYPT',
+      url: this.delegatedUserDecryptUrl,
+      payload,
+      options,
+    });
+    const result = await request.run();
+    assertIsRelayerUserDecryptResult(result, 'fetchPostDelegatedUserDecrypt()');
     return result;
   }
 }

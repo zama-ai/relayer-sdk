@@ -48,6 +48,7 @@ interface RelayerV2ResultMap {
   INPUT_PROOF: RelayerV2ResultInputProof;
   PUBLIC_DECRYPT: RelayerV2ResultPublicDecrypt;
   USER_DECRYPT: RelayerV2ResultUserDecrypt;
+  DELEGATED_USER_DECRYPT: RelayerV2ResultUserDecrypt;
 }
 
 // GET:  200 | 202 | 400 | 401 | 404 | 500 | 503

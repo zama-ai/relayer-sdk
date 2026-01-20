@@ -471,14 +471,14 @@ describe('FhevmInstance.createEIP712', () => {
       throw new Error(`Missing MNEMONIC env variable in .env file!`);
     }
 
-    const userSigner = KmsSigner.fromMnemonic({ mnemonic });
+    const delegateSigner = KmsSigner.fromMnemonic({ mnemonic });
 
     const startTimestamp = timestampNow();
     const durationDays = 365;
     const extraData = '0x00';
     const contractAddress = TEST_CONFIG.testContracts.FHETestAddress;
     const contractAddresses = [contractAddress];
-    const delegatedAccount = '0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF';
+    const delegatorAddress = '0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF';
 
     const instance = await createInstance(config);
     const keypairNo0x = instance.generateKeypair();
@@ -487,58 +487,62 @@ describe('FhevmInstance.createEIP712', () => {
     assertIsBytesHexNo0x(keypairNo0x.privateKey);
 
     const publicKey: BytesHex = ensure0x(keypairNo0x.publicKey);
-    const kmsEIP712 = new KmsEIP712({
-      chainId: BigInt(config.chainId!),
-      verifyingContractAddressDecryption:
-        config.verifyingContractAddressDecryption,
-    });
 
-    const eip = kmsEIP712.createDelegateUserDecryptEIP712({
+    const instanceEIP712 = instance.createDelegatedUserDecryptEIP712(
       publicKey,
       contractAddresses,
+      delegatorAddress,
       startTimestamp,
       durationDays,
-      delegatedAccount,
-      extraData: '0x00',
-    });
+    );
 
-    const newKmsEIP712 = new KmsEIP712({
-      chainId: BigInt(TEST_CONFIG.fhevmInstanceConfig.chainId!),
+    const kmsEIP712 = new KmsEIP712({
+      chainId: BigInt(TEST_CONFIG.fhevmInstanceConfig.chainId),
       verifyingContractAddressDecryption:
         TEST_CONFIG.fhevmInstanceConfig.verifyingContractAddressDecryption,
     });
 
-    const new_eip = newKmsEIP712.createDelegateUserDecryptEIP712({
-      publicKey,
-      contractAddresses,
-      durationDays,
-      startTimestamp,
-      extraData,
-      delegatedAccount,
-    });
+    const delegateUserDecryptEIP712 = kmsEIP712.createDelegateUserDecryptEIP712(
+      {
+        publicKey,
+        contractAddresses,
+        delegatorAddress,
+        startTimestamp,
+        durationDays,
+        extraData,
+      },
+    );
 
-    expect(new_eip.domain).toStrictEqual(eip.domain);
-    expect(new_eip.primaryType).toStrictEqual(eip.primaryType);
-    expect(new_eip.types).toStrictEqual(eip.types);
-    expect(new_eip.message).toStrictEqual(eip.message);
+    expect(delegateUserDecryptEIP712.domain).toStrictEqual(
+      instanceEIP712.domain,
+    );
+    expect(delegateUserDecryptEIP712.primaryType).toStrictEqual(
+      instanceEIP712.primaryType,
+    );
+    expect(delegateUserDecryptEIP712.types).toStrictEqual(instanceEIP712.types);
+    expect(delegateUserDecryptEIP712.message).toStrictEqual(
+      instanceEIP712.message,
+    );
 
-    const signature: Bytes65Hex = await userSigner.sign(new_eip);
+    const signature: Bytes65Hex = await delegateSigner.sign(
+      delegateUserDecryptEIP712,
+    );
     assertIsBytes65Hex(signature);
 
     const recoveredAddresses = kmsEIP712.verifyDelegateUserDecrypt(
       [signature],
       {
-        contractAddresses,
-        durationDays,
-        startTimestamp,
-        extraData,
         publicKey,
-        delegatedAccount,
+        contractAddresses,
+        delegatorAddress,
+        startTimestamp,
+        durationDays,
+        extraData,
       },
     );
 
     expect(recoveredAddresses.length).toBe(1);
-    expect(recoveredAddresses[0]).toBe(userSigner.address);
+    expect(recoveredAddresses[0]).toBe(delegateSigner.address);
   }
 
   it('v1: createEIP712 succeeded', async () => {

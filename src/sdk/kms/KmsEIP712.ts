@@ -65,10 +65,10 @@ export class KmsEIP712 {
       DelegatedUserDecryptRequestVerification: [
         { name: 'publicKey', type: 'bytes' },
         { name: 'contractAddresses', type: 'address[]' },
+        { name: 'delegatorAddress', type: 'address' },
         { name: 'startTimestamp', type: 'uint256' },
         { name: 'durationDays', type: 'uint256' },
         { name: 'extraData', type: 'bytes' },
-        { name: 'delegatedAccount', type: 'address' },
       ] as const,
     } as const;
 
@@ -190,18 +190,18 @@ export class KmsEIP712 {
   public createDelegateUserDecryptEIP712({
     publicKey,
     contractAddresses,
+    delegatorAddress,
     startTimestamp,
     durationDays,
     extraData,
-    delegatedAccount,
   }: KmsDelegateUserDecryptEIP712UserArgsType): KmsDelegateUserDecryptEIP712Type {
     const publicKeyBytesHex = _verifyPublicKeyArg(publicKey);
 
     assertIsAddressArray(contractAddresses);
+    assertIsAddress(delegatorAddress);
     assertIsUintNumber(startTimestamp);
     assertIsUintNumber(durationDays);
     assertIsBytesHex(extraData);
-    assertIsAddress(delegatedAccount);
 
     const EIP712DomainType = [
       { name: 'name', type: 'string' },
@@ -216,10 +216,10 @@ export class KmsEIP712 {
         DelegatedUserDecryptRequestVerification: [
           { name: 'publicKey', type: 'bytes' },
           { name: 'contractAddresses', type: 'address[]' },
+          { name: 'delegatorAddress', type: 'address' },
           { name: 'startTimestamp', type: 'uint256' },
           { name: 'durationDays', type: 'uint256' },
           { name: 'extraData', type: 'bytes' },
-          { name: 'delegatedAccount', type: 'address' },
         ] as const,
       },
       primaryType: 'DelegatedUserDecryptRequestVerification' as const,
@@ -227,10 +227,10 @@ export class KmsEIP712 {
       message: {
         publicKey: publicKeyBytesHex,
         contractAddresses: [...contractAddresses],
+        delegatorAddress,
         startTimestamp: startTimestamp.toString(),
         durationDays: durationDays.toString(),
         extraData,
-        delegatedAccount,
       },
     };
 

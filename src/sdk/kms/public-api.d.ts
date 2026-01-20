@@ -91,13 +91,13 @@ export type KmsUserDecryptEIP712Type = Readonly<
 
 export type KmsDelegateUserDecryptEIP712UserArgsType = Prettify<
   KmsUserDecryptEIP712UserArgsType & {
-    readonly delegatedAccount: string;
+    readonly delegatorAddress: string;
   }
 >;
 
 export type KmsDelegateUserDecryptEIP712MessageType = Prettify<
   KmsUserDecryptEIP712MessageType & {
-    readonly delegatedAccount: ChecksummedAddress;
+    readonly delegatorAddress: ChecksummedAddress;
   }
 >;
 
@@ -111,10 +111,10 @@ export type KmsDelegateUserDecryptEIP712TypesType = {
   readonly DelegatedUserDecryptRequestVerification: readonly [
     { readonly name: 'publicKey'; readonly type: 'bytes' },
     { readonly name: 'contractAddresses'; readonly type: 'address[]' },
+    { readonly name: 'delegatorAddress'; readonly type: 'address' },
     { readonly name: 'startTimestamp'; readonly type: 'uint256' },
     { readonly name: 'durationDays'; readonly type: 'uint256' },
     { readonly name: 'extraData'; readonly type: 'bytes' },
-    { readonly name: 'delegatedAccount'; readonly type: 'address' },
   ];
 };
 
