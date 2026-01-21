@@ -803,10 +803,11 @@ export class RelayerV2AsyncRequest {
               return publicDecryptResult;
             }
             //
-            // USER_DECRYPT
+            // USER_DECRYPT - DELEGATED_USER_DECRYPT
             //
             else if (
               this._relayerOperation === 'USER_DECRYPT' ||
+              // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
               this._relayerOperation === 'DELEGATED_USER_DECRYPT'
             ) {
               assertIsRelayerV2GetResponseUserDecryptSucceeded(

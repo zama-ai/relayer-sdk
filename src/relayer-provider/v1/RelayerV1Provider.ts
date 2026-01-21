@@ -93,9 +93,9 @@ export class RelayerV1Provider extends AbstractRelayerProvider {
     return json.response;
   }
 
-  public override async fetchPostDelegatedUserDecrypt(
-    payload: RelayerDelegatedUserDecryptPayload,
-    options?: FhevmInstanceOptions,
+  public override fetchPostDelegatedUserDecrypt(
+    _payload: RelayerDelegatedUserDecryptPayload,
+    _options?: FhevmInstanceOptions,
   ): Promise<RelayerUserDecryptResult> {
     throw new Error('Delegated user decrypt is not supported in Relayer V1');
   }
