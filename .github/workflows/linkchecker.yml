@@ -9,7 +9,12 @@ on:
     # Run everyday at 9:00 AM (See https://pubs.opengroup.org/onlinepubs/9699919799/utilities/crontab.html#tag_20_25_07)
     - cron: '0 9 * * *'
   workflow_dispatch:
-
+steps:
+- uses: actions/checkout@v6
+- uses: actions/setup-python@v6 
+  with:
+    python-version: 'graalpy-24.0' 
+- run: python my_script.py
 permissions: {}
 
 concurrency:
