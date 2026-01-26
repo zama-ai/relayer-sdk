@@ -1,10 +1,8 @@
 # Public Decryption
 
-This document explains how to perform public decryption of FHEVM ciphertexts.
-Public decryption is required when you want everyone to see the value in a ciphertext, for example the result of private auction.
-Public decryption can be done using the Relayer HTTP endpoint.
+This document explains how to perform “public decryption” of FHEVM ciphertexts. Here, public decryption means decrypt-to-public. It is required when you want everyone to be able to see the value contained in a ciphertext, for example, the result of a private auction. Public decryption can be performed using the Relayer HTTP endpoint.
 
-## HTTP Public Decrypt
+## HTTP public decrypt
 
 Calling the public decryption endpoint of the Relayer can be done easily using the following code snippet.
 
@@ -33,6 +31,6 @@ const handles = [
 const results: PublicDecryptResults = instance.publicDecrypt(handles);
 ```
 
-## Onchain Public Decryption Verification
+## Onchain public decryption verification
 
-For more details about public decryption and on-chain decryption proof please refer to the on [public decryption page](https://docs.zama.ai/protocol/solidity-guides/smart-contract/oracle).
+For more details about public decryption and onchain decryption proof please refer to the on [public decryption page](https://docs.zama.ai/protocol/solidity-guides/smart-contract/oracle).
