@@ -177,7 +177,7 @@ export class RelayerV2AsyncRequest {
       'PUBLIC_DECRYPT',
       'USER_DECRYPT',
       'DELEGATED_USER_DECRYPT',
-    ];
+    ] as const;
     if (!validRelayerOperations.includes(params.relayerOperation)) {
       throw new InvalidPropertyError({
         objName: 'RelayerV2AsyncRequestParams',
