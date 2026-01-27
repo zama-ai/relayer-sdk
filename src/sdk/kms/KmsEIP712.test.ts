@@ -358,7 +358,7 @@ describe('KmsEIP712', () => {
     });
 
     it('creates delegate EIP712 object with valid message', () => {
-      const eip712 = kms.createDelegateUserDecryptEIP712(
+      const eip712 = kms.createDelegatedUserDecryptEIP712(
         createValidDelegateMessage(),
       );
 
@@ -372,7 +372,7 @@ describe('KmsEIP712', () => {
     });
 
     it('copies domain to delegate EIP712 object', () => {
-      const eip712 = kms.createDelegateUserDecryptEIP712(
+      const eip712 = kms.createDelegatedUserDecryptEIP712(
         createValidDelegateMessage(),
       );
 
@@ -383,7 +383,7 @@ describe('KmsEIP712', () => {
     });
 
     it('includes delegatorAddress in delegate EIP712 message', () => {
-      const eip712 = kms.createDelegateUserDecryptEIP712(
+      const eip712 = kms.createDelegatedUserDecryptEIP712(
         createValidDelegateMessage(),
       );
 
@@ -391,7 +391,7 @@ describe('KmsEIP712', () => {
     });
 
     it('freezes delegate EIP712 object and its properties', () => {
-      const eip712 = kms.createDelegateUserDecryptEIP712(
+      const eip712 = kms.createDelegatedUserDecryptEIP712(
         createValidDelegateMessage(),
       );
 
@@ -423,9 +423,9 @@ describe('KmsEIP712', () => {
         delegatorAddress: '0xinvalid',
       };
 
-      expect(() => kms.createDelegateUserDecryptEIP712(message as any)).toThrow(
-        AddressError,
-      );
+      expect(() =>
+        kms.createDelegatedUserDecryptEIP712(message as any),
+      ).toThrow(AddressError);
     });
 
     it('throws for lowercase delegatorAddress', () => {
@@ -435,7 +435,7 @@ describe('KmsEIP712', () => {
       };
 
       expect(() =>
-        kms.createDelegateUserDecryptEIP712(message as any),
+        kms.createDelegatedUserDecryptEIP712(message as any),
       ).not.toThrow();
     });
   });
@@ -477,7 +477,7 @@ describe('KmsEIP712', () => {
 
     it('throws for invalid signatures array', () => {
       expect(() =>
-        kms.verifyDelegateUserDecrypt(
+        kms.verifyDelegatedUserDecrypt(
           ['0xinvalid'] as any,
           createValidDelegateMessage(),
         ),
@@ -485,7 +485,7 @@ describe('KmsEIP712', () => {
     });
 
     it('accepts empty signatures array', () => {
-      const result = kms.verifyDelegateUserDecrypt(
+      const result = kms.verifyDelegatedUserDecrypt(
         [],
         createValidDelegateMessage(),
       );
@@ -533,7 +533,7 @@ describe('KmsEIP712', () => {
         contractAddresses: addresses,
       };
 
-      const eip712 = kms.createDelegateUserDecryptEIP712(message);
+      const eip712 = kms.createDelegatedUserDecryptEIP712(message);
 
       addresses.push(VALID_DELEGATOR_ADDRESS);
 
@@ -775,10 +775,10 @@ describe('KmsEIP712', () => {
   });
 
   //////////////////////////////////////////////////////////////////////////////
-  // verifyDelegateUserDecrypt with signatures
+  // verifyDelegatedUserDecrypt with signatures
   //////////////////////////////////////////////////////////////////////////////
 
-  describe('verifyDelegateUserDecrypt with signatures', () => {
+  describe('verifyDelegatedUserDecrypt with signatures', () => {
     let kms: KmsEIP712;
 
     beforeEach(() => {
@@ -813,7 +813,7 @@ describe('KmsEIP712', () => {
         durationDays: message.durationDays.toString(),
       })) as Bytes65Hex;
 
-      const result = kms.verifyDelegateUserDecrypt([signature], message);
+      const result = kms.verifyDelegatedUserDecrypt([signature], message);
 
       expect(result).toHaveLength(1);
       expect(result[0]).toBe(wallet.address);

@@ -88,7 +88,7 @@ describeIfFetchMock('token', () => {
         '0x8ba1f109551bD432803012645Ac136ddd64DBA72',
     });
 
-    const eip712 = kmsEIP712.createDelegateUserDecryptEIP712({
+    const eip712 = kmsEIP712.createDelegatedUserDecryptEIP712({
       publicKey: keypair.publicKey,
       contractAddresses: ['0x8ba1f109551bd432803012645ac136ddd64dba72'],
       delegatorAddress: '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
@@ -169,7 +169,7 @@ describeIfFetchMock('token', () => {
       }),
     ).toThrow(AddressError);
     expect(() =>
-      kmsEIP712.createDelegateUserDecryptEIP712({
+      kmsEIP712.createDelegatedUserDecryptEIP712({
         publicKey: keypair.publicKey,
         contractAddresses: ['0x8ba1f109551bd432803012645ac136ddd64dba72'],
         delegatorAddress: '99',

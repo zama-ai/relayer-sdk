@@ -250,7 +250,7 @@ export const createInstance = async (
         chainId: BigInt(chainId),
         verifyingContractAddressDecryption,
       });
-      return kmsEIP712.createDelegateUserDecryptEIP712({
+      return kmsEIP712.createDelegatedUserDecryptEIP712({
         publicKey,
         contractAddresses,
         delegatorAddress,

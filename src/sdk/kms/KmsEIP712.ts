@@ -7,7 +7,7 @@ import type {
 import type {
   KmsDelegatedUserDecryptEIP712Type,
   KmsDelegatedUserDecryptEIP712TypesType,
-  KmsDelegateUserDecryptEIP712UserArgsType,
+  KmsDelegatedUserDecryptEIP712UserArgsType,
   KmsEIP712DomainType,
   KmsPublicDecryptEIP712Type,
   KmsPublicDecryptEIP712TypesType,
@@ -54,7 +54,7 @@ export class KmsEIP712 {
     ] as const,
   } as const;
 
-  static readonly #delegateUserDecryptTypes: KmsDelegatedUserDecryptEIP712TypesType =
+  static readonly #delegatedUserDecryptTypes: KmsDelegatedUserDecryptEIP712TypesType =
     {
       EIP712Domain: [
         { name: 'name', type: 'string' },
@@ -91,10 +91,10 @@ export class KmsEIP712 {
     Object.freeze(KmsEIP712.#userDecryptTypes.EIP712Domain);
     Object.freeze(KmsEIP712.#userDecryptTypes.UserDecryptRequestVerification);
 
-    Object.freeze(KmsEIP712.#delegateUserDecryptTypes);
-    Object.freeze(KmsEIP712.#delegateUserDecryptTypes.EIP712Domain);
+    Object.freeze(KmsEIP712.#delegatedUserDecryptTypes);
+    Object.freeze(KmsEIP712.#delegatedUserDecryptTypes.EIP712Domain);
     Object.freeze(
-      KmsEIP712.#delegateUserDecryptTypes
+      KmsEIP712.#delegatedUserDecryptTypes
         .DelegatedUserDecryptRequestVerification,
     );
 
@@ -335,16 +335,16 @@ export class KmsEIP712 {
     return recoveredAddresses;
   }
 
-  public verifyDelegateUserDecrypt(
+  public verifyDelegatedUserDecrypt(
     signatures: Bytes65Hex[],
-    message: KmsDelegateUserDecryptEIP712UserArgsType,
+    message: KmsDelegatedUserDecryptEIP712UserArgsType,
   ): ChecksummedAddress[] {
     assertIsBytes65HexArray(signatures);
     const recoveredAddresses = signatures.map((signature: Bytes65Hex) => {
       const recoveredAddress = verifySignature({
         signature,
         domain: this.domain,
-        types: KmsEIP712.#delegateUserDecryptTypes as unknown as Record<
+        types: KmsEIP712.#delegatedUserDecryptTypes as unknown as Record<
           string,
           EthersT.TypedDataField[]
         >,

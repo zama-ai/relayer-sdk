@@ -89,13 +89,13 @@ export type KmsUserDecryptEIP712Type = Readonly<
 // DelegatedUserDecryptRequestVerification
 ////////////////////////////////////////////////////////////////////////////////
 
-export type KmsDelegateUserDecryptEIP712UserArgsType = Prettify<
+export type KmsDelegatedUserDecryptEIP712UserArgsType = Prettify<
   KmsUserDecryptEIP712UserArgsType & {
     readonly delegatorAddress: string;
   }
 >;
 
-export type KmsDelegateUserDecryptEIP712MessageType = Prettify<
+export type KmsDelegatedUserDecryptEIP712MessageType = Prettify<
   KmsUserDecryptEIP712MessageType & {
     readonly delegatorAddress: ChecksummedAddress;
   }
@@ -122,7 +122,7 @@ export type KmsDelegatedUserDecryptEIP712Type = Readonly<{
   types: KmsDelegatedUserDecryptEIP712TypesType;
   primaryType: 'DelegatedUserDecryptRequestVerification';
   domain: KmsEIP712DomainType;
-  message: KmsDelegateUserDecryptEIP712MessageType;
+  message: KmsDelegatedUserDecryptEIP712MessageType;
 }>;
 
 ////////////////////////////////////////////////////////////////////////////////

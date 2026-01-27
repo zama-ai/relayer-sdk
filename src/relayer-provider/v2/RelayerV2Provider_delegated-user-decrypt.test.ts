@@ -50,7 +50,8 @@ jest.mock('ethers', () => {
   return setupEthersJestMock();
 });
 
-const DELEGATED_USER_DECRYPT_URL = TEST_CONFIG.v2.urls.base + '/delegated-user-decrypt';
+const DELEGATED_USER_DECRYPT_URL =
+  TEST_CONFIG.v2.urls.base + '/delegated-user-decrypt';
 
 const payload: RelayerDelegatedUserDecryptPayload = {
   handleContractPairs: [
@@ -322,7 +323,7 @@ describeIfFetch('FhevmInstance.delegatedUserDecrypt:sepolia:', () => {
         TEST_CONFIG.fhevmInstanceConfig.verifyingContractAddressDecryption,
     });
 
-    const new_eip = kmsEIP712.createDelegateUserDecryptEIP712({
+    const new_eip = kmsEIP712.createDelegatedUserDecryptEIP712({
       publicKey,
       contractAddresses,
       delegatorAddress,
@@ -443,34 +444,35 @@ describe('FhevmInstance.createDelegatedUserDecryptEIP712', () => {
         TEST_CONFIG.fhevmInstanceConfig.verifyingContractAddressDecryption,
     });
 
-    const delegateUserDecryptEIP712 = kmsEIP712.createDelegateUserDecryptEIP712(
-      {
+    const delegatedUserDecryptEIP712 =
+      kmsEIP712.createDelegatedUserDecryptEIP712({
         publicKey,
         contractAddresses,
         delegatorAddress,
         startTimestamp,
         durationDays,
         extraData,
-      },
-    );
+      });
 
-    expect(delegateUserDecryptEIP712.domain).toStrictEqual(
+    expect(delegatedUserDecryptEIP712.domain).toStrictEqual(
       instanceEIP712.domain,
     );
-    expect(delegateUserDecryptEIP712.primaryType).toStrictEqual(
+    expect(delegatedUserDecryptEIP712.primaryType).toStrictEqual(
       instanceEIP712.primaryType,
     );
-    expect(delegateUserDecryptEIP712.types).toStrictEqual(instanceEIP712.types);
-    expect(delegateUserDecryptEIP712.message).toStrictEqual(
+    expect(delegatedUserDecryptEIP712.types).toStrictEqual(
+      instanceEIP712.types,
+    );
+    expect(delegatedUserDecryptEIP712.message).toStrictEqual(
       instanceEIP712.message,
     );
 
     const signature: Bytes65Hex = await delegateSigner.sign(
-      delegateUserDecryptEIP712,
+      delegatedUserDecryptEIP712,
     );
     assertIsBytes65Hex(signature);
 
-    const recoveredAddresses = kmsEIP712.verifyDelegateUserDecrypt(
+    const recoveredAddresses = kmsEIP712.verifyDelegatedUserDecrypt(
       [signature],
       {
         publicKey,
