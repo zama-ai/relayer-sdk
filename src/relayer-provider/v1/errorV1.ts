@@ -67,7 +67,7 @@ export async function throwRelayerResponseError(
         break;
       }
       case 'DELEGATED_USER_DECRYPT': {
-        message = `Delegated user decrypt failed: relayer respond with HTTP code ${response.status}`;
+        message = `Delegated user decrypt failed: relayer responded with HTTP code ${response.status}`;
         break;
       }
       case 'INPUT_PROOF': {
