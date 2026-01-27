@@ -187,7 +187,7 @@ export class KmsEIP712 {
     return eip712;
   }
 
-  public createDelegateUserDecryptEIP712({
+  public createDelegatedUserDecryptEIP712({
     publicKey,
     contractAddresses,
     delegatorAddress,
