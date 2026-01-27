@@ -194,7 +194,7 @@ export class KmsEIP712 {
     startTimestamp,
     durationDays,
     extraData,
-  }: KmsDelegateUserDecryptEIP712UserArgsType): KmsDelegatedUserDecryptEIP712Type {
+  }: KmsDelegatedUserDecryptEIP712UserArgsType): KmsDelegatedUserDecryptEIP712Type {
     const publicKeyBytesHex = _verifyPublicKeyArg(publicKey);
 
     assertIsAddressArray(contractAddresses);
