@@ -45,5 +45,5 @@ The `gatewayChainId` is `10901`.
 The `chainId` is the chain-id of the FHEVM chain, so for Sepolia it would be `11155111`.
 
 {% hint style="info" %}
-For more information on the Relayer's part in the overall architecture please refer to [the Relayer's page in the architecture documentation](https://docs.zama.ai/protocol/protocol/overview/relayer_oracle).
+For more information on the Relayer's part，please refer to [the Relayer SDK documentation](https://docs.zama.org/protocol/relayer-sdk-guides).
 {% endhint %}

@@ -33,4 +33,4 @@ const results: PublicDecryptResults = instance.publicDecrypt(handles);
 
 ## Onchain public decryption verification
 
-For more details about public decryption and onchain decryption proof please refer to the on [public decryption page](https://docs.zama.ai/protocol/solidity-guides/smart-contract/oracle).
+For more details about public decryption and onchain decryption proof please refer to the on [public decryption page](https://docs.zama.org/protocol/solidity-guides/smart-contract/oracle).
