@@ -58,6 +58,74 @@ function formatAccordingToType(
   return clearValueAsBigInt;
 }
 
+function parseKeys(publicKey: string, privateKey: string) {
+  try {
+    const pubKey = TKMSModule.u8vec_to_ml_kem_pke_pk(hexToBytes(publicKey));
+    const privKey = TKMSModule.u8vec_to_ml_kem_pke_sk(hexToBytes(privateKey));
+    return { pubKey, privKey };
+  } catch (e) {
+    throw new Error('Invalid public or private key', { cause: e });
+  }
+}
+
+function parseHandleContractPairs(
+  handles: HandleContractPair[],
+): HandleContractPairRelayer[] {
+  return handles.map((h) => ({
+    handle:
+      typeof h.handle === 'string'
+        ? bytesToHex(hexToBytes(h.handle))
+        : bytesToHex(h.handle),
+    contractAddress: getAddress(h.contractAddress),
+  }));
+}
+
+function validateContractAddresses(contractAddresses: string[]) {
+  const contractAddressesLength = contractAddresses.length;
+  if (contractAddressesLength === 0) {
+    throw Error('contractAddresses is empty');
+  }
+  if (contractAddressesLength > MAX_USER_DECRYPT_CONTRACT_ADDRESSES) {
+    throw Error(
+      `contractAddresses max length of ${MAX_USER_DECRYPT_CONTRACT_ADDRESSES} exceeded`,
+    );
+  }
+}
+
+async function validateAclPermissions(
+  acl: Contract,
+  handleContractPairs: HandleContractPairRelayer[],
+  authorizedUserAddress: string,
+) {
+  const verifications = handleContractPairs.map(
+    async ({ handle, contractAddress }) => {
+      const userAllowed = await acl.persistAllowed(
+        handle,
+        authorizedUserAddress,
+      );
+      const contractAllowed = await acl.persistAllowed(handle, contractAddress);
+
+      if (!userAllowed) {
+        throw new Error(
+          `User address ${authorizedUserAddress} is not authorized to user decrypt handle ${handle}!`,
+        );
+      }
+      if (!contractAllowed) {
+        throw new Error(
+          `dapp contract ${contractAddress} is not authorized to user decrypt handle ${handle}!`,
+        );
+      }
+      if (authorizedUserAddress === contractAddress) {
+        throw new Error(
+          `User address ${authorizedUserAddress} should not be equal to contract address when requesting user decryption!`,
+        );
+      }
+    },
+  );
+
+  await Promise.all(verifications);
+}
+
 function buildUserDecryptResults(
   handles: `0x${string}`[],
   listBigIntDecryptions: bigint[],
@@ -136,72 +204,21 @@ export const userDecryptRequest =
     options?: RelayerUserDecryptOptionsType,
   ): Promise<UserDecryptResults> => {
     const extraData: BytesHex = '0x00';
-    let pubKey;
-    let privKey;
-    try {
-      pubKey = TKMSModule.u8vec_to_ml_kem_pke_pk(hexToBytes(publicKey));
-      privKey = TKMSModule.u8vec_to_ml_kem_pke_sk(hexToBytes(privateKey));
-    } catch (e) {
-      throw new Error('Invalid public or private key', { cause: e });
-    }
 
-    // Casting handles if string
+    const { pubKey, privKey } = parseKeys(publicKey, privateKey);
+
+    // Sanitize hex strings
     const signatureSanitized = signature.replace(/^(0x)/, '');
     const publicKeySanitized = publicKey.replace(/^(0x)/, '');
 
-    const handleContractPairs: HandleContractPairRelayer[] = _handles.map(
-      (h) => ({
-        handle:
-          typeof h.handle === 'string'
-            ? bytesToHex(hexToBytes(h.handle))
-            : bytesToHex(h.handle),
-        contractAddress: getAddress(h.contractAddress),
-      }),
-    );
+    const handleContractPairs = parseHandleContractPairs(_handles);
 
     check2048EncryptedBits(handleContractPairs.map((h) => h.handle));
-
     checkDeadlineValidity(BigInt(startTimestamp), BigInt(durationDays));
+    validateContractAddresses(contractAddresses);
 
     const acl = new Contract(aclContractAddress, aclABI, provider);
-    const verifications = handleContractPairs.map(
-      async ({ handle, contractAddress }) => {
-        const userAllowed = await acl.persistAllowed(handle, userAddress);
-        const contractAllowed = await acl.persistAllowed(
-          handle,
-          contractAddress,
-        );
-        if (!userAllowed) {
-          throw new Error(
-            `User ${userAddress} is not authorized to user decrypt handle ${handle}!`,
-          );
-        }
-        if (!contractAllowed) {
-          throw new Error(
-            `dapp contract ${contractAddress} is not authorized to user decrypt handle ${handle}!`,
-          );
-        }
-        if (userAddress === contractAddress) {
-          throw new Error(
-            `userAddress ${userAddress} should not be equal to contractAddress when requesting user decryption!`,
-          );
-        }
-      },
-    );
-
-    const contractAddressesLength = contractAddresses.length;
-    if (contractAddressesLength === 0) {
-      throw Error('contractAddresses is empty');
-    }
-    if (contractAddressesLength > MAX_USER_DECRYPT_CONTRACT_ADDRESSES) {
-      throw Error(
-        `contractAddresses max length of ${MAX_USER_DECRYPT_CONTRACT_ADDRESSES} exceeded`,
-      );
-    }
-
-    await Promise.all(verifications).catch((e) => {
-      throw e;
-    });
+    await validateAclPermissions(acl, handleContractPairs, userAddress);
 
     const payloadForRequest: RelayerUserDecryptPayload = {
       handleContractPairs,
@@ -304,77 +321,26 @@ export const delegatedUserDecryptRequest =
     options?: RelayerUserDecryptOptionsType,
   ): Promise<UserDecryptResults> => {
     const extraData: BytesHex = '0x00';
-    let pubKey;
-    try {
-      pubKey = TKMSModule.u8vec_to_ml_kem_pke_pk(hexToBytes(publicKey));
-    } catch (e) {
-      throw new Error('Invalid public key.', { cause: e });
-    }
 
-    let privKey;
-    try {
-      privKey = TKMSModule.u8vec_to_ml_kem_pke_sk(hexToBytes(privateKey));
-    } catch (e) {
-      throw new Error('Invalid private key.', { cause: e });
-    }
+    const { pubKey, privKey } = parseKeys(publicKey, privateKey);
 
-    // Sanitize hex strings.
+    // Sanitize hex strings
     const signatureSanitized = signature.replace(/^(0x)/, '');
     const publicKeySanitized = publicKey.replace(/^(0x)/, '');
 
-    const handleContractPairsRelayer: HandleContractPairRelayer[] =
-      handleContractPairs.map((h) => ({
-        handle:
-          typeof h.handle === 'string'
-            ? bytesToHex(hexToBytes(h.handle))
-            : bytesToHex(h.handle),
-        contractAddress: getAddress(h.contractAddress),
-      }));
+    const handleContractPairsRelayer =
+      parseHandleContractPairs(handleContractPairs);
 
     check2048EncryptedBits(handleContractPairsRelayer.map((h) => h.handle));
-
     checkDeadlineValidity(BigInt(startTimestamp), BigInt(durationDays));
-
-    const contractAddressesLength = contractAddresses.length;
-    if (contractAddressesLength === 0) {
-      throw Error('ContractAddresses is empty.');
-    }
-    if (contractAddressesLength > MAX_USER_DECRYPT_CONTRACT_ADDRESSES) {
-      throw Error(
-        `ContractAddresses max length of ${MAX_USER_DECRYPT_CONTRACT_ADDRESSES} exceeded.`,
-      );
-    }
+    validateContractAddresses(contractAddresses);
 
     // Check ACL for each handle against delegatorAddress and contractAddress
     const acl = new Contract(aclContractAddress, aclABI, provider);
-    await Promise.all(
-      handleContractPairsRelayer.map(async ({ handle, contractAddress }) => {
-        if (delegatorAddress === contractAddress) {
-          throw new Error(
-            `Delegator ${delegatorAddress} and contract addresses cannot be equal when requesting delegated user decryption.`,
-          );
-        }
-
-        const delegatorAllowed = await acl.persistAllowed(
-          handle,
-          delegatorAddress,
-        );
-        if (!delegatorAllowed) {
-          throw new Error(
-            `Delegator address ${delegatorAddress} is not authorized to user decrypt ctHandle ${handle}.`,
-          );
-        }
-
-        const contractAllowed = await acl.persistAllowed(
-          handle,
-          contractAddress,
-        );
-        if (!contractAllowed) {
-          throw new Error(
-            `Contract address ${contractAddress} is not authorized to user decrypt ctHandle ${handle}!`,
-          );
-        }
-      }),
+    await validateAclPermissions(
+      acl,
+      handleContractPairsRelayer,
+      delegatorAddress,
     );
 
     const delegatedUserDecryptPayload: RelayerDelegatedUserDecryptPayload = {
