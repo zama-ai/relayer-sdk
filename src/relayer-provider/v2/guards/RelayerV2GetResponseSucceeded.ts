@@ -37,7 +37,10 @@ export function assertIsRelayerV2Result<T extends RelayerPostOperation>(
     assertIsRelayerV2ResultInputProof(value, name);
   } else if (operation === 'PUBLIC_DECRYPT') {
     assertIsRelayerV2ResultPublicDecrypt(value, name);
-  } else if (operation === 'USER_DECRYPT') {
+  } else if (
+    operation === 'USER_DECRYPT' ||
+    operation === 'DELEGATED_USER_DECRYPT'
+  ) {
     assertIsRelayerV2ResultUserDecrypt(value, name);
   } else {
     assertNever(operation, `Unexpected operation ${operation}`);

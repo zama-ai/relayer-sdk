@@ -12,6 +12,7 @@ import type {
   RelayerPublicDecryptResult,
   RelayerUserDecryptOptionsType,
   RelayerUserDecryptPayload,
+  RelayerDelegatedUserDecryptPayload,
   RelayerUserDecryptResult,
 } from './types/public-api';
 import { sdkName, version } from '../_version';
@@ -80,6 +81,9 @@ export abstract class AbstractRelayerProvider {
   }
   public get userDecryptUrl(): string {
     return `${this.url}/user-decrypt`;
+  }
+  public get delegatedUserDecryptUrl(): string {
+    return `${this.url}/delegated-user-decrypt`;
   }
 
   public abstract get version(): number;
@@ -245,6 +249,12 @@ export abstract class AbstractRelayerProvider {
   /** @internal */
   public abstract fetchPostUserDecrypt(
     payload: RelayerUserDecryptPayload,
+    options?: RelayerUserDecryptOptionsType,
+  ): Promise<RelayerUserDecryptResult>;
+
+  /** @internal */
+  public abstract fetchPostDelegatedUserDecrypt(
+    payload: RelayerDelegatedUserDecryptPayload,
     options?: RelayerUserDecryptOptionsType,
   ): Promise<RelayerUserDecryptResult>;
 

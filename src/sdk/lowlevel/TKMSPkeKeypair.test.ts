@@ -71,9 +71,7 @@ describeIfFetchMock('token', () => {
     expect(eip712.domain.chainId).toBe(12345n);
     expect(eip712.domain.name).toBe('Decryption');
     expect(eip712.domain.version).toBe('1');
-    expect((eip712.message as { publicKey: unknown }).publicKey).toBe(
-      `0x${keypair.publicKey}`,
-    );
+    expect(eip712.message.publicKey).toBe(`0x${keypair.publicKey}`);
     expect(eip712.primaryType).toBe('UserDecryptRequestVerification');
     expect(eip712.types.UserDecryptRequestVerification.length).toBe(5);
     expect(eip712.types.UserDecryptRequestVerification[0].name).toBe(
@@ -90,33 +88,24 @@ describeIfFetchMock('token', () => {
         '0x8ba1f109551bD432803012645Ac136ddd64DBA72',
     });
 
-    const eip712 = kmsEIP712.createDelegateUserDecryptEIP712({
+    const eip712 = kmsEIP712.createDelegatedUserDecryptEIP712({
       publicKey: keypair.publicKey,
       contractAddresses: ['0x8ba1f109551bd432803012645ac136ddd64dba72'],
+      delegatorAddress: '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
       startTimestamp: Date.now(),
       durationDays: 86400,
       extraData: '0x00',
-      delegatedAccount: '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
     });
 
     expect(eip712.domain.chainId).toBe(12345n);
     expect(eip712.domain.name).toBe('Decryption');
     expect(eip712.domain.version).toBe('1');
-    expect((eip712.message as { publicKey: unknown }).publicKey).toBe(
-      `0x${keypair.publicKey}`,
+    expect(eip712.message.publicKey).toBe(`0x${keypair.publicKey}`);
+    expect(eip712.message.delegatorAddress).toBe(
+      '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
     );
-    expect(
-      (eip712.message as { delegatedAccount: unknown }).delegatedAccount,
-    ).toBe('0xa5e1defb98EFe38EBb2D958CEe052410247F4c80');
     expect(eip712.primaryType).toBe('DelegatedUserDecryptRequestVerification');
 
-    /*
-      { name: 'publicKey', type: 'bytes' },
-      { name: 'contractAddresses', type: 'address[]' },
-      { name: 'startTimestamp', type: 'uint256' },
-      { name: 'durationDays', type: 'uint256' },
-      { name: 'delegatedAccount', type: 'address' },
-    */
     expect(eip712.types.DelegatedUserDecryptRequestVerification.length).toBe(6);
 
     expect(eip712.types.DelegatedUserDecryptRequestVerification[0].name).toBe(
@@ -125,6 +114,7 @@ describeIfFetchMock('token', () => {
     expect(eip712.types.DelegatedUserDecryptRequestVerification[0].type).toBe(
       'bytes',
     );
+
     expect(eip712.types.DelegatedUserDecryptRequestVerification[1].name).toBe(
       'contractAddresses',
     );
@@ -133,31 +123,31 @@ describeIfFetchMock('token', () => {
     );
 
     expect(eip712.types.DelegatedUserDecryptRequestVerification[2].name).toBe(
-      'startTimestamp',
+      'delegatorAddress',
     );
     expect(eip712.types.DelegatedUserDecryptRequestVerification[2].type).toBe(
-      'uint256',
+      'address',
     );
 
     expect(eip712.types.DelegatedUserDecryptRequestVerification[3].name).toBe(
-      'durationDays',
+      'startTimestamp',
     );
     expect(eip712.types.DelegatedUserDecryptRequestVerification[3].type).toBe(
       'uint256',
     );
 
     expect(eip712.types.DelegatedUserDecryptRequestVerification[4].name).toBe(
-      'extraData',
+      'durationDays',
     );
     expect(eip712.types.DelegatedUserDecryptRequestVerification[4].type).toBe(
-      'bytes',
+      'uint256',
     );
 
     expect(eip712.types.DelegatedUserDecryptRequestVerification[5].name).toBe(
-      'delegatedAccount',
+      'extraData',
     );
     expect(eip712.types.DelegatedUserDecryptRequestVerification[5].type).toBe(
-      'address',
+      'bytes',
     );
   });
 
@@ -179,12 +169,12 @@ describeIfFetchMock('token', () => {
       }),
     ).toThrow(AddressError);
     expect(() =>
-      kmsEIP712.createDelegateUserDecryptEIP712({
+      kmsEIP712.createDelegatedUserDecryptEIP712({
         publicKey: keypair.publicKey,
         contractAddresses: ['0x8ba1f109551bd432803012645ac136ddd64dba72'],
+        delegatorAddress: '99',
         startTimestamp: Date.now(),
         durationDays: 86400,
-        delegatedAccount: '99',
         extraData: '0x00',
       }),
     ).toThrow(AddressError);

@@ -172,17 +172,19 @@ export class RelayerV2AsyncRequest {
   private static readonly MAX_POST_RETRY = RelayerV2AsyncRequest.MAX_GET_RETRY;
 
   constructor(params: RelayerV2AsyncRequestParams) {
-    if (
-      (params.relayerOperation as unknown) !== 'INPUT_PROOF' &&
-      (params.relayerOperation as unknown) !== 'PUBLIC_DECRYPT' &&
-      (params.relayerOperation as unknown) !== 'USER_DECRYPT'
-    ) {
+    const validRelayerOperations = [
+      'INPUT_PROOF',
+      'PUBLIC_DECRYPT',
+      'USER_DECRYPT',
+      'DELEGATED_USER_DECRYPT',
+    ] as const;
+    if (!validRelayerOperations.includes(params.relayerOperation)) {
       throw new InvalidPropertyError({
         objName: 'RelayerV2AsyncRequestParams',
         property: 'relayerOperation',
         expectedType: 'string',
         value: params.relayerOperation,
-        expectedValue: 'INPUT_PROOF | PUBLIC_DECRYPT | USER_DECRYPT',
+        expectedValue: validRelayerOperations.join(' | '),
       });
     }
 
@@ -801,10 +803,13 @@ export class RelayerV2AsyncRequest {
               return publicDecryptResult;
             }
             //
-            // USER_DECRYPT
+            // USER_DECRYPT - DELEGATED_USER_DECRYPT
             //
-            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-            else if (this._relayerOperation === 'USER_DECRYPT') {
+            else if (
+              this._relayerOperation === 'USER_DECRYPT' ||
+              // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+              this._relayerOperation === 'DELEGATED_USER_DECRYPT'
+            ) {
               assertIsRelayerV2GetResponseUserDecryptSucceeded(
                 bodyJson,
                 'body',
@@ -829,17 +834,19 @@ export class RelayerV2AsyncRequest {
                 result: userDecryptResult,
                 step: this._step,
                 totalSteps: this._totalSteps,
-              } satisfies RelayerProgressSucceededType<'USER_DECRYPT'>);
+              } satisfies RelayerProgressSucceededType<
+                'USER_DECRYPT' | 'DELEGATED_USER_DECRYPT'
+              >);
 
               return userDecryptResult;
             }
             //
-            // Unkown operation, assert failed
+            // Unknown operation, assert failed
             //
             else {
               assertNever(
                 this._relayerOperation,
-                `Unkown operation: ${this._relayerOperation}`,
+                `Unknown operation: ${this._relayerOperation}`,
               );
             }
           } catch (cause) {

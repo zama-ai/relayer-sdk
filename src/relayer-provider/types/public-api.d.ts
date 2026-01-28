@@ -39,6 +39,7 @@ export interface RelayerPostOperationResultMap {
   INPUT_PROOF: RelayerInputProofResult;
   PUBLIC_DECRYPT: RelayerPublicDecryptResult;
   USER_DECRYPT: RelayerUserDecryptResult;
+  DELEGATED_USER_DECRYPT: RelayerUserDecryptResult;
 }
 
 export type RelayerGetOperation = 'KEY_URL';
@@ -97,8 +98,9 @@ export type RelayerProgressArgsType<O extends RelayerPostOperation> =
 
 export type RelayerInputProofProgressArgs =
   RelayerProgressArgsType<'INPUT_PROOF'>;
-export type RelayerUserDecryptProgressArgs =
-  RelayerProgressArgsType<'USER_DECRYPT'>;
+export type RelayerUserDecryptProgressArgs = RelayerProgressArgsType<
+  'USER_DECRYPT' | 'DELEGATED_USER_DECRYPT'
+>;
 export type RelayerPublicDecryptProgressArgs =
   RelayerProgressArgsType<'PUBLIC_DECRYPT'>;
 
@@ -229,6 +231,28 @@ export type RelayerUserDecryptPayload = {
   contractAddresses: Array<`0x${string}`>;
   // Hex encoded address with 0x prefix.
   userAddress: `0x${string}`;
+  // Hex encoded signature without 0x prefix.
+  signature: string;
+  // Hex encoded key without 0x prefix.
+  publicKey: string;
+  // Hex encoded bytes with 0x prefix. Default: 0x00
+  extraData: `0x${string}`;
+};
+
+export type RelayerDelegatedUserDecryptPayload = {
+  handleContractPairs: HandleContractPairRelayer[];
+  // Hex encoded uint256 string without prefix
+  contractsChainId: string;
+  // List of hex encoded addresses with 0x prefix
+  contractAddresses: Array<`0x${string}`>;
+  // Hex encoded address with 0x prefix.
+  delegatorAddress: `0x${string}`;
+  // Hex encoded address with 0x prefix.
+  delegateAddress: `0x${string}`;
+  // Number as a string
+  startTimestamp: string;
+  // Number as a string
+  durationDays: string;
   // Hex encoded signature without 0x prefix.
   signature: string;
   // Hex encoded key without 0x prefix.

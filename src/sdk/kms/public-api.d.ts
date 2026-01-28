@@ -89,19 +89,19 @@ export type KmsUserDecryptEIP712Type = Readonly<
 // DelegatedUserDecryptRequestVerification
 ////////////////////////////////////////////////////////////////////////////////
 
-export type KmsDelegateUserDecryptEIP712UserArgsType = Prettify<
+export type KmsDelegatedUserDecryptEIP712UserArgsType = Prettify<
   KmsUserDecryptEIP712UserArgsType & {
-    readonly delegatedAccount: string;
+    readonly delegatorAddress: string;
   }
 >;
 
-export type KmsDelegateUserDecryptEIP712MessageType = Prettify<
+export type KmsDelegatedUserDecryptEIP712MessageType = Prettify<
   KmsUserDecryptEIP712MessageType & {
-    readonly delegatedAccount: ChecksummedAddress;
+    readonly delegatorAddress: ChecksummedAddress;
   }
 >;
 
-export type KmsDelegateUserDecryptEIP712TypesType = {
+export type KmsDelegatedUserDecryptEIP712TypesType = {
   readonly EIP712Domain: readonly [
     { readonly name: 'name'; readonly type: 'string' },
     { readonly name: 'version'; readonly type: 'string' },
@@ -111,18 +111,18 @@ export type KmsDelegateUserDecryptEIP712TypesType = {
   readonly DelegatedUserDecryptRequestVerification: readonly [
     { readonly name: 'publicKey'; readonly type: 'bytes' },
     { readonly name: 'contractAddresses'; readonly type: 'address[]' },
+    { readonly name: 'delegatorAddress'; readonly type: 'address' },
     { readonly name: 'startTimestamp'; readonly type: 'uint256' },
     { readonly name: 'durationDays'; readonly type: 'uint256' },
     { readonly name: 'extraData'; readonly type: 'bytes' },
-    { readonly name: 'delegatedAccount'; readonly type: 'address' },
   ];
 };
 
-export type KmsDelegateUserDecryptEIP712Type = Readonly<{
-  types: KmsDelegateUserDecryptEIP712TypesType;
+export type KmsDelegatedUserDecryptEIP712Type = Readonly<{
+  types: KmsDelegatedUserDecryptEIP712TypesType;
   primaryType: 'DelegatedUserDecryptRequestVerification';
   domain: KmsEIP712DomainType;
-  message: KmsDelegateUserDecryptEIP712MessageType;
+  message: KmsDelegatedUserDecryptEIP712MessageType;
 }>;
 
 ////////////////////////////////////////////////////////////////////////////////

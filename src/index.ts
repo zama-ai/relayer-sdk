@@ -29,8 +29,12 @@ import type {
   InputProofBytesType,
   KeypairType,
   KmsUserDecryptEIP712Type,
+  KmsDelegatedUserDecryptEIP712Type,
 } from './sdk';
-import { userDecryptRequest } from './relayer/userDecrypt';
+import {
+  userDecryptRequest,
+  delegatedUserDecryptRequest,
+} from './relayer/userDecrypt';
 import {
   createRelayerEncryptedInput,
   requestCiphertextWithZKProofVerification,
@@ -99,6 +103,13 @@ export interface FhevmInstance {
     startTimestamp: number,
     durationDays: number,
   ): KmsUserDecryptEIP712Type;
+  createDelegatedUserDecryptEIP712(
+    publicKey: string,
+    contractAddresses: string[],
+    delegatorAddress: string,
+    startTimestamp: number,
+    durationDays: number,
+  ): KmsDelegatedUserDecryptEIP712Type;
   publicDecrypt(
     handles: (string | Uint8Array)[],
     options?: RelayerPublicDecryptOptionsType,
@@ -110,8 +121,20 @@ export interface FhevmInstance {
     signature: string,
     contractAddresses: string[],
     userAddress: string,
-    startTimestamp: string | number,
-    durationDays: string | number,
+    startTimestamp: number,
+    durationDays: number,
+    options?: RelayerUserDecryptOptionsType,
+  ): Promise<UserDecryptResults>;
+  delegatedUserDecrypt(
+    handleContractPairs: HandleContractPair[],
+    privateKey: string,
+    publicKey: string,
+    signature: string,
+    contractAddresses: string[],
+    delegatorAddress: string,
+    delegateAddress: string,
+    startTimestamp: number,
+    durationDays: number,
     options?: RelayerUserDecryptOptionsType,
   ): Promise<UserDecryptResults>;
   getPublicKey(): { publicKeyId: string; publicKey: Uint8Array } | null;
@@ -216,6 +239,26 @@ export const createInstance = async (
         extraData: '0x00',
       });
     },
+    createDelegatedUserDecryptEIP712: (
+      publicKey: string,
+      contractAddresses: string[],
+      delegatorAddress: string,
+      startTimestamp: number,
+      durationDays: number,
+    ): KmsDelegatedUserDecryptEIP712Type => {
+      const kmsEIP712 = new KmsEIP712({
+        chainId: BigInt(chainId),
+        verifyingContractAddressDecryption,
+      });
+      return kmsEIP712.createDelegatedUserDecryptEIP712({
+        publicKey,
+        contractAddresses,
+        delegatorAddress,
+        startTimestamp,
+        durationDays,
+        extraData: '0x00',
+      });
+    },
     publicDecrypt: publicDecryptRequest({
       kmsSigners,
       thresholdSigners: thresholdKMSSigners,
@@ -227,6 +270,16 @@ export const createInstance = async (
       defaultOptions,
     }),
     userDecrypt: userDecryptRequest({
+      kmsSigners,
+      gatewayChainId: Number(gatewayChainId),
+      chainId: chainId,
+      verifyingContractAddressDecryption,
+      aclContractAddress,
+      relayerProvider: relayerFhevm.relayerProvider,
+      provider,
+      defaultOptions,
+    }),
+    delegatedUserDecrypt: delegatedUserDecryptRequest({
       kmsSigners,
       gatewayChainId: Number(gatewayChainId),
       chainId: chainId,
