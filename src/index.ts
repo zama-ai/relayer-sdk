@@ -121,8 +121,8 @@ export interface FhevmInstance {
     signature: string,
     contractAddresses: string[],
     userAddress: string,
-    startTimestamp: string | number,
-    durationDays: string | number,
+    startTimestamp: number,
+    durationDays: number,
     options?: RelayerUserDecryptOptionsType,
   ): Promise<UserDecryptResults>;
   delegatedUserDecrypt(
