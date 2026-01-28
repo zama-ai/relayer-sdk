@@ -123,7 +123,9 @@ async function validateAclPermissions(
     },
   );
 
-  await Promise.all(verifications);
+  await Promise.all(verifications).catch((e) => {
+    throw e;
+  });
 }
 
 function buildUserDecryptResults(
