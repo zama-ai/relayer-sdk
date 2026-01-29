@@ -8,6 +8,7 @@ import { RelayerV2Provider } from './RelayerV2Provider';
 import { TEST_CONFIG } from '../../test/config';
 import { _clearTFHEPkeParamsCache } from '../AbstractRelayerProvider';
 import { TFHEPkeParams } from '../../sdk/lowlevel/TFHEPkeParams';
+import type { Auth } from '../types/public-api';
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -243,6 +244,83 @@ describeIfFetchMock('RelayerV2Provider', () => {
         JSON.stringify(bodyObj),
       );
     }
+  });
+});
+
+////////////////////////////////////////////////////////////////////////////////
+// Auth on GET requests Tests
+////////////////////////////////////////////////////////////////////////////////
+
+describeIfFetchMock('RelayerV2Provider - Auth on GET requests', () => {
+  beforeEach(() => {
+    fetchMock.removeRoutes();
+  });
+
+  it('v2:keyurl: GET request includes BearerToken auth header', async () => {
+    fetchMock.get(`${relayerUrlV2}/keyurl`, relayerV2ResponseGetKeyUrl);
+
+    const auth: Auth = {
+      __type: 'BearerToken',
+      token: 'test-bearer-token',
+    };
+
+    const provider = new RelayerV2Provider(relayerUrlV2, auth);
+    await provider.fetchGetKeyUrl();
+
+    const lastCall = fetchMock.callHistory.lastCall();
+    expect(lastCall).toBeDefined();
+    // Note: fetch-mock normalizes header keys to lowercase
+    const headers = lastCall!.options.headers as Record<string, string>;
+    expect(headers['authorization']).toBe('Bearer test-bearer-token');
+  });
+
+  it('v2:keyurl: GET request includes ApiKeyHeader auth header', async () => {
+    fetchMock.get(`${relayerUrlV2}/keyurl`, relayerV2ResponseGetKeyUrl);
+
+    const auth: Auth = {
+      __type: 'ApiKeyHeader',
+      header: 'x-custom-api-key',
+      value: 'my-secret-key',
+    };
+
+    const provider = new RelayerV2Provider(relayerUrlV2, auth);
+    await provider.fetchGetKeyUrl();
+
+    const lastCall = fetchMock.callHistory.lastCall();
+    expect(lastCall).toBeDefined();
+    const headers = lastCall!.options.headers as Record<string, string>;
+    expect(headers['x-custom-api-key']).toBe('my-secret-key');
+  });
+
+  it('v2:keyurl: GET request includes default x-api-key header when no header specified', async () => {
+    fetchMock.get(`${relayerUrlV2}/keyurl`, relayerV2ResponseGetKeyUrl);
+
+    const auth: Auth = {
+      __type: 'ApiKeyHeader',
+      value: 'my-secret-key',
+    };
+
+    const provider = new RelayerV2Provider(relayerUrlV2, auth);
+    await provider.fetchGetKeyUrl();
+
+    const lastCall = fetchMock.callHistory.lastCall();
+    expect(lastCall).toBeDefined();
+    const headers = lastCall!.options.headers as Record<string, string>;
+    expect(headers['x-api-key']).toBe('my-secret-key');
+  });
+
+  it('v2:keyurl: GET request without auth has no Authorization header', async () => {
+    fetchMock.get(`${relayerUrlV2}/keyurl`, relayerV2ResponseGetKeyUrl);
+
+    const provider = new RelayerV2Provider(relayerUrlV2);
+    await provider.fetchGetKeyUrl();
+
+    const lastCall = fetchMock.callHistory.lastCall();
+    expect(lastCall).toBeDefined();
+    // Note: fetch-mock normalizes header keys to lowercase
+    const headers = lastCall!.options.headers as Record<string, string>;
+    expect(headers['authorization']).toBeUndefined();
+    expect(headers['x-api-key']).toBeUndefined();
   });
 });
 

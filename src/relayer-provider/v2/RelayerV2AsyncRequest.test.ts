@@ -1,4 +1,5 @@
 import type {
+  Auth,
   RelayerApiError500Type,
   RelayerInputProofPayload,
 } from '../types/public-api';
@@ -192,5 +193,193 @@ describeIfFetchMock('RelayerV2Request', () => {
     // Otherwise, jest will detect an unreleased timer handle coming
     // from fetch-mock (the timer used internaly to simulate fetch delay)
     await sleep(2000);
+  });
+});
+
+////////////////////////////////////////////////////////////////////////////////
+// Auth on GET requests Tests
+////////////////////////////////////////////////////////////////////////////////
+
+describeIfFetchMock('RelayerV2AsyncRequest - Auth on GET requests', () => {
+  beforeEach(async () => {
+    fetchMock.removeRoutes();
+    fetchMock.callHistory.clear();
+  });
+
+  afterAll(async () => {
+    await fetchMock.callHistory.flush(true);
+  });
+
+  it('v2: GET request includes BearerToken auth header', async () => {
+    const jobId = 'test-job-123';
+
+    // Mock POST (initial request)
+    fetchMock.post(requestUrl, {
+      status: 202,
+      headers: { 'Retry-After': '1' },
+      body: {
+        status: 'queued',
+        requestId: 'req-123',
+        result: { jobId },
+      },
+    });
+
+    // Mock GET (polling request)
+    fetchMock.get(`${requestUrl}/${jobId}`, {
+      status: 200,
+      body: {
+        status: 'succeeded',
+        requestId: 'req-123',
+        result: {
+          accepted: true,
+          handles: [
+            '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+          ],
+          signatures: [
+            '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef00',
+          ],
+          extraData: '0x00',
+        },
+      },
+    });
+
+    const auth: Auth = {
+      __type: 'BearerToken',
+      token: 'test-bearer-token',
+    };
+
+    const relayerRequest = new RelayerV2AsyncRequest({
+      relayerOperation: 'INPUT_PROOF',
+      url: requestUrl,
+      payload,
+      options: { auth },
+    });
+
+    await relayerRequest.run();
+
+    // Get all calls and check headers
+    const calls = fetchMock.callHistory.calls();
+    expect(calls.length).toBeGreaterThanOrEqual(2);
+
+    // Check POST request has auth
+    // Note: fetch-mock normalizes header keys and method to lowercase
+    const postCall = calls.find((c) => c.options.method === 'post');
+    expect(postCall).toBeDefined();
+    const postHeaders = postCall!.options.headers as Record<string, string>;
+    expect(postHeaders['authorization']).toBe('Bearer test-bearer-token');
+
+    // Check GET request has auth
+    const getCall = calls.find((c) => c.options.method === 'get');
+    expect(getCall).toBeDefined();
+    const getHeaders = getCall!.options.headers as Record<string, string>;
+    expect(getHeaders['authorization']).toBe('Bearer test-bearer-token');
+  });
+
+  it('v2: GET request includes ApiKeyHeader auth header', async () => {
+    const jobId = 'test-job-456';
+
+    // Mock POST (initial request)
+    fetchMock.post(requestUrl, {
+      status: 202,
+      headers: { 'Retry-After': '1' },
+      body: {
+        status: 'queued',
+        requestId: 'req-123',
+        result: { jobId },
+      },
+    });
+
+    // Mock GET (polling request)
+    fetchMock.get(`${requestUrl}/${jobId}`, {
+      status: 200,
+      body: {
+        status: 'succeeded',
+        requestId: 'req-123',
+        result: {
+          accepted: true,
+          handles: [
+            '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+          ],
+          signatures: [
+            '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef00',
+          ],
+          extraData: '0x00',
+        },
+      },
+    });
+
+    const auth: Auth = {
+      __type: 'ApiKeyHeader',
+      header: 'x-custom-api-key',
+      value: 'my-secret-key',
+    };
+
+    const relayerRequest = new RelayerV2AsyncRequest({
+      relayerOperation: 'INPUT_PROOF',
+      url: requestUrl,
+      payload,
+      options: { auth },
+    });
+
+    await relayerRequest.run();
+
+    // Check GET request has auth
+    // Note: fetch-mock normalizes header keys and method to lowercase
+    const calls = fetchMock.callHistory.calls();
+    const getCall = calls.find((c) => c.options.method === 'get');
+    expect(getCall).toBeDefined();
+    const getHeaders = getCall!.options.headers as Record<string, string>;
+    expect(getHeaders['x-custom-api-key']).toBe('my-secret-key');
+  });
+
+  it('v2: GET request without auth has no Authorization header', async () => {
+    const jobId = 'test-job-789';
+
+    // Mock POST (initial request)
+    fetchMock.post(requestUrl, {
+      status: 202,
+      headers: { 'Retry-After': '1' },
+      body: {
+        status: 'queued',
+        requestId: 'req-123',
+        result: { jobId },
+      },
+    });
+
+    // Mock GET (polling request)
+    fetchMock.get(`${requestUrl}/${jobId}`, {
+      status: 200,
+      body: {
+        status: 'succeeded',
+        requestId: 'req-123',
+        result: {
+          accepted: true,
+          handles: [
+            '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+          ],
+          signatures: [
+            '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef00',
+          ],
+          extraData: '0x00',
+        },
+      },
+    });
+
+    const relayerRequest = new RelayerV2AsyncRequest({
+      relayerOperation: 'INPUT_PROOF',
+      url: requestUrl,
+      payload,
+    });
+
+    await relayerRequest.run();
+
+    // Check GET request has no auth
+    // Note: fetch-mock normalizes header keys and method to lowercase
+    const calls = fetchMock.callHistory.calls();
+    const getCall = calls.find((c) => c.options.method === 'get');
+    expect(getCall).toBeDefined();
+    const getHeaders = getCall!.options.headers as Record<string, string>;
+    expect(getHeaders['authorization']).toBeUndefined();
+    expect(getHeaders['x-api-key']).toBeUndefined();
   });
 });

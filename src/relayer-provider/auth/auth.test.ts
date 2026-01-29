@@ -147,4 +147,94 @@ describe('auth', () => {
       body: '{"foo":"bar"}',
     });
   });
+
+  // GET request tests
+  it('setAuth GET BearerToken', () => {
+    const init = setAuth(
+      {
+        method: 'GET',
+        headers: {
+          'ZAMA-SDK-VERSION': '1.0.0',
+        },
+      } satisfies RequestInit,
+      {
+        __type: 'BearerToken',
+        token: 'my-api-token',
+      },
+    );
+
+    expect(init).toEqual({
+      method: 'GET',
+      headers: {
+        'ZAMA-SDK-VERSION': '1.0.0',
+        Authorization: 'Bearer my-api-token',
+      },
+    });
+  });
+
+  it('setAuth GET ApiKeyHeader', () => {
+    const init = setAuth(
+      {
+        method: 'GET',
+        headers: {
+          'ZAMA-SDK-VERSION': '1.0.0',
+        },
+      } satisfies RequestInit,
+      {
+        __type: 'ApiKeyHeader',
+        header: 'x-custom-api-key',
+        value: 'secret-key',
+      },
+    );
+
+    expect(init).toEqual({
+      method: 'GET',
+      headers: {
+        'ZAMA-SDK-VERSION': '1.0.0',
+        'x-custom-api-key': 'secret-key',
+      },
+    });
+  });
+
+  it('setAuth GET ApiKeyHeader default header', () => {
+    const init = setAuth(
+      {
+        method: 'GET',
+        headers: {
+          'ZAMA-SDK-VERSION': '1.0.0',
+        },
+      } satisfies RequestInit,
+      {
+        __type: 'ApiKeyHeader',
+        value: 'secret-key',
+      },
+    );
+
+    expect(init).toEqual({
+      method: 'GET',
+      headers: {
+        'ZAMA-SDK-VERSION': '1.0.0',
+        'x-api-key': 'secret-key',
+      },
+    });
+  });
+
+  it('setAuth GET no auth', () => {
+    const init = setAuth(
+      {
+        method: 'GET',
+        headers: {
+          'ZAMA-SDK-VERSION': '1.0.0',
+        },
+      } satisfies RequestInit,
+      undefined,
+    );
+
+    expect(init).toEqual({
+      method: 'GET',
+      headers: {
+        'ZAMA-SDK-VERSION': '1.0.0',
+      },
+    });
+  });
 });
