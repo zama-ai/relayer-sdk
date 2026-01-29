@@ -4,7 +4,7 @@ import type {
   CompactPkeCrsWasmType,
   TfheCompactPublicKeyWasmType,
 } from '@sdk/lowlevel/public-api';
-import type { PublicParams } from '../../types/relayer';
+import type { FhevmInstanceOptions, PublicParams } from '../../types/relayer';
 import {
   SERIALIZED_SIZE_LIMIT_PK,
   SERIALIZED_SIZE_LIMIT_CRS,
@@ -33,6 +33,7 @@ const keyurlCache: Record<string, CachedKey> = {};
 export async function getKeysFromRelayer(
   versionUrl: string,
   publicKeyId?: string | null,
+  options?: FhevmInstanceOptions,
 ): Promise<CachedKey> {
   if (versionUrl in keyurlCache) {
     return keyurlCache[versionUrl];
@@ -41,6 +42,7 @@ export async function getKeysFromRelayer(
   const data: RelayerGetResponseKeyUrlSnakeCase = (await fetchRelayerV1Get(
     'KEY_URL',
     `${versionUrl}/keyurl`,
+    options,
   )) as RelayerGetResponseKeyUrlSnakeCase;
 
   try {
@@ -148,21 +150,25 @@ export async function getKeysFromRelayer(
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export async function getTfheCompactPublicKey(config: {
-  relayerVersionUrl?: string | undefined;
-  publicKey?:
-    | {
-        data: Uint8Array | null;
-        id: string | null;
-      }
-    | undefined;
-}): Promise<{
+export async function getTfheCompactPublicKey(
+  config: {
+    relayerVersionUrl?: string | undefined;
+    publicKey?:
+      | {
+          data: Uint8Array | null;
+          id: string | null;
+        }
+      | undefined;
+  } & FhevmInstanceOptions,
+): Promise<{
   publicKey: TfheCompactPublicKeyWasmType;
   publicKeyId: string;
 }> {
   if (isNonEmptyString(config.relayerVersionUrl) && !config.publicKey) {
     const inputs = await getKeysFromRelayer(
       removeSuffix(config.relayerVersionUrl, '/'),
+      undefined,
+      config,
     );
     return { publicKey: inputs.publicKey, publicKeyId: inputs.publicKeyId };
   } else if (config.publicKey?.data && isNonEmptyString(config.publicKey.id)) {
@@ -187,13 +193,17 @@ export async function getTfheCompactPublicKey(config: {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export async function getPublicParams(config: {
-  relayerVersionUrl?: string | undefined;
-  publicParams?: PublicParams<Uint8Array> | null | undefined;
-}): Promise<PublicParams<CompactPkeCrsWasmType>> {
+export async function getPublicParams(
+  config: {
+    relayerVersionUrl?: string | undefined;
+    publicParams?: PublicParams<Uint8Array> | null | undefined;
+  } & FhevmInstanceOptions,
+): Promise<PublicParams<CompactPkeCrsWasmType>> {
   if (isNonEmptyString(config.relayerVersionUrl) && !config.publicParams) {
     const inputs = await getKeysFromRelayer(
       removeSuffix(config.relayerVersionUrl, '/'),
+      undefined,
+      config,
     );
     return inputs.publicParams;
   } else if (config.publicParams?.['2048']) {

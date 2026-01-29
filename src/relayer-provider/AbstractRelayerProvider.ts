@@ -3,6 +3,7 @@ import type { BytesHex } from '@base/types/primitives';
 import type { RelayerGetResponseKeyUrlSnakeCase } from './types/private';
 import type { ZKProof } from '@sdk/ZKProof';
 import type {
+  Auth,
   RelayerGetOperation,
   RelayerInputProofOptionsType,
   RelayerInputProofPayload,
@@ -35,6 +36,7 @@ import {
   throwRelayerUnexpectedJSONError,
   throwRelayerUnknownError,
 } from '../relayer/error';
+import { setAuth } from './auth/auth';
 import { TFHEPkeParams } from '@sdk/lowlevel/TFHEPkeParams';
 import { FhevmHandle } from '@sdk/FhevmHandle';
 import {
@@ -62,9 +64,11 @@ export function _clearTFHEPkeParamsCache(): void {
 
 export abstract class AbstractRelayerProvider {
   private readonly _relayerUrl: string;
+  protected readonly _auth: Auth | undefined;
 
-  constructor(relayerUrl: string) {
+  constructor(relayerUrl: string, auth?: Auth) {
     this._relayerUrl = relayerUrl;
+    this._auth = auth;
   }
 
   public get url(): string {
@@ -144,10 +148,7 @@ export abstract class AbstractRelayerProvider {
 
   /** @internal */
   public async fetchGetKeyUrl(): Promise<RelayerGetResponseKeyUrlSnakeCase> {
-    const response = await AbstractRelayerProvider._fetchRelayerGet(
-      'KEY_URL',
-      this.keyUrl,
-    );
+    const response = await this._fetchRelayerGet('KEY_URL', this.keyUrl);
 
     let responseSnakeCase;
 
@@ -259,17 +260,20 @@ export abstract class AbstractRelayerProvider {
   ): Promise<RelayerUserDecryptResult>;
 
   /** @internal */
-  private static async _fetchRelayerGet(
+  private async _fetchRelayerGet(
     relayerOperation: RelayerGetOperation,
     url: string,
   ): Promise<{ response: unknown }> {
-    const init = {
-      method: 'GET',
-      headers: {
-        'ZAMA-SDK-VERSION': version,
-        'ZAMA-SDK-NAME': sdkName,
-      },
-    } satisfies RequestInit;
+    const init = setAuth(
+      {
+        method: 'GET',
+        headers: {
+          'ZAMA-SDK-VERSION': version,
+          'ZAMA-SDK-NAME': sdkName,
+        },
+      } satisfies RequestInit,
+      this._auth,
+    );
 
     let response: Response;
     let json: { response: unknown };
