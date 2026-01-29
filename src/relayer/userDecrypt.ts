@@ -3,6 +3,7 @@ import type {
   HandleContractPairRelayer,
   RelayerUserDecryptOptionsType,
   RelayerUserDecryptPayload,
+  RelayerDelegatedUserDecryptPayload,
 } from '@relayer-provider/types/public-api';
 import type { BytesHex } from '@base/types/primitives';
 import type { Provider as EthersProviderType } from 'ethers';
@@ -16,6 +17,17 @@ import { Contract, getAddress as ethersGetAddress } from 'ethers';
 import { bytesToBigInt, bytesToHex, hexToBytes } from '@base/bytes';
 import { AbstractRelayerProvider } from '@relayer-provider/AbstractRelayerProvider';
 import { check2048EncryptedBits } from './decryptUtils';
+
+interface DelegatedUserDecryptRequest {
+  kmsSigners: string[];
+  gatewayChainId: number;
+  chainId: number;
+  verifyingContractAddressDecryption: string;
+  aclContractAddress: string;
+  relayerProvider: AbstractRelayerProvider;
+  provider: EthersProviderType;
+  defaultOptions?: FhevmInstanceOptions;
+}
 
 // Add type checking
 const getAddress = (value: string): `0x${string}` =>
@@ -44,6 +56,76 @@ function formatAccordingToType(
   }
   // euintXXX
   return clearValueAsBigInt;
+}
+
+function parseKeys(publicKey: string, privateKey: string) {
+  try {
+    const pubKey = TKMSModule.u8vec_to_ml_kem_pke_pk(hexToBytes(publicKey));
+    const privKey = TKMSModule.u8vec_to_ml_kem_pke_sk(hexToBytes(privateKey));
+    return { pubKey, privKey };
+  } catch (e) {
+    throw new Error('Invalid public or private key', { cause: e });
+  }
+}
+
+function parseHandleContractPairs(
+  handles: HandleContractPair[],
+): HandleContractPairRelayer[] {
+  return handles.map((h) => ({
+    handle:
+      typeof h.handle === 'string'
+        ? bytesToHex(hexToBytes(h.handle))
+        : bytesToHex(h.handle),
+    contractAddress: getAddress(h.contractAddress),
+  }));
+}
+
+function validateContractAddresses(contractAddresses: string[]) {
+  const contractAddressesLength = contractAddresses.length;
+  if (contractAddressesLength === 0) {
+    throw Error('contractAddresses is empty');
+  }
+  if (contractAddressesLength > MAX_USER_DECRYPT_CONTRACT_ADDRESSES) {
+    throw Error(
+      `contractAddresses max length of ${MAX_USER_DECRYPT_CONTRACT_ADDRESSES} exceeded`,
+    );
+  }
+}
+
+async function validateAclPermissions(
+  acl: Contract,
+  handleContractPairs: HandleContractPairRelayer[],
+  authorizedUserAddress: string,
+) {
+  const verifications = handleContractPairs.map(
+    async ({ handle, contractAddress }) => {
+      const userAllowed = await acl.persistAllowed(
+        handle,
+        authorizedUserAddress,
+      );
+      const contractAllowed = await acl.persistAllowed(handle, contractAddress);
+
+      if (!userAllowed) {
+        throw new Error(
+          `User address ${authorizedUserAddress} is not authorized to user decrypt handle ${handle}!`,
+        );
+      }
+      if (!contractAllowed) {
+        throw new Error(
+          `dapp contract ${contractAddress} is not authorized to user decrypt handle ${handle}!`,
+        );
+      }
+      if (authorizedUserAddress === contractAddress) {
+        throw new Error(
+          `User address ${authorizedUserAddress} should not be equal to contract address when requesting user decryption!`,
+        );
+      }
+    },
+  );
+
+  await Promise.all(verifications).catch((e) => {
+    throw e;
+  });
 }
 
 function buildUserDecryptResults(
@@ -124,72 +206,21 @@ export const userDecryptRequest =
     options?: RelayerUserDecryptOptionsType,
   ): Promise<UserDecryptResults> => {
     const extraData: BytesHex = '0x00';
-    let pubKey;
-    let privKey;
-    try {
-      pubKey = TKMSModule.u8vec_to_ml_kem_pke_pk(hexToBytes(publicKey));
-      privKey = TKMSModule.u8vec_to_ml_kem_pke_sk(hexToBytes(privateKey));
-    } catch (e) {
-      throw new Error('Invalid public or private key', { cause: e });
-    }
 
-    // Casting handles if string
+    const { pubKey, privKey } = parseKeys(publicKey, privateKey);
+
+    // Sanitize hex strings
     const signatureSanitized = signature.replace(/^(0x)/, '');
     const publicKeySanitized = publicKey.replace(/^(0x)/, '');
 
-    const handleContractPairs: HandleContractPairRelayer[] = _handles.map(
-      (h) => ({
-        handle:
-          typeof h.handle === 'string'
-            ? bytesToHex(hexToBytes(h.handle))
-            : bytesToHex(h.handle),
-        contractAddress: getAddress(h.contractAddress),
-      }),
-    );
+    const handleContractPairs = parseHandleContractPairs(_handles);
 
     check2048EncryptedBits(handleContractPairs.map((h) => h.handle));
-
     checkDeadlineValidity(BigInt(startTimestamp), BigInt(durationDays));
+    validateContractAddresses(contractAddresses);
 
     const acl = new Contract(aclContractAddress, aclABI, provider);
-    const verifications = handleContractPairs.map(
-      async ({ handle, contractAddress }) => {
-        const userAllowed = await acl.persistAllowed(handle, userAddress);
-        const contractAllowed = await acl.persistAllowed(
-          handle,
-          contractAddress,
-        );
-        if (!userAllowed) {
-          throw new Error(
-            `User ${userAddress} is not authorized to user decrypt handle ${handle}!`,
-          );
-        }
-        if (!contractAllowed) {
-          throw new Error(
-            `dapp contract ${contractAddress} is not authorized to user decrypt handle ${handle}!`,
-          );
-        }
-        if (userAddress === contractAddress) {
-          throw new Error(
-            `userAddress ${userAddress} should not be equal to contractAddress when requesting user decryption!`,
-          );
-        }
-      },
-    );
-
-    const contractAddressesLength = contractAddresses.length;
-    if (contractAddressesLength === 0) {
-      throw Error('contractAddresses is empty');
-    }
-    if (contractAddressesLength > MAX_USER_DECRYPT_CONTRACT_ADDRESSES) {
-      throw Error(
-        `contractAddresses max length of ${MAX_USER_DECRYPT_CONTRACT_ADDRESSES} exceeded`,
-      );
-    }
-
-    await Promise.all(verifications).catch((e) => {
-      throw e;
-    });
+    await validateAclPermissions(acl, handleContractPairs, userAddress);
 
     const payloadForRequest: RelayerUserDecryptPayload = {
       handleContractPairs,
@@ -265,5 +296,135 @@ export const userDecryptRequest =
       return results;
     } catch (e) {
       throw new Error('An error occured during decryption', { cause: e });
+    }
+  };
+
+export const delegatedUserDecryptRequest =
+  ({
+    kmsSigners,
+    gatewayChainId,
+    chainId,
+    verifyingContractAddressDecryption,
+    aclContractAddress,
+    relayerProvider,
+    provider,
+    defaultOptions,
+  }: DelegatedUserDecryptRequest) =>
+  async (
+    handleContractPairs: HandleContractPair[],
+    privateKey: string,
+    publicKey: string,
+    signature: string,
+    contractAddresses: string[],
+    delegatorAddress: string,
+    delegateAddress: string,
+    startTimestamp: string | number,
+    durationDays: string | number,
+    options?: RelayerUserDecryptOptionsType,
+  ): Promise<UserDecryptResults> => {
+    const extraData: BytesHex = '0x00';
+
+    const { pubKey, privKey } = parseKeys(publicKey, privateKey);
+
+    // Sanitize hex strings
+    const signatureSanitized = signature.replace(/^(0x)/, '');
+    const publicKeySanitized = publicKey.replace(/^(0x)/, '');
+
+    const handleContractPairsRelayer =
+      parseHandleContractPairs(handleContractPairs);
+
+    check2048EncryptedBits(handleContractPairsRelayer.map((h) => h.handle));
+    checkDeadlineValidity(BigInt(startTimestamp), BigInt(durationDays));
+    validateContractAddresses(contractAddresses);
+
+    // Check ACL for each handle against delegatorAddress and contractAddress
+    const acl = new Contract(aclContractAddress, aclABI, provider);
+    await validateAclPermissions(
+      acl,
+      handleContractPairsRelayer,
+      delegatorAddress,
+    );
+
+    const delegatedUserDecryptPayload: RelayerDelegatedUserDecryptPayload = {
+      handleContractPairs: handleContractPairsRelayer,
+      contractsChainId: chainId.toString(),
+      contractAddresses: contractAddresses.map((c) => getAddress(c)),
+      delegatorAddress: getAddress(delegatorAddress),
+      delegateAddress: getAddress(delegateAddress),
+      startTimestamp: startTimestamp.toString(),
+      durationDays: durationDays.toString(),
+      signature: signatureSanitized,
+      publicKey: publicKeySanitized,
+      extraData,
+    };
+
+    const json = await relayerProvider.fetchPostDelegatedUserDecrypt(
+      delegatedUserDecryptPayload,
+      {
+        ...defaultOptions,
+        ...options,
+      },
+    );
+
+    // Assume the KMS signers have the correct order.
+    let indexedKmsSigners = kmsSigners.map((signer, index) => {
+      return TKMSModule.new_server_id_addr(index + 1, signer);
+    });
+
+    const client = TKMSModule.new_client(
+      indexedKmsSigners,
+      delegateAddress,
+      'default',
+    );
+
+    try {
+      const buffer = new ArrayBuffer(32);
+      const view = new DataView(buffer);
+      view.setUint32(28, gatewayChainId, false);
+      const chainIdArrayBE = new Uint8Array(buffer);
+      const eip712Domain = {
+        name: 'Decryption',
+        version: '1',
+        chain_id: chainIdArrayBE,
+        verifying_contract: verifyingContractAddressDecryption,
+        salt: null,
+      };
+
+      const payloadForVerification = {
+        signature: signatureSanitized,
+        client_address: delegateAddress,
+        enc_key: publicKeySanitized,
+        ciphertext_handles: handleContractPairsRelayer.map((h) =>
+          h.handle.replace(/^0x/, ''),
+        ),
+        eip712_verifying_contract: verifyingContractAddressDecryption,
+      };
+
+      const decryption = TKMSModule.process_user_decryption_resp_from_js(
+        client,
+        payloadForVerification,
+        eip712Domain,
+        json,
+        pubKey,
+        privKey,
+        true,
+      );
+      const listBigIntDecryptions = decryption.map(
+        (d: { bytes: Uint8Array<ArrayBufferLike> }) => bytesToBigInt(d.bytes),
+      );
+
+      const results: UserDecryptResults = buildUserDecryptResults(
+        handleContractPairsRelayer.map((h) => h.handle),
+        listBigIntDecryptions,
+      );
+
+      return results;
+    } catch (e) {
+      throw new Error(
+        'An error occurred during the delegated user decryption request.',
+        {
+          cause: e,
+        },
+      );
     }
   };

@@ -66,6 +66,10 @@ export async function throwRelayerResponseError(
         message = `User decrypt failed: relayer respond with HTTP code ${response.status}`;
         break;
       }
+      case 'DELEGATED_USER_DECRYPT': {
+        message = `Delegated user decrypt failed: relayer responded with HTTP code ${response.status}`;
+        break;
+      }
       case 'INPUT_PROOF': {
         message = `Input proof failed: relayer respond with HTTP code ${response.status}`;
         break;
@@ -119,6 +123,10 @@ export function throwRelayerJSONError(
       message = "User decrypt failed: Relayer didn't return a JSON";
       break;
     }
+    case 'DELEGATED_USER_DECRYPT': {
+      message = "Delegated user decrypt failed: Relayer didn't return a JSON";
+      break;
+    }
     case 'INPUT_PROOF': {
       message = "Input proof failed: Relayer didn't return a JSON";
       break;
@@ -156,6 +164,11 @@ export function throwRelayerUnexpectedJSONError(
     case 'USER_DECRYPT': {
       message =
         'User decrypt failed: Relayer returned an unexpected JSON response';
+      break;
+    }
+    case 'DELEGATED_USER_DECRYPT': {
+      message =
+        'Delegated user decrypt failed: Relayer returned an unexpected JSON response';
       break;
     }
     case 'INPUT_PROOF': {
@@ -197,6 +210,11 @@ export function throwRelayerInternalError(
         "User decrypt failed: the user decryption didn't succeed for an unknown reason";
       break;
     }
+    case 'DELEGATED_USER_DECRYPT': {
+      message =
+        "Delegated user decrypt failed: the user decryption didn't succeed for an unknown reason";
+      break;
+    }
     case 'INPUT_PROOF': {
       message =
         "Input proof failed: the user decryption didn't succeed for an unknown reason";
@@ -233,6 +251,10 @@ export function throwRelayerUnknownError(
       }
       case 'USER_DECRYPT': {
         message = "User decrypt failed: Relayer didn't respond";
+        break;
+      }
+      case 'DELEGATED_USER_DECRYPT': {
+        message = "Delegated user decrypt failed: Relayer didn't respond";
         break;
       }
       case 'INPUT_PROOF': {

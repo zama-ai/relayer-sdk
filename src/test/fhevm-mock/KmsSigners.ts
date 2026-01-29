@@ -1,5 +1,5 @@
 import type {
-  KmsDelegateUserDecryptEIP712Type,
+  KmsDelegatedUserDecryptEIP712Type,
   KmsEIP712Params,
   KmsUserDecryptEIP712Type,
 } from '../../sdk/kms/public-api';
@@ -23,7 +23,7 @@ type KmsSignersParams = Prettify<
 
 export class KmsSigners extends EIP712Signers<
   KmsSigner,
-  KmsUserDecryptEIP712Type | KmsDelegateUserDecryptEIP712Type
+  KmsUserDecryptEIP712Type | KmsDelegatedUserDecryptEIP712Type
 > {
   private static readonly DEFAULT_KMS_SIGNER_BASE_PATH = "m/44'/60'/2'/0";
 

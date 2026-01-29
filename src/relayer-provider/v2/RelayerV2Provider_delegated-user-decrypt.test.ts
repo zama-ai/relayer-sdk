@@ -23,25 +23,25 @@ import type {
   BytesHex,
   ChecksummedAddress,
 } from '../../base/types/primitives';
-import type { RelayerUserDecryptPayload } from '../types/public-api';
+import type { RelayerDelegatedUserDecryptPayload } from '../types/public-api';
 import type { FhevmInstanceConfig } from '../../types/relayer';
 
 ////////////////////////////////////////////////////////////////////////////////
 //
 // Jest Command line
 // =================
-// npx jest --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_user-decrypt.test.ts --testNamePattern=xxx
-// npx jest --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_user-decrypt.test.ts
-// npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v2/RelayerV2Provider_user-decrypt.test.ts --collectCoverageFrom=./src/relayer-provider/v2/RelayerV2Provider.ts
+// npx jest --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_delegated-user-decrypt.test.ts --testNamePattern=xxx
+// npx jest --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_delegated-user-decrypt.test.ts
+// npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v2/RelayerV2Provider_delegated-user-decrypt.test.ts --collectCoverageFrom=./src/relayer-provider/v2/RelayerV2Provider.ts
 //
 // Devnet:
 // =======
-// npx jest --config jest.devnet.config.cjs --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_user-decrypt.test.ts
-// npx jest --config jest.devnet.config.cjs --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_user-decrypt.test.ts --testNamePattern=xxx
+// npx jest --config jest.devnet.config.cjs --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_delegated-user-decrypt.test.ts
+// npx jest --config jest.devnet.config.cjs --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_delegated-user-decrypt.test.ts --testNamePattern=xxx
 //
 // Testnet:
 // =======
-// npx jest --config jest.testnet.config.cjs --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_user-decrypt.test.ts
+// npx jest --config jest.testnet.config.cjs --colors --passWithNoTests ./src/relayer-provider/v2/RelayerV2Provider_delegated-user-decrypt.test.ts
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -50,20 +50,22 @@ jest.mock('ethers', () => {
   return setupEthersJestMock();
 });
 
-const payload: RelayerUserDecryptPayload = {
+const DELEGATED_USER_DECRYPT_URL =
+  TEST_CONFIG.v2.urls.base + '/delegated-user-decrypt';
+
+const payload: RelayerDelegatedUserDecryptPayload = {
   handleContractPairs: [
     {
       handle: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
       contractAddress: TEST_CONFIG.testContracts.FHETestAddress,
     },
   ],
-  requestValidity: {
-    startTimestamp: '123',
-    durationDays: '456',
-  },
+  startTimestamp: '123',
+  durationDays: '456',
   contractsChainId: '1234',
   contractAddresses: [TEST_CONFIG.testContracts.FHETestAddress],
-  userAddress: TEST_CONFIG.signerAddress,
+  delegateAddress: TEST_CONFIG.signerAddress,
+  delegatorAddress: '0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF',
   signature: 'deadbeef',
   publicKey: 'deadbeef',
   extraData: '0x00',
@@ -76,17 +78,17 @@ function invalidBodyError(params: {
   return new RelayerV2ResponseInvalidBodyError({
     fetchMethod: 'POST',
     status: 202,
-    url: TEST_CONFIG.v2.urls.userDecrypt,
+    url: DELEGATED_USER_DECRYPT_URL,
     elapsed: 0,
     retryCount: 0,
-    operation: 'USER_DECRYPT',
+    operation: 'DELEGATED_USER_DECRYPT',
     state: RUNNING_REQ_STATE,
     ...params,
   });
 }
 
 function post202(body: any) {
-  fetchMock.post(TEST_CONFIG.v2.urls.userDecrypt, {
+  fetchMock.post(DELEGATED_USER_DECRYPT_URL, {
     status: 202,
     body,
     headers: { 'Content-Type': 'application/json' },
@@ -104,7 +106,7 @@ const consoleLogSpy = jest
     process.stdout.write(`${message}\n`);
   });
 
-describeIfFetchMock('RelayerV2Provider', () => {
+describeIfFetchMock('RelayerV2Provider - Delegated User Decrypt', () => {
   let relayerProvider: AbstractRelayerProvider;
 
   beforeEach(() => {
@@ -112,8 +114,8 @@ describeIfFetchMock('RelayerV2Provider', () => {
     relayerProvider = createRelayerProvider(TEST_CONFIG.v2.urls.base, 1);
     expect(relayerProvider.version).toBe(2);
     expect(relayerProvider.url).toBe(TEST_CONFIG.v2.urls.base);
-    expect(relayerProvider.userDecryptUrl).toBe(
-      TEST_CONFIG.v2.urls.userDecrypt,
+    expect(relayerProvider.delegatedUserDecryptUrl).toBe(
+      DELEGATED_USER_DECRYPT_URL,
     );
   });
 
@@ -121,7 +123,7 @@ describeIfFetchMock('RelayerV2Provider', () => {
     consoleLogSpy.mockRestore();
   });
 
-  it('v2:user-decrypt: 202 - malformed json', async () => {
+  it('v2:delegated-user-decrypt: 202 - malformed json', async () => {
     const malformedBodyJson = '{ "some_key": "incomplete_json"';
 
     let syntaxError;
@@ -133,15 +135,15 @@ describeIfFetchMock('RelayerV2Provider', () => {
 
     post202(malformedBodyJson);
     await expect(() =>
-      relayerProvider.fetchPostUserDecrypt(payload),
+      relayerProvider.fetchPostDelegatedUserDecrypt(payload),
     ).rejects.toThrow(syntaxError);
   });
 
-  it('v2:user-decrypt: 202 - empty json', async () => {
+  it('v2:delegated-user-decrypt: 202 - empty json', async () => {
     const bodyJson = {};
     post202(bodyJson);
     await expect(() =>
-      relayerProvider.fetchPostUserDecrypt(payload),
+      relayerProvider.fetchPostDelegatedUserDecrypt(payload),
     ).rejects.toThrow(
       invalidBodyError({
         cause: InvalidPropertyError.missingProperty({
@@ -155,11 +157,11 @@ describeIfFetchMock('RelayerV2Provider', () => {
     );
   });
 
-  it('v2:user-decrypt: 202 - status:failed', async () => {
+  it('v2:delegated-user-decrypt: 202 - status:failed', async () => {
     const bodyJson = { status: 'failed' };
     post202(bodyJson);
     await expect(() =>
-      relayerProvider.fetchPostUserDecrypt(payload),
+      relayerProvider.fetchPostDelegatedUserDecrypt(payload),
     ).rejects.toThrow(
       invalidBodyError({
         cause: new InvalidPropertyError({
@@ -175,11 +177,11 @@ describeIfFetchMock('RelayerV2Provider', () => {
     );
   });
 
-  it('v2:user-decrypt: 202 - status:succeeded', async () => {
+  it('v2:delegated-user-decrypt: 202 - status:succeeded', async () => {
     const bodyJson = { status: 'succeeded' };
     post202(bodyJson);
     await expect(() =>
-      relayerProvider.fetchPostUserDecrypt(payload),
+      relayerProvider.fetchPostDelegatedUserDecrypt(payload),
     ).rejects.toThrow(
       invalidBodyError({
         cause: new InvalidPropertyError({
@@ -195,11 +197,11 @@ describeIfFetchMock('RelayerV2Provider', () => {
     );
   });
 
-  it('v2:user-decrypt: 202 - status:queued', async () => {
+  it('v2:delegated-user-decrypt: 202 - status:queued', async () => {
     const bodyJson = { status: 'queued' };
     post202(bodyJson);
     await expect(() =>
-      relayerProvider.fetchPostUserDecrypt(payload),
+      relayerProvider.fetchPostDelegatedUserDecrypt(payload),
     ).rejects.toThrow(
       invalidBodyError({
         cause: InvalidPropertyError.missingProperty({
@@ -212,11 +214,11 @@ describeIfFetchMock('RelayerV2Provider', () => {
     );
   });
 
-  it('v2:user-decrypt: 202 - status:queued, result empty', async () => {
+  it('v2:delegated-user-decrypt: 202 - status:queued, result empty', async () => {
     const bodyJson = { status: 'queued', result: {} };
     post202(bodyJson);
     await expect(() =>
-      relayerProvider.fetchPostUserDecrypt(payload),
+      relayerProvider.fetchPostDelegatedUserDecrypt(payload),
     ).rejects.toThrow(
       invalidBodyError({
         cause: InvalidPropertyError.missingProperty({
@@ -229,7 +231,7 @@ describeIfFetchMock('RelayerV2Provider', () => {
     );
   });
 
-  it('v2:user-decrypt: 202 - status:queued, result ok', async () => {
+  it('v2:delegated-user-decrypt: 202 - status:queued, result ok', async () => {
     const bodyJson = {
       status: 'queued',
       requestId: 'hello',
@@ -237,7 +239,7 @@ describeIfFetchMock('RelayerV2Provider', () => {
     };
     post202(bodyJson);
 
-    fetchMock.get(`${TEST_CONFIG.v2.urls.userDecrypt}/123`, {
+    fetchMock.get(`${DELEGATED_USER_DECRYPT_URL}/123`, {
       status: 200,
       body: {
         status: 'succeeded',
@@ -247,7 +249,6 @@ describeIfFetchMock('RelayerV2Provider', () => {
             {
               payload: 'deadbeef',
               signature: 'deadbeef',
-              //extraData: '0x00',
             },
           ],
         },
@@ -255,14 +256,14 @@ describeIfFetchMock('RelayerV2Provider', () => {
       headers: { 'Content-Type': 'application/json' },
     });
 
-    const result = await relayerProvider.fetchPostUserDecrypt(payload);
+    const result = await relayerProvider.fetchPostDelegatedUserDecrypt(payload);
     console.log(JSON.stringify(result, null, 2));
   });
 });
 
 ////////////////////////////////////////////////////////////////////////////////
 
-describeIfFetch('FhevmInstance.userDecrypot:sepolia:', () => {
+describeIfFetch('FhevmInstance.delegatedUserDecrypt:sepolia:', () => {
   let provider: EthersT.Provider;
   let fromAddress: ChecksummedAddress;
 
@@ -276,13 +277,13 @@ describeIfFetch('FhevmInstance.userDecrypot:sepolia:', () => {
     consoleLogSpy.mockRestore();
   });
 
-  async function testUserDecrypt(config: FhevmInstanceConfig) {
+  async function testDelegatedUserDecrypt(config: FhevmInstanceConfig) {
     const mnemonic = TEST_CONFIG.mnemonic;
     if (typeof mnemonic !== 'string' || mnemonic.length === 0) {
       throw new Error(`Missing MNEMONIC env variable in .env file!`);
     }
 
-    const userSigner = KmsSigner.fromMnemonic({ mnemonic });
+    const delegateSigner = KmsSigner.fromMnemonic({ mnemonic });
 
     const eCount = await fheTestGet(
       'euint32',
@@ -296,7 +297,8 @@ describeIfFetch('FhevmInstance.userDecrypot:sepolia:', () => {
     const extraData = '0x00';
     const contractAddress = TEST_CONFIG.testContracts.FHETestAddress;
     const contractAddresses = [contractAddress];
-    const userAddress = userSigner.address;
+    const delegatorAddress = '0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF';
+    const delegateAddress = delegateSigner.address;
 
     const instance = await createInstance(config);
     const keypairNo0x = instance.generateKeypair();
@@ -307,9 +309,10 @@ describeIfFetch('FhevmInstance.userDecrypot:sepolia:', () => {
     const publicKey: BytesHex = ensure0x(keypairNo0x.publicKey);
     const privateKey: BytesHex = ensure0x(keypairNo0x.privateKey);
 
-    const eip = instance.createEIP712(
+    const eip = instance.createDelegatedUserDecryptEIP712(
       publicKey,
       contractAddresses,
+      delegatorAddress,
       startTimestamp,
       durationDays,
     );
@@ -320,9 +323,10 @@ describeIfFetch('FhevmInstance.userDecrypot:sepolia:', () => {
         TEST_CONFIG.fhevmInstanceConfig.verifyingContractAddressDecryption,
     });
 
-    const new_eip = kmsEIP712.createUserDecryptEIP712({
+    const new_eip = kmsEIP712.createDelegatedUserDecryptEIP712({
       publicKey,
       contractAddresses,
+      delegatorAddress,
       durationDays,
       startTimestamp,
       extraData,
@@ -333,10 +337,10 @@ describeIfFetch('FhevmInstance.userDecrypot:sepolia:', () => {
     expect(new_eip.types).toStrictEqual(eip.types);
     expect(new_eip.message).toStrictEqual(eip.message);
 
-    const signature: Bytes65Hex = await userSigner.sign(new_eip);
+    const signature: Bytes65Hex = await delegateSigner.sign(new_eip);
     assertIsBytes65Hex(signature);
 
-    const res: UserDecryptResults = await instance.userDecrypt(
+    const res: UserDecryptResults = await instance.delegatedUserDecrypt(
       [
         {
           contractAddress,
@@ -347,7 +351,8 @@ describeIfFetch('FhevmInstance.userDecrypot:sepolia:', () => {
       publicKey,
       signature,
       contractAddresses,
-      userAddress,
+      delegateAddress,
+      delegatorAddress,
       startTimestamp,
       durationDays,
     );
@@ -361,24 +366,24 @@ describeIfFetch('FhevmInstance.userDecrypot:sepolia:', () => {
     expect(res[eCount]).toBeGreaterThan(0);
   }
 
-  it('v2: FhevmInstance.userDecrypt succeeded', async () => {
+  it('v2: FhevmInstance.delegatedUserDecrypt succeeded', async () => {
     setupAllFetchMockRoutes({
       enableInputProofRoutes: false,
     });
-    await testUserDecrypt(TEST_CONFIG.v2.fhevmInstanceConfig);
+    await testDelegatedUserDecrypt(TEST_CONFIG.v2.fhevmInstanceConfig);
   }, 60000);
 
-  it('v1: FhevmInstance.userDecrypt succeeded', async () => {
+  it('v1: FhevmInstance.delegatedUserDecrypt succeeded', async () => {
     setupAllFetchMockRoutes({
       enableInputProofRoutes: false,
     });
-    await testUserDecrypt(TEST_CONFIG.v1.fhevmInstanceConfig);
+    await testDelegatedUserDecrypt(TEST_CONFIG.v1.fhevmInstanceConfig);
   }, 60000);
 });
 
 ////////////////////////////////////////////////////////////////////////////////
 
-describe('FhevmInstance.createEIP712', () => {
+describe('FhevmInstance.createDelegatedUserDecryptEIP712', () => {
   beforeEach(() => {
     removeAllFetchMockRoutes();
   });
@@ -387,7 +392,7 @@ describe('FhevmInstance.createEIP712', () => {
     consoleLogSpy.mockRestore();
   });
 
-  async function testCreateEIP712(config: FhevmInstanceConfig) {
+  async function testDelegateCreateEIP712(config: FhevmInstanceConfig) {
     const mnemonic = TEST_CONFIG.mnemonic;
     if (typeof mnemonic !== 'string' || mnemonic.length === 0) {
       throw new Error(`Missing MNEMONIC env variable in .env file!`);
@@ -397,16 +402,17 @@ describe('FhevmInstance.createEIP712', () => {
       config.verifyingContractAddressDecryption !==
       TEST_CONFIG.fhevmInstanceConfig.verifyingContractAddressDecryption
     ) {
-      throw new Error('verifyingContractAddressDecryption missmatch');
+      throw new Error('verifyingContractAddressDecryption mismatch');
     }
 
-    const userSigner = KmsSigner.fromMnemonic({ mnemonic });
+    const delegateSigner = KmsSigner.fromMnemonic({ mnemonic });
 
     const startTimestamp = timestampNow();
     const durationDays = 365;
     const extraData = '0x00';
     const contractAddress = TEST_CONFIG.testContracts.FHETestAddress;
     const contractAddresses = [contractAddress];
+    const delegatorAddress = '0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF';
 
     const instance = await createInstance(config);
 
@@ -414,7 +420,7 @@ describe('FhevmInstance.createEIP712', () => {
       instance.config.verifyingContractAddressDecryption !==
       TEST_CONFIG.fhevmInstanceConfig.verifyingContractAddressDecryption
     ) {
-      throw new Error('verifyingContractAddressDecryption missmatch');
+      throw new Error('verifyingContractAddressDecryption mismatch');
     }
 
     const keypairNo0x = instance.generateKeypair();
@@ -424,58 +430,75 @@ describe('FhevmInstance.createEIP712', () => {
 
     const publicKey: BytesHex = ensure0x(keypairNo0x.publicKey);
 
-    const eip = instance.createEIP712(
+    const instanceEIP712 = instance.createDelegatedUserDecryptEIP712(
       publicKey,
       contractAddresses,
+      delegatorAddress,
       startTimestamp,
       durationDays,
     );
 
     const kmsEIP712 = new KmsEIP712({
-      chainId: BigInt(TEST_CONFIG.fhevmInstanceConfig.chainId!),
+      chainId: BigInt(TEST_CONFIG.fhevmInstanceConfig.chainId),
       verifyingContractAddressDecryption:
         TEST_CONFIG.fhevmInstanceConfig.verifyingContractAddressDecryption,
     });
 
-    const new_eip = kmsEIP712.createUserDecryptEIP712({
-      publicKey,
-      contractAddresses,
-      durationDays,
-      startTimestamp,
-      extraData,
-    });
+    const delegatedUserDecryptEIP712 =
+      kmsEIP712.createDelegatedUserDecryptEIP712({
+        publicKey,
+        contractAddresses,
+        delegatorAddress,
+        startTimestamp,
+        durationDays,
+        extraData,
+      });
 
-    expect(new_eip.domain).toStrictEqual(eip.domain);
-    expect(new_eip.primaryType).toStrictEqual(eip.primaryType);
-    expect(new_eip.types).toStrictEqual(eip.types);
-    expect(new_eip.message).toStrictEqual(eip.message);
+    expect(delegatedUserDecryptEIP712.domain).toStrictEqual(
+      instanceEIP712.domain,
+    );
+    expect(delegatedUserDecryptEIP712.primaryType).toStrictEqual(
+      instanceEIP712.primaryType,
+    );
+    expect(delegatedUserDecryptEIP712.types).toStrictEqual(
+      instanceEIP712.types,
+    );
+    expect(delegatedUserDecryptEIP712.message).toStrictEqual(
+      instanceEIP712.message,
+    );
 
-    const signature: Bytes65Hex = await userSigner.sign(new_eip);
+    const signature: Bytes65Hex = await delegateSigner.sign(
+      delegatedUserDecryptEIP712,
+    );
     assertIsBytes65Hex(signature);
 
-    const recoveredAddresses = kmsEIP712.verifyUserDecrypt([signature], {
-      contractAddresses,
-      durationDays,
-      startTimestamp,
-      extraData,
-      publicKey,
-    });
+    const recoveredAddresses = kmsEIP712.verifyDelegatedUserDecrypt(
+      [signature],
+      {
+        publicKey,
+        contractAddresses,
+        delegatorAddress,
+        startTimestamp,
+        durationDays,
+        extraData,
+      },
+    );
 
     expect(recoveredAddresses.length).toBe(1);
-    expect(recoveredAddresses[0]).toBe(userSigner.address);
+    expect(recoveredAddresses[0]).toBe(delegateSigner.address);
   }
 
-  it('v1: createEIP712 succeeded', async () => {
+  it('v1: createDelegatedUserDecryptEIP712 succeeded', async () => {
     setupAllFetchMockRoutes({
       enableInputProofRoutes: false,
     });
-    await testCreateEIP712(TEST_CONFIG.v1.fhevmInstanceConfig);
+    await testDelegateCreateEIP712(TEST_CONFIG.v1.fhevmInstanceConfig);
   }, 60000);
 
-  it('v2: createEIP712 succeeded', async () => {
+  it('v2: createDelegatedUserDecryptEIP712 succeeded', async () => {
     setupAllFetchMockRoutes({
       enableInputProofRoutes: false,
     });
-    await testCreateEIP712(TEST_CONFIG.v2.fhevmInstanceConfig);
+    await testDelegateCreateEIP712(TEST_CONFIG.v2.fhevmInstanceConfig);
   }, 60000);
 });

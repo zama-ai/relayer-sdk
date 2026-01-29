@@ -27,7 +27,7 @@ export type FhevmInstanceConfig = Prettify<
     gatewayChainId: number;
     relayerUrl: string;
     network: Eip1193Provider | string;
-    chainId?: number;
+    chainId: number;
     batchRpcCalls?: boolean;
     relayerRouteVersion?: 1 | 2;
   } & Partial<FhevmPkeConfigType> &
