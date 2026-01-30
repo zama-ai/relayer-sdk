@@ -66,7 +66,10 @@ export class RelayerV1Fhevm extends AbstractRelayerFhevm {
       relayerVersionUrl: string;
     },
   ): Promise<RelayerV1Fhevm> {
-    const relayerProvider = new RelayerV1Provider(config.relayerVersionUrl);
+    const relayerProvider = new RelayerV1Provider({
+      relayerUrl: config.relayerVersionUrl,
+      ...(config.auth !== undefined ? { auth: config.auth } : {}),
+    });
     const publicKeyData = await getTfheCompactPublicKey(config);
     const publicParamsData = await getPublicParams(config);
 

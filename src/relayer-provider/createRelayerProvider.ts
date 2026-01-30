@@ -24,8 +24,8 @@ export function createRelayerProvider(
   }
 
   if (resolved.version === 2) {
-    return new RelayerV2Provider(resolved.url);
+    return new RelayerV2Provider({ relayerUrl: resolved.url });
   }
 
-  return new RelayerV1Provider(resolved.url);
+  return new RelayerV1Provider({ relayerUrl: resolved.url });
 }

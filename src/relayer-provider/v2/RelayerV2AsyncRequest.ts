@@ -1198,16 +1198,19 @@ export class RelayerV2AsyncRequest {
 
     this._trace('_fetchGet', `jobId=${this.jobId}`);
 
-    const init: RequestInit = {
-      method: 'GET',
-      headers: {
-        'ZAMA-SDK-VERSION': version,
-        'ZAMA-SDK-NAME': sdkName,
-      },
-      ...(this._internalAbortSignal
-        ? { signal: this._internalAbortSignal }
-        : {}),
-    };
+    const init = setAuth(
+      {
+        method: 'GET',
+        headers: {
+          'ZAMA-SDK-VERSION': version,
+          'ZAMA-SDK-NAME': sdkName,
+        },
+        ...(this._internalAbortSignal
+          ? { signal: this._internalAbortSignal }
+          : {}),
+      } satisfies RequestInit,
+      this._fhevmAuth,
+    );
 
     this._state.fetching = true;
 

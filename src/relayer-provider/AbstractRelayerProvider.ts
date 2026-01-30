@@ -3,6 +3,7 @@ import type { BytesHex } from '@base/types/primitives';
 import type { RelayerGetResponseKeyUrlSnakeCase } from './types/private';
 import type { ZKProof } from '@sdk/ZKProof';
 import type {
+  Auth,
   RelayerGetOperation,
   RelayerInputProofOptionsType,
   RelayerInputProofPayload,
@@ -35,6 +36,7 @@ import {
   throwRelayerUnexpectedJSONError,
   throwRelayerUnknownError,
 } from '../relayer/error';
+import { setAuth } from './auth/auth';
 import { TFHEPkeParams } from '@sdk/lowlevel/TFHEPkeParams';
 import { FhevmHandle } from '@sdk/FhevmHandle';
 import {
@@ -61,14 +63,16 @@ export function _clearTFHEPkeParamsCache(): void {
 ////////////////////////////////////////////////////////////////////////////////
 
 export abstract class AbstractRelayerProvider {
-  private readonly _relayerUrl: string;
+  readonly #relayerUrl: string;
+  readonly #auth: Auth | undefined;
 
-  constructor(relayerUrl: string) {
-    this._relayerUrl = relayerUrl;
+  constructor({ relayerUrl, auth }: { relayerUrl: string; auth?: Auth }) {
+    this.#relayerUrl = relayerUrl;
+    this.#auth = auth;
   }
 
   public get url(): string {
-    return this._relayerUrl;
+    return this.#relayerUrl;
   }
   public get keyUrl(): string {
     return `${this.url}/keyurl`;
@@ -90,7 +94,7 @@ export abstract class AbstractRelayerProvider {
 
   /** @internal */
   public fetchTFHEPkeParams(): Promise<TFHEPkeParams> {
-    const cached = privateKeyurlCache.get(this._relayerUrl);
+    const cached = privateKeyurlCache.get(this.#relayerUrl);
     if (cached !== undefined) {
       return cached;
     }
@@ -98,11 +102,11 @@ export abstract class AbstractRelayerProvider {
     // Create and cache the promise immediately to prevent race conditions
     const promise = this._fetchTFHEPkeParamsImpl().catch((err: unknown) => {
       // Remove from cache on failure so subsequent calls can retry
-      privateKeyurlCache.delete(this._relayerUrl);
+      privateKeyurlCache.delete(this.#relayerUrl);
       throw err;
     });
 
-    privateKeyurlCache.set(this._relayerUrl, promise);
+    privateKeyurlCache.set(this.#relayerUrl, promise);
 
     return promise;
   }
@@ -144,10 +148,7 @@ export abstract class AbstractRelayerProvider {
 
   /** @internal */
   public async fetchGetKeyUrl(): Promise<RelayerGetResponseKeyUrlSnakeCase> {
-    const response = await AbstractRelayerProvider._fetchRelayerGet(
-      'KEY_URL',
-      this.keyUrl,
-    );
+    const response = await this._fetchRelayerGet('KEY_URL', this.keyUrl);
 
     let responseSnakeCase;
 
@@ -259,17 +260,20 @@ export abstract class AbstractRelayerProvider {
   ): Promise<RelayerUserDecryptResult>;
 
   /** @internal */
-  private static async _fetchRelayerGet(
+  private async _fetchRelayerGet(
     relayerOperation: RelayerGetOperation,
     url: string,
   ): Promise<{ response: unknown }> {
-    const init = {
-      method: 'GET',
-      headers: {
-        'ZAMA-SDK-VERSION': version,
-        'ZAMA-SDK-NAME': sdkName,
-      },
-    } satisfies RequestInit;
+    const init = setAuth(
+      {
+        method: 'GET',
+        headers: {
+          'ZAMA-SDK-VERSION': version,
+          'ZAMA-SDK-NAME': sdkName,
+        },
+      } satisfies RequestInit,
+      this.#auth,
+    );
 
     let response: Response;
     let json: { response: unknown };

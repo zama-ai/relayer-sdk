@@ -82,14 +82,18 @@ export async function fetchRelayerV1Post(
 export async function fetchRelayerV1Get(
   relayerOperation: RelayerGetOperation,
   url: string,
+  options?: FhevmInstanceOptions,
 ): Promise<RelayerV1FetchResponseJson> {
-  const init = {
-    method: 'GET',
-    headers: {
-      'ZAMA-SDK-VERSION': version,
-      'ZAMA-SDK-NAME': sdkName,
-    },
-  } satisfies RequestInit;
+  const init = setAuth(
+    {
+      method: 'GET',
+      headers: {
+        'ZAMA-SDK-VERSION': version,
+        'ZAMA-SDK-NAME': sdkName,
+      },
+    } satisfies RequestInit,
+    options?.auth,
+  );
 
   let response: Response;
   let json: RelayerV1FetchResponseJson;
