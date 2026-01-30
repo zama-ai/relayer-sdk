@@ -1,4 +1,4 @@
-import { fetchBytes } from './fetch';
+import { getResponseBytes } from './fetch';
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -26,7 +26,9 @@ describe('fetchBytes', () => {
       arrayBuffer: jest.fn().mockResolvedValue(testData.buffer),
     });
 
-    const result = await fetchBytes('https://example.com/data');
+    const response = await fetch('https://example.com/data');
+    const result = await getResponseBytes(response);
+
     expect(result).toEqual(testData);
     expect(global.fetch).toHaveBeenCalledWith('https://example.com/data');
   });
@@ -40,21 +42,9 @@ describe('fetchBytes', () => {
       bytes: jest.fn().mockResolvedValue(testData),
     });
 
-    const result = await fetchBytes('https://example.com/data');
+    const response = await fetch('https://example.com/data');
+    const result = await getResponseBytes(response);
+
     expect(result).toEqual(testData);
-  });
-
-  //////////////////////////////////////////////////////////////////////////////
-
-  it('throws error when response is not ok', async () => {
-    global.fetch = jest.fn().mockResolvedValue({
-      ok: false,
-      status: 404,
-      url: 'https://example.com/not-found',
-    });
-
-    await expect(fetchBytes('https://example.com/not-found')).rejects.toThrow(
-      'HTTP error! status: 404 on https://example.com/not-found',
-    );
   });
 });
