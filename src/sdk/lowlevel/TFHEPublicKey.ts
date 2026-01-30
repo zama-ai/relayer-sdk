@@ -1,13 +1,14 @@
 import { TFHE as TFHEModule } from './wasm-modules';
 import type {
   TfheCompactPublicKeyWasmType,
+  TFHEFetchParams,
   TFHEPublicKeyBytesHexType,
   TFHEPublicKeyBytesType,
   TFHEPublicKeyUrlType,
   TFHEPublicKeyWasmType,
 } from './public-api';
 import { bytesToHexLarge, hexToBytesFaster } from '@base/bytes';
-import { fetchBytes } from '@base/fetch';
+import { fetchWithRetry, getResponseBytes } from '@base/fetch';
 import { assertRecordStringProperty } from '@base/string';
 import { TFHEError } from '../../errors/TFHEError';
 import {
@@ -121,11 +122,11 @@ export class TFHEPublicKey {
   //////////////////////////////////////////////////////////////////////////////
 
   public static async fetch(
-    params: TFHEPublicKeyUrlType,
+    params: TFHEPublicKeyUrlType & TFHEFetchParams,
   ): Promise<TFHEPublicKey> {
     try {
       assertIsTFHEPublicKeyUrlType(params, 'arg');
-      return await TFHEPublicKey._fetch(params);
+      return await TFHEPublicKey.#fetch(params);
     } catch (e) {
       throw new TFHEError({
         message: 'Impossible to fetch public key: wrong relayer url.',
@@ -134,12 +135,33 @@ export class TFHEPublicKey {
     }
   }
 
-  private static async _fetch(
-    params: TFHEPublicKeyUrlType,
+  static async #fetch(
+    params: TFHEPublicKeyUrlType & TFHEFetchParams,
   ): Promise<TFHEPublicKey> {
-    const tfheCompactPublicKeyBytes: Uint8Array = await fetchBytes(
-      params.srcUrl,
-    );
+    // Fetching a public key must use GET (the default method)
+    if (params.init?.method !== undefined && params.init.method !== 'GET') {
+      throw new TFHEError({
+        message: `Invalid fetch method: expected 'GET', got '${params.init.method}'`,
+      });
+    }
+
+    const response = await fetchWithRetry({
+      url: params.srcUrl,
+      ...(params.init !== undefined ? { init: params.init } : {}),
+      ...(params.retries !== undefined ? { retries: params.retries } : {}),
+      ...(params.retryDelayMs !== undefined
+        ? { retryDelayMs: params.retryDelayMs }
+        : {}),
+    });
+
+    if (!response.ok) {
+      throw new TFHEError({
+        message: `HTTP error! status: ${response.status} on ${response.url}`,
+      });
+    }
+
+    const tfheCompactPublicKeyBytes: Uint8Array =
+      await getResponseBytes(response);
 
     return TFHEPublicKey.fromBytes({
       bytes: tfheCompactPublicKeyBytes,

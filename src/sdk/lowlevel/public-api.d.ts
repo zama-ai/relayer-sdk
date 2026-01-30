@@ -94,6 +94,18 @@ export type TFHEPkeUrlsType = {
   pkeCrsUrl: TFHEPkeCrsUrlType;
 };
 
+/**
+ * Parameters for fetching TFHE resources with retry support.
+ */
+export type TFHEFetchParams = {
+  /** Optional fetch init options (headers, signal, etc.) */
+  init?: RequestInit | undefined;
+  /** Number of retry attempts on network failure (default: 3) */
+  retries?: number;
+  /** Delay in milliseconds between retries (default: 1000) */
+  retryDelayMs?: number;
+};
+
 export type WasmObject = object;
 
 export interface ProvenCompactCiphertextListStaticWasmType {
