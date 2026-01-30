@@ -193,7 +193,9 @@ describeIfFetchMock('RelayerV2Provider', () => {
 
     try {
       await relayerProvider.fetchGetKeyUrl();
-      fail('Expected fetchGetKeyUrl to throw an error, but it did not.');
+      throw new Error(
+        'Expected fetchGetKeyUrl to throw an error, but it did not.',
+      );
     } catch (e) {
       expect(String(e)).toStrictEqual('Error: HTTP error! status: 404');
       const cause = getErrorCause(e) as any;
@@ -228,7 +230,9 @@ describeIfFetchMock('RelayerV2Provider', () => {
 
     try {
       await relayerProvider.fetchGetKeyUrl();
-      fail('Expected fetchGetKeyUrl to throw an error, but it did not.');
+      throw new Error(
+        'Expected fetchGetKeyUrl to throw an error, but it did not.',
+      );
     } catch (e) {
       // Error message
       expect(String(e)).toStrictEqual('Error: HTTP error! status: 404');
@@ -264,7 +268,7 @@ describeIfFetchMock('RelayerV2Provider - Auth on GET requests', () => {
       token: 'test-bearer-token',
     };
 
-    const provider = new RelayerV2Provider(relayerUrlV2, auth);
+    const provider = new RelayerV2Provider({ relayerUrl: relayerUrlV2, auth });
     await provider.fetchGetKeyUrl();
 
     const lastCall = fetchMock.callHistory.lastCall();
@@ -283,7 +287,7 @@ describeIfFetchMock('RelayerV2Provider - Auth on GET requests', () => {
       value: 'my-secret-key',
     };
 
-    const provider = new RelayerV2Provider(relayerUrlV2, auth);
+    const provider = new RelayerV2Provider({ relayerUrl: relayerUrlV2, auth });
     await provider.fetchGetKeyUrl();
 
     const lastCall = fetchMock.callHistory.lastCall();
@@ -300,7 +304,7 @@ describeIfFetchMock('RelayerV2Provider - Auth on GET requests', () => {
       value: 'my-secret-key',
     };
 
-    const provider = new RelayerV2Provider(relayerUrlV2, auth);
+    const provider = new RelayerV2Provider({ relayerUrl: relayerUrlV2, auth });
     await provider.fetchGetKeyUrl();
 
     const lastCall = fetchMock.callHistory.lastCall();
@@ -312,7 +316,7 @@ describeIfFetchMock('RelayerV2Provider - Auth on GET requests', () => {
   it('v2:keyurl: GET request without auth has no Authorization header', async () => {
     fetchMock.get(`${relayerUrlV2}/keyurl`, relayerV2ResponseGetKeyUrl);
 
-    const provider = new RelayerV2Provider(relayerUrlV2);
+    const provider = new RelayerV2Provider({ relayerUrl: relayerUrlV2 });
     await provider.fetchGetKeyUrl();
 
     const lastCall = fetchMock.callHistory.lastCall();

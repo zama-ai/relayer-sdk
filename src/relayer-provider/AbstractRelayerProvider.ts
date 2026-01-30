@@ -63,16 +63,16 @@ export function _clearTFHEPkeParamsCache(): void {
 ////////////////////////////////////////////////////////////////////////////////
 
 export abstract class AbstractRelayerProvider {
-  private readonly _relayerUrl: string;
-  protected readonly _auth: Auth | undefined;
+  readonly #relayerUrl: string;
+  readonly #auth: Auth | undefined;
 
-  constructor(relayerUrl: string, auth?: Auth) {
-    this._relayerUrl = relayerUrl;
-    this._auth = auth;
+  constructor({ relayerUrl, auth }: { relayerUrl: string; auth?: Auth }) {
+    this.#relayerUrl = relayerUrl;
+    this.#auth = auth;
   }
 
   public get url(): string {
-    return this._relayerUrl;
+    return this.#relayerUrl;
   }
   public get keyUrl(): string {
     return `${this.url}/keyurl`;
@@ -94,7 +94,7 @@ export abstract class AbstractRelayerProvider {
 
   /** @internal */
   public fetchTFHEPkeParams(): Promise<TFHEPkeParams> {
-    const cached = privateKeyurlCache.get(this._relayerUrl);
+    const cached = privateKeyurlCache.get(this.#relayerUrl);
     if (cached !== undefined) {
       return cached;
     }
@@ -102,11 +102,11 @@ export abstract class AbstractRelayerProvider {
     // Create and cache the promise immediately to prevent race conditions
     const promise = this._fetchTFHEPkeParamsImpl().catch((err: unknown) => {
       // Remove from cache on failure so subsequent calls can retry
-      privateKeyurlCache.delete(this._relayerUrl);
+      privateKeyurlCache.delete(this.#relayerUrl);
       throw err;
     });
 
-    privateKeyurlCache.set(this._relayerUrl, promise);
+    privateKeyurlCache.set(this.#relayerUrl, promise);
 
     return promise;
   }
@@ -272,7 +272,7 @@ export abstract class AbstractRelayerProvider {
           'ZAMA-SDK-NAME': sdkName,
         },
       } satisfies RequestInit,
-      this._auth,
+      this.#auth,
     );
 
     let response: Response;

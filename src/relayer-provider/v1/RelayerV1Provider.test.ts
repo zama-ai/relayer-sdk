@@ -77,7 +77,7 @@ describeIfFetchMock('RelayerV1Provider - Auth on GET requests', () => {
       token: 'test-bearer-token',
     };
 
-    const provider = new RelayerV1Provider(relayerUrlV1, auth);
+    const provider = new RelayerV1Provider({ relayerUrl: relayerUrlV1, auth });
     await provider.fetchGetKeyUrl();
 
     const lastCall = fetchMock.callHistory.lastCall();
@@ -96,7 +96,7 @@ describeIfFetchMock('RelayerV1Provider - Auth on GET requests', () => {
       value: 'my-secret-key',
     };
 
-    const provider = new RelayerV1Provider(relayerUrlV1, auth);
+    const provider = new RelayerV1Provider({ relayerUrl: relayerUrlV1, auth });
     await provider.fetchGetKeyUrl();
 
     const lastCall = fetchMock.callHistory.lastCall();
@@ -108,7 +108,7 @@ describeIfFetchMock('RelayerV1Provider - Auth on GET requests', () => {
   it('v1:keyurl: GET request without auth has no Authorization header', async () => {
     fetchMock.get(`${relayerUrlV1}/keyurl`, relayerV1ResponseGetKeyUrl);
 
-    const provider = new RelayerV1Provider(relayerUrlV1);
+    const provider = new RelayerV1Provider({ relayerUrl: relayerUrlV1 });
     await provider.fetchGetKeyUrl();
 
     const lastCall = fetchMock.callHistory.lastCall();
