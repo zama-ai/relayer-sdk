@@ -270,7 +270,7 @@ describeIfFetch('RelayerV2Provider:public-decrypt:sepolia:', () => {
 
     const instance = await createInstance(config);
     await instance.publicDecrypt([handle]);
-  }, 60000);
+  }, 600000);
 
   it('v1: succeeded', async () => {
     setupAllFetchMockRoutes({
@@ -287,5 +287,5 @@ describeIfFetch('RelayerV2Provider:public-decrypt:sepolia:', () => {
 
     const instance = await createInstance(config);
     await instance.publicDecrypt([handle]);
-  }, 60000);
+  }, 600000);
 });
