@@ -1,15 +1,26 @@
 import OMT from '@surma/rollup-plugin-off-main-thread';
 
-import copy from 'rollup-plugin-copy';
 import json from '@rollup/plugin-json';
 import url from '@rollup/plugin-url';
 import typescript from '@rollup/plugin-typescript';
-import replace from '@rollup/plugin-replace';
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import nodePolyfills from 'rollup-plugin-polyfill-node';
 import path from 'path';
 import fs from 'fs';
+
+function copy({ targets }) {
+  return {
+    name: 'copy',
+    writeBundle() {
+      for (const { src, dest } of targets) {
+        const filename = path.basename(src);
+        fs.mkdirSync(dest, { recursive: true });
+        fs.copyFileSync(src, path.join(dest, filename));
+      }
+    },
+  };
+}
 
 const wasmBindgenRayon = fs.readdirSync(
   path.resolve('node_modules/tfhe/snippets'),
@@ -112,6 +123,8 @@ export default [
       format: 'es',
     },
     plugins: [...nodePlugins],
+    // Suppress warning
+    // https://rollupjs.org/troubleshooting/#warning-treating-module-as-external-dependency
     external: ['ethers', 'fetch-retry', 'node-tfhe', 'node-tkms', 'keccak'],
   },
 ];
