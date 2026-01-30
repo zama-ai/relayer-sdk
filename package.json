@@ -19,8 +19,6 @@
     "bundle.js",
     "node.d.ts",
     "node.js",
-    "node-mock.d.ts",
-    "node-mock.js",
     "web.d.ts",
     "web.js"
   ],
@@ -39,11 +37,6 @@
       "types": "./lib/node.d.ts",
       "import": "./lib/node.js",
       "require": "./lib/node.cjs"
-    },
-    "./node-mock": {
-      "types": "./lib/node-mock.d.ts",
-      "import": "./lib/node-mock.js",
-      "require": "./lib/node-mock.cjs"
     },
     "./package.json": "./package.json"
   },

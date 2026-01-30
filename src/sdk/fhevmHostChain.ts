@@ -200,7 +200,8 @@ export class FhevmHostChainConfig {
       };
     } else {
       throw new FhevmConfigError({
-        message: 'Invalid network: must be a URL string or Eip1193Provider',
+        message:
+          'Invalid FhevmInstanceConfig.network property, expecting an RPC URL string or an Eip1193Provider',
       });
     }
 

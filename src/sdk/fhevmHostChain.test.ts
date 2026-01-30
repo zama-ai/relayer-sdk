@@ -7,6 +7,7 @@ import {
 } from '../test/config';
 import { FhevmHostChainConfig, FhevmHostChain } from './fhevmHostChain';
 import { FhevmConfigError } from '../errors/FhevmConfigError';
+import { MainnetConfig, SepoliaConfig } from '../configs';
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -490,6 +491,101 @@ describe('FhevmHostChainConfig validation (mock)', () => {
           config as unknown as FhevmInstanceConfig,
         ),
       ).toThrow(/gateway chain ID/);
+    });
+
+    it('MainnetConfig: error message for missing network', () => {
+      const config = {
+        ...MainnetConfig,
+      };
+
+      expect(() =>
+        FhevmHostChainConfig.fromUserConfig(
+          config as unknown as FhevmInstanceConfig,
+        ),
+      ).toThrow(
+        'You must provide a network URL or a EIP1193 object (eg: window.ethereum)',
+      );
+    });
+
+    it('SepliaConfig: error message for missing network', () => {
+      const config = {
+        ...SepoliaConfig,
+      };
+
+      expect(() =>
+        FhevmHostChainConfig.fromUserConfig(
+          config as unknown as FhevmInstanceConfig,
+        ),
+      ).toThrow(
+        'You must provide a network URL or a EIP1193 object (eg: window.ethereum)',
+      );
+    });
+
+    it('MainnetConfig with network', () => {
+      const config = {
+        ...MainnetConfig,
+        network: 'https://my-rpc.com',
+      };
+
+      const cfg = FhevmHostChainConfig.fromUserConfig(
+        config as unknown as FhevmInstanceConfig,
+      );
+      expect(cfg.network).toBe('https://my-rpc.com');
+    });
+
+    it('SepoliaConfig with network', () => {
+      const config = {
+        ...SepoliaConfig,
+        network: 'https://my-rpc.com',
+      };
+
+      const cfg = FhevmHostChainConfig.fromUserConfig(
+        config as unknown as FhevmInstanceConfig,
+      );
+      expect(cfg.network).toBe('https://my-rpc.com');
+    });
+
+    it('error message for missing network', () => {
+      const config = {
+        ...TEST_CONFIG.v2.fhevmInstanceConfig,
+        network: undefined,
+      };
+
+      expect(() =>
+        FhevmHostChainConfig.fromUserConfig(
+          config as unknown as FhevmInstanceConfig,
+        ),
+      ).toThrow(
+        'You must provide a network URL or a EIP1193 object (eg: window.ethereum)',
+      );
+    });
+
+    it('error message for invalid network URL', () => {
+      const config = {
+        ...TEST_CONFIG.v2.fhevmInstanceConfig,
+        network: 'not-a-valid-url',
+      };
+
+      expect(() =>
+        FhevmHostChainConfig.fromUserConfig(
+          config as unknown as FhevmInstanceConfig,
+        ),
+      ).toThrow('Invalid network URL: not-a-valid-url');
+    });
+
+    it('error message for invalid network type', () => {
+      const config = {
+        ...TEST_CONFIG.v2.fhevmInstanceConfig,
+        network: 12345,
+      };
+
+      expect(() =>
+        FhevmHostChainConfig.fromUserConfig(
+          config as unknown as FhevmInstanceConfig,
+        ),
+      ).toThrow(
+        'Invalid FhevmInstanceConfig.network property, expecting an RPC URL string or an Eip1193Provider',
+      );
     });
   });
 });
