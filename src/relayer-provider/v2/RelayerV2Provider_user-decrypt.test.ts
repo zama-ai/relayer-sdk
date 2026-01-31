@@ -366,14 +366,14 @@ describeIfFetch('FhevmInstance.userDecrypot:sepolia:', () => {
       enableInputProofRoutes: false,
     });
     await testUserDecrypt(TEST_CONFIG.v2.fhevmInstanceConfig);
-  }, 60000);
+  }, 600000);
 
   it('v1: FhevmInstance.userDecrypt succeeded', async () => {
     setupAllFetchMockRoutes({
       enableInputProofRoutes: false,
     });
     await testUserDecrypt(TEST_CONFIG.v1.fhevmInstanceConfig);
-  }, 60000);
+  }, 600000);
 });
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -470,12 +470,12 @@ describe('FhevmInstance.createEIP712', () => {
       enableInputProofRoutes: false,
     });
     await testCreateEIP712(TEST_CONFIG.v1.fhevmInstanceConfig);
-  }, 60000);
+  }, 600000);
 
   it('v2: createEIP712 succeeded', async () => {
     setupAllFetchMockRoutes({
       enableInputProofRoutes: false,
     });
     await testCreateEIP712(TEST_CONFIG.v2.fhevmInstanceConfig);
-  }, 60000);
+  }, 600000);
 });

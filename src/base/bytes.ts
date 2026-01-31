@@ -747,3 +747,24 @@ export function bytesEquals(a: Bytes, b: Bytes): boolean {
   }
   return true;
 }
+
+/**
+ * Converts various byte-like types to a Uint8Array.
+ *
+ * Supported input types:
+ * - `Uint8Array` - returned as-is
+ * - `ArrayBuffer` - wrapped in a new Uint8Array
+ * - `ArrayBufferView` (e.g., Int8Array, DataView) - creates a Uint8Array view over the same buffer
+ *
+ * @throws {TypeError} If the value is not a supported byte-like type
+ */
+export function normalizeBytes(value: unknown): Bytes {
+  if (value instanceof Uint8Array) return value;
+  if (value instanceof ArrayBuffer) return new Uint8Array(value);
+  if (ArrayBuffer.isView(value)) {
+    return new Uint8Array(value.buffer, value.byteOffset, value.byteLength);
+  }
+  throw new TypeError(
+    `Unsupported bytes type: ${Object.prototype.toString.call(value)}`,
+  );
+}

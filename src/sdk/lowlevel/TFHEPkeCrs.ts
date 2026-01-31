@@ -1,5 +1,6 @@
 import { TFHE as TFHEModule } from './wasm-modules';
 import type {
+  TFHEFetchParams,
   TFHEPkeCrsBytesHexType,
   TFHEPkeCrsUrlType,
   TFHEPksCrsBytesType,
@@ -9,7 +10,7 @@ import type { CompactPkeCrsWasmType } from './public-api';
 import { SERIALIZED_SIZE_LIMIT_CRS } from './constants';
 import { assertRecordStringProperty } from '@base/string';
 import { bytesToHexLarge, hexToBytesFaster } from '@base/bytes';
-import { fetchBytes } from '@base/fetch';
+import { fetchWithRetry, getResponseBytes } from '@base/fetch';
 import { TFHEError } from '../../errors/TFHEError';
 import {
   assertIsTFHEPkeCrsUrlType,
@@ -163,10 +164,12 @@ export class TFHEPkeCrs {
   // serialize/deserialize: fetch
   //////////////////////////////////////////////////////////////////////////////
 
-  public static async fetch(params: TFHEPkeCrsUrlType): Promise<TFHEPkeCrs> {
+  public static async fetch(
+    params: TFHEPkeCrsUrlType & TFHEFetchParams,
+  ): Promise<TFHEPkeCrs> {
     try {
       assertIsTFHEPkeCrsUrlType(params, 'arg');
-      return await TFHEPkeCrs._fetch(params);
+      return await TFHEPkeCrs.#fetch(params);
     } catch (e) {
       throw new TFHEError({
         message: 'Impossible to fetch public key: wrong relayer url.',
@@ -175,10 +178,32 @@ export class TFHEPkeCrs {
     }
   }
 
-  private static async _fetch(params: TFHEPkeCrsUrlType): Promise<TFHEPkeCrs> {
-    assertIsTFHEPkeCrsUrlType(params, 'arg');
+  static async #fetch(
+    params: TFHEPkeCrsUrlType & TFHEFetchParams,
+  ): Promise<TFHEPkeCrs> {
+    // Fetching a public key must use GET (the default method)
+    if (params.init?.method !== undefined && params.init.method !== 'GET') {
+      throw new TFHEError({
+        message: `Invalid fetch method: expected 'GET', got '${params.init.method}'`,
+      });
+    }
 
-    const compactPkeCrsBytes: Uint8Array = await fetchBytes(params.srcUrl);
+    const response = await fetchWithRetry({
+      url: params.srcUrl,
+      ...(params.init !== undefined ? { init: params.init } : {}),
+      ...(params.retries !== undefined ? { retries: params.retries } : {}),
+      ...(params.retryDelayMs !== undefined
+        ? { retryDelayMs: params.retryDelayMs }
+        : {}),
+    });
+
+    if (!response.ok) {
+      throw new TFHEError({
+        message: `HTTP error! status: ${response.status} on ${response.url}`,
+      });
+    }
+
+    const compactPkeCrsBytes: Uint8Array = await getResponseBytes(response);
 
     return TFHEPkeCrs.fromBytes({
       bytes: compactPkeCrsBytes,

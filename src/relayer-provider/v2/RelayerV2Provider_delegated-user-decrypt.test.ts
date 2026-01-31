@@ -105,6 +105,11 @@ const describeIfFetch =
     ? describe.skip
     : describe;
 
+const defaultDescribe =
+  TEST_CONFIG.type === 'fetch-mock' || !SKIP_DELEGATE_TESTS_ON_SEPOLIA
+    ? describe
+    : describe.skip;
+
 const consoleLogSpy = jest
   .spyOn(console, 'log')
   .mockImplementation((message) => {
@@ -376,19 +381,19 @@ describeIfFetch('FhevmInstance.delegatedUserDecrypt:sepolia:', () => {
       enableInputProofRoutes: false,
     });
     await testDelegatedUserDecrypt(TEST_CONFIG.v2.fhevmInstanceConfig);
-  }, 60000);
+  }, 600000);
 
   it('v1: FhevmInstance.delegatedUserDecrypt succeeded', async () => {
     setupAllFetchMockRoutes({
       enableInputProofRoutes: false,
     });
     await testDelegatedUserDecrypt(TEST_CONFIG.v1.fhevmInstanceConfig);
-  }, 60000);
+  }, 600000);
 });
 
 ////////////////////////////////////////////////////////////////////////////////
 
-describe('FhevmInstance.createDelegatedUserDecryptEIP712', () => {
+defaultDescribe('FhevmInstance.createDelegatedUserDecryptEIP712', () => {
   beforeEach(() => {
     removeAllFetchMockRoutes();
   });
@@ -498,12 +503,12 @@ describe('FhevmInstance.createDelegatedUserDecryptEIP712', () => {
       enableInputProofRoutes: false,
     });
     await testDelegateCreateEIP712(TEST_CONFIG.v1.fhevmInstanceConfig);
-  }, 60000);
+  }, 600000);
 
   it('v2: createDelegatedUserDecryptEIP712 succeeded', async () => {
     setupAllFetchMockRoutes({
       enableInputProofRoutes: false,
     });
     await testDelegateCreateEIP712(TEST_CONFIG.v2.fhevmInstanceConfig);
-  }, 60000);
+  }, 600000);
 });

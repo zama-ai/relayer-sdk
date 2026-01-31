@@ -19,8 +19,6 @@
     "bundle.js",
     "node.d.ts",
     "node.js",
-    "node-mock.d.ts",
-    "node-mock.js",
     "web.d.ts",
     "web.js"
   ],
@@ -39,11 +37,6 @@
       "types": "./lib/node.d.ts",
       "import": "./lib/node.js",
       "require": "./lib/node.cjs"
-    },
-    "./node-mock": {
-      "types": "./lib/node-mock.d.ts",
-      "import": "./lib/node-mock.js",
-      "require": "./lib/node-mock.cjs"
     },
     "./package.json": "./package.json"
   },
@@ -80,7 +73,7 @@
     "flatten:node:dts": "api-extractor run --local --config config/api-extractor.node.json",
     "flatten:node-mock:dts": "api-extractor run --local --config config/api-extractor.node-mock.json",
     "flatten:web:dts": "api-extractor run --local --config config/api-extractor.web.json",
-    "flatten:dts": "npm run flatten:node:dts && npm run flatten:node-mock:dts && npm run flatten:web:dts",
+    "flatten:dts": "npm run flatten:node:dts && npm run flatten:web:dts",
     "copy:dts": "mkdir -p dist.tmp/base/types dist.tmp/sdk/lowlevel dist.tmp/sdk/coprocessor dist.tmp/sdk/kms dist.tmp/sdk/types dist.tmp/relayer-provider/types dist.tmp/relayer-provider/v2/errors dist.tmp/types && cp src/base/types/*.d.ts dist.tmp/base/types/ && cp src/sdk/lowlevel/*.d.ts dist.tmp/sdk/lowlevel/ && cp src/sdk/coprocessor/public-api.d.ts dist.tmp/sdk/coprocessor/ && cp src/sdk/kms/public-api.d.ts dist.tmp/sdk/kms/ && cp src/sdk/types/public-api.d.ts dist.tmp/sdk/types/ && cp src/relayer-provider/types/*.d.ts dist.tmp/relayer-provider/types/ && cp src/relayer-provider/v2/errors/public-types.d.ts dist.tmp/relayer-provider/v2/errors/ && cp src/types/relayer.d.ts dist.tmp/types/",
     "build:dts": "npm run clean:dts && npm run tsc:dts && npm run copy:dts && npx tsc-alias -p config/tsc-alias.json && npm run flatten:dts && npm run clean:dts",
     "version": "cd ./scripts && node ./generate-version.cjs"
