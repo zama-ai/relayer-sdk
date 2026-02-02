@@ -14,13 +14,14 @@ import {
 // npx . zkproof generate --values 123:euint32 true:ebool 1234567890123456789:euint256 0xb2a8A265dD5A27026693Aa6cE87Fb21Ac197b6b9:eaddress
 // npx . zkproof generate --contract-address 0xb2a8A265dD5A27026693Aa6cE87Fb21Ac197b6b9 --user-address 0x37AC010c1c566696326813b840319B58Bb5840E4 --values 123:euint32
 export async function zkProofGenerateCommand(options) {
-  const { config } = parseCommonOptions(options);
+  const { config, zamaFhevmApiKey } = parseCommonOptions(options);
 
   const fheTypedValues = valueColumnTypeListToFheTypedValues(options.values);
   const arr = fheTypedValuesToBuilderFunctionWithArg(fheTypedValues);
 
   const { publicKey, publicParams } = await loadFhevmPublicKeyConfig(
     config,
+    zamaFhevmApiKey,
     options,
   );
 

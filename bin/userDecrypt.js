@@ -13,6 +13,7 @@ export async function userDecrypt({
 }) {
   const { publicKey, publicParams } = await loadFhevmPublicKeyConfig(
     config,
+    zamaFhevmApiKey,
     options,
   );
 

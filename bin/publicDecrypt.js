@@ -5,16 +5,17 @@ import { logCLI } from './utils.js';
 export async function publicDecrypt(handles, config, zamaFhevmApiKey, options) {
   const { publicKey, publicParams } = await loadFhevmPublicKeyConfig(
     config,
+    zamaFhevmApiKey,
     options,
   );
+
+  const timeout =
+    options.timeout !== undefined ? Number(options.timeout) : undefined;
 
   const instanceOptions = {
     //...(options.verbose === true ? { debug: true } : {}),
     auth: { __type: 'ApiKeyHeader', value: zamaFhevmApiKey },
   };
-
-  const timeout =
-    options.timeout !== undefined ? Number(options.timeout) : undefined;
 
   try {
     const instance = await getInstance(

@@ -55,8 +55,24 @@ The information regarding the configuration of Mainnet's FHEVM and associated Re
 The `gatewayChainId` is `261131`.
 The `chainId` is the chain-id of the FHEVM chain, so for Mainnet it would be `1`.
 
+{% hint style="warning" %}
+**Zama API Key Required**: Access to the Mainnet Relayer requires a Zama API key.
+{% endhint %}
+
+```ts
+import { createInstance, MainnetConfig } from '@zama-fhe/relayer-sdk';
+
+const ZAMA_FHEVM_API_KEY = process.env.ZAMA_FHEVM_API_KEY; // Your Zama API key
+
+const instance = await createInstance({
+  ...MainnetConfig,
+  network: 'https://ethereum-rpc.publicnode.com', // or your preferred Ethereum mainnet RPC
+  auth: { __type: 'ApiKeyHeader', value: ZAMA_FHEVM_API_KEY },
+});
+```
+
 {% hint style="info" %}
-For more information on the Relayer's par, please refer to [the Relayer SDK documentation](https://docs.zama.org/protocol/relayer-sdk-guides).
+For more information on the Relayer's part, please refer to [the Relayer SDK documentation](https://docs.zama.org/protocol/relayer-sdk-guides).
 {% endhint %}
 
 # Network Configuration
