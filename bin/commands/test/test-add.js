@@ -41,6 +41,7 @@ export async function testFHETestAddCommand(options) {
 
   const { publicKey, publicParams } = await loadFhevmPublicKeyConfig(
     config,
+    zamaFhevmApiKey,
     options,
   );
 

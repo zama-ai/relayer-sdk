@@ -18,6 +18,7 @@ export async function inputProofCommand(options) {
 
   const { publicKey, publicParams } = await loadFhevmPublicKeyConfig(
     config,
+    zamaFhevmApiKey,
     options,
   );
 
