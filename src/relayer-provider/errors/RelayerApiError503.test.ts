@@ -119,7 +119,7 @@ describe('RelayerV2ApiError503', () => {
     expect(() =>
       assertIsRelayerApiError503Type(
         {
-          label: 'readiness_check_timedout',
+          label: 'readiness_check_timed_out',
           message: 'hello',
         },
         'Foo',
@@ -208,7 +208,7 @@ describe('RelayerV2ApiError503', () => {
     expect(() =>
       assertIsRelayerApiError503Type(
         {
-          label: 'readiness_check_timedout',
+          label: 'readiness_check_timed_out',
           message: 123,
         },
         'Foo',
