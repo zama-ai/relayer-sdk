@@ -329,8 +329,8 @@ export type RelayerApiError503Type = {
   label:
     | 'protocol_paused'
     | 'gateway_not_reachable'
-    | 'readiness_check_timedout'
-    | 'response_timedout';
+    | 'readiness_check_timed_out'
+    | 'response_timed_out';
   message: string;
 };
 

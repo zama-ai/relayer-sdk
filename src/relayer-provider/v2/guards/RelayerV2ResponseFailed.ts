@@ -90,9 +90,9 @@ export function assertIsRelayerV2ApiError(
   // 503
   else if (
     value.label ===
-      ('readiness_check_timedout' satisfies RelayerApiError503Type['label']) ||
+      ('readiness_check_timed_out' satisfies RelayerApiError503Type['label']) ||
     value.label ===
-      ('response_timedout' satisfies RelayerApiError503Type['label']) ||
+      ('response_timed_out' satisfies RelayerApiError503Type['label']) ||
     value.label ===
       ('protocol_paused' satisfies RelayerApiError503Type['label']) ||
     value.label ===
@@ -117,8 +117,8 @@ export function assertIsRelayerV2ApiError(
         'protocol_paused',
         'protocol_overload',
         'gateway_not_reachable',
-        'readiness_check_timedout',
-        'response_timedout',
+        'readiness_check_timed_out',
+        'response_timed_out',
       ],
       type: typeof value.label,
       value: value.label,

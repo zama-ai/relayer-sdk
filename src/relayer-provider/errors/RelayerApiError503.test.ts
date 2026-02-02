@@ -37,8 +37,8 @@ describe('RelayerV2ApiError503', () => {
         expectedValue: [
           'protocol_paused',
           'gateway_not_reachable',
-          'readiness_check_timedout',
-          'response_timedout',
+          'readiness_check_timed_out',
+          'response_timed_out',
         ],
       }),
     );
@@ -57,8 +57,8 @@ describe('RelayerV2ApiError503', () => {
         expectedType: 'string',
         type: 'string',
         expectedValue: [
-          'readiness_check_timedout',
-          'response_timedout',
+          'readiness_check_timed_out',
+          'response_timed_out',
           'protocol_paused',
           'gateway_not_reachable',
         ],
@@ -130,7 +130,7 @@ describe('RelayerV2ApiError503', () => {
     expect(() =>
       assertIsRelayerApiError503Type(
         {
-          label: 'response_timedout',
+          label: 'response_timed_out',
           message: 'hello',
         },
         'Foo',
@@ -146,8 +146,8 @@ describe('RelayerV2ApiError503', () => {
         expectedValue: [
           'protocol_paused',
           'gateway_not_reachable',
-          'readiness_check_timedout',
-          'response_timedout',
+          'readiness_check_timed_out',
+          'response_timed_out',
         ],
       }),
     );
@@ -166,8 +166,8 @@ describe('RelayerV2ApiError503', () => {
         expectedType: 'string',
         type: 'string',
         expectedValue: [
-          'readiness_check_timedout',
-          'response_timedout',
+          'readiness_check_timed_out',
+          'response_timed_out',
           'protocol_paused',
           'gateway_not_reachable',
         ],
@@ -178,7 +178,7 @@ describe('RelayerV2ApiError503', () => {
     expect(() =>
       assertIsRelayerApiError503Type(
         {
-          label: 'readiness_check_timedout',
+          label: 'readiness_check_timed_out',
         },
         'Foo',
       ),
@@ -193,7 +193,7 @@ describe('RelayerV2ApiError503', () => {
     expect(() =>
       assertIsRelayerApiError503Type(
         {
-          label: 'response_timedout',
+          label: 'response_timed_out',
         },
         'Foo',
       ),
