@@ -1,8 +1,7 @@
 import { InvalidPropertyError } from '../../errors/InvalidPropertyError';
 import { assertIsRelayerApiError503Type } from './RelayerApiError503';
 
-// npx jest --colors --passWithNoTests ./src/relayer-provider/v2/types/errors/RelayerV2ApiError503.test.ts
-// npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v2/types/errors/RelayerV2ApiError503.test.ts --collectCoverageFrom=./src/relayer-provider/v2/types/errors/RelayerV2ApiError503.ts
+// npx jest --colors --passWithNoTests ./src/relayer-provider/errors/RelayerApiError503.test.ts
 
 describe('RelayerV2ApiError503', () => {
   it('assertIsRelayerV2ApiError503', () => {
@@ -11,6 +10,28 @@ describe('RelayerV2ApiError503', () => {
       assertIsRelayerApiError503Type(
         {
           label: 'protocol_paused',
+          message: 'hello',
+        },
+        'Foo',
+      ),
+    ).not.toThrow();
+
+    // Success
+    expect(() =>
+      assertIsRelayerApiError503Type(
+        {
+          label: 'insufficient_balance',
+          message: 'hello',
+        },
+        'Foo',
+      ),
+    ).not.toThrow();
+
+    // Success
+    expect(() =>
+      assertIsRelayerApiError503Type(
+        {
+          label: 'insufficient_allowance',
           message: 'hello',
         },
         'Foo',
@@ -36,6 +57,8 @@ describe('RelayerV2ApiError503', () => {
         expectedType: 'string',
         expectedValue: [
           'protocol_paused',
+          'insufficient_balance',
+          'insufficient_allowance',
           'gateway_not_reachable',
           'readiness_check_timed_out',
           'response_timed_out',
@@ -145,6 +168,8 @@ describe('RelayerV2ApiError503', () => {
         expectedType: 'string',
         expectedValue: [
           'protocol_paused',
+          'insufficient_balance',
+          'insufficient_allowance',
           'gateway_not_reachable',
           'readiness_check_timed_out',
           'response_timed_out',

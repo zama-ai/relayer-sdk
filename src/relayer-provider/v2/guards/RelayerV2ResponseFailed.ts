@@ -96,6 +96,10 @@ export function assertIsRelayerV2ApiError(
     value.label ===
       ('protocol_paused' satisfies RelayerApiError503Type['label']) ||
     value.label ===
+      ('insufficient_balance' satisfies RelayerApiError503Type['label']) ||
+    value.label ===
+      ('insufficient_allowance' satisfies RelayerApiError503Type['label']) ||
+    value.label ===
       ('gateway_not_reachable' satisfies RelayerApiError503Type['label'])
   ) {
     assertIsRelayerApiError503Type(value, name);
@@ -115,6 +119,8 @@ export function assertIsRelayerV2ApiError(
         'rate_limited',
         'internal_server_error',
         'protocol_paused',
+        'insufficient_balance',
+        'insufficient_allowance',
         'protocol_overload',
         'gateway_not_reachable',
         'readiness_check_timed_out',

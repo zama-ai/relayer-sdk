@@ -328,6 +328,8 @@ export type RelayerApiError500Type = {
 export type RelayerApiError503Type = {
   label:
     | 'protocol_paused'
+    | 'insufficient_balance'
+    | 'insufficient_allowance'
     | 'gateway_not_reachable'
     | 'readiness_check_timed_out'
     | 'response_timed_out';
