@@ -1,6 +1,6 @@
 {
   "name": "@zama-fhe/relayer-sdk",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "fhevm Relayer SDK",
   "main": "lib/node.js",
   "types": "lib/node.d.ts",
