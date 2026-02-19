@@ -3,7 +3,9 @@ import type {
   RecordBooleanPropertyType,
   RecordNonNullablePropertyType,
 } from './types/private';
-import { InvalidPropertyError } from '../errors/InvalidPropertyError';
+import type { ErrorMetadataParams } from './errors/ErrorBase';
+import type { ExpectedType } from './errors/InvalidTypeError';
+import { InvalidPropertyError } from './errors/InvalidPropertyError';
 
 /**
  * Type guard that checks if a property exists on an object and is non-null/non-undefined.
@@ -43,9 +45,9 @@ export function isRecordNonNullableProperty<K extends string>(
  * Throws an `InvalidPropertyError` if validation fails.
  *
  * @template K - The property key type (string literal)
- * @param o - The value to validate (can be any type)
+ * @param record - The value to validate (can be any type)
  * @param property - The property name to check for
- * @param objName - The name of the object being validated (used in error messages)
+ * @param recordName - The name of the object being validated (used in error messages)
  * @throws {InvalidPropertyError} When the property is missing, null, or undefined
  * @throws {never} No other errors are thrown
  *
@@ -58,17 +60,21 @@ export function isRecordNonNullableProperty<K extends string>(
  * ```
  */
 export function assertRecordNonNullableProperty<K extends string>(
-  o: unknown,
+  record: unknown,
   property: K,
-  objName: string,
-): asserts o is RecordNonNullablePropertyType<K> {
-  if (!isRecordNonNullableProperty(o, property)) {
-    throw new InvalidPropertyError({
-      objName,
-      property,
-      expectedType: 'non-nullable',
-      type: typeofProperty(o, property),
-    });
+  recordName: string,
+  options: { expectedType?: ExpectedType } & ErrorMetadataParams,
+): asserts record is RecordNonNullablePropertyType<K> {
+  if (!isRecordNonNullableProperty(record, property)) {
+    throw new InvalidPropertyError(
+      {
+        subject: recordName,
+        property,
+        expectedType: options.expectedType ?? 'non-nullable',
+        type: typeofProperty(record, property),
+      },
+      options,
+    );
   }
 }
 
@@ -76,7 +82,7 @@ export function assertRecordNonNullableProperty<K extends string>(
  * Type guard that checks if a property exists on an object and is an array.
  *
  * @template K - The property key type (string literal)
- * @param o - The value to check (can be any type)
+ * @param record - The value to check (can be any type)
  * @param property - The property name to check for
  * @returns True if `o` is an object with the specified property that is a non-null array
  *
@@ -90,13 +96,13 @@ export function assertRecordNonNullableProperty<K extends string>(
  * ```
  */
 export function isRecordArrayProperty<K extends string>(
-  o: unknown,
+  record: unknown,
   property: K,
-): o is RecordArrayPropertyType<K> {
-  if (!isRecordNonNullableProperty(o, property)) {
+): record is RecordArrayPropertyType<K> {
+  if (!isRecordNonNullableProperty(record, property)) {
     return false;
   }
-  return Array.isArray(o[property]);
+  return Array.isArray(record[property]);
 }
 
 /**
@@ -104,9 +110,9 @@ export function isRecordArrayProperty<K extends string>(
  * Throws an `InvalidPropertyError` if validation fails.
  *
  * @template K - The property key type (string literal)
- * @param o - The value to validate (can be any type)
+ * @param record - The value to validate (can be any type)
  * @param property - The property name to check for
- * @param objName - The name of the object being validated (used in error messages)
+ * @param recordName - The name of the object being validated (used in error messages)
  * @throws {InvalidPropertyError} When the property is missing, null, or not an array
  * @throws {never} No other errors are thrown
  *
@@ -120,56 +126,73 @@ export function isRecordArrayProperty<K extends string>(
  * ```
  */
 export function assertRecordArrayProperty<K extends string>(
-  o: unknown,
+  record: unknown,
   property: K,
-  objName: string,
-): asserts o is RecordArrayPropertyType<K> {
-  if (!isRecordArrayProperty(o, property)) {
-    throw new InvalidPropertyError({
-      objName,
-      property,
-      expectedType: 'Array',
-      type: typeofProperty(o, property),
-    });
+  recordName: string,
+  options: { expectedType?: ExpectedType } & ErrorMetadataParams,
+): asserts record is RecordArrayPropertyType<K> {
+  if (!isRecordArrayProperty(record, property)) {
+    throw new InvalidPropertyError(
+      {
+        subject: recordName,
+        property,
+        expectedType: options.expectedType ?? 'Array',
+        type: typeofProperty(record, property),
+      },
+      options,
+    );
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// - isRecordBooleanProperty
+// - assertRecordBooleanProperty
+////////////////////////////////////////////////////////////////////////////////
+
 export function isRecordBooleanProperty<K extends string>(
-  o: unknown,
+  record: unknown,
   property: K,
-): o is RecordBooleanPropertyType<K> {
-  if (!isRecordNonNullableProperty(o, property)) {
+): record is RecordBooleanPropertyType<K> {
+  if (!isRecordNonNullableProperty(record, property)) {
     return false;
   }
-  return typeof o[property] === 'boolean';
+  return typeof record[property] === 'boolean';
 }
 
 export function assertRecordBooleanProperty<K extends string>(
-  o: unknown,
+  record: unknown,
   property: K,
-  objName: string,
-  expectedValue?: boolean,
-): asserts o is RecordBooleanPropertyType<K> {
-  if (!isRecordBooleanProperty(o, property))
-    throw new InvalidPropertyError({
-      objName,
-      property,
-      expectedType: 'boolean',
-      type: typeofProperty(o, property),
-    });
-  if (expectedValue !== undefined) {
-    if (o[property] !== expectedValue) {
-      throw new InvalidPropertyError({
-        objName,
+  recordName: string,
+  options: { expectedValue?: boolean } & ErrorMetadataParams,
+): asserts record is RecordBooleanPropertyType<K> {
+  if (!isRecordBooleanProperty(record, property))
+    throw new InvalidPropertyError(
+      {
+        subject: recordName,
         property,
         expectedType: 'boolean',
-        expectedValue: String(expectedValue),
-        type: typeof o[property],
-        value: String(o[property]),
-      });
+        type: typeofProperty(record, property),
+      },
+      options,
+    );
+  if (options.expectedValue !== undefined) {
+    if (record[property] !== options.expectedValue) {
+      throw new InvalidPropertyError(
+        {
+          subject: recordName,
+          property,
+          expectedType: 'boolean',
+          expectedValue: String(options.expectedValue),
+          type: typeof record[property],
+          value: String(record[property]),
+        },
+        options,
+      );
     }
   }
 }
+
+////////////////////////////////////////////////////////////////////////////////
 
 export function typeofProperty(o: unknown, property: string): string {
   if (isRecordNonNullableProperty(o, property)) {

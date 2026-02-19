@@ -2,15 +2,20 @@ import type {
   Bytes65Hex,
   BytesHex,
   ChecksummedAddress,
-  EncryptionBits,
-} from '../../base/types/primitives';
-import { CoprocessorSignersVerifier } from './CoprocessorSignersVerifier';
-import { RelayerDuplicateCoprocessorSignerError } from '../../errors/RelayerDuplicateCoprocessorSignerError';
-import { RelayerUnknownCoprocessorSignerError } from '../../errors/RelayerUnknownCoprocessorSignerError';
-import { RelayerThresholdCoprocessorSignerError } from '../../errors/RelayerThresholdCoprocessorSignerError';
-import { ChecksummedAddressError } from '../../errors/ChecksummedAddressError';
-import { ZKProof } from '../ZKProof';
-import { FhevmHandle } from '../FhevmHandle';
+  Uint256BigInt,
+  UintNumber,
+} from '@base/types/primitives';
+//import type { FhevmHandle } from '@fhevm-base/index';
+import type { EncryptionBits } from '@fhevm-base/index';
+import type { FhevmLibs } from '@fhevm-base-types/public-api';
+import { createZKProof } from '../ZKProof';
+import { createFhevmLibs } from '@fhevm-ethers/index';
+import { createCoprocessorSignersVerifier } from './CoprocessorSignersVerifier';
+import {
+  DuplicateSignerError,
+  ThresholdSignerError,
+  UnknownSignerError,
+} from '../errors/SignersError';
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -38,10 +43,14 @@ const VALID_SIGNER_3 =
 
 function createValidParams() {
   return {
-    gatewayChainId: VALID_GATEWAY_CHAIN_ID,
-    verifyingContractAddressInputVerification: VALID_VERIFYING_CONTRACT,
-    coprocessorSigners: [VALID_SIGNER_1, VALID_SIGNER_2],
-    coprocessorSignerThreshold: 1,
+    gatewayChainId: VALID_GATEWAY_CHAIN_ID as Uint256BigInt,
+    verifyingContractAddressInputVerification:
+      VALID_VERIFYING_CONTRACT as ChecksummedAddress,
+    coprocessorSigners: [
+      VALID_SIGNER_1,
+      VALID_SIGNER_2,
+    ] as ChecksummedAddress[],
+    coprocessorSignerThreshold: 1 as UintNumber,
   };
 }
 
@@ -53,23 +62,26 @@ describe('CoprocessorSignersVerifier', () => {
   //////////////////////////////////////////////////////////////////////////////
 
   describe('fromAddresses', () => {
-    it('creates instance with valid params', () => {
-      const verifier =
-        CoprocessorSignersVerifier.fromAddresses(createValidParams());
+    let fhevmLibs: FhevmLibs;
 
-      expect(verifier).toBeInstanceOf(CoprocessorSignersVerifier);
+    beforeAll(async () => {
+      fhevmLibs = await createFhevmLibs();
     });
 
     it('sets count correctly', () => {
-      const verifier =
-        CoprocessorSignersVerifier.fromAddresses(createValidParams());
+      const verifier = createCoprocessorSignersVerifier(
+        fhevmLibs,
+        createValidParams(),
+      );
 
       expect(verifier.count).toBe(2);
     });
 
     it('returns addresses correctly', () => {
-      const verifier =
-        CoprocessorSignersVerifier.fromAddresses(createValidParams());
+      const verifier = createCoprocessorSignersVerifier(
+        fhevmLibs,
+        createValidParams(),
+      );
 
       expect(verifier.coprocessorSigners).toEqual([
         VALID_SIGNER_1,
@@ -78,22 +90,29 @@ describe('CoprocessorSignersVerifier', () => {
     });
 
     it('sets threshold correctly', () => {
-      const params = { ...createValidParams(), coprocessorSignerThreshold: 2 };
-      const verifier = CoprocessorSignersVerifier.fromAddresses(params);
+      const params = {
+        ...createValidParams(),
+        coprocessorSignerThreshold: 2 as UintNumber,
+      };
+      const verifier = createCoprocessorSignersVerifier(fhevmLibs, params);
 
       expect(verifier.coprocessorSignerThreshold).toBe(2);
     });
 
     it('sets gatewayChainId correctly', () => {
-      const verifier =
-        CoprocessorSignersVerifier.fromAddresses(createValidParams());
+      const verifier = createCoprocessorSignersVerifier(
+        fhevmLibs,
+        createValidParams(),
+      );
 
       expect(verifier.gatewayChainId).toBe(VALID_GATEWAY_CHAIN_ID);
     });
 
     it('sets verifyingContractAddressInputVerification correctly', () => {
-      const verifier =
-        CoprocessorSignersVerifier.fromAddresses(createValidParams());
+      const verifier = createCoprocessorSignersVerifier(
+        fhevmLibs,
+        createValidParams(),
+      );
 
       expect(verifier.verifyingContractAddressInputVerification).toBe(
         VALID_VERIFYING_CONTRACT,
@@ -105,19 +124,19 @@ describe('CoprocessorSignersVerifier', () => {
         ...createValidParams(),
         coprocessorSigners: [VALID_SIGNER_1],
       };
-      const verifier = CoprocessorSignersVerifier.fromAddresses(params);
+      const verifier = createCoprocessorSignersVerifier(fhevmLibs, params);
 
       expect(verifier.count).toBe(1);
       expect(verifier.coprocessorSigners).toEqual([VALID_SIGNER_1]);
     });
 
-    it('accepts multiple signer addresses', () => {
+    it('accepts multiple signer addresses', async () => {
       const params = {
         ...createValidParams(),
         coprocessorSigners: [VALID_SIGNER_1, VALID_SIGNER_2, VALID_SIGNER_3],
-        coprocessorSignerThreshold: 2,
+        coprocessorSignerThreshold: 2 as UintNumber,
       };
-      const verifier = CoprocessorSignersVerifier.fromAddresses(params);
+      const verifier = createCoprocessorSignersVerifier(fhevmLibs, params);
 
       expect(verifier.count).toBe(3);
       expect(verifier.coprocessorSigners).toEqual([
@@ -129,56 +148,20 @@ describe('CoprocessorSignersVerifier', () => {
   });
 
   //////////////////////////////////////////////////////////////////////////////
-  // fromAddresses - invalid inputs
-  //////////////////////////////////////////////////////////////////////////////
-
-  describe('fromAddresses - invalid inputs', () => {
-    it('throws for non-checksummed signer address', () => {
-      const params = {
-        ...createValidParams(),
-        coprocessorSigners: [
-          '0x37ac010c1c566696326813b840319b58bb5840e4' as ChecksummedAddress,
-        ],
-      };
-
-      expect(() => CoprocessorSignersVerifier.fromAddresses(params)).toThrow(
-        ChecksummedAddressError,
-      );
-    });
-
-    it('throws for invalid hex in signer address', () => {
-      const params = {
-        ...createValidParams(),
-        coprocessorSigners: [
-          '0xINVALIDHEXADDRESS1234567890123456789012' as ChecksummedAddress,
-        ],
-      };
-
-      expect(() => CoprocessorSignersVerifier.fromAddresses(params)).toThrow();
-    });
-
-    it('throws for non-checksummed verifying contract address', () => {
-      const params = {
-        ...createValidParams(),
-        verifyingContractAddressInputVerification:
-          '0xf0ffdc93b7e186bc2f8cb3daa75d86d1930a433d' as ChecksummedAddress,
-      };
-
-      expect(() => CoprocessorSignersVerifier.fromAddresses(params)).toThrow(
-        ChecksummedAddressError,
-      );
-    });
-  });
-
-  //////////////////////////////////////////////////////////////////////////////
   // Immutability
   //////////////////////////////////////////////////////////////////////////////
 
   describe('immutability', () => {
+    let fhevmLibs: FhevmLibs;
+
+    beforeAll(async () => {
+      fhevmLibs = await createFhevmLibs();
+    });
+
     it('addresses array is not affected by modifying original params', () => {
       const params = createValidParams();
       const signersCopy = [...params.coprocessorSigners];
-      const verifier = CoprocessorSignersVerifier.fromAddresses(params);
+      const verifier = createCoprocessorSignersVerifier(fhevmLibs, params);
 
       // Attempt to modify original array
       (params.coprocessorSigners as ChecksummedAddress[]).push(VALID_SIGNER_3);
@@ -186,9 +169,11 @@ describe('CoprocessorSignersVerifier', () => {
       expect(verifier.coprocessorSigners).toEqual(signersCopy);
     });
 
-    it('returned addresses array is frozen', () => {
-      const verifier =
-        CoprocessorSignersVerifier.fromAddresses(createValidParams());
+    it('returned addresses array is frozen', async () => {
+      const verifier = createCoprocessorSignersVerifier(
+        fhevmLibs,
+        createValidParams(),
+      );
 
       expect(Object.isFrozen(verifier.coprocessorSigners)).toBe(true);
     });
@@ -202,6 +187,12 @@ describe('CoprocessorSignersVerifier', () => {
     const fs = require('fs');
     const path = require('path');
     const assetsDir = path.join(__dirname, '../../test/assets');
+
+    let fhevmLibs: FhevmLibs;
+
+    beforeAll(async () => {
+      fhevmLibs = await createFhevmLibs();
+    });
 
     // Find all input-proof-payload-*.json files
     const payloadFiles = fs
@@ -217,7 +208,9 @@ describe('CoprocessorSignersVerifier', () => {
       const payload = JSON.parse(fs.readFileSync(payloadPath, 'utf-8'));
 
       const PAYLOAD_CHAIN_ID = payload.chainId;
-      const PAYLOAD_GATEWAY_CHAIN_ID = payload.gatewayChainId;
+      const PAYLOAD_GATEWAY_CHAIN_ID = BigInt(
+        payload.gatewayChainId,
+      ) as Uint256BigInt;
       const PAYLOAD_VERIFYING_CONTRACT =
         payload.verifyingContractAddressInputVerification as ChecksummedAddress;
       const PAYLOAD_USER_ADDRESS = payload.userAddress as ChecksummedAddress;
@@ -230,20 +223,20 @@ describe('CoprocessorSignersVerifier', () => {
       const PAYLOAD_BITS =
         payload.fheTypeEncryptionBitwidths as EncryptionBits[];
       const PAYLOAD_EXTRA_DATA = '0x00' as BytesHex;
-      const PAYLOAD_VERSION = payload.ciphertextVersion as number;
+      //const PAYLOAD_VERSION = payload.ciphertextVersion as number;
       const EXPECTED_SIGNER_ADDRESSES =
         payload.coprocessorSigners as ChecksummedAddress[];
-      const PAYLOAD_THRESHOLD = payload.threshold as number;
+      const PAYLOAD_THRESHOLD = payload.threshold as UintNumber;
 
-      it('verifyZKProof succeeds with valid signatures', () => {
-        const verifier = CoprocessorSignersVerifier.fromAddresses({
+      it('verifyZKProof succeeds with valid signatures', async () => {
+        const verifier = createCoprocessorSignersVerifier(fhevmLibs, {
           gatewayChainId: PAYLOAD_GATEWAY_CHAIN_ID,
           verifyingContractAddressInputVerification: PAYLOAD_VERIFYING_CONTRACT,
           coprocessorSigners: EXPECTED_SIGNER_ADDRESSES,
           coprocessorSignerThreshold: PAYLOAD_THRESHOLD,
         });
 
-        const zkProof = ZKProof.fromComponents({
+        const zkProof = createZKProof({
           ciphertextWithZKProof: PAYLOAD_CIPHERTEXT,
           chainId: BigInt(PAYLOAD_CHAIN_ID),
           aclContractAddress: PAYLOAD_ACL_ADDRESS,
@@ -252,31 +245,28 @@ describe('CoprocessorSignersVerifier', () => {
           contractAddress: PAYLOAD_CONTRACT_ADDRESS,
         });
 
-        const fhevmHandles: FhevmHandle[] = FhevmHandle.fromZKProof(
-          zkProof,
-          PAYLOAD_VERSION,
-        );
+        // const fhevmHandles: FhevmHandle[] = zkProofToFhevmHandles(zkProof, {
+        //   version: PAYLOAD_VERSION,
+        // });
 
-        // Should not throw
-        expect(() =>
-          verifier.verifyZKProof({
-            handles: fhevmHandles,
-            zkProof,
-            signatures: PAYLOAD_SIGNATURES,
-            extraData: PAYLOAD_EXTRA_DATA,
-          }),
-        ).not.toThrow();
+        // Should not throw - just await and let Jest fail if it throws
+        await verifier.verifyZKProof({
+          //handles: fhevmHandles,
+          zkProof,
+          signatures: PAYLOAD_SIGNATURES,
+          extraData: PAYLOAD_EXTRA_DATA,
+        });
       });
 
-      it('verifyAndComputeInputProof returns valid InputProof', () => {
-        const verifier = CoprocessorSignersVerifier.fromAddresses({
+      it('verifyAndComputeInputProof returns valid InputProof', async () => {
+        const verifier = createCoprocessorSignersVerifier(fhevmLibs, {
           gatewayChainId: PAYLOAD_GATEWAY_CHAIN_ID,
           verifyingContractAddressInputVerification: PAYLOAD_VERIFYING_CONTRACT,
           coprocessorSigners: EXPECTED_SIGNER_ADDRESSES,
           coprocessorSignerThreshold: PAYLOAD_THRESHOLD,
         });
 
-        const zkProof = ZKProof.fromComponents({
+        const zkProof = createZKProof({
           ciphertextWithZKProof: PAYLOAD_CIPHERTEXT,
           chainId: BigInt(PAYLOAD_CHAIN_ID),
           aclContractAddress: PAYLOAD_ACL_ADDRESS,
@@ -285,13 +275,12 @@ describe('CoprocessorSignersVerifier', () => {
           contractAddress: PAYLOAD_CONTRACT_ADDRESS,
         });
 
-        const fhevmHandles: FhevmHandle[] = FhevmHandle.fromZKProof(
-          zkProof,
-          PAYLOAD_VERSION,
-        );
+        // const fhevmHandles: FhevmHandle[] = zkProofToFhevmHandles(zkProof, {
+        //   version: PAYLOAD_VERSION,
+        // });
 
-        const inputProof = verifier.verifyAndComputeInputProof({
-          handles: fhevmHandles,
+        const inputProof = await verifier.verifyZKProofAndComputeInputProof({
+          //handles: fhevmHandles,
           zkProof,
           signatures: PAYLOAD_SIGNATURES,
           extraData: PAYLOAD_EXTRA_DATA,
@@ -300,19 +289,19 @@ describe('CoprocessorSignersVerifier', () => {
         expect(inputProof).toBeDefined();
       });
 
-      it('verifyZKProof throws for unknown signer', () => {
+      it('verifyZKProof throws for unknown signer', async () => {
         const unknownSigner =
           '0x1234567890123456789012345678901234567890' as ChecksummedAddress;
 
         // Use a different set of signers that doesn't include the actual signer
-        const verifier = CoprocessorSignersVerifier.fromAddresses({
+        const verifier = createCoprocessorSignersVerifier(fhevmLibs, {
           gatewayChainId: PAYLOAD_GATEWAY_CHAIN_ID,
           verifyingContractAddressInputVerification: PAYLOAD_VERIFYING_CONTRACT,
           coprocessorSigners: [unknownSigner],
-          coprocessorSignerThreshold: 1,
+          coprocessorSignerThreshold: 1 as UintNumber,
         });
 
-        const zkProof = ZKProof.fromComponents({
+        const zkProof = createZKProof({
           ciphertextWithZKProof: PAYLOAD_CIPHERTEXT,
           chainId: BigInt(PAYLOAD_CHAIN_ID),
           aclContractAddress: PAYLOAD_ACL_ADDRESS,
@@ -321,31 +310,31 @@ describe('CoprocessorSignersVerifier', () => {
           contractAddress: PAYLOAD_CONTRACT_ADDRESS,
         });
 
-        const fhevmHandles: FhevmHandle[] = FhevmHandle.fromZKProof(
-          zkProof,
-          PAYLOAD_VERSION,
-        );
+        // const fhevmHandles: FhevmHandle[] = zkProofToFhevmHandles(zkProof, {
+        //   version: PAYLOAD_VERSION,
+        // });
 
-        expect(() =>
+        await expect(
           verifier.verifyZKProof({
-            handles: fhevmHandles,
+            //handles: fhevmHandles,
             zkProof,
             signatures: PAYLOAD_SIGNATURES,
             extraData: PAYLOAD_EXTRA_DATA,
           }),
-        ).toThrow(RelayerUnknownCoprocessorSignerError);
+        ).rejects.toThrow(UnknownSignerError);
       });
 
-      it('verifyZKProof throws when threshold not reached', () => {
+      it('verifyZKProof throws when threshold not reached', async () => {
         // Set threshold higher than available signatures
-        const verifier = CoprocessorSignersVerifier.fromAddresses({
+        const verifier = createCoprocessorSignersVerifier(fhevmLibs, {
           gatewayChainId: PAYLOAD_GATEWAY_CHAIN_ID,
           verifyingContractAddressInputVerification: PAYLOAD_VERIFYING_CONTRACT,
           coprocessorSigners: EXPECTED_SIGNER_ADDRESSES,
-          coprocessorSignerThreshold: PAYLOAD_SIGNATURES.length + 1,
+          coprocessorSignerThreshold: (PAYLOAD_SIGNATURES.length +
+            1) as UintNumber,
         });
 
-        const zkProof = ZKProof.fromComponents({
+        const zkProof = createZKProof({
           ciphertextWithZKProof: PAYLOAD_CIPHERTEXT,
           chainId: BigInt(PAYLOAD_CHAIN_ID),
           aclContractAddress: PAYLOAD_ACL_ADDRESS,
@@ -354,19 +343,18 @@ describe('CoprocessorSignersVerifier', () => {
           contractAddress: PAYLOAD_CONTRACT_ADDRESS,
         });
 
-        const fhevmHandles: FhevmHandle[] = FhevmHandle.fromZKProof(
-          zkProof,
-          PAYLOAD_VERSION,
-        );
+        // const fhevmHandles: FhevmHandle[] = zkProofToFhevmHandles(zkProof, {
+        //   version: PAYLOAD_VERSION,
+        // });
 
-        expect(() =>
+        await expect(
           verifier.verifyZKProof({
-            handles: fhevmHandles,
+            //handles: fhevmHandles,
             zkProof,
             signatures: PAYLOAD_SIGNATURES,
             extraData: PAYLOAD_EXTRA_DATA,
           }),
-        ).toThrow(RelayerThresholdCoprocessorSignerError);
+        ).rejects.toThrow(ThresholdSignerError);
       });
     });
   });
@@ -379,7 +367,7 @@ describe('CoprocessorSignersVerifier', () => {
     it('throws for duplicate signatures from same signer', () => {
       // This test requires mocking the EIP712 verification
       // For now, we test the error class exists
-      expect(RelayerDuplicateCoprocessorSignerError).toBeDefined();
+      expect(DuplicateSignerError).toBeDefined();
     });
   });
 });

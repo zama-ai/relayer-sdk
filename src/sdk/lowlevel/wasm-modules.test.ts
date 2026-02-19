@@ -5,6 +5,7 @@ import type { TFHEType, TKMSType } from './public-api';
 // Jest Command line
 // =================
 // npx jest --colors --passWithNoTests ./src/sdk/lowlevel/wasm-modules.test.ts
+// npx jest --colors --passWithNoTests ./src/sdk/lowlevel/wasm-modules.test.ts --testNamePattern=xxx
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -16,22 +17,22 @@ import type { TFHEType, TKMSType } from './public-api';
 // Mock TFHE module
 function createMockTFHE(): TFHEType {
   return {
-    TfheCompactPublicKey: {
+    TfheCompactPublicKey: Object.assign(jest.fn(), {
       safe_deserialize: jest.fn(),
-    },
-    CompactPkeCrs: {
+    }),
+    CompactPkeCrs: Object.assign(jest.fn(), {
       safe_deserialize: jest.fn(),
-    },
-    CompactCiphertextList: {
+    }),
+    CompactCiphertextList: Object.assign(jest.fn(), {
       builder: jest.fn(),
-    },
+    }),
     ZkComputeLoad: {
-      Verify: 'verify-value',
-      Proof: 'proof-value',
+      Verify: 42,
+      Proof: 43,
     },
-    ProvenCompactCiphertextList: {
+    ProvenCompactCiphertextList: Object.assign(jest.fn(), {
       safe_deserialize: jest.fn(),
-    },
+    }),
     init_panic_hook: jest.fn(),
   } as unknown as TFHEType;
 }
@@ -71,7 +72,7 @@ describe('TFHEModule', () => {
       expect(TFHE.isMockMode).toBe(false);
     });
 
-    it('should initialize with init()', async () => {
+    it('xxx should initialize with init()', async () => {
       const { TFHE } = await import('./wasm-modules');
       const mockTFHE = createMockTFHE();
 
@@ -113,13 +114,13 @@ describe('TFHEModule', () => {
       const { TFHE } = await import('./wasm-modules');
       const mockTFHE1 = createMockTFHE();
       const mockTFHE2 = createMockTFHE();
-      (mockTFHE2.ZkComputeLoad as { Verify: string }).Verify = 'new-verify';
+      (mockTFHE2.ZkComputeLoad as { Verify: number }).Verify = 123;
 
       TFHE.initMock(mockTFHE1);
-      expect(TFHE.ZkComputeLoadVerify).toBe('verify-value');
+      expect(TFHE.ZkComputeLoadVerify).toBe(42);
 
       TFHE.initMock(mockTFHE2);
-      expect(TFHE.ZkComputeLoadVerify).toBe('verify-value');
+      expect(TFHE.ZkComputeLoadVerify).toBe(42);
     });
 
     it('should silently ignore initMock() after production init()', async () => {
@@ -207,10 +208,10 @@ describe('TFHEModule', () => {
       TFHE.initMock(mockTFHE);
 
       // Attempt to tamper with the original object after init
-      (mockTFHE.ZkComputeLoad as { Verify: string }).Verify = 'tampered';
+      (mockTFHE.ZkComputeLoad as { Verify: number }).Verify = 123;
 
       // The captured value should remain unchanged
-      expect(TFHE.ZkComputeLoadVerify).toBe('verify-value');
+      expect(TFHE.ZkComputeLoadVerify).toBe(42);
     });
   });
 });

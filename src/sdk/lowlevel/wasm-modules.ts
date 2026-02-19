@@ -7,16 +7,18 @@ const SILENT = true;
 // TFHEModule
 ////////////////////////////////////////////////////////////////////////////////
 
+const TFHE_BRAND = Symbol('TFHEModule.brand');
+
 class TFHEModule {
+  readonly #brand: symbol = TFHE_BRAND;
+
   #default: TFHEType['default'] | null = null;
   #init_panic_hook: TFHEType['init_panic_hook'] | null = null;
   #initThreadPool: TFHEType['initThreadPool'] | null = null;
   #TfheCompactPublicKey: TFHEType['TfheCompactPublicKey'] | null = null;
   #CompactPkeCrs: TFHEType['CompactPkeCrs'] | null = null;
   #CompactCiphertextList: TFHEType['CompactCiphertextList'] | null = null;
-  // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
   #ZkComputeLoadVerify: TFHEType['ZkComputeLoad']['Verify'] | null = null;
-  // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
   #ZkComputeLoadProof: TFHEType['ZkComputeLoad']['Proof'] | null = null;
   #ProvenCompactCiphertextList: TFHEType['ProvenCompactCiphertextList'] | null =
     null;
@@ -77,6 +79,36 @@ class TFHEModule {
   }
 
   #capture(tfhe: TFHEType): void {
+    const requiredFunctions: Array<keyof TFHEType> = [
+      //'default',
+      'init_panic_hook',
+      'TfheCompactPublicKey',
+      'CompactPkeCrs',
+      'CompactCiphertextList',
+      'ProvenCompactCiphertextList',
+    ];
+    for (const fn of requiredFunctions) {
+      if (typeof tfhe[fn] !== 'function') {
+        throw new Error(
+          `Invalid TFHE module: ${fn} is not a function/class type=${typeof tfhe[fn]}`,
+        );
+      }
+    }
+    // ZkComputeLoad is an object with nested properties
+    if (typeof tfhe.ZkComputeLoad !== 'object' || tfhe.ZkComputeLoad === null) {
+      throw new Error('Invalid TFHE module: Missing ZkComputeLoad');
+    }
+    if (typeof tfhe.ZkComputeLoad.Verify !== 'number') {
+      throw new Error(
+        `Invalid TFHE module: Invalid ZkComputeLoad.Verify. Expecting 'number'. Got '${Object.prototype.toString.call(tfhe.ZkComputeLoad.Verify)}'.`,
+      );
+    }
+    if (typeof tfhe.ZkComputeLoad.Proof !== 'number') {
+      throw new Error(
+        `Invalid TFHE module: Invalid ZkComputeLoad.Proof. Expecting 'number'. Got '${Object.prototype.toString.call(tfhe.ZkComputeLoad.Proof)}'.`,
+      );
+    }
+
     this.#default = tfhe.default;
     this.#TfheCompactPublicKey = tfhe.TfheCompactPublicKey;
     this.#CompactPkeCrs = tfhe.CompactPkeCrs;
@@ -146,13 +178,25 @@ class TFHEModule {
   get isMockMode(): boolean {
     return this.#isMockMode;
   }
+
+  static isValid(value: unknown): value is TFHEModule {
+    return (
+      typeof value === 'object' &&
+      value !== null &&
+      #brand in value &&
+      value.#brand === TFHE_BRAND
+    );
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // TKMSModule
 ////////////////////////////////////////////////////////////////////////////////
 
+const TKMS_BRAND = Symbol('TKMSModule.brand');
+
 class TKMSModule {
+  readonly #brand: symbol = TKMS_BRAND;
   #default: TKMSType['default'] | null = null;
   #u8vecToMlKemPkePk: TKMSType['u8vec_to_ml_kem_pke_pk'] | null = null;
   #u8vecToMlKemPkeSk: TKMSType['u8vec_to_ml_kem_pke_sk'] | null = null;
@@ -222,6 +266,24 @@ class TKMSModule {
   }
 
   #capture(tkms: TKMSType): void {
+    const requiredFunctions: Array<keyof TKMSType> = [
+      //'default',
+      'u8vec_to_ml_kem_pke_pk',
+      'u8vec_to_ml_kem_pke_sk',
+      'new_client',
+      'new_server_id_addr',
+      'process_user_decryption_resp_from_js',
+      'ml_kem_pke_keygen',
+      'ml_kem_pke_pk_to_u8vec',
+      'ml_kem_pke_sk_to_u8vec',
+      'ml_kem_pke_get_pk',
+    ];
+    for (const fn of requiredFunctions) {
+      if (typeof tkms[fn] !== 'function') {
+        throw new Error(`Invalid TKMS module: ${fn} is not a function`);
+      }
+    }
+
     this.#default = tkms.default;
     // Bind methods to preserve 'this' context when called separately
     this.#u8vecToMlKemPkePk = tkms.u8vec_to_ml_kem_pke_pk.bind(tkms);
@@ -297,14 +359,26 @@ class TKMSModule {
   get isMockMode(): boolean {
     return this.#isMockMode;
   }
+
+  static isValid(value: unknown): value is TKMSModule {
+    return (
+      typeof value === 'object' &&
+      value !== null &&
+      #brand in value &&
+      value.#brand === TKMS_BRAND
+    );
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // Singleton Instances
 ////////////////////////////////////////////////////////////////////////////////
 
-export const TFHE = new TFHEModule();
-export const TKMS = new TKMSModule();
+const tfheModule = new TFHEModule();
+const tkmsModule = new TKMSModule();
+
+export const TFHE = Object.freeze(tfheModule);
+export const TKMS = Object.freeze(tkmsModule);
 
 ////////////////////////////////////////////////////////////////////////////////
 // Helpers

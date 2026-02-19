@@ -1,65 +1,71 @@
-import type { Prettify } from '@base/types/utils';
 import type {
-  Bytes32,
   Bytes32Hex,
+  Bytes65Hex,
   BytesHex,
   ChecksummedAddress,
+  Uint256BigInt,
+  UintBigInt,
 } from '@base/types/primitives';
+import type { Prettify } from '@base/types/utils';
+import type { EIP712Lib } from '@fhevm-base-types/public-api';
+import type {
+  CoprocessorEIP712,
+  CoprocessorEIP712Domain,
+  CoprocessorEIP712Message,
+  CoprocessorEIP712Types,
+  FhevmHandle,
+  FhevmHandleLike,
+} from '@fhevm-base/types/public-api';
+import type { ZKProof } from '../types/public-api';
 
 ////////////////////////////////////////////////////////////////////////////////
 // CoprocessorEIP712 Types
 ////////////////////////////////////////////////////////////////////////////////
 
-export interface ICoprocessorSignersVerifier extends ICoprocessorEIP712 {
+interface CoprocessorSignersVerifier {
+  readonly count: number;
   readonly coprocessorSigners: readonly ChecksummedAddress[];
   readonly coprocessorSignerThreshold: number;
-}
-
-export interface ICoprocessorEIP712 {
-  readonly gatewayChainId: bigint;
+  readonly gatewayChainId: Uint256BigInt;
   readonly verifyingContractAddressInputVerification: ChecksummedAddress;
+
+  verifyFhevmHandles(params: {
+    readonly handles: readonly FhevmHandle[];
+    readonly signatures: readonly Bytes65Hex[];
+    readonly extraData: BytesHex;
+    readonly userAddress: ChecksummedAddress;
+    readonly contractAddress: ChecksummedAddress;
+    readonly chainId: UintBigInt;
+  }): Promise<void>;
+
+  verifyZKProof(params: {
+    readonly zkProof: ZKProof;
+    readonly signatures: readonly Bytes65Hex[];
+    readonly extraData: BytesHex;
+  }): Promise<void>;
+
+  verifyZKProofAndComputeInputProof(params: {
+    readonly zkProof: ZKProof;
+    readonly signatures: readonly Bytes65Hex[];
+    readonly extraData: BytesHex;
+  }): Promise<InputProof>;
 }
 
-export type CoprocessorEIP712DomainType = {
-  readonly name: 'InputVerification';
-  readonly version: '1';
-  readonly chainId: bigint;
-  readonly verifyingContract: ChecksummedAddress;
-};
-
-export type CoprocessorEIP712MessageType = Readonly<{
-  ctHandles: readonly Bytes32Hex[] | readonly Bytes32[];
-  userAddress: ChecksummedAddress;
-  contractAddress: ChecksummedAddress;
-  contractChainId: bigint;
-  extraData: BytesHex;
-}>;
-
-export type CoprocessorEIP712MessageHexType = Readonly<{
-  ctHandles: readonly Bytes32Hex[];
-  userAddress: ChecksummedAddress;
-  contractAddress: ChecksummedAddress;
-  contractChainId: bigint;
-  extraData: BytesHex;
-}>;
-
-export type CoprocessorEIP712TypesType = {
-  readonly CiphertextVerification: readonly [
-    { readonly name: 'ctHandles'; readonly type: 'bytes32[]' },
-    { readonly name: 'userAddress'; readonly type: 'address' },
-    { readonly name: 'contractAddress'; readonly type: 'address' },
-    { readonly name: 'contractChainId'; readonly type: 'uint256' },
-    { readonly name: 'extraData'; readonly type: 'bytes' },
-  ];
-};
-
-export type CoprocessorEIP712Type = Prettify<{
-  readonly domain: CoprocessorEIP712DomainType;
-  readonly types: CoprocessorEIP712TypesType;
-  readonly message: CoprocessorEIP712MessageType;
-}>;
-
-export type InputProofBytesType = Readonly<{
-  handles: Uint8Array[];
-  inputProof: Uint8Array;
-}>;
+export interface CoprocessorEIP712Builder {
+  readonly gatewayChainId: Uint256BigInt;
+  readonly verifyingContractAddressInputVerification: ChecksummedAddress;
+  readonly types: CoprocessorEIP712Types;
+  readonly #domain: CoprocessorEIP712Domain;
+  create(
+    params: Prettify<
+      Omit<CoprocessorEIP712Message, 'ctHandles'> & {
+        readonly ctHandles: readonly FhevmHandleLike[];
+      }
+    >,
+  ): CoprocessorEIP712;
+  verify(params: {
+    readonly signatures: readonly Bytes65Hex[];
+    readonly message: CoprocessorEIP712Message;
+    readonly verifier: EIP712Lib;
+  }): Promise<ChecksummedAddress[]>;
+}

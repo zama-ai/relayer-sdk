@@ -25,8 +25,8 @@ const instance = await createInstance({
   chainId: 11155111,
   // Gateway chain id
   gatewayChainId: 10901,
-  // RPC provider to host chain (or Eip1193Provider)
-  network: 'https://ethereum-sepolia-rpc.publicnode.com',
+  // Optional RPC provider to host chain
+  network: 'https://eth-sepolia.public.blastapi.io',
   // Relayer URL
   relayerUrl: 'https://relayer.testnet.zama.org',
 });
@@ -37,75 +37,13 @@ or the even simpler:
 ```ts
 import { createInstance, SepoliaConfig } from '@zama-fhe/relayer-sdk';
 
-const instance = await createInstance({
-  ...SepoliaConfig,
-  network: 'https://ethereum-sepolia-rpc.publicnode.com',
-});
+const instance = await createInstance(SepoliaConfig);
 ```
-
-## Sepolia
 
 The information regarding the configuration of Sepolia's FHEVM and associated Relayer maintained by Zama can be found in the `SepoliaConfig` object or in the [contract addresses page](https://docs.zama.ai/protocol/solidity-guides/smart-contract/configure/contract_addresses).
 The `gatewayChainId` is `10901`.
 The `chainId` is the chain-id of the FHEVM chain, so for Sepolia it would be `11155111`.
 
-## Mainnet
-
-The information regarding the configuration of Mainnet's FHEVM and associated Relayer maintained by Zama can be found in the `MainnetConfig` object or in the [contract addresses page](https://docs.zama.ai/protocol/solidity-guides/smart-contract/configure/contract_addresses).
-The `gatewayChainId` is `261131`.
-The `chainId` is the chain-id of the FHEVM chain, so for Mainnet it would be `1`.
-
-{% hint style="warning" %}
-**Zama API Key Required**: Access to the Mainnet Relayer requires a Zama API key.
-{% endhint %}
-
-```ts
-import { createInstance, MainnetConfig } from '@zama-fhe/relayer-sdk';
-
-const ZAMA_FHEVM_API_KEY = process.env.ZAMA_FHEVM_API_KEY; // Your Zama API key
-
-const instance = await createInstance({
-  ...MainnetConfig,
-  network: 'https://ethereum-rpc.publicnode.com', // or your preferred Ethereum mainnet RPC
-  auth: { __type: 'ApiKeyHeader', value: ZAMA_FHEVM_API_KEY },
-});
-```
-
 {% hint style="info" %}
-For more information on the Relayer's part, please refer to [the Relayer SDK documentation](https://docs.zama.org/protocol/relayer-sdk-guides).
-{% endhint %}
-
-# Network Configuration
-
-The `network` property in `FhevmInstanceConfig` is required and specifies how the SDK connects to the FHEVM host chain. It accepts two types of values:
-
-## RPC URL String
-
-A valid RPC endpoint URL as a string:
-
-```ts
-import { createInstance, SepoliaConfig } from '@zama-fhe/relayer-sdk';
-
-const instance = await createInstance({
-  ...SepoliaConfig,
-  network: 'https://ethereum-sepolia-rpc.publicnode.com',
-});
-```
-
-## Eip1193Provider Instance
-
-An object implementing the `ethers.Eip1193Provider` interface. This is useful when integrating with browser wallets like MetaMask:
-
-```ts
-import { createInstance, SepoliaConfig } from '@zama-fhe/relayer-sdk';
-
-// Using window.ethereum from MetaMask or other browser wallets
-const instance = await createInstance({
-  ...SepoliaConfig,
-  network: window.ethereum, // Eip1193Provider
-});
-```
-
-{% hint style="warning" %}
-The `network` property is mandatory. If omitted or invalid, the SDK will throw an error.
+For more information on the Relayer's part in the overall architecture please refer to [the Relayer's page in the architecture documentation](https://docs.zama.ai/protocol/protocol/overview/relayer_oracle).
 {% endhint %}

@@ -1,7 +1,16 @@
 import { AbiCoder } from 'ethers';
-import type { Bytes32Hex, Bytes65Hex, BytesHex } from '@base/types/primitives';
-import { FhevmHandle } from '@sdk/FhevmHandle';
-import { PublicDecryptionProof } from './PublicDecryptionProof';
+import type {
+  Bytes21Hex,
+  Bytes65Hex,
+  BytesHex,
+  Uint64BigInt,
+  Uint8Number,
+} from '@base/types/primitives';
+import type { FhevmHandle } from '@fhevm-base/types/public-api';
+import { buildFhevmHandle } from '@fhevm-base/FhevmHandle';
+import { createPublicDecryptionProof } from './PublicDecryptionProof';
+import { createFhevmLibs } from '@fhevm-ethers/index';
+import { FhevmLibs } from '@fhevm-base-types/public-api';
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -14,14 +23,13 @@ import { PublicDecryptionProof } from './PublicDecryptionProof';
 // Helper to create FhevmHandle with specific fheTypeId
 function createHandle(fheTypeId: number, index: number): FhevmHandle {
   // Create a valid 21-byte hash (42 hex chars + 0x prefix = 43 chars)
-  const hash21 = `0x${'ab'.repeat(21).slice(0, 42)}` as `0x${string}`;
-  return FhevmHandle.fromComponents({
+  const hash21 = `0x${'ab'.repeat(21).slice(0, 42)}` as Bytes21Hex;
+  return buildFhevmHandle({
     hash21,
-    chainId: 9000,
+    chainId: 9000n as Uint64BigInt,
     fheTypeId: fheTypeId as 0 | 2 | 3 | 4 | 5 | 6 | 7 | 8,
-    version: 0,
-    computed: false,
-    index,
+    version: 0 as Uint8Number,
+    index: index as Uint8Number,
   });
 }
 
@@ -32,6 +40,12 @@ function createSignature(seed: number): Bytes65Hex {
 }
 
 describe('PublicDecryptionProof', () => {
+  let fhevmLibs: FhevmLibs;
+
+  beforeAll(async () => {
+    fhevmLibs = await createFhevmLibs();
+  });
+
   describe('from() factory method', () => {
     it('should create proof with single ebool handle', () => {
       const handles = [createHandle(0, 0)]; // ebool
@@ -40,11 +54,12 @@ describe('PublicDecryptionProof', () => {
       const signatures = [createSignature(1)];
       const extraData = '0xabcd' as BytesHex;
 
-      const proof = PublicDecryptionProof.from({
+      const proof = createPublicDecryptionProof({
         orderedHandles: handles,
         orderedDecryptedResult,
         signatures,
         extraData,
+        abiEncoder: fhevmLibs.abiLib,
       });
 
       expect(proof.orderedHandles).toHaveLength(1);
@@ -60,11 +75,12 @@ describe('PublicDecryptionProof', () => {
       const signatures = [createSignature(1)];
       const extraData = '0x' as BytesHex;
 
-      const proof = PublicDecryptionProof.from({
+      const proof = createPublicDecryptionProof({
         orderedHandles: handles,
         orderedDecryptedResult,
         signatures,
         extraData,
+        abiEncoder: fhevmLibs.abiLib,
       });
 
       expect(proof.orderedClearValues[0]).toBe(42n);
@@ -81,11 +97,12 @@ describe('PublicDecryptionProof', () => {
       const signatures = [createSignature(1)];
       const extraData = '0x' as BytesHex;
 
-      const proof = PublicDecryptionProof.from({
+      const proof = createPublicDecryptionProof({
         orderedHandles: handles,
         orderedDecryptedResult,
         signatures,
         extraData,
+        abiEncoder: fhevmLibs.abiLib,
       });
 
       expect(proof.orderedClearValues[0]).toBe(bigValue);
@@ -102,11 +119,12 @@ describe('PublicDecryptionProof', () => {
       const signatures = [createSignature(1)];
       const extraData = '0x' as BytesHex;
 
-      const proof = PublicDecryptionProof.from({
+      const proof = createPublicDecryptionProof({
         orderedHandles: handles,
         orderedDecryptedResult,
         signatures,
         extraData,
+        abiEncoder: fhevmLibs.abiLib,
       });
 
       expect(proof.orderedClearValues[0]).toBe(address);
@@ -129,11 +147,12 @@ describe('PublicDecryptionProof', () => {
       const signatures = [createSignature(1), createSignature(2)];
       const extraData = '0xdeadbeef' as BytesHex;
 
-      const proof = PublicDecryptionProof.from({
+      const proof = createPublicDecryptionProof({
         orderedHandles: handles,
         orderedDecryptedResult,
         signatures,
         extraData,
+        abiEncoder: fhevmLibs.abiLib,
       });
 
       expect(proof.orderedHandles).toHaveLength(4);
@@ -153,11 +172,12 @@ describe('PublicDecryptionProof', () => {
       const extraData = '0x' as BytesHex;
 
       expect(() =>
-        PublicDecryptionProof.from({
+        createPublicDecryptionProof({
           orderedHandles: handles,
           orderedDecryptedResult,
           signatures,
           extraData,
+          abiEncoder: fhevmLibs.abiLib,
         }),
       ).toThrow(); // ethers throws BUFFER_OVERRUN before the length check
     });
@@ -171,11 +191,12 @@ describe('PublicDecryptionProof', () => {
       const signatures = [createSignature(0xaa), createSignature(0xbb)];
       const extraData = '0xcafe' as BytesHex;
 
-      const proof = PublicDecryptionProof.from({
+      const proof = createPublicDecryptionProof({
         orderedHandles: handles,
         orderedDecryptedResult,
         signatures,
         extraData,
+        abiEncoder: fhevmLibs.abiLib,
       });
 
       // Proof should start with number of signers (0x02)
@@ -194,11 +215,12 @@ describe('PublicDecryptionProof', () => {
       const signatures: Bytes65Hex[] = [];
       const extraData = '0x1234' as BytesHex;
 
-      const proof = PublicDecryptionProof.from({
+      const proof = createPublicDecryptionProof({
         orderedHandles: handles,
         orderedDecryptedResult,
         signatures,
         extraData,
+        abiEncoder: fhevmLibs.abiLib,
       });
 
       // Proof should start with 0x00 (0 signers)
@@ -212,11 +234,12 @@ describe('PublicDecryptionProof', () => {
       const coder = new AbiCoder();
       const orderedDecryptedResult = coder.encode(['uint8'], [10]) as BytesHex;
 
-      const proof = PublicDecryptionProof.from({
+      const proof = createPublicDecryptionProof({
         orderedHandles: handles,
         orderedDecryptedResult,
         signatures: [createSignature(1)],
         extraData: '0x' as BytesHex,
+        abiEncoder: fhevmLibs.abiLib,
       });
 
       expect(Object.isFrozen(proof.orderedHandles)).toBe(true);
@@ -227,11 +250,12 @@ describe('PublicDecryptionProof', () => {
       const coder = new AbiCoder();
       const orderedDecryptedResult = coder.encode(['uint8'], [10]) as BytesHex;
 
-      const proof = PublicDecryptionProof.from({
+      const proof = createPublicDecryptionProof({
         orderedHandles: handles,
         orderedDecryptedResult,
         signatures: [createSignature(1)],
         extraData: '0x' as BytesHex,
+        abiEncoder: fhevmLibs.abiLib,
       });
 
       expect(Object.isFrozen(proof.orderedClearValues)).toBe(true);
@@ -244,11 +268,12 @@ describe('PublicDecryptionProof', () => {
       const coder = new AbiCoder();
       const orderedDecryptedResult = coder.encode(['bool'], [true]) as BytesHex;
 
-      const proof = PublicDecryptionProof.from({
+      const proof = createPublicDecryptionProof({
         orderedHandles: handles,
         orderedDecryptedResult,
         signatures: [createSignature(1)],
         extraData: '0x' as BytesHex,
+        abiEncoder: fhevmLibs.abiLib,
       });
 
       // Decode the ABI encoded result
@@ -270,11 +295,12 @@ describe('PublicDecryptionProof', () => {
         [200, BigInt('9223372036854775807')],
       ) as BytesHex;
 
-      const proof = PublicDecryptionProof.from({
+      const proof = createPublicDecryptionProof({
         orderedHandles: handles,
         orderedDecryptedResult,
         signatures: [createSignature(1)],
         extraData: '0x' as BytesHex,
+        abiEncoder: fhevmLibs.abiLib,
       });
 
       const decoded = coder.decode(
@@ -294,11 +320,12 @@ describe('PublicDecryptionProof', () => {
         [address],
       ) as BytesHex;
 
-      const proof = PublicDecryptionProof.from({
+      const proof = createPublicDecryptionProof({
         orderedHandles: handles,
         orderedDecryptedResult,
         signatures: [createSignature(1)],
         extraData: '0x' as BytesHex,
+        abiEncoder: fhevmLibs.abiLib,
       });
 
       // Should be ABI encoded as uint256
@@ -317,11 +344,12 @@ describe('PublicDecryptionProof', () => {
         [false],
       ) as BytesHex;
 
-      const proof = PublicDecryptionProof.from({
+      const proof = createPublicDecryptionProof({
         orderedHandles: handles,
         orderedDecryptedResult,
         signatures: [createSignature(1)],
         extraData: '0x' as BytesHex,
+        abiEncoder: fhevmLibs.abiLib,
       });
 
       // Decode and verify it's 0
@@ -342,11 +370,12 @@ describe('PublicDecryptionProof', () => {
         [42, 999],
       ) as BytesHex;
 
-      const proof = PublicDecryptionProof.from({
+      const proof = createPublicDecryptionProof({
         orderedHandles: handles,
         orderedDecryptedResult,
         signatures: [createSignature(1)],
-        extraData: '0xbeef' as BytesHex,
+        extraData: '0x' as BytesHex,
+        abiEncoder: fhevmLibs.abiLib,
       });
 
       const results = proof.toPublicDecryptResults();
@@ -367,18 +396,19 @@ describe('PublicDecryptionProof', () => {
         [42, 999],
       ) as BytesHex;
 
-      const proof = PublicDecryptionProof.from({
+      const proof = createPublicDecryptionProof({
         orderedHandles: handles,
         orderedDecryptedResult,
         signatures: [createSignature(1)],
         extraData: '0x' as BytesHex,
+        abiEncoder: fhevmLibs.abiLib,
       });
 
       const results = proof.toPublicDecryptResults();
 
       // Check that each handle's bytes32hex maps to the correct clear value
-      const handle0Key = handles[0].toBytes32Hex() as Bytes32Hex;
-      const handle1Key = handles[1].toBytes32Hex() as Bytes32Hex;
+      const handle0Key = handles[0].bytes32Hex;
+      const handle1Key = handles[1].bytes32Hex;
 
       expect(results.clearValues[handle0Key]).toBe(42n);
       expect(results.clearValues[handle1Key]).toBe(999n);

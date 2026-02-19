@@ -1,0 +1,31 @@
+import type { RelayerErrorBaseParams } from './RelayerErrorBase';
+import type { RelayerFetchErrorBaseParams } from './RelayerFetchErrorBase';
+import type { Prettify } from '@base/types/utils';
+import { RelayerFetchErrorBase } from './RelayerFetchErrorBase';
+import { humanReadableOperation } from '../utils';
+
+////////////////////////////////////////////////////////////////////////////////
+// RelayerMaxRetryError
+////////////////////////////////////////////////////////////////////////////////
+
+export type RelayerMaxRetryErrorType = RelayerMaxRetryError & {
+  name: 'RelayerMaxRetryError';
+};
+
+export type RelayerMaxRetryErrorParams = Prettify<
+  Omit<RelayerFetchErrorBaseParams, keyof RelayerErrorBaseParams>
+>;
+
+/**
+ * The maximum number of retries is exceeded.
+ */
+export class RelayerMaxRetryError extends RelayerFetchErrorBase {
+  constructor(params: RelayerMaxRetryErrorParams) {
+    super({
+      ...params,
+      name: 'RelayerMaxRetryError',
+      message: `${humanReadableOperation(params.operation, true)}: Maximum polling retry limit exceeded (${params.retryCount} attempts)`,
+      details: `After ${params.retryCount} polling attempts, the retry limit was exceeded. The operation may still complete on the server - consider checking the result later.`,
+    });
+  }
+}

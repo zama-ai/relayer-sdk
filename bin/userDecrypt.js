@@ -13,17 +13,24 @@ export async function userDecrypt({
 }) {
   const { publicKey, publicParams } = await loadFhevmPublicKeyConfig(
     config,
-    zamaFhevmApiKey,
     options,
   );
 
   const instanceOptions = {
-    //...(options.verbose === true ? { debug: true } : {}),
+    ...(options.debug === true ? { debug: true } : {}),
     auth: { __type: 'ApiKeyHeader', value: zamaFhevmApiKey },
   };
 
   const timeout =
     options.timeout !== undefined ? Number(options.timeout) : undefined;
+  const fetchRetries =
+    options.fetchRetries !== undefined
+      ? Number(options.fetchRetries)
+      : undefined;
+  const fetchRetryDelayInMilliseconds =
+    options.fetchRetryDelay !== undefined
+      ? Number(options.fetchRetryDelay)
+      : undefined;
 
   try {
     const instance = await getInstance(
@@ -75,12 +82,15 @@ export async function userDecrypt({
       durationDays,
       {
         timeout,
+        fetchRetries,
+        fetchRetryDelayInMilliseconds,
         //signal: abortController.signal,
         onProgress: (args) => {
-          logCLI(
-            `[${args.type}] progress: ${args.step}/${args.totalSteps}`,
-            options,
-          );
+          let s = `[${config.name}/v${config.version}/user-decrypt - ${args.type}] jobId:${args.jobId} requestId:${args.requestId} retryCount:${args.retryCount}`;
+          if (args.retryAfterMs !== undefined) {
+            s += ` retryAfterMs:${args.retryAfterMs}`;
+          }
+          logCLI(s, options);
         },
         auth: { __type: 'ApiKeyHeader', value: zamaFhevmApiKey },
       },
@@ -90,16 +100,7 @@ export async function userDecrypt({
 
     return res;
   } catch (e) {
-    console.log('');
-    console.log('===================== ❌ ERROR ❌ ========================');
-    console.log(`[Error message]: '${e.message}'`);
-    console.log('');
-    console.log(`[Error log]:`);
-    console.log(e);
-    if (e.cause) {
-      console.log('[ERROR cause]:');
-      console.log(JSON.stringify(e.cause, null, 2));
-    }
-    console.log('========================================================');
+    logError('User Decrypt', e, options);
+    process.exit(1);
   }
 }

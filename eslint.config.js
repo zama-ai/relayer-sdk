@@ -2,9 +2,13 @@ import eslint from '@eslint/js';
 import tseslint from 'typescript-eslint';
 
 const targetFiles = [
-  'src/sdk/**/*.ts',
-  'src/relayer-provider/**/*.ts',
   'src/base/**/*.ts',
+  'src/fhevm-base/**/*.ts',
+  'src/fhevm-base-types/**/*.ts',
+  'src/sdk/**/*.ts',
+  'src/relayer/**/*.ts',
+  'src/ethers/**/*.ts',
+  'src/viem/**/*.ts',
 ];
 
 /** @type {import('typescript-eslint').ConfigArray} */
@@ -222,9 +226,13 @@ export default [
   // TypeScript declaration files (.d.ts) - relaxed rules
   {
     files: [
-      'src/sdk/**/*.d.ts',
-      'src/relayer-provider/**/*.d.ts',
       'src/base/**/*.d.ts',
+      'src/fhevm-base/**/*.d.ts',
+      'src/fhevm-base-types/**/*.d.ts',
+      'src/ethers/**/*.d.ts',
+      'src/viem/**/*.d.ts',
+      'src/sdk/**/*.d.ts',
+      'src/relayer/**/*.d.ts',
     ],
     rules: {
       '@typescript-eslint/consistent-type-definitions': 'off', // Allow both interface and type

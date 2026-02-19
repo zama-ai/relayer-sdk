@@ -1,5 +1,3 @@
-import { throwIfAborted } from './abort';
-
 /**
  * Creates an Error with name 'AbortError' for consistency with fetch abort behavior.
  * Preserves the original abort reason as the error's cause.
@@ -20,7 +18,7 @@ export function abortableSleep(
   signal?: AbortSignal,
 ): Promise<void> {
   // Check if already aborted before creating the Promise
-  throwIfAborted(signal);
+  signal?.throwIfAborted();
 
   return new Promise((resolve, reject) => {
     const timeoutId = setTimeout(resolve, ms);

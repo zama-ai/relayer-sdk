@@ -1,5 +1,5 @@
-import { InvalidPropertyError } from '../errors/InvalidPropertyError';
-import { InternalError } from '../errors/InternalError';
+import { InvalidPropertyError } from './errors/InvalidPropertyError';
+import { InternalError } from './errors/InternalError';
 import {
   ensure0x,
   removeSuffix,
@@ -10,7 +10,6 @@ import {
   isRecordStringProperty,
   assertRecordStringProperty,
   assertRecordStringArrayProperty,
-  assertRecordTimestampProperty,
   safeJSONstringify,
   isNonEmptyString,
 } from './string';
@@ -110,16 +109,16 @@ describe('string', () => {
 
   it('assertRecordStringProperty', () => {
     expect(() =>
-      assertRecordStringProperty({ foo: 'bar' }, 'foo', 'Obj'),
+      assertRecordStringProperty({ foo: 'bar' }, 'foo', 'Obj', {}),
     ).not.toThrow();
     expect(() =>
-      assertRecordStringProperty({ foo: '' }, 'foo', 'Obj'),
+      assertRecordStringProperty({ foo: '' }, 'foo', 'Obj', {}),
     ).not.toThrow();
 
     expect(() =>
-      assertRecordStringProperty({ foo: 123 }, 'foo', 'Obj'),
+      assertRecordStringProperty({ foo: 123 }, 'foo', 'Obj', {}),
     ).toThrow(InvalidPropertyError);
-    expect(() => assertRecordStringProperty({}, 'foo', 'Obj')).toThrow(
+    expect(() => assertRecordStringProperty({}, 'foo', 'Obj', {})).toThrow(
       InvalidPropertyError,
     );
   });
@@ -128,20 +127,27 @@ describe('string', () => {
 
   it('assertRecordStringProperty with expectedValue (string)', () => {
     expect(() =>
-      assertRecordStringProperty({ foo: 'bar' }, 'foo', 'Obj', 'bar'),
+      assertRecordStringProperty({ foo: 'bar' }, 'foo', 'Obj', {
+        expectedValue: 'bar',
+      }),
     ).not.toThrow();
 
     expect(() =>
-      assertRecordStringProperty({ foo: 'bar' }, 'foo', 'Obj', 'baz'),
-    ).toThrow(
-      new InvalidPropertyError({
-        objName: 'Obj',
-        property: 'foo',
-        expectedType: 'string',
+      assertRecordStringProperty({ foo: 'bar' }, 'foo', 'Obj', {
         expectedValue: 'baz',
-        type: 'string',
-        value: 'bar',
       }),
+    ).toThrow(
+      new InvalidPropertyError(
+        {
+          subject: 'Obj',
+          property: 'foo',
+          expectedType: 'string',
+          expectedValue: 'baz',
+          type: 'string',
+          value: 'bar',
+        },
+        {},
+      ),
     );
   });
 
@@ -149,23 +155,32 @@ describe('string', () => {
 
   it('assertRecordStringProperty with expectedValue (array)', () => {
     expect(() =>
-      assertRecordStringProperty({ foo: 'bar' }, 'foo', 'Obj', ['bar', 'baz']),
+      assertRecordStringProperty({ foo: 'bar' }, 'foo', 'Obj', {
+        expectedValue: ['bar', 'baz'],
+      }),
     ).not.toThrow();
     expect(() =>
-      assertRecordStringProperty({ foo: 'baz' }, 'foo', 'Obj', ['bar', 'baz']),
+      assertRecordStringProperty({ foo: 'baz' }, 'foo', 'Obj', {
+        expectedValue: ['bar', 'baz'],
+      }),
     ).not.toThrow();
 
     expect(() =>
-      assertRecordStringProperty({ foo: 'qux' }, 'foo', 'Obj', ['bar', 'baz']),
-    ).toThrow(
-      new InvalidPropertyError({
-        objName: 'Obj',
-        property: 'foo',
-        expectedType: 'string',
+      assertRecordStringProperty({ foo: 'qux' }, 'foo', 'Obj', {
         expectedValue: ['bar', 'baz'],
-        type: 'string',
-        value: 'qux',
       }),
+    ).toThrow(
+      new InvalidPropertyError(
+        {
+          subject: 'Obj',
+          property: 'foo',
+          expectedType: 'string',
+          expectedValue: ['bar', 'baz'],
+          type: 'string',
+          value: 'qux',
+        },
+        {},
+      ),
     );
   });
 
@@ -173,46 +188,43 @@ describe('string', () => {
 
   it('assertRecordStringArrayProperty', () => {
     expect(() =>
-      assertRecordStringArrayProperty({ foo: [] }, 'foo', 'Obj'),
+      assertRecordStringArrayProperty({ foo: [] }, 'foo', 'Obj', {}),
     ).not.toThrow();
     expect(() =>
-      assertRecordStringArrayProperty({ foo: ['a', 'b', 'c'] }, 'foo', 'Obj'),
-    ).not.toThrow();
-
-    expect(() =>
-      assertRecordStringArrayProperty({ foo: [1, 2, 3] }, 'foo', 'Obj'),
-    ).toThrow(InvalidPropertyError);
-    expect(() =>
-      assertRecordStringArrayProperty({ foo: ['a', 123, 'c'] }, 'foo', 'Obj'),
-    ).toThrow(InvalidPropertyError);
-    expect(() =>
-      assertRecordStringArrayProperty({ foo: 'not-array' }, 'foo', 'Obj'),
-    ).toThrow(InvalidPropertyError);
-  });
-
-  //////////////////////////////////////////////////////////////////////////////
-
-  it('assertRecordTimestampProperty', () => {
-    expect(() =>
-      assertRecordTimestampProperty(
-        { foo: '2024-01-01T00:00:00Z' },
+      assertRecordStringArrayProperty(
+        { foo: ['a', 'b', 'c'] },
         'foo',
         'Obj',
+        {},
       ),
-    ).not.toThrow();
-    expect(() =>
-      assertRecordTimestampProperty({ foo: '2024-12-25' }, 'foo', 'Obj'),
     ).not.toThrow();
 
     expect(() =>
-      assertRecordTimestampProperty({ foo: 'not-a-date' }, 'foo', 'Obj'),
+      assertRecordStringArrayProperty({ foo: [1, 2, 3] }, 'foo', 'Obj', {}),
+    ).toThrow(
+      new InvalidPropertyError(
+        {
+          subject: 'Obj',
+          property: 'foo',
+          index: 0,
+          expectedType: 'string',
+          type: 'number',
+        },
+        {},
+      ),
+    );
+
+    expect(() =>
+      assertRecordStringArrayProperty(
+        { foo: ['a', 123, 'c'] },
+        'foo',
+        'Obj',
+        {},
+      ),
     ).toThrow(InvalidPropertyError);
     expect(() =>
-      assertRecordTimestampProperty({ foo: 123 }, 'foo', 'Obj'),
+      assertRecordStringArrayProperty({ foo: 'not-array' }, 'foo', 'Obj', {}),
     ).toThrow(InvalidPropertyError);
-    expect(() => assertRecordTimestampProperty({}, 'foo', 'Obj')).toThrow(
-      InvalidPropertyError,
-    );
   });
 
   //////////////////////////////////////////////////////////////////////////////

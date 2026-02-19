@@ -1,8 +1,8 @@
-import { EncryptionError } from '../../errors/EncryptionError';
+import { EncryptionError } from '../errors/EncryptionError';
 import { pkeParams as pkeParamsAsset } from '../../test';
 import { TEST_CONFIG } from '../../test/config';
-import { ChecksummedAddress } from '../../base/types/primitives';
-import { TFHEZKProofBuilder } from './TFHEZKProofBuilder';
+import { ChecksummedAddress } from '@base/types/primitives';
+import { createTFHEZKProofBuilder } from './TFHEZKProofBuilder';
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -34,7 +34,7 @@ const userAddress =
 
 describeIfFetchMock('TFHEZKProofBuilder', () => {
   it('encrypt', async () => {
-    const builder = new TFHEZKProofBuilder({
+    const builder = createTFHEZKProofBuilder({
       pkeParams: pkeParamsAsset,
     });
     builder.addBool(false);
@@ -55,7 +55,7 @@ describeIfFetchMock('TFHEZKProofBuilder', () => {
   }, 60000);
 
   it('encrypt one 0 value', async () => {
-    const builder = new TFHEZKProofBuilder({
+    const builder = createTFHEZKProofBuilder({
       pkeParams: pkeParamsAsset,
     });
     builder.addUint128(BigInt(0));
@@ -69,7 +69,7 @@ describeIfFetchMock('TFHEZKProofBuilder', () => {
   });
 
   it('throws errors', async () => {
-    const builder = new TFHEZKProofBuilder({
+    const builder = createTFHEZKProofBuilder({
       pkeParams: pkeParamsAsset,
     });
     builder.addUint128(BigInt(0));
@@ -170,7 +170,7 @@ describeIfFetchMock('TFHEZKProofBuilder', () => {
   });
 
   it('throws if total bits is above 2048', async () => {
-    const builder = new TFHEZKProofBuilder({
+    const builder = createTFHEZKProofBuilder({
       pkeParams: pkeParamsAsset,
     });
     for (let i = 0; i < 8; ++i) {
@@ -182,7 +182,7 @@ describeIfFetchMock('TFHEZKProofBuilder', () => {
   });
 
   it('count and totalBits getters', () => {
-    const builder = new TFHEZKProofBuilder({
+    const builder = createTFHEZKProofBuilder({
       pkeParams: pkeParamsAsset,
     });
     expect(builder.count).toBe(0);
@@ -198,13 +198,13 @@ describeIfFetchMock('TFHEZKProofBuilder', () => {
   });
 
   it('getBits returns copy of bits array', () => {
-    const builder = new TFHEZKProofBuilder({
+    const builder = createTFHEZKProofBuilder({
       pkeParams: pkeParamsAsset,
     });
     builder.addBool(true);
     builder.addUint8(42);
 
-    const bits = builder.getBits();
+    const bits = builder.getBits() as unknown as number[];
     expect(bits).toEqual([2, 8]);
 
     // Verify it's a copy, not the original
@@ -213,7 +213,7 @@ describeIfFetchMock('TFHEZKProofBuilder', () => {
   });
 
   it('methods return this for chaining', () => {
-    const builder = new TFHEZKProofBuilder({
+    const builder = createTFHEZKProofBuilder({
       pkeParams: pkeParamsAsset,
     });
 
@@ -231,7 +231,7 @@ describeIfFetchMock('TFHEZKProofBuilder', () => {
   });
 
   it('throws on invalid ACL address', () => {
-    const builder = new TFHEZKProofBuilder({
+    const builder = createTFHEZKProofBuilder({
       pkeParams: pkeParamsAsset,
     });
     builder.addUint8(1);
@@ -251,7 +251,7 @@ describeIfFetchMock('TFHEZKProofBuilder', () => {
   });
 
   it('throws on invalid chainId', () => {
-    const builder = new TFHEZKProofBuilder({
+    const builder = createTFHEZKProofBuilder({
       pkeParams: pkeParamsAsset,
     });
     builder.addUint8(1);
@@ -271,7 +271,7 @@ describeIfFetchMock('TFHEZKProofBuilder', () => {
   });
 
   it('throws on negative values', () => {
-    const builder = new TFHEZKProofBuilder({
+    const builder = createTFHEZKProofBuilder({
       pkeParams: pkeParamsAsset,
     });
 
@@ -284,7 +284,7 @@ describeIfFetchMock('TFHEZKProofBuilder', () => {
   });
 
   it('throws on null/undefined values for addBool', () => {
-    const builder = new TFHEZKProofBuilder({
+    const builder = createTFHEZKProofBuilder({
       pkeParams: pkeParamsAsset,
     });
 
@@ -293,7 +293,7 @@ describeIfFetchMock('TFHEZKProofBuilder', () => {
   });
 
   it('throws if packing more than 256 variables', () => {
-    const builder = new TFHEZKProofBuilder({
+    const builder = createTFHEZKProofBuilder({
       pkeParams: pkeParamsAsset,
     });
 

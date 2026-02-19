@@ -1,14 +1,14 @@
 import { TEST_CONFIG } from '../../test/config';
-import { hexToBytes } from '../../base/bytes';
+import { asBytesHex, hexToBytes } from '@base/bytes';
 import {
   ml_kem_pke_pk_to_u8vec,
   ml_kem_pke_sk_to_u8vec,
   u8vec_to_ml_kem_pke_pk,
   u8vec_to_ml_kem_pke_sk,
 } from 'node-tkms';
-import { KmsEIP712 } from '../kms/KmsEIP712';
-import { TKMSPkeKeypair } from './TKMSPkeKeypair';
-import { AddressError } from '../../errors/AddressError';
+import { AddressError } from '@base/errors/AddressError';
+import { generateTKMSPkeKeypair, toTKMSPkeKeypair } from './TKMSPkeKeypair';
+import { createKmsEIP712Builder } from '../kms/KmsEIP712Builder';
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -25,7 +25,7 @@ const describeIfFetchMock =
 
 describeIfFetchMock('token', () => {
   it('generate a valid keypair', async () => {
-    const keypair = TKMSPkeKeypair.generate();
+    const keypair = generateTKMSPkeKeypair();
 
     //const ml_kem_ct_length = 768; // for MlKem512Params, unused here
     const ml_kem_pk_length = 800; // for MlKem512Params
@@ -53,25 +53,27 @@ describeIfFetchMock('token', () => {
   });
 
   it('create a valid EIP712', async () => {
-    const keypair = TKMSPkeKeypair.generate();
-    const kmsEIP712 = new KmsEIP712({
+    const keypair = generateTKMSPkeKeypair();
+    const kmsEIP712Builder = createKmsEIP712Builder({
       chainId: BigInt(12345),
       verifyingContractAddressDecryption:
         '0x8ba1f109551bD432803012645Ac136ddd64DBA72',
     });
 
-    const eip712 = kmsEIP712.createUserDecryptEIP712({
+    const eip712 = kmsEIP712Builder.createUserDecrypt({
       publicKey: keypair.publicKey,
       contractAddresses: ['0x8ba1f109551bD432803012645Ac136ddd64DBA72'],
       startTimestamp: Date.now(),
       durationDays: 86400,
-      extraData: '0x00',
+      extraData: asBytesHex('0x00'),
     });
 
     expect(eip712.domain.chainId).toBe(12345n);
     expect(eip712.domain.name).toBe('Decryption');
     expect(eip712.domain.version).toBe('1');
-    expect(eip712.message.publicKey).toBe(`0x${keypair.publicKey}`);
+    expect((eip712.message as { publicKey: unknown }).publicKey).toBe(
+      `0x${keypair.publicKey}`,
+    );
     expect(eip712.primaryType).toBe('UserDecryptRequestVerification');
     expect(eip712.types.UserDecryptRequestVerification.length).toBe(5);
     expect(eip712.types.UserDecryptRequestVerification[0].name).toBe(
@@ -81,31 +83,40 @@ describeIfFetchMock('token', () => {
   });
 
   it('create a valid EIP712 with delegated account', async () => {
-    const keypair = TKMSPkeKeypair.generate();
-    const kmsEIP712 = new KmsEIP712({
+    const keypair = generateTKMSPkeKeypair();
+    const kmsEIP712Builder = createKmsEIP712Builder({
       chainId: BigInt(12345),
       verifyingContractAddressDecryption:
         '0x8ba1f109551bD432803012645Ac136ddd64DBA72',
     });
 
-    const eip712 = kmsEIP712.createDelegatedUserDecryptEIP712({
+    const eip712 = kmsEIP712Builder.createDelegateUserDecrypt({
       publicKey: keypair.publicKey,
       contractAddresses: ['0x8ba1f109551bd432803012645ac136ddd64dba72'],
-      delegatorAddress: '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
       startTimestamp: Date.now(),
       durationDays: 86400,
-      extraData: '0x00',
+      extraData: asBytesHex('0x00'),
+      delegatedAccount: '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
     });
 
     expect(eip712.domain.chainId).toBe(12345n);
     expect(eip712.domain.name).toBe('Decryption');
     expect(eip712.domain.version).toBe('1');
-    expect(eip712.message.publicKey).toBe(`0x${keypair.publicKey}`);
-    expect(eip712.message.delegatorAddress).toBe(
-      '0xa5e1defb98EFe38EBb2D958CEe052410247F4c80',
+    expect((eip712.message as { publicKey: unknown }).publicKey).toBe(
+      `0x${keypair.publicKey}`,
     );
+    expect(
+      (eip712.message as { delegatedAccount: unknown }).delegatedAccount,
+    ).toBe('0xa5e1defb98EFe38EBb2D958CEe052410247F4c80');
     expect(eip712.primaryType).toBe('DelegatedUserDecryptRequestVerification');
 
+    /*
+      { name: 'publicKey', type: 'bytes' },
+      { name: 'contractAddresses', type: 'address[]' },
+      { name: 'startTimestamp', type: 'uint256' },
+      { name: 'durationDays', type: 'uint256' },
+      { name: 'delegatedAccount', type: 'address' },
+    */
     expect(eip712.types.DelegatedUserDecryptRequestVerification.length).toBe(6);
 
     expect(eip712.types.DelegatedUserDecryptRequestVerification[0].name).toBe(
@@ -114,7 +125,6 @@ describeIfFetchMock('token', () => {
     expect(eip712.types.DelegatedUserDecryptRequestVerification[0].type).toBe(
       'bytes',
     );
-
     expect(eip712.types.DelegatedUserDecryptRequestVerification[1].name).toBe(
       'contractAddresses',
     );
@@ -123,59 +133,59 @@ describeIfFetchMock('token', () => {
     );
 
     expect(eip712.types.DelegatedUserDecryptRequestVerification[2].name).toBe(
-      'delegatorAddress',
+      'startTimestamp',
     );
     expect(eip712.types.DelegatedUserDecryptRequestVerification[2].type).toBe(
-      'address',
+      'uint256',
     );
 
     expect(eip712.types.DelegatedUserDecryptRequestVerification[3].name).toBe(
-      'startTimestamp',
+      'durationDays',
     );
     expect(eip712.types.DelegatedUserDecryptRequestVerification[3].type).toBe(
       'uint256',
     );
 
     expect(eip712.types.DelegatedUserDecryptRequestVerification[4].name).toBe(
-      'durationDays',
+      'extraData',
     );
     expect(eip712.types.DelegatedUserDecryptRequestVerification[4].type).toBe(
-      'uint256',
+      'bytes',
     );
 
     expect(eip712.types.DelegatedUserDecryptRequestVerification[5].name).toBe(
-      'extraData',
+      'delegatedAccount',
     );
     expect(eip712.types.DelegatedUserDecryptRequestVerification[5].type).toBe(
-      'bytes',
+      'address',
     );
   });
 
   it('create invalid EIP712', async () => {
-    const keypair = TKMSPkeKeypair.generate();
-    const kmsEIP712 = new KmsEIP712({
+    const keypair = generateTKMSPkeKeypair();
+    const kmsEIP712Builder = createKmsEIP712Builder({
       chainId: BigInt(12345),
       verifyingContractAddressDecryption:
         '0x8ba1f109551bD432803012645Ac136ddd64DBA72',
     });
 
     expect(() =>
-      kmsEIP712.createUserDecryptEIP712({
+      kmsEIP712Builder.createUserDecrypt({
         publicKey: keypair.publicKey,
         contractAddresses: ['99'],
         startTimestamp: Date.now(),
         durationDays: 86400,
-        extraData: '0x00',
+        extraData: asBytesHex('0x00'),
       }),
     ).toThrow(AddressError);
     expect(() =>
-      kmsEIP712.createDelegatedUserDecryptEIP712({
+      kmsEIP712Builder.createDelegateUserDecrypt({
         publicKey: keypair.publicKey,
         contractAddresses: ['0x8ba1f109551bd432803012645ac136ddd64dba72'],
-        delegatorAddress: '99',
         startTimestamp: Date.now(),
         durationDays: 86400,
-        extraData: '0x00',
+        delegatedAccount: '99',
+        extraData: asBytesHex('0x00'),
       }),
     ).toThrow(AddressError);
   });
@@ -186,61 +196,61 @@ describeIfFetchMock('token', () => {
 
   describe('from()', () => {
     it('creates keypair from hex strings with 0x prefix', () => {
-      const original = TKMSPkeKeypair.generate();
+      const original = generateTKMSPkeKeypair();
       const hexKeypair = original.toBytesHex();
 
-      const restored = TKMSPkeKeypair.from(hexKeypair);
+      const restored = toTKMSPkeKeypair(hexKeypair);
 
       expect(restored.publicKey).toBe(original.publicKey);
       expect(restored.privateKey).toBe(original.privateKey);
     });
 
     it('creates keypair from hex strings without 0x prefix', () => {
-      const original = TKMSPkeKeypair.generate();
+      const original = generateTKMSPkeKeypair();
       const hexNo0xKeypair = original.toBytesHexNo0x();
 
-      const restored = TKMSPkeKeypair.from(hexNo0xKeypair);
+      const restored = toTKMSPkeKeypair(hexNo0xKeypair);
 
       expect(restored.publicKey).toBe(original.publicKey);
       expect(restored.privateKey).toBe(original.privateKey);
     });
 
     it('creates keypair from Uint8Array', () => {
-      const original = TKMSPkeKeypair.generate();
+      const original = generateTKMSPkeKeypair();
       const bytesKeypair = original.toBytes();
 
-      const restored = TKMSPkeKeypair.from(bytesKeypair);
+      const restored = toTKMSPkeKeypair(bytesKeypair);
 
       expect(restored.publicKey).toBe(original.publicKey);
       expect(restored.privateKey).toBe(original.privateKey);
     });
 
     it('throws for missing publicKey', () => {
-      expect(() => TKMSPkeKeypair.from({ privateKey: '0xabc' })).toThrow();
+      expect(() => toTKMSPkeKeypair({ privateKey: '0xabc' })).toThrow();
     });
 
     it('throws for missing privateKey', () => {
-      expect(() => TKMSPkeKeypair.from({ publicKey: '0xabc' })).toThrow();
+      expect(() => toTKMSPkeKeypair({ publicKey: '0xabc' })).toThrow();
     });
 
     it('throws for null value', () => {
-      expect(() => TKMSPkeKeypair.from(null)).toThrow();
+      expect(() => toTKMSPkeKeypair(null)).toThrow();
     });
 
     it('throws for undefined value', () => {
-      expect(() => TKMSPkeKeypair.from(undefined)).toThrow();
+      expect(() => toTKMSPkeKeypair(undefined)).toThrow();
     });
 
     it('throws for invalid publicKey type', () => {
       expect(() =>
-        TKMSPkeKeypair.from({ publicKey: 123, privateKey: '0xabc' }),
+        toTKMSPkeKeypair({ publicKey: 123, privateKey: '0xabc' }),
       ).toThrow();
     });
 
     it('throws for invalid privateKey type', () => {
-      const original = TKMSPkeKeypair.generate();
+      const original = generateTKMSPkeKeypair();
       expect(() =>
-        TKMSPkeKeypair.from({ publicKey: original.publicKey, privateKey: 123 }),
+        toTKMSPkeKeypair({ publicKey: original.publicKey, privateKey: 123 }),
       ).toThrow();
     });
   });
@@ -251,7 +261,7 @@ describeIfFetchMock('token', () => {
 
   describe('conversion methods', () => {
     it('toBytesHex() returns keys with 0x prefix', () => {
-      const keypair = TKMSPkeKeypair.generate();
+      const keypair = generateTKMSPkeKeypair();
 
       const result = keypair.toBytesHex();
 
@@ -260,7 +270,7 @@ describeIfFetchMock('token', () => {
     });
 
     it('toBytesHexNo0x() returns keys without 0x prefix', () => {
-      const keypair = TKMSPkeKeypair.generate();
+      const keypair = generateTKMSPkeKeypair();
 
       const result = keypair.toBytesHexNo0x();
 
@@ -269,7 +279,7 @@ describeIfFetchMock('token', () => {
     });
 
     it('toBytes() returns Uint8Array keys', () => {
-      const keypair = TKMSPkeKeypair.generate();
+      const keypair = generateTKMSPkeKeypair();
 
       const result = keypair.toBytes();
 
@@ -278,7 +288,7 @@ describeIfFetchMock('token', () => {
     });
 
     it('toBytesHex() and toBytesHexNo0x() are consistent', () => {
-      const keypair = TKMSPkeKeypair.generate();
+      const keypair = generateTKMSPkeKeypair();
 
       const withPrefix = keypair.toBytesHex();
       const withoutPrefix = keypair.toBytesHexNo0x();
@@ -294,16 +304,16 @@ describeIfFetchMock('token', () => {
 
   describe('toJSON()', () => {
     it('returns same format as toBytesHex()', () => {
-      const keypair = TKMSPkeKeypair.generate();
+      const keypair = generateTKMSPkeKeypair();
 
-      const json = keypair.toJSON();
+      const json = JSON.parse(JSON.stringify(keypair));
       const hex = keypair.toBytesHex();
 
       expect(json).toEqual(hex);
     });
 
     it('produces valid JSON string', () => {
-      const keypair = TKMSPkeKeypair.generate();
+      const keypair = generateTKMSPkeKeypair();
 
       const jsonString = JSON.stringify(keypair);
       const parsed = JSON.parse(jsonString);
@@ -319,14 +329,14 @@ describeIfFetchMock('token', () => {
 
   describe('verify()', () => {
     it('does not throw for valid keypair', () => {
-      const keypair = TKMSPkeKeypair.generate();
+      const keypair = generateTKMSPkeKeypair();
 
       expect(() => keypair.verify()).not.toThrow();
     });
 
     it('validates round-trip through from()', () => {
-      const original = TKMSPkeKeypair.generate();
-      const restored = TKMSPkeKeypair.from(original.toBytesHex());
+      const original = generateTKMSPkeKeypair();
+      const restored = toTKMSPkeKeypair(original.toBytesHex());
 
       expect(() => restored.verify()).not.toThrow();
     });
@@ -334,18 +344,18 @@ describeIfFetchMock('token', () => {
 
   describe('verify()', () => {
     it('does not throw for valid keypair', () => {
-      const keypair = TKMSPkeKeypair.generate();
+      const keypair = generateTKMSPkeKeypair();
 
       expect(() => keypair.verify()).not.toThrow();
     });
 
     it('throws for mismatched publicKey', () => {
-      const keypair1 = TKMSPkeKeypair.generate();
-      const keypair2 = TKMSPkeKeypair.generate();
+      const keypair1 = generateTKMSPkeKeypair();
+      const keypair2 = generateTKMSPkeKeypair();
 
       // Create a keypair with keypair1's privateKey but keypair2's publicKey
       expect(() =>
-        TKMSPkeKeypair.from({
+        toTKMSPkeKeypair({
           publicKey: keypair2.publicKey,
           privateKey: keypair1.privateKey,
         }),
@@ -353,10 +363,10 @@ describeIfFetchMock('token', () => {
     });
 
     it('throws for publicKey instead of privateKey', () => {
-      const keypair = TKMSPkeKeypair.generate();
+      const keypair = generateTKMSPkeKeypair();
 
       expect(() =>
-        TKMSPkeKeypair.from({
+        toTKMSPkeKeypair({
           publicKey: keypair.publicKey,
           privateKey: keypair.publicKey,
         }),
@@ -364,10 +374,10 @@ describeIfFetchMock('token', () => {
     });
 
     it('throws for too large privateKey', () => {
-      const keypair = TKMSPkeKeypair.generate();
+      const keypair = generateTKMSPkeKeypair();
 
       expect(() =>
-        TKMSPkeKeypair.from({
+        toTKMSPkeKeypair({
           publicKey: keypair.publicKey,
           privateKey: keypair.privateKey + 'ff',
         }),
@@ -375,7 +385,7 @@ describeIfFetchMock('token', () => {
     });
 
     it('throws for altered privateKey', () => {
-      const keypair = TKMSPkeKeypair.generate();
+      const keypair = generateTKMSPkeKeypair();
       const sk = keypair.privateKey
         .replaceAll('a', 'e')
         .replaceAll('b', 'e')
@@ -385,7 +395,7 @@ describeIfFetchMock('token', () => {
       const pk = keypair.publicKey;
 
       expect(() =>
-        TKMSPkeKeypair.from({
+        toTKMSPkeKeypair({
           publicKey: pk,
           privateKey: sk,
         }),
@@ -393,11 +403,11 @@ describeIfFetchMock('token', () => {
     });
 
     it('throws for altered privateKey', () => {
-      const keypair = TKMSPkeKeypair.generate();
+      const keypair = generateTKMSPkeKeypair();
       const pk = keypair.publicKey;
 
       expect(() =>
-        TKMSPkeKeypair.from({
+        toTKMSPkeKeypair({
           publicKey: pk,
           privateKey: 'deadbeef',
         }),
@@ -411,14 +421,14 @@ describeIfFetchMock('token', () => {
 
   describe('getters', () => {
     it('publicKey returns hex without 0x prefix', () => {
-      const keypair = TKMSPkeKeypair.generate();
+      const keypair = generateTKMSPkeKeypair();
 
       expect(keypair.publicKey.startsWith('0x')).toBe(false);
       expect(keypair.publicKey).toBe(keypair.toBytesHexNo0x().publicKey);
     });
 
     it('privateKey returns hex without 0x prefix', () => {
-      const keypair = TKMSPkeKeypair.generate();
+      const keypair = generateTKMSPkeKeypair();
 
       expect(keypair.privateKey.startsWith('0x')).toBe(false);
       expect(keypair.privateKey).toBe(keypair.toBytesHexNo0x().privateKey);

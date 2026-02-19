@@ -15,14 +15,20 @@ import { parseCommonOptions, parseHandles } from '../utils.js';
 // npx . public-decrypt --version 2 --handles 0xe85c2a81338b8542a6c0a99a5a794f158f4fb0f6a2ff0000000000aa36a70400
 // npx . public-decrypt --version 2 --handles 0x7abb4a6c63af220fcd7da6bba4a0891fbe77e576efff00000000000000010500
 export async function publicDecryptCommand(options) {
-  const { config, zamaFhevmApiKey } = parseCommonOptions(options);
+  const { config, provider, signer, zamaFhevmApiKey } =
+    parseCommonOptions(options);
 
   const fhevmHandles = parseHandles(options.handles);
   const handles = fhevmHandles.map((h) => {
     return h.toBytes32Hex();
   });
 
-  const res = await publicDecrypt(handles, config, zamaFhevmApiKey, options);
+  const res = await publicDecrypt({
+    handles,
+    config,
+    zamaFhevmApiKey,
+    options,
+  });
 
   console.log(safeJSONstringify(res, 2));
 }

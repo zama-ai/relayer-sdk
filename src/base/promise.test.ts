@@ -1,4 +1,6 @@
-import { executeWithBatching, PromiseFactory } from './promise';
+import { executeWithBatching } from './promise';
+
+type PromiseFactory<T> = () => Promise<T>;
 
 ////////////////////////////////////////////////////////////////////////////////
 //

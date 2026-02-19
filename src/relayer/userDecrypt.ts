@@ -1,87 +1,65 @@
-import { TKMS as TKMSModule } from '../sdk/lowlevel/wasm-modules';
 import type {
-  HandleContractPairRelayer,
-  RelayerUserDecryptOptionsType,
-  RelayerUserDecryptPayload,
-  RelayerDelegatedUserDecryptPayload,
-} from '@relayer-provider/types/public-api';
-import type { BytesHex } from '@base/types/primitives';
-import type { Provider as EthersProviderType } from 'ethers';
+  Bytes65Hex,
+  Bytes65HexNo0x,
+  BytesHexNo0x,
+  ChecksummedAddress,
+  UintNumber,
+} from '@base/types/primitives';
 import type {
   ClearValueType,
-  FhevmInstanceOptions,
-  HandleContractPair,
-  UserDecryptResults,
-} from '../types/relayer';
-import { Contract, getAddress as ethersGetAddress } from 'ethers';
-import { bytesToBigInt, bytesToHex, hexToBytes } from '@base/bytes';
-import { AbstractRelayerProvider } from '@relayer-provider/AbstractRelayerProvider';
-import { check2048EncryptedBits } from './decryptUtils';
+  KmsUserDecryptEIP712Message,
+} from '@sdk/kms/public-api';
+import { type PrivateEncKeyMlKem512 } from '@sdk/lowlevel/TKMSPkeKeypair';
+import type { FhevmConfig, FhevmHandle } from '@fhevm-base/types/public-api';
+import type { FetchUserDecryptPayload } from './types/private-api';
+import type { RelayerUserDecryptOptions } from './types/public-api';
+import { createACL } from '@fhevm-base/host-contracts/ACL';
+import { assertKmsDecryptionBitLimit } from '@fhevm-base/kms/utils';
+import { remove0x } from '@base/string';
+import { fetchUserDecrypt } from './fetch/userDecrypt';
+import type { KmsSigncryptedShares } from '@fhevm-base/types/public-api';
+import type { FhevmChainClient } from '@fhevm-base-types/public-api';
+import { assertKmsEIP712DeadlineValidity } from '@fhevm-base/kms/KmsEIP712';
+import type {
+  KmsSigncryptedShare,
+  KmsSigncryptedSharesMetadata,
+} from '@sdk/types/private';
+import { createKmsSigncryptedShares } from '@fhevm-base/kms/KmsSigncryptedShares';
+import type { FHELib } from '@fhevm-base/types/libs';
 
-interface DelegatedUserDecryptRequest {
-  kmsSigners: string[];
-  gatewayChainId: number;
-  chainId: number;
-  verifyingContractAddressDecryption: string;
-  aclContractAddress: string;
-  relayerProvider: AbstractRelayerProvider;
-  provider: EthersProviderType;
-  defaultOptions?: FhevmInstanceOptions;
-}
-
-// Add type checking
-const getAddress = (value: string): `0x${string}` =>
-  ethersGetAddress(value) as `0x${string}`;
-
-const aclABI = [
-  'function persistAllowed(bytes32 handle, address account) view returns (bool)',
-];
+////////////////////////////////////////////////////////////////////////////////
+// userDecrypt
+////////////////////////////////////////////////////////////////////////////////
 
 const MAX_USER_DECRYPT_CONTRACT_ADDRESSES = 10;
-const MAX_USER_DECRYPT_DURATION_DAYS = BigInt(365);
+const MAX_USER_DECRYPT_DURATION_DAYS = 365 as UintNumber;
 
-function formatAccordingToType(
-  clearValueAsBigInt: bigint,
-  type: number,
-): ClearValueType {
-  if (type === 0) {
-    // ebool
-    return clearValueAsBigInt === BigInt(1);
-  } else if (type === 7) {
-    // eaddress
-    return getAddress('0x' + clearValueAsBigInt.toString(16).padStart(40, '0'));
-  } else if (type > 8 || type == 1) {
-    // type == 1 : euint4 (not supported)
-    throw new Error(`Unsupported handle type ${type}`);
-  }
-  // euintXXX
-  return clearValueAsBigInt;
-}
+export async function userDecrypt(
+  fhevm: FhevmChainClient & {
+    config: FhevmConfig;
+    relayerUrl: string;
+    fheLib: FHELib;
+  },
+  args: {
+    readonly privateKey: PrivateEncKeyMlKem512;
+    readonly userAddress: ChecksummedAddress;
+    readonly handleContractPairs: ReadonlyArray<{
+      handle: FhevmHandle;
+      contractAddress: ChecksummedAddress;
+    }>;
+    readonly userDecryptEIP712Message: Omit<
+      KmsUserDecryptEIP712Message,
+      'publicKey'
+    >;
+    readonly userDecryptEIP712Signature: Bytes65Hex;
+    readonly options?: RelayerUserDecryptOptions;
+  },
+): Promise<Readonly<Record<`0x${string}`, ClearValueType>>> {
+  const { userDecryptEIP712Message, userAddress } = args;
 
-function parseKeys(publicKey: string, privateKey: string) {
-  try {
-    const pubKey = TKMSModule.u8vec_to_ml_kem_pke_pk(hexToBytes(publicKey));
-    const privKey = TKMSModule.u8vec_to_ml_kem_pke_sk(hexToBytes(privateKey));
-    return { pubKey, privKey };
-  } catch (e) {
-    throw new Error('Invalid public or private key', { cause: e });
-  }
-}
-
-function parseHandleContractPairs(
-  handles: HandleContractPair[],
-): HandleContractPairRelayer[] {
-  return handles.map((h) => ({
-    handle:
-      typeof h.handle === 'string'
-        ? bytesToHex(hexToBytes(h.handle))
-        : bytesToHex(h.handle),
-    contractAddress: getAddress(h.contractAddress),
-  }));
-}
-
-function validateContractAddresses(contractAddresses: string[]) {
-  const contractAddressesLength = contractAddresses.length;
+  // No more that 10 contract addresses
+  const contractAddressesLength =
+    userDecryptEIP712Message.contractAddresses.length;
   if (contractAddressesLength === 0) {
     throw Error('contractAddresses is empty');
   }
@@ -90,341 +68,81 @@ function validateContractAddresses(contractAddresses: string[]) {
       `contractAddresses max length of ${MAX_USER_DECRYPT_CONTRACT_ADDRESSES} exceeded`,
     );
   }
-}
 
-async function validateAclPermissions(
-  acl: Contract,
-  handleContractPairs: HandleContractPairRelayer[],
-  authorizedUserAddress: string,
-) {
-  const verifications = handleContractPairs.map(
-    async ({ handle, contractAddress }) => {
-      const userAllowed = await acl.persistAllowed(
-        handle,
-        authorizedUserAddress,
-      );
-      const contractAllowed = await acl.persistAllowed(handle, contractAddress);
+  const fhevmHandles = args.handleContractPairs.map((pair) => pair.handle);
+  Object.freeze(fhevmHandles);
 
-      if (!userAllowed) {
-        throw new Error(
-          `User address ${authorizedUserAddress} is not authorized to user decrypt handle ${handle}!`,
-        );
-      }
-      if (!contractAllowed) {
-        throw new Error(
-          `dapp contract ${contractAddress} is not authorized to user decrypt handle ${handle}!`,
-        );
-      }
-      if (authorizedUserAddress === contractAddress) {
-        throw new Error(
-          `User address ${authorizedUserAddress} should not be equal to contract address when requesting user decryption!`,
-        );
-      }
-    },
+  // Check 2048 bits limit
+  assertKmsDecryptionBitLimit(fhevmHandles);
+
+  // Check expiration date
+  assertKmsEIP712DeadlineValidity(
+    userDecryptEIP712Message,
+    MAX_USER_DECRYPT_DURATION_DAYS,
   );
 
-  await Promise.all(verifications).catch((e) => {
-    throw e;
+  // Check ACL permissions
+  const acl = createACL(fhevm);
+  await acl.checkUserAllowedForDecryption({
+    userAddress: args.userAddress,
+    handleContractPairs: args.handleContractPairs,
   });
-}
 
-function buildUserDecryptResults(
-  handles: `0x${string}`[],
-  listBigIntDecryptions: bigint[],
-): UserDecryptResults {
-  let typesList: number[] = [];
-  for (const handle of handles) {
-    const hexPair = handle.slice(-4, -2).toLowerCase();
-    const typeDiscriminant = parseInt(hexPair, 16);
-    typesList.push(typeDiscriminant);
-  }
+  // Build relayer playload
+  const payloadForRequest: FetchUserDecryptPayload = {
+    handleContractPairs: args.handleContractPairs.map((pair) => {
+      return {
+        handle: pair.handle.bytes32Hex,
+        contractAddress: pair.contractAddress,
+      };
+    }),
+    requestValidity: {
+      startTimestamp: userDecryptEIP712Message.startTimestamp,
+      durationDays: userDecryptEIP712Message.durationDays,
+    },
+    contractsChainId: fhevm.config.hostChainConfig.chainId.toString(),
+    contractAddresses: userDecryptEIP712Message.contractAddresses,
+    userAddress,
+    signature: remove0x(args.userDecryptEIP712Signature) as Bytes65HexNo0x,
+    extraData: args.userDecryptEIP712Message.extraData,
+    publicKey: remove0x(args.privateKey.getPublicKeyHex()) as BytesHexNo0x,
+  };
 
-  const results: Record<string, ClearValueType> = {};
-
-  handles.forEach(
-    (handle, idx) =>
-      (results[handle] = formatAccordingToType(
-        listBigIntDecryptions[idx],
-        typesList[idx],
-      )),
+  // Call relayer with playload to fetch the `KmsSigncryptedShares`
+  const shares: readonly KmsSigncryptedShare[] = await fetchUserDecrypt(
+    fhevm.relayerUrl,
+    payloadForRequest,
+    args.options,
   );
 
-  return results;
-}
-
-function checkDeadlineValidity(startTimestamp: bigint, durationDays: bigint) {
-  if (durationDays === BigInt(0)) {
-    throw Error('durationDays is null');
-  }
-
-  if (durationDays > MAX_USER_DECRYPT_DURATION_DAYS) {
-    throw Error(
-      `durationDays is above max duration of ${MAX_USER_DECRYPT_DURATION_DAYS}`,
-    );
-  }
-
-  const currentTimestamp = BigInt(Math.floor(Date.now() / 1000));
-  if (startTimestamp > currentTimestamp) {
-    throw Error('startTimestamp is set in the future');
-  }
-
-  const durationInSeconds = durationDays * BigInt(86400);
-  if (startTimestamp + durationInSeconds < currentTimestamp) {
-    throw Error('User decrypt request has expired');
-  }
-}
-
-export const userDecryptRequest =
-  ({
-    kmsSigners,
-    gatewayChainId,
-    chainId,
-    verifyingContractAddressDecryption,
-    aclContractAddress,
-    relayerProvider,
-    provider,
-    defaultOptions,
-  }: {
-    kmsSigners: string[];
-    gatewayChainId: number;
-    chainId: number;
-    verifyingContractAddressDecryption: string;
-    aclContractAddress: string;
-    relayerProvider: AbstractRelayerProvider;
-    provider: EthersProviderType;
-    defaultOptions?: FhevmInstanceOptions;
-  }) =>
-  async (
-    _handles: HandleContractPair[],
-    privateKey: string,
-    publicKey: string,
-    signature: string,
-    contractAddresses: string[],
-    userAddress: string,
-    startTimestamp: string | number,
-    durationDays: string | number,
-    options?: RelayerUserDecryptOptionsType,
-  ): Promise<UserDecryptResults> => {
-    const extraData: BytesHex = '0x00';
-
-    const { pubKey, privKey } = parseKeys(publicKey, privateKey);
-
-    // Sanitize hex strings
-    const signatureSanitized = signature.replace(/^(0x)/, '');
-    const publicKeySanitized = publicKey.replace(/^(0x)/, '');
-
-    const handleContractPairs = parseHandleContractPairs(_handles);
-
-    check2048EncryptedBits(handleContractPairs.map((h) => h.handle));
-    checkDeadlineValidity(BigInt(startTimestamp), BigInt(durationDays));
-    validateContractAddresses(contractAddresses);
-
-    const acl = new Contract(aclContractAddress, aclABI, provider);
-    await validateAclPermissions(acl, handleContractPairs, userAddress);
-
-    const payloadForRequest: RelayerUserDecryptPayload = {
-      handleContractPairs,
-      requestValidity: {
-        startTimestamp: startTimestamp.toString(), // Convert to string
-        durationDays: durationDays.toString(), // Convert to string
-      },
-      contractsChainId: chainId.toString(), // Convert to string
-      contractAddresses: contractAddresses.map((c) => getAddress(c)),
-      userAddress: getAddress(userAddress),
-      signature: signatureSanitized,
-      publicKey: publicKeySanitized,
-      extraData,
-    };
-
-    const json = await relayerProvider.fetchPostUserDecrypt(payloadForRequest, {
-      ...defaultOptions,
-      ...options,
-    });
-
-    // assume the KMS Signers have the correct order
-    let indexedKmsSigners = kmsSigners.map((signer, index) => {
-      return TKMSModule.new_server_id_addr(index + 1, signer);
-    });
-
-    const client = TKMSModule.new_client(
-      indexedKmsSigners,
-      userAddress,
-      'default',
-    );
-
-    try {
-      const buffer = new ArrayBuffer(32);
-      const view = new DataView(buffer);
-      view.setUint32(28, gatewayChainId, false);
-      const chainIdArrayBE = new Uint8Array(buffer);
-      const eip712Domain = {
-        name: 'Decryption',
-        version: '1',
-        chain_id: chainIdArrayBE,
-        verifying_contract: verifyingContractAddressDecryption,
-        salt: null,
-      };
-
-      const payloadForVerification = {
-        signature: signatureSanitized,
-        client_address: userAddress,
-        enc_key: publicKeySanitized,
-        ciphertext_handles: handleContractPairs.map((h) =>
-          h.handle.replace(/^0x/, ''),
-        ),
-        eip712_verifying_contract: verifyingContractAddressDecryption,
-      };
-
-      const decryption = TKMSModule.process_user_decryption_resp_from_js(
-        client,
-        payloadForVerification,
-        eip712Domain,
-        json, //json.response,
-        pubKey,
-        privKey,
-        true,
-      );
-      const listBigIntDecryptions = decryption.map(
-        (d: { bytes: Uint8Array<ArrayBufferLike> }) => bytesToBigInt(d.bytes),
-      );
-
-      const results: UserDecryptResults = buildUserDecryptResults(
-        handleContractPairs.map((h) => h.handle),
-        listBigIntDecryptions,
-      );
-
-      return results;
-    } catch (e) {
-      throw new Error('An error occured during decryption', { cause: e });
-    }
+  // Build the sealed `KmsSigncryptedShares` object
+  const sharesMetadata: KmsSigncryptedSharesMetadata = {
+    kmsVerifier: fhevm.config.kmsVerifier,
+    eip712Signature: args.userDecryptEIP712Signature,
+    eip712SignerAddress: userAddress,
+    fhevmHandles,
   };
 
-export const delegatedUserDecryptRequest =
-  ({
-    kmsSigners,
-    gatewayChainId,
-    chainId,
-    verifyingContractAddressDecryption,
-    aclContractAddress,
-    relayerProvider,
-    provider,
-    defaultOptions,
-  }: DelegatedUserDecryptRequest) =>
-  async (
-    handleContractPairs: HandleContractPair[],
-    privateKey: string,
-    publicKey: string,
-    signature: string,
-    contractAddresses: string[],
-    delegatorAddress: string,
-    delegateAddress: string,
-    startTimestamp: string | number,
-    durationDays: string | number,
-    options?: RelayerUserDecryptOptionsType,
-  ): Promise<UserDecryptResults> => {
-    const extraData: BytesHex = '0x00';
+  const kmsSigncryptedShares: KmsSigncryptedShares = createKmsSigncryptedShares(
+    sharesMetadata,
+    shares,
+  );
 
-    const { pubKey, privKey } = parseKeys(publicKey, privateKey);
+  // Using the `KmsSigncryptedShares` decrypt and reconstruct clear values
+  const orderedDecryptedHandles = fhevm.fheLib.kmsDecryptAndReconstruct(
+    args.privateKey,
+    kmsSigncryptedShares,
+  );
 
-    // Sanitize hex strings
-    const signatureSanitized = signature.replace(/^(0x)/, '');
-    const publicKeySanitized = publicKey.replace(/^(0x)/, '');
+  // Build the return type in the expected format
+  const clearValues: Record<string, ClearValueType> = {};
 
-    const handleContractPairsRelayer =
-      parseHandleContractPairs(handleContractPairs);
+  orderedDecryptedHandles.forEach(
+    (decryptedHandle) =>
+      (clearValues[decryptedHandle.handle.bytes32Hex] =
+        decryptedHandle.value as ClearValueType),
+  );
+  Object.freeze(clearValues);
 
-    check2048EncryptedBits(handleContractPairsRelayer.map((h) => h.handle));
-    checkDeadlineValidity(BigInt(startTimestamp), BigInt(durationDays));
-    validateContractAddresses(contractAddresses);
-
-    // Check ACL for each handle against delegatorAddress and contractAddress
-    const acl = new Contract(aclContractAddress, aclABI, provider);
-    await validateAclPermissions(
-      acl,
-      handleContractPairsRelayer,
-      delegatorAddress,
-    );
-
-    const delegatedUserDecryptPayload: RelayerDelegatedUserDecryptPayload = {
-      handleContractPairs: handleContractPairsRelayer,
-      contractsChainId: chainId.toString(),
-      contractAddresses: contractAddresses.map((c) => getAddress(c)),
-      delegatorAddress: getAddress(delegatorAddress),
-      delegateAddress: getAddress(delegateAddress),
-      startTimestamp: startTimestamp.toString(),
-      durationDays: durationDays.toString(),
-      signature: signatureSanitized,
-      publicKey: publicKeySanitized,
-      extraData,
-    };
-
-    const json = await relayerProvider.fetchPostDelegatedUserDecrypt(
-      delegatedUserDecryptPayload,
-      {
-        ...defaultOptions,
-        ...options,
-      },
-    );
-
-    // Assume the KMS signers have the correct order.
-    let indexedKmsSigners = kmsSigners.map((signer, index) => {
-      return TKMSModule.new_server_id_addr(index + 1, signer);
-    });
-
-    const client = TKMSModule.new_client(
-      indexedKmsSigners,
-      delegateAddress,
-      'default',
-    );
-
-    try {
-      const buffer = new ArrayBuffer(32);
-      const view = new DataView(buffer);
-      view.setUint32(28, gatewayChainId, false);
-      const chainIdArrayBE = new Uint8Array(buffer);
-      const eip712Domain = {
-        name: 'Decryption',
-        version: '1',
-        chain_id: chainIdArrayBE,
-        verifying_contract: verifyingContractAddressDecryption,
-        salt: null,
-      };
-
-      const payloadForVerification = {
-        signature: signatureSanitized,
-        client_address: delegateAddress,
-        enc_key: publicKeySanitized,
-        ciphertext_handles: handleContractPairsRelayer.map((h) =>
-          h.handle.replace(/^0x/, ''),
-        ),
-        eip712_verifying_contract: verifyingContractAddressDecryption,
-      };
-
-      const decryption = TKMSModule.process_user_decryption_resp_from_js(
-        client,
-        payloadForVerification,
-        eip712Domain,
-        json,
-        pubKey,
-        privKey,
-        true,
-      );
-      const listBigIntDecryptions = decryption.map(
-        (d: { bytes: Uint8Array<ArrayBufferLike> }) => bytesToBigInt(d.bytes),
-      );
-
-      const results: UserDecryptResults = buildUserDecryptResults(
-        handleContractPairsRelayer.map((h) => h.handle),
-        listBigIntDecryptions,
-      );
-
-      return results;
-    } catch (e) {
-      throw new Error(
-        'An error occurred during the delegated user decryption request.',
-        {
-          cause: e,
-        },
-      );
-    }
-  };
+  return clearValues;
+}

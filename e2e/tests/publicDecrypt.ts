@@ -38,10 +38,7 @@ export async function testPublicDecrypt() {
   trace(JSON.stringify(relayerSDK.SepoliaConfig), startTime);
 
   trace('Creating instance...', startTime);
-  const instance = await relayerSDK.createInstance({
-    ...relayerSDK.SepoliaConfig,
-    network: 'https://ethereum-sepolia-rpc.publicnode.com',
-  });
+  const instance = await relayerSDK.createInstance(relayerSDK.SepoliaConfig);
 
   const handle =
     '0x1edaef82ad486a3edb58e08ae5701141927d4eeb28ff0000000000aa36a70400';

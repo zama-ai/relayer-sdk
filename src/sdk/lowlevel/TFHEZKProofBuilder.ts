@@ -1,14 +1,15 @@
 import { TFHE as TFHEModule } from './wasm-modules';
+import type { TFHEPkeParams } from './public-api';
 import type {
-  ChecksummedAddress,
-  EncryptionBits,
-  FheTypeName,
-  Uint64,
-} from '@base/types/primitives';
-import type { TFHEPkeParams } from './TFHEPkeParams';
-import type { CompactCiphertextListBuilderWasmType } from './public-api';
-import { EncryptionError } from '../../errors/EncryptionError';
-import { assertRelayer } from '../../errors/InternalError';
+  CompactCiphertextListBuilderWasmType,
+  ProvenCompactCiphertextListWasmType,
+  TFHEZKProofBuilder,
+} from './public-api';
+import type { EncryptionBits, FheTypeName } from '@fhevm-base/types/public-api';
+import type { Bytes20, Bytes32 } from '@base/types/primitives';
+import type { ZKProof } from '../types/public-api';
+import { EncryptionError } from '../errors/EncryptionError';
+import { assert } from '@base/errors/InternalError';
 import {
   isUint128,
   isUint16,
@@ -21,37 +22,36 @@ import {
   MAX_UINT8,
   uint256ToBytes32,
 } from '@base/uint';
-import { encryptionBitsFromFheTypeName } from '../FheType';
+import { encryptionBitsFromFheTypeName } from '@fhevm-base/FheType';
 import { isChecksummedAddress } from '@base/address';
-import { hexToBytes } from '@base/bytes';
+import { hexToBytes20 } from '@base/bytes';
 import {
   SERIALIZED_SIZE_LIMIT_CIPHERTEXT,
   TFHE_CRS_BITS_CAPACITY,
   TFHE_ZKPROOF_CIPHERTEXT_CAPACITY,
 } from './constants';
-import { ZKProof } from '../ZKProof';
+import { createZKProof } from '../ZKProof';
 
 ////////////////////////////////////////////////////////////////////////////////
 // TFHEZKProofBuilder
 ////////////////////////////////////////////////////////////////////////////////
 
-export class TFHEZKProofBuilder {
+class TFHEZKProofBuilderImpl implements TFHEZKProofBuilder {
   #totalBits: number = 0;
+  #disposed: boolean = false;
   readonly #bits: EncryptionBits[] = [];
   readonly #bitsCapacity: number = TFHE_CRS_BITS_CAPACITY;
   readonly #ciphertextCapacity: number = TFHE_ZKPROOF_CIPHERTEXT_CAPACITY;
   readonly #fheCompactCiphertextListBuilderWasm: CompactCiphertextListBuilderWasmType;
   readonly #pkeParams: TFHEPkeParams;
 
-  constructor(params: { pkeParams: TFHEPkeParams }) {
+  constructor(params: { readonly pkeParams: TFHEPkeParams }) {
     this.#pkeParams = params.pkeParams;
     this.#fheCompactCiphertextListBuilderWasm =
       TFHEModule.CompactCiphertextList.builder(
-        this.#pkeParams.getTFHEPublicKey().tfheCompactPublicKeyWasm,
+        this.#pkeParams.tfhePublicKey.tfheCompactPublicKeyWasm,
       );
-    assertRelayer(
-      this.#pkeParams.getTFHEPkeCrs().supportsCapacity(this.#bitsCapacity),
-    );
+    assert(this.#pkeParams.tfhePkeCrs.supportsCapacity(this.#bitsCapacity));
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -177,11 +177,13 @@ export class TFHEZKProofBuilder {
     aclContractAddress,
     chainId,
   }: {
-    contractAddress: ChecksummedAddress;
-    userAddress: ChecksummedAddress;
-    aclContractAddress: ChecksummedAddress;
-    chainId: Uint64;
+    contractAddress: string;
+    userAddress: string;
+    aclContractAddress: string;
+    chainId: number | bigint;
   }): ZKProof {
+    this.#assertNotDisposed();
+
     if (this.#totalBits === 0) {
       throw new EncryptionError({
         message: `Encrypted input must contain at least one value`,
@@ -189,7 +191,7 @@ export class TFHEZKProofBuilder {
     }
 
     // should be guaranteed at this point
-    assertRelayer(this.#totalBits <= this.#bitsCapacity);
+    assert(this.#totalBits <= this.#bitsCapacity);
 
     if (!isChecksummedAddress(contractAddress)) {
       throw new EncryptionError({
@@ -218,20 +220,16 @@ export class TFHEZKProofBuilder {
     // hexToBytes(<42-characters hex string>) always returns a 20-byte long Uint8Array
 
     // Bytes20
-    const contractAddressBytes20 = hexToBytes(contractAddress);
-    assertRelayer(contractAddressBytes20.length === 20);
+    const contractAddressBytes20: Bytes20 = hexToBytes20(contractAddress);
 
     // Bytes20
-    const userAddressBytes20 = hexToBytes(userAddress);
-    assertRelayer(userAddressBytes20.length === 20);
+    const userAddressBytes20: Bytes20 = hexToBytes20(userAddress);
 
     // Bytes20
-    const aclContractAddressBytes20 = hexToBytes(aclContractAddress);
-    assertRelayer(aclContractAddressBytes20.length === 20);
+    const aclContractAddressBytes20: Bytes20 = hexToBytes20(aclContractAddress);
 
     // Bytes32
-    const chainIdBytes32 = uint256ToBytes32(chainId);
-    assertRelayer(chainIdBytes32.length === 32);
+    const chainIdBytes32: Bytes32 = uint256ToBytes32(chainId);
 
     const metaDataLength = 3 * 20 + 32;
     const metaData = new Uint8Array(metaDataLength);
@@ -241,37 +239,55 @@ export class TFHEZKProofBuilder {
     metaData.set(aclContractAddressBytes20, 40);
     metaData.set(chainIdBytes32, 60);
 
-    assertRelayer(metaData.length - chainIdBytes32.length === 60);
+    assert(metaData.length - chainIdBytes32.length === 60);
 
-    const tfheProvenCompactCiphertextList =
-      this.#fheCompactCiphertextListBuilderWasm.build_with_proof_packed(
-        this.#pkeParams.getTFHEPkeCrs().getWasmForCapacity(this.#bitsCapacity)
-          .wasm,
-        metaData,
-        TFHEModule.ZkComputeLoadVerify,
+    let tfheProvenCompactCiphertextList:
+      | ProvenCompactCiphertextListWasmType
+      | undefined;
+
+    try {
+      tfheProvenCompactCiphertextList =
+        this.#fheCompactCiphertextListBuilderWasm.build_with_proof_packed(
+          this.#pkeParams.tfhePkeCrs.getWasmForCapacity(this.#bitsCapacity)
+            .wasm,
+          metaData,
+          TFHEModule.ZkComputeLoadVerify,
+        );
+
+      const ciphertextWithZKProofBytes: Uint8Array =
+        tfheProvenCompactCiphertextList.safe_serialize(
+          SERIALIZED_SIZE_LIMIT_CIPHERTEXT,
+        );
+
+      return createZKProof(
+        {
+          chainId: BigInt(chainId),
+          aclContractAddress,
+          contractAddress,
+          userAddress,
+          ciphertextWithZKProof: ciphertextWithZKProofBytes,
+          encryptionBits: this.#bits,
+        },
+        { copy: false }, // Take ownership
       );
-
-    const ciphertextWithZKProofBytes: Uint8Array =
-      tfheProvenCompactCiphertextList.safe_serialize(
-        SERIALIZED_SIZE_LIMIT_CIPHERTEXT,
-      );
-
-    return ZKProof.fromComponents(
-      {
-        chainId: BigInt(chainId),
-        aclContractAddress,
-        contractAddress,
-        userAddress,
-        ciphertextWithZKProof: ciphertextWithZKProofBytes,
-        encryptionBits: this.#bits,
-      },
-      { copy: false }, // Take ownership
-    );
+    } finally {
+      this.#disposed = true;
+      tfheProvenCompactCiphertextList?.free();
+      this.#fheCompactCiphertextListBuilderWasm.free();
+    }
   }
 
   //////////////////////////////////////////////////////////////////////////////
   // Private helpers
   //////////////////////////////////////////////////////////////////////////////
+
+  #assertNotDisposed(): void {
+    if (this.#disposed) {
+      throw new EncryptionError({
+        message: 'TFHEZKProofBuilder has already been disposed',
+      });
+    }
+  }
 
   #checkLimit(encryptionBits: EncryptionBits): void {
     if (this.#totalBits + encryptionBits > this.#bitsCapacity) {
@@ -287,10 +303,21 @@ export class TFHEZKProofBuilder {
   }
 
   #addType(fheTypeName: FheTypeName): void {
+    this.#assertNotDisposed();
     // encryptionBits is guaranteed to be >= 2
     const encryptionBits = encryptionBitsFromFheTypeName(fheTypeName);
     this.#checkLimit(encryptionBits);
     this.#totalBits += encryptionBits;
     this.#bits.push(encryptionBits);
   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+// Public API
+//////////////////////////////////////////////////////////////////////////////
+
+export function createTFHEZKProofBuilder(params: {
+  readonly pkeParams: TFHEPkeParams;
+}): TFHEZKProofBuilder {
+  return new TFHEZKProofBuilderImpl(params);
 }

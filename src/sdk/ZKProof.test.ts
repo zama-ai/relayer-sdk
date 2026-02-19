@@ -1,14 +1,13 @@
 import fs from 'fs';
 import path from 'path';
-import type {
-  ChecksummedAddress,
-  EncryptionBits,
-} from '../base/types/primitives';
-import { ZKProof } from './ZKProof';
-import { ZKProofError } from '../errors/ZKProofError';
-import { InvalidTypeError } from '../errors/InvalidTypeError';
-import { ChecksummedAddressError } from '../errors/ChecksummedAddressError';
-import { hexToBytes } from '../base/bytes';
+import type { ChecksummedAddress } from '@base/types/primitives';
+import type { ZKProof } from './types/public-api';
+import { ZKProofError } from './errors/ZKProofError';
+import { InvalidTypeError } from '@base/errors/InvalidTypeError';
+import { ChecksummedAddressError } from '@base/errors/ChecksummedAddressError';
+import { hexToBytes } from '@base/bytes';
+import { EncryptionBits } from '@fhevm-base/index';
+import { createZKProof } from './ZKProof';
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -68,14 +67,13 @@ function createValidZKProofLikeBytes() {
 
 describe('ZKProof', () => {
   //////////////////////////////////////////////////////////////////////////////
-  // fromComponents - valid inputs
+  // createZKProof - valid inputs
   //////////////////////////////////////////////////////////////////////////////
 
-  describe('fromComponents', () => {
+  describe('createZKProof', () => {
     it('creates ZKProof from valid hex string ciphertext', () => {
-      const zkProof = ZKProof.fromComponents(createValidZKProofLike());
+      const zkProof = createZKProof(createValidZKProofLike());
 
-      expect(zkProof).toBeInstanceOf(ZKProof);
       expect(zkProof.chainId).toBe(VALID_CHAIN_ID);
       expect(zkProof.aclContractAddress).toBe(VALID_ACL_ADDRESS);
       expect(zkProof.contractAddress).toBe(VALID_CONTRACT_ADDRESS);
@@ -90,7 +88,7 @@ describe('ZKProof', () => {
         ciphertextWithZKProof: VALID_CIPHERTEXT_BYTES,
       };
 
-      const zkProof = ZKProof.fromComponents(input);
+      const zkProof = createZKProof(input);
 
       expect(zkProof.ciphertextWithZKProof).toEqual(VALID_CIPHERTEXT_BYTES);
     });
@@ -101,66 +99,60 @@ describe('ZKProof', () => {
         chainId: 11155111,
       };
 
-      const zkProof = ZKProof.fromComponents(input);
+      const zkProof = createZKProof(input);
 
       expect(zkProof.chainId).toBe(BigInt(11155111));
     });
   });
 
   //////////////////////////////////////////////////////////////////////////////
-  // fromComponents - copy option
+  // createZKProof - copy option
   //////////////////////////////////////////////////////////////////////////////
 
-  describe('fromComponents copy option', () => {
-    it('takes ownership of Uint8Array by default (no copy)', () => {
-      const input = {
-        ...createValidZKProofLikeBytes(),
-      };
+  describe('createZKProof copy option', () => {
+    it('takes ownership when copy: false (no defensive copy)', () => {
+      const input = createValidZKProofLikeBytes();
 
-      const zkProof = ZKProof.fromComponents(input);
+      const zkProof = createZKProof(input, { copy: false });
 
-      // Should be the same reference (Uint8Array input)
-      expect(zkProof.ciphertextWithZKProof).toBe(input.ciphertextWithZKProof);
+      // Should be the same reference (no copy was made)
+      expect(zkProof.getUnsafeRawBytes()).toBe(input.ciphertextWithZKProof);
     });
 
-    it('makes defensive copy when copy: true', () => {
-      const input = {
-        ...createValidZKProofLikeBytes(),
-      };
+    it('makes defensive copy by default (copy: true)', () => {
+      const input = createValidZKProofLikeBytes();
 
-      const zkProof = ZKProof.fromComponents(input, { copy: true });
+      const zkProof = createZKProof(input, { copy: true });
 
       // Should be a different reference but same content
-      expect(zkProof.ciphertextWithZKProof).not.toBe(
-        input.ciphertextWithZKProof,
-      );
-      expect(zkProof.ciphertextWithZKProof).toEqual(VALID_CIPHERTEXT_BYTES);
+      expect(zkProof.getUnsafeRawBytes()).not.toBe(input.ciphertextWithZKProof);
+      expect(zkProof.getUnsafeRawBytes()).toEqual(VALID_CIPHERTEXT_BYTES);
     });
 
     it('copy option has no effect on hex string input', () => {
-      const zkProof1 = ZKProof.fromComponents(createValidZKProofLike());
-      const zkProof2 = ZKProof.fromComponents(createValidZKProofLike(), {
+      const zkProof1 = createZKProof(createValidZKProofLike());
+      const zkProof2 = createZKProof(createValidZKProofLike(), {
         copy: true,
       });
 
-      expect(zkProof1.ciphertextWithZKProof).toEqual(
-        zkProof2.ciphertextWithZKProof,
+      expect(zkProof1.getUnsafeRawBytes()).toEqual(
+        zkProof2.getUnsafeRawBytes(),
       );
     });
   });
 
   //////////////////////////////////////////////////////////////////////////////
-  // fromComponents - invalid inputs
+  // createZKProof - invalid inputs
   //////////////////////////////////////////////////////////////////////////////
 
-  describe('fromComponents validation', () => {
+  describe('createZKProof validation', () => {
     it('throws on invalid chainId (negative)', () => {
       const input = {
         ...createValidZKProofLike(),
         chainId: -1,
       };
 
-      expect(() => ZKProof.fromComponents(input)).toThrow(InvalidTypeError);
+      expect(() => createZKProof(input)).toThrow(InvalidTypeError);
     });
 
     it('throws on invalid chainId (not a number)', () => {
@@ -169,7 +161,7 @@ describe('ZKProof', () => {
         chainId: 'invalid' as any,
       };
 
-      expect(() => ZKProof.fromComponents(input)).toThrow(InvalidTypeError);
+      expect(() => createZKProof(input)).toThrow(InvalidTypeError);
     });
 
     it('throws on invalid aclContractAddress', () => {
@@ -178,9 +170,7 @@ describe('ZKProof', () => {
         aclContractAddress: 'not-an-address',
       };
 
-      expect(() => ZKProof.fromComponents(input)).toThrow(
-        ChecksummedAddressError,
-      );
+      expect(() => createZKProof(input)).toThrow(ChecksummedAddressError);
     });
 
     it('throws on invalid contractAddress', () => {
@@ -189,9 +179,7 @@ describe('ZKProof', () => {
         contractAddress: '0xinvalid',
       };
 
-      expect(() => ZKProof.fromComponents(input)).toThrow(
-        ChecksummedAddressError,
-      );
+      expect(() => createZKProof(input)).toThrow(ChecksummedAddressError);
     });
 
     it('throws on invalid userAddress', () => {
@@ -200,9 +188,7 @@ describe('ZKProof', () => {
         userAddress: '',
       };
 
-      expect(() => ZKProof.fromComponents(input)).toThrow(
-        ChecksummedAddressError,
-      );
+      expect(() => createZKProof(input)).toThrow(ChecksummedAddressError);
     });
 
     it('throws on empty ciphertextWithZKProof hex string', () => {
@@ -211,7 +197,7 @@ describe('ZKProof', () => {
         ciphertextWithZKProof: '0x',
       };
 
-      expect(() => ZKProof.fromComponents(input)).toThrow(ZKProofError);
+      expect(() => createZKProof(input)).toThrow(ZKProofError);
     });
 
     it('throws on empty ciphertextWithZKProof Uint8Array', () => {
@@ -220,7 +206,7 @@ describe('ZKProof', () => {
         ciphertextWithZKProof: new Uint8Array(0),
       };
 
-      expect(() => ZKProof.fromComponents(input)).toThrow(ZKProofError);
+      expect(() => createZKProof(input)).toThrow(ZKProofError);
     });
 
     it('throws on invalid ciphertextWithZKProof type', () => {
@@ -229,7 +215,7 @@ describe('ZKProof', () => {
         ciphertextWithZKProof: 12345 as any,
       };
 
-      expect(() => ZKProof.fromComponents(input)).toThrow(ZKProofError);
+      expect(() => createZKProof(input)).toThrow(InvalidTypeError);
     });
 
     it('throws on invalid encryptionBits value', () => {
@@ -238,7 +224,7 @@ describe('ZKProof', () => {
         encryptionBits: [8, 999] as any,
       };
 
-      expect(() => ZKProof.fromComponents(input)).toThrow(InvalidTypeError);
+      expect(() => createZKProof(input)).toThrow(InvalidTypeError);
     });
 
     it('throws on encryption count mismatch', () => {
@@ -247,10 +233,8 @@ describe('ZKProof', () => {
         encryptionBits: [32, 64], // Ciphertext only contains 1 value
       };
 
-      expect(() => ZKProof.fromComponents(input)).toThrow(ZKProofError);
-      expect(() => ZKProof.fromComponents(input)).toThrow(
-        /Encryption count mismatch/,
-      );
+      expect(() => createZKProof(input)).toThrow(ZKProofError);
+      expect(() => createZKProof(input)).toThrow(/Encryption count mismatch/);
     });
 
     it('throws on encryption type mismatch', () => {
@@ -259,8 +243,8 @@ describe('ZKProof', () => {
         encryptionBits: [64], // Ciphertext contains 32-bit value, not 64-bit
       };
 
-      expect(() => ZKProof.fromComponents(input)).toThrow(ZKProofError);
-      expect(() => ZKProof.fromComponents(input)).toThrow(
+      expect(() => createZKProof(input)).toThrow(ZKProofError);
+      expect(() => createZKProof(input)).toThrow(
         /Encryption type mismatch at index 0/,
       );
     });
@@ -269,7 +253,7 @@ describe('ZKProof', () => {
       const { encryptionBits: _, ...inputWithoutBits } =
         createValidZKProofLike();
 
-      const zkProof = ZKProof.fromComponents(inputWithoutBits);
+      const zkProof = createZKProof(inputWithoutBits);
 
       // encryptionBits should be derived from the ciphertext
       expect(zkProof.encryptionBits).toEqual([32]);
@@ -284,7 +268,7 @@ describe('ZKProof', () => {
     let zkProof: ZKProof;
 
     beforeEach(() => {
-      zkProof = ZKProof.fromComponents(createValidZKProofLike());
+      zkProof = createZKProof(createValidZKProofLike());
     });
 
     it('chainId returns bigint', () => {
@@ -311,18 +295,16 @@ describe('ZKProof', () => {
     it('ciphertextWithZKProof getter throws if internally empty (defensive check)', () => {
       // Bypass TypeScript private constructor to test the getter's defensive check
       // This simulates a scenario where the internal state is corrupted
-      const malformedZKProof = new (ZKProof as any)({
-        chainId: VALID_CHAIN_ID,
-        aclContractAddress: VALID_ACL_ADDRESS,
-        contractAddress: VALID_CONTRACT_ADDRESS,
-        userAddress: VALID_USER_ADDRESS,
-        ciphertextWithZKProof: new Uint8Array(0), // Empty!
-        encryptionBits: VALID_ENCRYPTION_BITS,
-      });
-
-      expect(() => malformedZKProof.ciphertextWithZKProof).toThrow(
-        ZKProofError,
-      );
+      expect(() =>
+        createZKProof({
+          chainId: VALID_CHAIN_ID,
+          aclContractAddress: VALID_ACL_ADDRESS,
+          contractAddress: VALID_CONTRACT_ADDRESS,
+          userAddress: VALID_USER_ADDRESS,
+          ciphertextWithZKProof: new Uint8Array(0), // Empty!
+          encryptionBits: VALID_ENCRYPTION_BITS,
+        }),
+      ).toThrow(ZKProofError);
     });
 
     it('encryptionBits returns readonly array', () => {
@@ -337,7 +319,7 @@ describe('ZKProof', () => {
 
   describe('immutability', () => {
     it('encryptionBits array is frozen', () => {
-      const zkProof = ZKProof.fromComponents(createValidZKProofLike());
+      const zkProof = createZKProof(createValidZKProofLike());
 
       expect(Object.isFrozen(zkProof.encryptionBits)).toBe(true);
     });
@@ -349,7 +331,7 @@ describe('ZKProof', () => {
         encryptionBits,
       };
 
-      const zkProof = ZKProof.fromComponents(input);
+      const zkProof = createZKProof(input);
 
       // Mutate the original array
       encryptionBits.push(64);
@@ -365,8 +347,9 @@ describe('ZKProof', () => {
 
   describe('toJSON', () => {
     it('serializes to ZKProofLike', () => {
-      const zkProof = ZKProof.fromComponents(createValidZKProofLike());
-      const json = zkProof.toJSON();
+      const zkProof = createZKProof(createValidZKProofLike());
+      const jsonStr = JSON.stringify(zkProof);
+      const json = JSON.parse(jsonStr);
 
       // chainId is converted to number when within safe integer range
       expect(json.chainId).toBe(Number(VALID_CHAIN_ID));
@@ -378,16 +361,18 @@ describe('ZKProof', () => {
     });
 
     it('ciphertextWithZKProof is serialized as hex string', () => {
-      const zkProof = ZKProof.fromComponents(createValidZKProofLike());
-      const json = zkProof.toJSON();
+      const zkProof = createZKProof(createValidZKProofLike());
+      const jsonStr = JSON.stringify(zkProof);
+      const json = JSON.parse(jsonStr);
 
       expect(json.ciphertextWithZKProof).toBe(VALID_CIPHERTEXT_HEX);
     });
 
-    it('can round-trip through toJSON and fromComponents', () => {
-      const original = ZKProof.fromComponents(createValidZKProofLike());
-      const json = original.toJSON();
-      const restored = ZKProof.fromComponents(json);
+    it('can round-trip through toJSON and createZKProof', () => {
+      const original = createZKProof(createValidZKProofLike());
+      const jsonStr = JSON.stringify(original);
+      const json = JSON.parse(jsonStr);
+      const restored = createZKProof(json);
 
       expect(restored.chainId).toBe(original.chainId);
       expect(restored.aclContractAddress).toBe(original.aclContractAddress);
@@ -406,7 +391,7 @@ describe('ZKProof', () => {
 
   describe('JSON.stringify compatibility', () => {
     it('works with JSON.stringify natively for safe integer chainIds', () => {
-      const zkProof = ZKProof.fromComponents(createValidZKProofLike());
+      const zkProof = createZKProof(createValidZKProofLike());
 
       // chainId within Number.MAX_SAFE_INTEGER is converted to number
       const jsonString = JSON.stringify(zkProof);
@@ -419,7 +404,7 @@ describe('ZKProof', () => {
     });
 
     it('chainId is serialized as number when within safe integer range', () => {
-      const zkProof = ZKProof.fromComponents(createValidZKProofLike());
+      const zkProof = createZKProof(createValidZKProofLike());
 
       const jsonString = JSON.stringify(zkProof);
       const parsed = JSON.parse(jsonString);
@@ -436,7 +421,7 @@ describe('ZKProof', () => {
         chainId: largeChainId,
       };
 
-      const zkProof = ZKProof.fromComponents(input);
+      const zkProof = createZKProof(input);
 
       // Large chainId stays as bigint, requires replacer for JSON.stringify
       expect(() => JSON.stringify(zkProof)).toThrow(TypeError);

@@ -19,16 +19,7 @@ export function getFhevmPubKeyCacheInfo(name) {
   };
 }
 
-export async function loadFhevmPublicKeyConfig(
-  config,
-  zamaFhevmApiKey,
-  options,
-) {
-  const instanceOptions = {
-    //...(options.verbose === true ? { debug: true } : {}),
-    auth: { __type: 'ApiKeyHeader', value: zamaFhevmApiKey },
-  };
-
+export async function loadFhevmPublicKeyConfig(config, options) {
   const res = loadFhevmPubKeyFromCache({ ...options, name: config.name });
   if (res) {
     const pk = res.pk.toBytes();
@@ -57,7 +48,6 @@ export async function loadFhevmPublicKeyConfig(
   const fhevm = await createRelayerFhevm({
     ...config.fhevmInstanceConfig,
     defaultRelayerVersion: config.version,
-    ...instanceOptions,
   });
 
   logCLI(`Relayer url: ${fhevm.relayerVersionUrl}`, options);

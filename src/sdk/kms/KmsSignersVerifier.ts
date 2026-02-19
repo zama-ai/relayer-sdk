@@ -3,102 +3,82 @@ import type {
   Bytes65Hex,
   BytesHex,
   ChecksummedAddress,
+  Uint32BigInt,
+  UintNumber,
 } from '@base/types/primitives';
-import type { IKMSVerifier } from '../types/private';
-import type { Prettify } from '@base/types/utils';
-import type { ethers as EthersT } from 'ethers';
 import type {
-  IKmsEIP712,
-  IKmsSignersVerifier,
-  KmsPublicDecryptEIP712MessageType,
+  KmsEIP712Builder,
+  KmsPublicDecryptEIP712Message,
+  KmsSignersVerifier,
+  PublicDecryptionProof,
 } from './public-api';
-import type { ClearValueType } from '../../types/relayer';
-import type { FhevmHandle } from '@sdk/FhevmHandle';
-import { RelayerDuplicateKmsSignerError } from '../../errors/RelayerDuplicateKmsSignerError';
+import type { FhevmHandle } from '@fhevm-base/types/public-api';
+import type {
+  FhevmChainClient,
+  ABILib,
+  EIP712Lib,
+} from '@fhevm-base-types/public-api';
+import { createPublicDecryptionProof } from './PublicDecryptionProof';
 import {
-  assertIsChecksummedAddress,
-  assertIsChecksummedAddressArray,
-} from '@base/address';
-import { RelayerUnknownKmsSignerError } from '../../errors/RelayerUnknownKmsSignerError';
-import { RelayerThresholdKmsSignerError } from '../../errors/RelayerThresholdKmsSignerError';
-import { KmsEIP712 } from './KmsEIP712';
-import { Contract } from 'ethers';
+  DuplicateSignerError,
+  ThresholdSignerError,
+  UnknownSignerError,
+} from '../errors/SignersError';
+import { createKmsEIP712Builder } from './KmsEIP712Builder';
+import { assertIsChecksummedAddress } from '@base/address';
 import { executeWithBatching } from '@base/promise';
-import { PublicDecryptionProof } from './PublicDecryptionProof';
+import { assertIsUintNumber, asUint32BigInt } from '@base/uint';
 
 ////////////////////////////////////////////////////////////////////////////////
 // KmsSignersVerifier
 ////////////////////////////////////////////////////////////////////////////////
 
-export type OrderedFhevmHandleClearValuePairs = Array<{
-  fhevmHandle: FhevmHandle;
-  clearValue: ClearValueType;
-}>;
+// export type OrderedFhevmHandleClearValuePairs = Array<{
+//   fhevmHandle: FhevmHandle;
+//   clearValue: ClearValueType;
+// }>;
 
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-export type OrderedAbiEncodedClearValues = {
-  abiTypes: Array<'uint256'>;
-  abiValues: Array<string | bigint>;
-  abiEncodedClearValues: BytesHex;
-};
+// // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+// export type OrderedAbiEncodedClearValues = {
+//   abiTypes: Array<'uint256'>;
+//   abiValues: Array<string | bigint>;
+//   abiEncodedClearValues: BytesHex;
+// };
 
-export class KmsSignersVerifier implements IKmsSignersVerifier {
+class KmsSignersVerifierImpl implements KmsSignersVerifier {
   readonly #kmsSigners: readonly ChecksummedAddress[];
   readonly #kmsSignersSet: Set<string>;
-  readonly #threshold: number;
-  readonly #eip712: KmsEIP712;
+  readonly #kmsSignerThreshold: number;
+  readonly #eip712Builder: KmsEIP712Builder;
+  readonly #eip712Lib: EIP712Lib;
+  readonly #abiLib: ABILib;
 
-  private constructor(params: IKmsSignersVerifier) {
-    assertIsChecksummedAddressArray(params.kmsSigners);
+  constructor(
+    libs: {
+      readonly eip712Lib: EIP712Lib;
+      readonly abiLib: ABILib;
+    },
+    params: {
+      readonly kmsSigners: readonly ChecksummedAddress[];
+      readonly kmsSignerThreshold: UintNumber;
+      readonly chainId: Uint32BigInt;
+      readonly verifyingContractAddressDecryption: ChecksummedAddress;
+    },
+  ) {
     this.#kmsSigners = [...params.kmsSigners];
-    this.#threshold = params.threshold;
+    this.#kmsSignerThreshold = params.kmsSignerThreshold;
     Object.freeze(this.#kmsSigners);
     this.#kmsSignersSet = new Set(
       this.#kmsSigners.map((addr) => addr.toLowerCase()),
     );
-    this.#eip712 = new KmsEIP712(params);
+    this.#eip712Builder = createKmsEIP712Builder(params);
+    this.#eip712Lib = libs.eip712Lib;
+    this.#abiLib = libs.abiLib;
   }
 
-  public static fromAddresses(params: IKmsSignersVerifier): KmsSignersVerifier {
-    return new KmsSignersVerifier(params);
-  }
-
-  public static async fromProvider(
-    params: Prettify<
-      {
-        readonly kmsVerifierContractAddress: ChecksummedAddress;
-        readonly provider: EthersT.Provider;
-        readonly batchRpcCalls?: boolean;
-      } & IKmsEIP712
-    >,
-  ): Promise<KmsSignersVerifier> {
-    assertIsChecksummedAddress(params.kmsVerifierContractAddress);
-
-    const abiKMSVerifier = [
-      'function getKmsSigners() view returns (address[])',
-      'function getThreshold() view returns (uint256)',
-    ];
-
-    const kmsContract = new Contract(
-      params.kmsVerifierContractAddress,
-      abiKMSVerifier,
-      params.provider,
-    ) as unknown as IKMSVerifier;
-
-    const res = await executeWithBatching(
-      [() => kmsContract.getKmsSigners(), () => kmsContract.getThreshold()],
-      params.batchRpcCalls,
-    );
-
-    const kmsSignersAddresses = res[0] as ChecksummedAddress[];
-    const threshold = res[1] as number;
-
-    return new KmsSignersVerifier({
-      ...params,
-      kmsSigners: kmsSignersAddresses,
-      threshold,
-    });
-  }
+  //////////////////////////////////////////////////////////////////////////////
+  // Getters
+  //////////////////////////////////////////////////////////////////////////////
 
   public get count(): number {
     return this.#kmsSigners.length;
@@ -108,24 +88,72 @@ export class KmsSignersVerifier implements IKmsSignersVerifier {
     return this.#kmsSigners;
   }
 
-  public get threshold(): number {
-    return this.#threshold;
+  public get kmsSignerThreshold(): number {
+    return this.#kmsSignerThreshold;
   }
 
-  public get chainId(): bigint {
-    return this.#eip712.chainId;
+  public get chainId(): Uint32BigInt {
+    return this.#eip712Builder.chainId;
   }
 
   public get verifyingContractAddressDecryption(): ChecksummedAddress {
-    return this.#eip712.verifyingContractAddressDecryption;
+    return this.#eip712Builder.verifyingContractAddressDecryption;
   }
 
-  private _isThresholdReached(recoveredAddresses: readonly string[]): boolean {
+  //////////////////////////////////////////////////////////////////////////////
+  // Getters
+  //////////////////////////////////////////////////////////////////////////////
+
+  public async verifyPublicDecrypt(params: {
+    readonly orderedHandles: readonly FhevmHandle[];
+    readonly orderedDecryptedResult: BytesHex;
+    readonly signatures: readonly Bytes65Hex[];
+    readonly extraData: BytesHex;
+  }): Promise<void> {
+    const handlesBytes32Hex: readonly Bytes32Hex[] = params.orderedHandles.map(
+      (h) => h.bytes32Hex,
+    );
+
+    const message: KmsPublicDecryptEIP712Message = {
+      ctHandles: handlesBytes32Hex,
+      decryptedResult: params.orderedDecryptedResult,
+      extraData: params.extraData,
+    };
+
+    // 1. Verify signatures
+    const recoveredAddresses = await this.#eip712Builder.verifyPublicDecrypt({
+      signatures: params.signatures,
+      message,
+      verifier: this.#eip712Lib,
+    });
+
+    // 2. Verify signature theshold is reached
+    if (!this.#_isThresholdReached(recoveredAddresses)) {
+      throw new ThresholdSignerError({
+        type: 'kms',
+      });
+    }
+  }
+
+  public async verifyAndComputePublicDecryptionProof(params: {
+    readonly orderedHandles: readonly FhevmHandle[];
+    readonly orderedDecryptedResult: BytesHex;
+    readonly signatures: readonly Bytes65Hex[];
+    readonly extraData: BytesHex;
+  }): Promise<PublicDecryptionProof> {
+    // Throws exception if message properties are invalid
+    await this.verifyPublicDecrypt(params);
+
+    return createPublicDecryptionProof({ abiLib: this.#abiLib }, params);
+  }
+
+  #_isThresholdReached(recoveredAddresses: readonly string[]): boolean {
     const addressMap = new Set<string>();
     recoveredAddresses.forEach((address) => {
       if (addressMap.has(address.toLowerCase())) {
-        throw new RelayerDuplicateKmsSignerError({
+        throw new DuplicateSignerError({
           duplicateAddress: address,
+          type: 'kms',
         });
       }
       addressMap.add(address);
@@ -133,56 +161,78 @@ export class KmsSignersVerifier implements IKmsSignersVerifier {
 
     for (const address of recoveredAddresses) {
       if (!this.#kmsSignersSet.has(address.toLowerCase())) {
-        throw new RelayerUnknownKmsSignerError({
+        throw new UnknownSignerError({
           unknownAddress: address,
+          type: 'kms',
         });
       }
     }
 
-    return recoveredAddresses.length >= this.#threshold;
+    return recoveredAddresses.length >= this.#kmsSignerThreshold;
   }
+}
 
-  public verifyPublicDecrypt(params: {
-    readonly orderedHandles: readonly FhevmHandle[];
-    readonly orderedDecryptedResult: BytesHex;
-    readonly signatures: readonly Bytes65Hex[];
-    readonly extraData: BytesHex;
-  }): void {
-    const handlesBytes32Hex: readonly Bytes32Hex[] = params.orderedHandles.map(
-      (h) => h.toBytes32Hex(),
-    );
+////////////////////////////////////////////////////////////////////////////////
+// Public API
+////////////////////////////////////////////////////////////////////////////////
 
-    const message: KmsPublicDecryptEIP712MessageType = {
-      ctHandles: handlesBytes32Hex,
-      decryptedResult: params.orderedDecryptedResult,
-      extraData: params.extraData,
-    };
+export function createKmsSignersVerifier(
+  libs: {
+    readonly eip712Lib: EIP712Lib;
+    readonly abiLib: ABILib;
+  },
+  args: {
+    readonly chainId: Uint32BigInt;
+    readonly verifyingContractAddressDecryption: ChecksummedAddress;
+    readonly kmsSigners: readonly ChecksummedAddress[];
+    readonly kmsSignerThreshold: UintNumber;
+  },
+): KmsSignersVerifier {
+  return new KmsSignersVerifierImpl(libs, args);
+}
 
-    this._verifyPublicDecrypt({ signatures: params.signatures, message });
-  }
+export async function fetchKmsSignersVerifier(
+  client: FhevmChainClient,
+  args: {
+    readonly chainId: bigint;
+    readonly verifyingContractAddressDecryption: string;
+    readonly kmsVerifierContractAddress: string;
+  },
+): Promise<KmsSignersVerifier> {
+  const { kmsVerifierContractAddress, verifyingContractAddressDecryption } =
+    args;
+  assertIsChecksummedAddress(kmsVerifierContractAddress, {});
+  assertIsChecksummedAddress(verifyingContractAddressDecryption, {});
 
-  public verifyAndComputePublicDecryptionProof(params: {
-    readonly orderedHandles: readonly FhevmHandle[];
-    readonly orderedDecryptedResult: BytesHex;
-    readonly signatures: readonly Bytes65Hex[];
-    readonly extraData: BytesHex;
-  }): PublicDecryptionProof {
-    // Throws exception if message properties are invalid
-    this.verifyPublicDecrypt(params);
+  const chainId = asUint32BigInt(args.chainId);
 
-    return PublicDecryptionProof.from(params);
-  }
+  const kmsContract = client.libs.kmsVerifierContractLib;
 
-  private _verifyPublicDecrypt(params: {
-    signatures: readonly Bytes65Hex[];
-    message: KmsPublicDecryptEIP712MessageType;
-  }): void {
-    // 1. Verify signatures
-    const recoveredAddresses = this.#eip712.verifyPublicDecrypt(params);
+  const res = await executeWithBatching(
+    [
+      () =>
+        kmsContract.getKmsSigners(
+          client.nativeClient,
+          kmsVerifierContractAddress,
+        ),
+      () =>
+        kmsContract.getThreshold(
+          client.nativeClient,
+          kmsVerifierContractAddress,
+        ),
+    ],
+    client.batchRpcCalls,
+  );
 
-    // 2. Verify signature theshold is reached
-    if (!this._isThresholdReached(recoveredAddresses)) {
-      throw new RelayerThresholdKmsSignerError();
-    }
-  }
+  const kmsSigners = res[0] as ChecksummedAddress[];
+  const kmsSignerThreshold = res[1] as number;
+
+  assertIsUintNumber(kmsSignerThreshold, {});
+
+  return new KmsSignersVerifierImpl(client.libs, {
+    verifyingContractAddressDecryption,
+    chainId,
+    kmsSigners,
+    kmsSignerThreshold,
+  });
 }

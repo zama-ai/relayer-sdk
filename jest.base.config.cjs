@@ -20,7 +20,10 @@ module.exports = {
   moduleNameMapper: {
     '^@base/(.*)$': '<rootDir>/src/base/$1',
     '^@sdk/(.*)$': '<rootDir>/src/sdk/$1',
-    '^@relayer-provider/(.*)$': '<rootDir>/src/relayer-provider/$1',
+    '^@fhevm-ethers/(.*)$': '<rootDir>/src/ethers/$1',
+    '^@fhevm-viem/(.*)$': '<rootDir>/src/viem/$1',
+    '^@fhevm-base/(.*)$': '<rootDir>/src/fhevm-base/$1',
+    '^@relayer/(.*)$': '<rootDir>/src/relayer/$1',
   },
   collectCoverageFrom: [
     'src/**/*.ts',
@@ -32,7 +35,7 @@ module.exports = {
     '!src/web.ts',
   ],
   coverageReporters: ['lcov', 'text-summary', 'json'],
-  transformIgnorePatterns: ['/node_modules/'],
+  transformIgnorePatterns: ['/node_modules/(?!@noble/hashes)'],
   testPathIgnorePatterns: ['/node_modules/', '/e2e/'],
   coverageThreshold: {
     global: {

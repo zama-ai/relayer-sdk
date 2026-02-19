@@ -2,14 +2,14 @@ import type {
   RecordStringArrayPropertyType,
   RecordStringPropertyType,
 } from './types/private';
+import type { ErrorMetadataParams } from './errors/ErrorBase';
 import {
-  assertRecordNonNullableProperty,
   assertRecordArrayProperty,
   isRecordNonNullableProperty,
   typeofProperty,
 } from './record';
-import { InternalError } from '../errors/InternalError';
-import { InvalidPropertyError } from '../errors/InvalidPropertyError';
+import { InternalError } from './errors/InternalError';
+import { InvalidPropertyError } from './errors/InvalidPropertyError';
 
 export function removeSuffix(s: string | undefined, suffix: string): string {
   if (s === undefined) {
@@ -82,9 +82,9 @@ export function isRecordStringProperty<K extends string>(
  * Throws an `InvalidPropertyError` if validation fails.
  *
  * @template K - The property key type (string literal)
- * @param o - The value to validate (can be any type)
+ * @param record - The value to validate (can be any type)
  * @param property - The property name to check for
- * @param objName - The name of the object being validated (used in error messages)
+ * @param recordName - The name of the object being validated (used in error messages)
  * @param expectedValue - Optional specific string value or array of allowed values to match against
  * @throws {InvalidPropertyError} When the property is missing, not a string, or doesn't match expectedValue
  * @throws {never} No other errors are thrown
@@ -102,99 +102,94 @@ export function isRecordStringProperty<K extends string>(
  * ```
  */
 export function assertRecordStringProperty<K extends string>(
-  o: unknown,
+  record: unknown,
   property: K,
-  objName: string,
-  expectedValue?: string | string[],
-): asserts o is RecordStringPropertyType<K> {
-  if (!isRecordStringProperty(o, property)) {
-    throw new InvalidPropertyError({
-      objName,
-      property,
-      expectedType: 'string',
-      expectedValue,
-      type: typeofProperty(o, property),
-    });
+  recordName: string,
+  options: { expectedValue?: string | string[] } & ErrorMetadataParams,
+): asserts record is RecordStringPropertyType<K> {
+  if (!isRecordStringProperty(record, property)) {
+    throw new InvalidPropertyError(
+      {
+        subject: recordName,
+        property,
+        expectedType: 'string',
+        expectedValue: options.expectedValue,
+        type: typeofProperty(record, property),
+      },
+      options,
+    );
   }
 
-  if (expectedValue !== undefined) {
-    if (Array.isArray(expectedValue)) {
+  if (options.expectedValue !== undefined) {
+    if (Array.isArray(options.expectedValue)) {
       // Check if value matches any of the allowed values
-      for (let i = 0; i < expectedValue.length; ++i) {
-        if (o[property] === expectedValue[i]) {
+      for (let i = 0; i < options.expectedValue.length; ++i) {
+        if (record[property] === options.expectedValue[i]) {
           return;
         }
       }
 
-      throw new InvalidPropertyError({
-        objName,
-        property,
-        expectedType: 'string',
-        expectedValue,
-        type: typeof o[property], // === "string"
-        value: o[property],
-      });
-    } else {
-      if (o[property] !== expectedValue) {
-        throw new InvalidPropertyError({
-          objName,
+      throw new InvalidPropertyError(
+        {
+          subject: recordName,
           property,
           expectedType: 'string',
-          expectedValue,
-          type: typeof o[property], // === "string"
-          value: o[property],
-        });
+          expectedValue: options.expectedValue,
+          type: typeof record[property], // === "string"
+          value: record[property],
+        },
+        options,
+      );
+    } else {
+      if (record[property] !== options.expectedValue) {
+        throw new InvalidPropertyError(
+          {
+            subject: recordName,
+            property,
+            expectedType: 'string',
+            expectedValue: options.expectedValue,
+            type: typeof record[property], // === "string"
+            value: record[property],
+          },
+          options,
+        );
       }
     }
   }
 }
 
 export function assertRecordStringArrayProperty<K extends string>(
-  o: unknown,
+  record: unknown,
   property: K,
-  objName: string,
-): asserts o is RecordStringArrayPropertyType<K> {
-  assertRecordArrayProperty(o, property, objName);
-  const arr = o[property];
+  recordName: string,
+  options: ErrorMetadataParams,
+): asserts record is RecordStringArrayPropertyType<K> {
+  assertRecordArrayProperty(record, property, recordName, options);
+  const arr = record[property];
   for (let i = 0; i < arr.length; ++i) {
     if (typeof arr[i] !== 'string') {
-      throw new InvalidPropertyError({
-        objName,
-        property: `${property}[${i}]`,
-        expectedType: 'string',
-        type: typeof arr[i],
-      });
+      throw new InvalidPropertyError(
+        {
+          subject: recordName,
+          index: i,
+          property,
+          expectedType: 'string',
+          type: typeof arr[i],
+        },
+        options,
+      );
     }
   }
 }
 
-export function assertRecordTimestampProperty<K extends string>(
-  o: unknown,
-  property: K,
-  objName: string,
-): asserts o is RecordStringPropertyType<K> {
-  assertRecordNonNullableProperty(o, property, objName);
-  if (typeof o[property] !== 'string') {
-    throw new InvalidPropertyError({
-      objName,
-      property,
-      expectedType: 'Timestamp',
-      type: typeof o[property],
-    });
+/**
+ * Capitalizes the first letter of a string.
+ */
+export function capitalizeFirstLetter(s: string): string {
+  if (s.length === 0) {
+    return s;
   }
-  try {
-    const d = Date.parse(o[property]);
-    if (Number.isNaN(d)) {
-      throw new Error(`Invalid timestamp ${objName}.${property}`);
-    }
-  } catch {
-    throw new InvalidPropertyError({
-      objName,
-      property,
-      expectedType: 'Timestamp',
-      type: typeof o[property],
-    });
-  }
+  return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
 export function safeJSONstringify(o: unknown, space?: string | number): string {

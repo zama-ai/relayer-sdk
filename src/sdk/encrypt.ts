@@ -3,7 +3,7 @@ import type {
   CompactPkeCrsWasmType,
   TfheCompactPublicKeyWasmType,
 } from './lowlevel/public-api';
-import type { EncryptionBits } from '@base/types/primitives';
+import type { EncryptionBits } from '@fhevm-base/types/public-api';
 import { isChecksummedAddress } from '@base/address';
 import { hexToBytes } from '@base/bytes';
 import { SERIALIZED_SIZE_LIMIT_CIPHERTEXT } from './lowlevel/constants';

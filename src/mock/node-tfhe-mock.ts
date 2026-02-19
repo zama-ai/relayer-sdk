@@ -23,6 +23,7 @@ class ProvenCompactCiphertextListMock {
   public len() {
     return 0;
   }
+  public free() {}
   safe_serialize(serialized_size_limit: bigint): Uint8Array {
     return this._data;
   }
@@ -83,6 +84,9 @@ class CompactCiphertextListMock {
 class CompactCiphertextListBuilderMock
   implements CompactCiphertextListBuilderWasmType
 {
+  free(): void {
+    throw new Error('Method not implemented.');
+  }
   push_boolean(value: boolean): void {
     throw new Error('Method not implemented.');
   }

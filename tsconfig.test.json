@@ -17,7 +17,11 @@
     "paths": {
       "@base/*": ["./src/base/*"],
       "@sdk/*": ["./src/sdk/*"],
-      "@relayer-provider/*": ["./src/relayer-provider/*"],
+      "@fhevm-ethers/*": ["./src/ethers/*"],
+      "@fhevm-viem/*": ["./src/viem/*"],
+      "@fhevm-base/*": ["./src/fhevm-base/*"],
+      "@fhevm-base-types/*": ["./src/fhevm-base-types/*"],
+      "@relayer/*": ["./src/relayer/*"],
       "*": ["*"]
     },
     // Add a bit of extra testing

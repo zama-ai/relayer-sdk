@@ -1,4 +1,3 @@
-import { throwIfAborted } from './abort';
 import { normalizeBytes } from './bytes';
 import { abortableSleep } from './timeout';
 
@@ -209,46 +208,31 @@ export function formatFetchErrorMetaMessages(error: unknown): string[] {
  *
  * @param url - The URL to fetch
  * @param init - Optional fetch init options (method, headers, body, etc.)
- * @param retries - Number of retry attempts on network failure (default: 3, min: 0, max: 1000)
- * @param retryDelayMs - Delay in milliseconds between retries (default: 1000, min: 100, max: 1h)
+ * @param retries - Number of retry attempts on network failure (default: 3)
+ * @param retryDelayMs - Delay in milliseconds between retries (default: 1000)
  * @returns The fetch Response
  * @throws The last network error if all retries are exhausted
  * @throws {Error} An error with name 'AbortError' if the signal is aborted
  */
 export async function fetchWithRetry(args: {
   url: string;
-  init?: RequestInit;
-  retries?: number;
-  retryDelayMs?: number;
+  init?: RequestInit | undefined;
+  retries?: number | undefined;
+  retryDelayMs?: number | undefined;
 }): Promise<Response> {
   let lastError: unknown;
 
-  let retries = args.retries ?? 3;
-  if (retries > 1000) {
-    retries = 1000;
-  }
-  if (retries < 0) {
-    retries = 0;
-  }
-
-  let retryDelayMs = args.retryDelayMs ?? 1000;
-  if (retryDelayMs > 60 * 60 * 1000) {
-    retryDelayMs = 60 * 60 * 1000;
-  }
-  if (retryDelayMs < 100) {
-    retryDelayMs = 100;
-  }
-
-  const init = args.init;
-  const url = args.url;
+  const retries = args.retries ?? 3;
+  const retryDelayMs = args.retryDelayMs ?? 1000;
+  const { url, init } = args;
 
   for (let attempt = 0; attempt <= retries; attempt++) {
     // Check if already aborted before fetching
-    throwIfAborted(init?.signal);
+    init?.signal?.throwIfAborted();
 
     try {
       return await fetch(url, init);
-    } catch (error: unknown) {
+    } catch (error) {
       // AbortError should not be retried - propagate immediately
       if ((error as { name: string }).name === 'AbortError') {
         throw error;

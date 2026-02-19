@@ -4,9 +4,8 @@ import { logCLI, parseCommonOptions } from '../utils.js';
 
 // npx . acl address
 export async function testACLAddressCommand(options) {
-  const { config, provider } = parseCommonOptions(options);
-
-  logCLI('🚚 network: ' + config.name, options);
+  const { config, provider, signer, zamaFhevmApiKey } =
+    parseCommonOptions(options);
 
   if (!config.fhevmInstanceConfig.aclContractAddress) {
     logCLI(

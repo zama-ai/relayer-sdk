@@ -12,7 +12,11 @@
     "paths": {
       "@base/*": ["../dist.tmp/base/*"],
       "@sdk/*": ["../dist.tmp/sdk/*"],
-      "@relayer-provider/*": ["../dist.tmp/relayer-provider/*"],
+      "@fhevm-ethers/*": ["../dist.tmp/ethers/*"],
+      "@fhevm-viem/*": ["../dist.tmp/viem/*"],
+      "@fhevm-base/*": ["../dist.tmp/fhevm-base/*"],
+      "@fhevm-base-types/*": ["../dist.tmp/fhevm-base-types/*"],
+      "@relayer/*": ["../dist.tmp/relayer/*"],
       "*": ["*"]
     }
   },

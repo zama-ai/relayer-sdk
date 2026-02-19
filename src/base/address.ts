@@ -1,182 +1,338 @@
-import type { Address, ChecksummedAddress } from './types/primitives';
 import type {
+  Address,
+  Bytes20,
+  Bytes20HexNo0x,
+  ChecksummedAddress,
+} from './types/primitives';
+import type {
+  RecordAddressPropertyType,
   RecordChecksummedAddressArrayPropertyType,
   RecordChecksummedAddressPropertyType,
 } from './types/private';
-import {
-  isAddress as ethersIsAddress,
-  getAddress as ethersGetAddress,
-} from 'ethers';
+import type { ErrorMetadataParams } from './errors/ErrorBase';
+import { keccak_256 } from '@noble/hashes/sha3.js';
 import {
   assertRecordArrayProperty,
   isRecordNonNullableProperty,
   typeofProperty,
 } from './record';
 import { remove0x } from './string';
-import { AddressError } from '../errors/AddressError';
-import { ChecksummedAddressError } from '../errors/ChecksummedAddressError';
-import { InvalidPropertyError } from '../errors/InvalidPropertyError';
-import { InvalidTypeError } from '../errors/InvalidTypeError';
+import { AddressError } from './errors/AddressError';
+import { ChecksummedAddressError } from './errors/ChecksummedAddressError';
+import { InvalidTypeError } from './errors/InvalidTypeError';
+import { bytesToHex, isBytes20Hex } from './bytes';
+import { InvalidPropertyError } from './errors/InvalidPropertyError';
 
-export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
+////////////////////////////////////////////////////////////////////////////////
 
+export const ZERO_ADDRESS =
+  '0x0000000000000000000000000000000000000000' as ChecksummedAddress;
+
+////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Converts a checksummed Ethereum address to its raw 20-byte representation.
+ *
+ * @param address - A valid EIP-55 checksummed address
+ * @returns The 20-byte Uint8Array representation
+ */
 export function checksummedAddressToBytes20(
   address: ChecksummedAddress,
-): Uint8Array {
-  if (!isAddress(address)) {
-    throw new InvalidTypeError({ expectedType: 'ChecksummedAddress' });
-  }
-
+): Bytes20 {
   const hex = remove0x(address);
   const bytes = new Uint8Array(20);
   for (let i = 0; i < 20; i++) {
     bytes[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
   }
-  return bytes;
+
+  return bytes as Bytes20;
 }
 
-export function toChecksummedAddress(
-  value: unknown,
-): ChecksummedAddress | undefined {
-  if (typeof value !== 'string') {
-    return undefined;
-  }
-  if (!value.startsWith('0x')) {
-    return undefined;
-  }
-  if (value.length !== 42) {
-    return undefined;
-  }
-  try {
-    const a = ethersGetAddress(value);
-    return a as ChecksummedAddress;
-  } catch {
-    return undefined;
-  }
-}
+////////////////////////////////////////////////////////////////////////////////
 
+/**
+ * Type guard that checks if a value is a valid EIP-55 checksummed Ethereum address.
+ *
+ * @param value - The value to check
+ * @returns True if the value is a valid checksummed address
+ */
 export function isChecksummedAddress(
   value: unknown,
 ): value is ChecksummedAddress {
-  if (typeof value !== 'string') {
-    return false;
-  }
-  if (!value.startsWith('0x')) {
-    return false;
-  }
-  if (value.length !== 42) {
-    return false;
-  }
   try {
-    const a = ethersGetAddress(value);
+    const a = toChecksummedAddress(value);
     return a === value;
   } catch {
     return false;
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
 export function assertIsChecksummedAddress(
   value: unknown,
+  options: { subject?: string } & ErrorMetadataParams,
 ): asserts value is ChecksummedAddress {
   if (!isChecksummedAddress(value)) {
-    throw new ChecksummedAddressError({ address: String(value) });
+    if (typeof value === 'string') {
+      throw new ChecksummedAddressError(
+        {
+          address: value,
+        },
+        options,
+      );
+    } else {
+      throw new InvalidTypeError(
+        {
+          subject: options.subject,
+          type: typeof value,
+          expectedType: 'checksummedAddress',
+        },
+        options,
+      );
+    }
   }
 }
+
+////////////////////////////////////////////////////////////////////////////////
+
+export function asChecksummedAddress(
+  value: unknown,
+  options?: ErrorMetadataParams,
+): ChecksummedAddress {
+  assertIsChecksummedAddress(value, options ?? {});
+  return value;
+}
+
+////////////////////////////////////////////////////////////////////////////////
 
 export function assertIsChecksummedAddressArray(
   value: unknown,
+  options: { subject?: string } & ErrorMetadataParams,
 ): asserts value is ChecksummedAddress[] {
   if (!Array.isArray(value)) {
-    throw new InvalidTypeError({
-      type: typeof value,
-      expectedType: 'ChecksummedAddressArray',
-    });
+    throw new InvalidTypeError(
+      {
+        subject: options.subject,
+        type: typeof value,
+        expectedType: 'checksummedAddress[]',
+      },
+      options,
+    );
   }
   for (let i = 0; i < value.length; ++i) {
     if (!isChecksummedAddress(value[i])) {
-      throw new ChecksummedAddressError({ address: String(value) });
+      throw new ChecksummedAddressError({ address: String(value) }, options);
     }
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
 export function isAddress(value: unknown): value is Address {
-  if (typeof value !== 'string') {
+  if (!isBytes20Hex(value)) {
     return false;
   }
-  if (!value.startsWith('0x')) {
-    return false;
+
+  const hexNo0x = remove0x(value) as Bytes20HexNo0x;
+  const hexNo0xLowerCase = hexNo0x.toLowerCase();
+
+  if (hexNo0x === hexNo0xLowerCase) {
+    return true;
   }
-  if (value.length !== 42) {
-    return false;
-  }
-  if (!ethersIsAddress(value)) {
-    return false;
-  }
-  return true;
+
+  // Has uppercase letters - must match EIP-55 checksum exactly
+  return _toChecksummedAddress(hexNo0xLowerCase) === value;
 }
 
-export function assertIsAddress(value: unknown): asserts value is Address {
+////////////////////////////////////////////////////////////////////////////////
+
+export function asAddress(
+  value: unknown,
+  options?: ErrorMetadataParams,
+): Address {
+  assertIsAddress(value, options ?? {});
+  return value;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+export function assertIsAddress(
+  value: unknown,
+  options: ErrorMetadataParams,
+): asserts value is Address {
   if (!isAddress(value)) {
-    throw new AddressError({ address: String(value) });
+    throw new AddressError({ address: String(value) }, options);
   }
 }
+
+////////////////////////////////////////////////////////////////////////////////
 
 export function assertIsAddressArray(
   value: unknown,
+  options: { subject?: string } & ErrorMetadataParams,
 ): asserts value is Address[] {
   if (!Array.isArray(value)) {
-    throw new InvalidTypeError({
-      type: typeof value,
-      expectedType: 'AddressArray',
-    });
+    throw new InvalidTypeError(
+      {
+        subject: options.subject,
+        type: typeof value,
+        expectedType: 'address[]',
+      },
+      options,
+    );
   }
   for (let i = 0; i < value.length; ++i) {
     if (!isAddress(value[i])) {
-      throw new AddressError({ address: String(value) });
+      throw new AddressError({ address: String(value) }, options);
     }
   }
 }
 
-export function isRecordChecksummedAddressProperty<K extends string>(
-  o: unknown,
+////////////////////////////////////////////////////////////////////////////////
+
+export function isRecordAddressProperty<K extends string>(
+  record: unknown,
   property: K,
-): o is RecordChecksummedAddressPropertyType<K> {
-  if (!isRecordNonNullableProperty(o, property)) {
+): record is RecordAddressPropertyType<K> {
+  if (!isRecordNonNullableProperty(record, property)) {
     return false;
   }
-  return isChecksummedAddress(o[property]);
+  return isAddress(record[property]);
 }
+
+////////////////////////////////////////////////////////////////////////////////
+
+export function assertRecordAddressProperty<K extends string>(
+  record: unknown,
+  property: K,
+  recordName: string,
+  options: ErrorMetadataParams,
+): asserts record is RecordAddressPropertyType<K> {
+  if (!isRecordAddressProperty(record, property)) {
+    const type = typeofProperty(record, property);
+    throw new InvalidPropertyError(
+      {
+        subject: recordName,
+        property,
+        type,
+        expectedType: 'address',
+        value:
+          type === 'string'
+            ? String((record as Record<string, unknown>)[property])
+            : undefined,
+      },
+      options,
+    );
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+export function isRecordChecksummedAddressProperty<K extends string>(
+  record: unknown,
+  property: K,
+): record is RecordChecksummedAddressPropertyType<K> {
+  if (!isRecordNonNullableProperty(record, property)) {
+    return false;
+  }
+  return isChecksummedAddress(record[property]);
+}
+
+////////////////////////////////////////////////////////////////////////////////
 
 export function assertRecordChecksummedAddressProperty<K extends string>(
-  o: unknown,
+  record: unknown,
   property: K,
-  objName: string,
-): asserts o is RecordChecksummedAddressPropertyType<K> {
-  if (!isRecordChecksummedAddressProperty(o, property)) {
-    throw new InvalidPropertyError({
-      objName,
-      property,
-      expectedType: 'ChecksummedAddress',
-      type: typeofProperty(o, property),
-    });
+  recordName: string,
+  options: ErrorMetadataParams,
+): asserts record is RecordChecksummedAddressPropertyType<K> {
+  if (!isRecordChecksummedAddressProperty(record, property)) {
+    const type = typeofProperty(record, property);
+    throw new InvalidPropertyError(
+      {
+        subject: recordName,
+        property,
+        type,
+        expectedType: 'checksummedAddress',
+        value:
+          type === 'string'
+            ? String((record as Record<string, unknown>)[property])
+            : undefined,
+      },
+      options,
+    );
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
 export function assertRecordChecksummedAddressArrayProperty<K extends string>(
-  o: unknown,
+  record: unknown,
   property: K,
-  objName: string,
-): asserts o is RecordChecksummedAddressArrayPropertyType<K> {
-  assertRecordArrayProperty(o, property, objName);
-  const arr = o[property];
+  recordName: string,
+  options: ErrorMetadataParams,
+): asserts record is RecordChecksummedAddressArrayPropertyType<K> {
+  assertRecordArrayProperty(record, property, recordName, options);
+  const arr = record[property];
   for (let i = 0; i < arr.length; ++i) {
-    if (!isChecksummedAddress(arr[i])) {
-      throw new InvalidPropertyError({
-        objName,
-        property: `${property}[${i}]`,
-        expectedType: 'ChecksummedAddress',
-        type: typeof arr[i],
-      });
+    assertIsChecksummedAddress(arr[i], options);
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Converts an Ethereum address to its EIP-55 checksummed format.
+ *
+ * @param value - The 0x-prefixed address to checksum
+ * @returns The checksummed address, or undefined if invalid
+ */
+export function toChecksummedAddress(
+  value: unknown,
+): ChecksummedAddress | undefined {
+  if (!isBytes20Hex(value)) {
+    return undefined;
+  }
+
+  return _toChecksummedAddress(remove0x(value).toLowerCase());
+}
+
+/**
+ * Converts an Ethereum address to its EIP-55 checksummed format.
+ *
+ * @param address - The 0x-prefixed address to checksum
+ * @returns The checksummed address, or undefined if invalid
+ */
+export function addressToChecksummedAddress(
+  address: Address,
+): ChecksummedAddress {
+  return _toChecksummedAddress(remove0x(address).toLowerCase());
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+export function _toChecksummedAddress(
+  bytes20No0xLowerCase: string,
+): ChecksummedAddress {
+  // Hash the lowercase hex string as UTF-8 bytes (EIP-55)
+  const hash = bytesToHex(
+    keccak_256(new TextEncoder().encode(bytes20No0xLowerCase)),
+  );
+
+  // Apply checksum: uppercase if hash nibble >= 8
+  let checksummed = '0x';
+  for (let i = 0; i < 40; i++) {
+    const char = bytes20No0xLowerCase[i];
+    // Check if it's a letter (a-f)
+    if (char >= 'a' && char <= 'f') {
+      // Get corresponding nibble from hash (hash has 0x prefix, so offset by 2)
+      const hashNibble = parseInt(hash[i + 2], 16);
+      checksummed += hashNibble >= 8 ? char.toUpperCase() : char;
+    } else {
+      checksummed += char;
     }
   }
+
+  return checksummed as ChecksummedAddress;
 }

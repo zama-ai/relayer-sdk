@@ -1,5 +1,3 @@
-export type PromiseFactory<T> = () => Promise<T>;
-
 /**
  * Executes promise factories with control over batching behavior.
  * @param factories - Array of functions that create promises (not promises themselves)
@@ -21,7 +19,7 @@ export type PromiseFactory<T> = () => Promise<T>;
  * ```
  */
 export async function executeWithBatching<T>(
-  factories: Array<PromiseFactory<T>>,
+  factories: Array<() => Promise<T>>,
   parallel?: boolean,
 ): Promise<T[]> {
   if (parallel === true) {

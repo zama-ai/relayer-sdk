@@ -1,19 +1,15 @@
 import type {
-  FhevmPkeConfigType,
-  FhevmPkeCrsByCapacityType,
-  FhevmPublicKeyType,
-} from '../types/relayer';
-import type {
-  TFHEPksCrsBytesType,
-  TFHEPublicKeyBytesType,
-} from '../sdk/lowlevel/public-api';
+  TFHEPkeParams,
+  TFHEPkeCrsBytes,
+  TFHEPublicKeyBytes,
+} from '@sdk/lowlevel/public-api';
 import { CompactPkeCrs, TfheClientKey, TfheCompactPublicKey } from 'node-tfhe';
 import fs from 'fs';
 import {
   SERIALIZED_SIZE_LIMIT_CRS,
   SERIALIZED_SIZE_LIMIT_PK,
-} from '../sdk/lowlevel/constants';
-import { TFHEPkeParams } from '../sdk/lowlevel/TFHEPkeParams';
+} from '@sdk/lowlevel/constants';
+import { createTFHEPkeParams } from '@sdk/lowlevel/keys/TFHEPkeParams';
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -77,7 +73,7 @@ export const tfheCompactPkeCrsBytes = tfheCompactPkeCrsWasm.safe_serialize(
 // High level structures
 ////////////////////////////////////////////////////////////////////////////////
 
-export const fhevmPkeCrsByCapacity: FhevmPkeCrsByCapacityType = {
+export const fhevmPkeCrsByCapacity = {
   2048: {
     publicParams: tfheCompactPkeCrsBytes,
     publicParamsId,
@@ -86,47 +82,56 @@ export const fhevmPkeCrsByCapacity: FhevmPkeCrsByCapacityType = {
 Object.freeze(fhevmPkeCrsByCapacity['2048']);
 Object.freeze(fhevmPkeCrsByCapacity);
 
-export const fhevmPublicKey: FhevmPublicKeyType = {
+export const fhevmPublicKey = {
   data: tfheCompactPublicKeyBytes,
   id: publicKeyId,
 };
 Object.freeze(fhevmPublicKey);
 
-export const fhevmPkeConfig: FhevmPkeConfigType = {
+export const fhevmPkeConfig = {
   publicKey: fhevmPublicKey,
   publicParams: fhevmPkeCrsByCapacity,
 };
 Object.freeze(fhevmPkeConfig);
 
-export const pkeParams: TFHEPkeParams =
-  TFHEPkeParams.fromFhevmPkeConfig(fhevmPkeConfig);
+export const pkeParams: TFHEPkeParams = createTFHEPkeParams({
+  publicKey: {
+    id: fhevmPublicKey.id,
+    bytes: fhevmPublicKey.data,
+  },
+  pkeCrs: {
+    id: fhevmPkeCrsByCapacity[2048].publicParamsId,
+    bytes: fhevmPkeCrsByCapacity[2048].publicParams,
+    capacity: 2048,
+  },
+});
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export const tfhePublicKeyBytes: TFHEPublicKeyBytesType = {
+export const tfhePublicKeyBytes: TFHEPublicKeyBytes = {
   id: publicKeyId,
   bytes: tfheCompactPublicKeyBytes,
 };
 Object.freeze(tfhePublicKeyBytes);
 
-export const tfhePublicKeyBytesWithSrcUrl: TFHEPublicKeyBytesType = {
+export const tfhePublicKeyBytesWithSrcUrl: TFHEPublicKeyBytes = {
   id: publicKeyId,
   bytes: tfheCompactPublicKeyBytes,
   srcUrl: 'https://example.com/publicKey.bin',
 };
 Object.freeze(tfhePublicKeyBytes);
 
-export const tfhePksCrsBytes: TFHEPksCrsBytesType = {
+export const tfhePkeCrsBytes: TFHEPkeCrsBytes = {
   id: publicParamsId,
   bytes: tfheCompactPkeCrsBytes,
   capacity: 2048,
 };
-Object.freeze(tfhePksCrsBytes);
+Object.freeze(tfhePkeCrsBytes);
 
-export const tfhePksCrsBytesWithSrcUrl: TFHEPksCrsBytesType = {
-  ...tfhePksCrsBytes,
+export const tfhePkeCrsBytesWithSrcUrl: TFHEPkeCrsBytes = {
+  ...tfhePkeCrsBytes,
   srcUrl: 'https://example.com/crs2048.bin',
 };
-Object.freeze(tfhePksCrsBytesWithSrcUrl);
+Object.freeze(tfhePkeCrsBytesWithSrcUrl);
 
 ////////////////////////////////////////////////////////////////////////////////

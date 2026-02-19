@@ -1,11 +1,22 @@
-export interface IInputVerifier {
-  getCoprocessorSigners(): Promise<unknown[]>;
-  getThreshold(): Promise<unknown>;
-  eip712Domain(): Promise<unknown[]>;
+import type {
+  Bytes65Hex,
+  Bytes65HexNo0x,
+  BytesHexNo0x,
+  ChecksummedAddress,
+} from '@base/types/primitives';
+import type {
+  FhevmHandle,
+  KMSVerifierContractData,
+} from '@fhevm-base/types/public-api';
+
+export interface KmsSigncryptedSharesMetadata {
+  readonly kmsVerifier: KMSVerifierContractData;
+  readonly eip712Signature: Bytes65Hex;
+  readonly eip712SignerAddress: ChecksummedAddress;
+  readonly fhevmHandles: readonly FhevmHandle[];
 }
 
-export interface IKMSVerifier {
-  getKmsSigners(): Promise<unknown[]>;
-  getThreshold(): Promise<unknown>;
-  eip712Domain(): Promise<unknown[]>;
+export interface KmsSigncryptedShare {
+  readonly payload: BytesHexNo0x; // signcrypted share: a bunch of bytes that contains
+  readonly signature: Bytes65HexNo0x;
 }

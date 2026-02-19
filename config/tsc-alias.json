@@ -5,7 +5,11 @@
     "paths": {
       "@base/*": ["./base/*"],
       "@sdk/*": ["./sdk/*"],
-      "@relayer-provider/*": ["./relayer-provider/*"]
+      "@fhevm-ethers/*": ["./ethers/*"],
+      "@fhevm-viem/*": ["./viem/*"],
+      "@fhevm-base/*": ["./fhevm-base/*"],
+      "@fhevm-base-types/*": ["./fhevm-base-types/*"],
+      "@relayer/*": ["./relayer/*"]
     }
   },
   "tsc-alias": {

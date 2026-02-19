@@ -27,6 +27,3 @@ export {
 
 // String utilities
 export { safeJSONstringify } from './base/string';
-
-// Private functions
-export { createRelayerFhevm } from '@relayer-provider/createRelayerFhevm';

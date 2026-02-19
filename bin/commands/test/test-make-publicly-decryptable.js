@@ -9,11 +9,8 @@ import { ethers } from 'ethers';
 // npx . test make-publicly-decryptable --type euint32 --network testnet
 // npx . test make-publicly-decryptable --type euint32 --network mainnet
 export async function testFHETestMakePubliclyDecryptableCommand(options) {
-  const { config, provider, signer } = parseCommonOptions(options);
-
-  logCLI('🚚 network: ' + config.name, options);
-  logCLI('🚀 route: v' + config.version, options);
-  logCLI(`🍔 signer: ${signer.address}`);
+  const { config, provider, signer, zamaFhevmApiKey } =
+    parseCommonOptions(options);
 
   if (!FHETestAddresses[config.name]) {
     logCLI(`❌ FHETest is not deployed on network ${config.name}`, options);
@@ -43,6 +40,7 @@ export async function testFHETestMakePubliclyDecryptableCommand(options) {
     aclContractAddress: config.fhevmInstanceConfig.aclContractAddress,
     provider,
   });
+
   const ok = await acl.isAllowedForDecryption([handle]);
   if (ok[0] === true) {
     logCLI(`🚨 handle is already publicly decryptable.`);

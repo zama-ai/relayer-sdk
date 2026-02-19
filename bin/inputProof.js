@@ -2,20 +2,31 @@ import { bytesToHex, FhevmHandle } from '../lib/internal.js';
 import { getInstance } from './instance.js';
 import { logCLI, fheTypedValuesToBuilderFunctionWithArg } from './utils.js';
 
-export async function inputProof(
+export async function inputProof({
   fheTypedValues,
   config,
   publicKey,
   publicParams,
   zamaFhevmApiKey,
   options,
-) {
+}) {
   const arr = fheTypedValuesToBuilderFunctionWithArg(fheTypedValues);
 
   const instanceOptions = {
-    ...(options?.verbose === true ? { debug: true } : {}),
+    ...(options.debug === true ? { debug: true } : {}),
     auth: { __type: 'ApiKeyHeader', value: zamaFhevmApiKey },
   };
+
+  const timeout =
+    options.timeout !== undefined ? Number(options.timeout) : undefined;
+  const fetchRetries =
+    options.fetchRetries !== undefined
+      ? Number(options.fetchRetries)
+      : undefined;
+  const fetchRetryDelayInMilliseconds =
+    options.fetchRetryDelay !== undefined
+      ? Number(options.fetchRetryDelay)
+      : undefined;
 
   try {
     const instance = await getInstance(
@@ -43,11 +54,15 @@ export async function inputProof(
     const { handles, inputProof } = await instance.requestZKProofVerification(
       zkproof,
       {
+        timeout,
+        fetchRetries,
+        fetchRetryDelayInMilliseconds,
         onProgress: (args) => {
-          logCLI(
-            `[${args.type}] progress: ${args.step}/${args.totalSteps}`,
-            options,
-          );
+          let s = `[${config.name}/v${config.version}/input-proof - ${args.type}] jobId:${args.jobId} requestId:${args.requestId} retryCount:${args.retryCount}`;
+          if (args.retryAfterMs !== undefined) {
+            s += ` retryAfterMs:${args.retryAfterMs}`;
+          }
+          logCLI(s, options);
         },
         auth: { __type: 'ApiKeyHeader', value: zamaFhevmApiKey },
       },
@@ -60,11 +75,7 @@ export async function inputProof(
     };
     return o;
   } catch (e) {
-    console.log(e.name);
-    console.log(e.message);
-    console.log(e);
-    console.log(JSON.stringify(e.cause, null, 2));
-
+    logError('Input Proof', e, options);
     process.exit(1);
   }
 }
