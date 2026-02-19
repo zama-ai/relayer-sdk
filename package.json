@@ -20,7 +20,9 @@
     "node.d.ts",
     "node.js",
     "web.d.ts",
-    "web.js"
+    "web.js",
+    "core.d.ts",
+    "core.js"
   ],
   "exports": {
     "./web": {
@@ -38,7 +40,12 @@
       "import": "./lib/node.js",
       "require": "./lib/node.cjs"
     },
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./core": {
+      "types": "./lib/core.d.ts",
+      "import": "./lib/core.js",
+      "require": "./lib/core.cjs"
+    }
   },
   "scripts": {
     "pr-check": "npm run clean && npm run prettier:check && npm run lint && npm run build:strict && npm run build && npm run test && npm run test:testnet && npm run test:cli && npm run test:playwright",
@@ -73,10 +80,11 @@
     "flatten:node:dts": "api-extractor run --local --config config/api-extractor.node.json",
     "flatten:node-mock:dts": "api-extractor run --local --config config/api-extractor.node-mock.json",
     "flatten:web:dts": "api-extractor run --local --config config/api-extractor.web.json",
-    "flatten:dts": "npm run flatten:node:dts && npm run flatten:web:dts",
+    "flatten:dts": "npm run flatten:node:dts && npm run flatten:web:dts && npm run flatten:core:dts",
     "copy:dts": "mkdir -p dist.tmp/base/types dist.tmp/sdk/lowlevel dist.tmp/sdk/coprocessor dist.tmp/sdk/kms dist.tmp/sdk/types dist.tmp/relayer-provider/types dist.tmp/relayer-provider/v2/errors dist.tmp/types && cp src/base/types/*.d.ts dist.tmp/base/types/ && cp src/sdk/lowlevel/*.d.ts dist.tmp/sdk/lowlevel/ && cp src/sdk/coprocessor/public-api.d.ts dist.tmp/sdk/coprocessor/ && cp src/sdk/kms/public-api.d.ts dist.tmp/sdk/kms/ && cp src/sdk/types/public-api.d.ts dist.tmp/sdk/types/ && cp src/relayer-provider/types/*.d.ts dist.tmp/relayer-provider/types/ && cp src/relayer-provider/v2/errors/public-types.d.ts dist.tmp/relayer-provider/v2/errors/ && cp src/types/relayer.d.ts dist.tmp/types/",
     "build:dts": "npm run clean:dts && npm run tsc:dts && npm run copy:dts && npx tsc-alias -p config/tsc-alias.json && npm run flatten:dts && npm run clean:dts",
-    "version": "cd ./scripts && node ./generate-version.cjs"
+    "version": "cd ./scripts && node ./generate-version.cjs",
+    "flatten:core:dts": "api-extractor run --local --config config/api-extractor.core.json"
   },
   "repository": {
     "type": "git",
