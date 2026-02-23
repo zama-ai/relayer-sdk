@@ -1,4 +1,3 @@
-import type { RelayerErrorBaseParams } from './RelayerErrorBase';
 import type { RelayerFetchErrorBaseParams } from './RelayerFetchErrorBase';
 import type { Prettify } from '@base/types/utils';
 import { RelayerFetchErrorBase } from './RelayerFetchErrorBase';
@@ -13,7 +12,7 @@ export type RelayerMaxRetryErrorType = RelayerMaxRetryError & {
 };
 
 export type RelayerMaxRetryErrorParams = Prettify<
-  Omit<RelayerFetchErrorBaseParams, keyof RelayerErrorBaseParams>
+  Omit<RelayerFetchErrorBaseParams, 'name' | 'message' | 'details'>
 >;
 
 /**

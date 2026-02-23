@@ -1,6 +1,5 @@
 import type { RelayerResponseErrorBaseParams } from './RelayerResponseErrorBase';
 import type { RelayerApiError } from '../types/private-api';
-import type { RelayerErrorBaseParams } from './RelayerErrorBase';
 import type { Prettify } from '@base/types/utils';
 import { RelayerResponseErrorBase } from './RelayerResponseErrorBase';
 import { humanReadableOperation } from '../utils';
@@ -14,8 +13,8 @@ export type RelayerResponseApiErrorType = RelayerResponseErrorBase & {
 };
 
 export type RelayerResponseApiErrorParams = Prettify<
-  Omit<RelayerResponseErrorBaseParams, keyof RelayerErrorBaseParams> & {
-    relayerApiError: RelayerApiError;
+  Omit<RelayerResponseErrorBaseParams, 'metaMessages' | 'name' | 'message'> & {
+    readonly relayerApiError: RelayerApiError;
   }
 >;
 

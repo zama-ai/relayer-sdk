@@ -6,10 +6,7 @@ import { ZKProofError } from '../errors/ZKProofError';
 import { InvalidTypeError } from '@base/errors/InvalidTypeError';
 import { ChecksummedAddressError } from '@base/errors/ChecksummedAddressError';
 import { hexToBytes } from '@base/bytes';
-import {
-  createZKProofInternal,
-  zkProofGetUnsafeRawBytesInternal,
-} from './ZKProof';
+import { toZKProof, zkProofGetUnsafeRawBytesInternal } from './ZKProof';
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -74,7 +71,7 @@ describe('ZKProof', () => {
 
   describe('createZKProof', () => {
     it('creates ZKProof from valid hex string ciphertext', () => {
-      const zkProof = createZKProofInternal(createValidZKProofLike());
+      const zkProof = toZKProof(createValidZKProofLike());
 
       expect(zkProof.chainId).toBe(VALID_CHAIN_ID);
       expect(zkProof.aclContractAddress).toBe(VALID_ACL_ADDRESS);
@@ -90,7 +87,7 @@ describe('ZKProof', () => {
         ciphertextWithZKProof: VALID_CIPHERTEXT_BYTES,
       };
 
-      const zkProof = createZKProofInternal(input);
+      const zkProof = toZKProof(input);
 
       expect(zkProof.ciphertextWithZKProof).toEqual(VALID_CIPHERTEXT_BYTES);
     });
@@ -101,7 +98,7 @@ describe('ZKProof', () => {
         chainId: 11155111,
       };
 
-      const zkProof = createZKProofInternal(input);
+      const zkProof = toZKProof(input);
 
       expect(zkProof.chainId).toBe(BigInt(11155111));
     });
@@ -115,7 +112,7 @@ describe('ZKProof', () => {
     it('takes ownership when copy: false (no defensive copy)', () => {
       const input = createValidZKProofLikeBytes();
 
-      const zkProof = createZKProofInternal(input, { copy: false });
+      const zkProof = toZKProof(input, { copy: false });
 
       // Should be the same reference (no copy was made)
       expect(zkProofGetUnsafeRawBytesInternal(zkProof)).toBe(
@@ -126,7 +123,7 @@ describe('ZKProof', () => {
     it('makes defensive copy by default (copy: true)', () => {
       const input = createValidZKProofLikeBytes();
 
-      const zkProof = createZKProofInternal(input, { copy: true });
+      const zkProof = toZKProof(input, { copy: true });
 
       // Should be a different reference but same content
       expect(zkProofGetUnsafeRawBytesInternal(zkProof)).not.toBe(
@@ -138,8 +135,8 @@ describe('ZKProof', () => {
     });
 
     it('copy option has no effect on hex string input', () => {
-      const zkProof1 = createZKProofInternal(createValidZKProofLike());
-      const zkProof2 = createZKProofInternal(createValidZKProofLike(), {
+      const zkProof1 = toZKProof(createValidZKProofLike());
+      const zkProof2 = toZKProof(createValidZKProofLike(), {
         copy: true,
       });
 
@@ -160,7 +157,7 @@ describe('ZKProof', () => {
         chainId: -1,
       };
 
-      expect(() => createZKProofInternal(input)).toThrow(InvalidTypeError);
+      expect(() => toZKProof(input)).toThrow(InvalidTypeError);
     });
 
     it('throws on invalid chainId (not a number)', () => {
@@ -169,7 +166,7 @@ describe('ZKProof', () => {
         chainId: 'invalid' as any,
       };
 
-      expect(() => createZKProofInternal(input)).toThrow(InvalidTypeError);
+      expect(() => toZKProof(input)).toThrow(InvalidTypeError);
     });
 
     it('throws on invalid aclContractAddress', () => {
@@ -178,9 +175,7 @@ describe('ZKProof', () => {
         aclContractAddress: 'not-an-address',
       };
 
-      expect(() => createZKProofInternal(input)).toThrow(
-        ChecksummedAddressError,
-      );
+      expect(() => toZKProof(input)).toThrow(ChecksummedAddressError);
     });
 
     it('throws on invalid contractAddress', () => {
@@ -189,9 +184,7 @@ describe('ZKProof', () => {
         contractAddress: '0xinvalid',
       };
 
-      expect(() => createZKProofInternal(input)).toThrow(
-        ChecksummedAddressError,
-      );
+      expect(() => toZKProof(input)).toThrow(ChecksummedAddressError);
     });
 
     it('throws on invalid userAddress', () => {
@@ -200,9 +193,7 @@ describe('ZKProof', () => {
         userAddress: '',
       };
 
-      expect(() => createZKProofInternal(input)).toThrow(
-        ChecksummedAddressError,
-      );
+      expect(() => toZKProof(input)).toThrow(ChecksummedAddressError);
     });
 
     it('throws on empty ciphertextWithZKProof hex string', () => {
@@ -211,7 +202,7 @@ describe('ZKProof', () => {
         ciphertextWithZKProof: '0x',
       };
 
-      expect(() => createZKProofInternal(input)).toThrow(ZKProofError);
+      expect(() => toZKProof(input)).toThrow(ZKProofError);
     });
 
     it('throws on empty ciphertextWithZKProof Uint8Array', () => {
@@ -220,7 +211,7 @@ describe('ZKProof', () => {
         ciphertextWithZKProof: new Uint8Array(0),
       };
 
-      expect(() => createZKProofInternal(input)).toThrow(ZKProofError);
+      expect(() => toZKProof(input)).toThrow(ZKProofError);
     });
 
     it('throws on invalid ciphertextWithZKProof type', () => {
@@ -229,7 +220,7 @@ describe('ZKProof', () => {
         ciphertextWithZKProof: 12345 as any,
       };
 
-      expect(() => createZKProofInternal(input)).toThrow(InvalidTypeError);
+      expect(() => toZKProof(input)).toThrow(InvalidTypeError);
     });
 
     it('throws on invalid encryptionBits value', () => {
@@ -238,7 +229,7 @@ describe('ZKProof', () => {
         encryptionBits: [8, 999] as any,
       };
 
-      expect(() => createZKProofInternal(input)).toThrow(InvalidTypeError);
+      expect(() => toZKProof(input)).toThrow(InvalidTypeError);
     });
   });
 
@@ -250,7 +241,7 @@ describe('ZKProof', () => {
     let zkProof: ZKProof;
 
     beforeEach(() => {
-      zkProof = createZKProofInternal(createValidZKProofLike());
+      zkProof = toZKProof(createValidZKProofLike());
     });
 
     it('chainId returns bigint', () => {
@@ -278,7 +269,7 @@ describe('ZKProof', () => {
       // Bypass TypeScript private constructor to test the getter's defensive check
       // This simulates a scenario where the internal state is corrupted
       expect(() =>
-        createZKProofInternal({
+        toZKProof({
           chainId: VALID_CHAIN_ID,
           aclContractAddress: VALID_ACL_ADDRESS,
           contractAddress: VALID_CONTRACT_ADDRESS,
@@ -301,7 +292,7 @@ describe('ZKProof', () => {
 
   describe('immutability', () => {
     it('encryptionBits array is frozen', () => {
-      const zkProof = createZKProofInternal(createValidZKProofLike());
+      const zkProof = toZKProof(createValidZKProofLike());
 
       expect(Object.isFrozen(zkProof.encryptionBits)).toBe(true);
     });
@@ -313,7 +304,7 @@ describe('ZKProof', () => {
         encryptionBits,
       };
 
-      const zkProof = createZKProofInternal(input);
+      const zkProof = toZKProof(input);
 
       // Mutate the original array
       encryptionBits.push(64);
@@ -329,7 +320,7 @@ describe('ZKProof', () => {
 
   describe('toJSON', () => {
     it('serializes to ZKProofLike', () => {
-      const zkProof = createZKProofInternal(createValidZKProofLike());
+      const zkProof = toZKProof(createValidZKProofLike());
       const jsonStr = JSON.stringify(zkProof);
       const json = JSON.parse(jsonStr);
 
@@ -343,7 +334,7 @@ describe('ZKProof', () => {
     });
 
     it('ciphertextWithZKProof is serialized as hex string', () => {
-      const zkProof = createZKProofInternal(createValidZKProofLike());
+      const zkProof = toZKProof(createValidZKProofLike());
       const jsonStr = JSON.stringify(zkProof);
       const json = JSON.parse(jsonStr);
 
@@ -351,10 +342,10 @@ describe('ZKProof', () => {
     });
 
     it('can round-trip through toJSON and createZKProof', () => {
-      const original = createZKProofInternal(createValidZKProofLike());
+      const original = toZKProof(createValidZKProofLike());
       const jsonStr = JSON.stringify(original);
       const json = JSON.parse(jsonStr);
-      const restored = createZKProofInternal(json);
+      const restored = toZKProof(json);
 
       expect(restored.chainId).toBe(original.chainId);
       expect(restored.aclContractAddress).toBe(original.aclContractAddress);
@@ -373,7 +364,7 @@ describe('ZKProof', () => {
 
   describe('JSON.stringify compatibility', () => {
     it('works with JSON.stringify natively for safe integer chainIds', () => {
-      const zkProof = createZKProofInternal(createValidZKProofLike());
+      const zkProof = toZKProof(createValidZKProofLike());
 
       // chainId within Number.MAX_SAFE_INTEGER is converted to number
       const jsonString = JSON.stringify(zkProof);
@@ -386,7 +377,7 @@ describe('ZKProof', () => {
     });
 
     it('chainId is serialized as number when within safe integer range', () => {
-      const zkProof = createZKProofInternal(createValidZKProofLike());
+      const zkProof = toZKProof(createValidZKProofLike());
 
       const jsonString = JSON.stringify(zkProof);
       const parsed = JSON.parse(jsonString);
@@ -403,7 +394,7 @@ describe('ZKProof', () => {
         chainId: largeChainId,
       };
 
-      const zkProof = createZKProofInternal(input);
+      const zkProof = toZKProof(input);
 
       // Large chainId stays as bigint, requires replacer for JSON.stringify
       expect(() => JSON.stringify(zkProof)).toThrow(TypeError);

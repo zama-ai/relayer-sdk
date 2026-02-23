@@ -5,7 +5,7 @@ import type {
 } from '@base/types/primitives';
 import type { Prettify } from '@base/types/utils';
 import type { FhevmHandle } from '@fhevm-base/types/public-api';
-import type { KmsSigncryptedShare } from '@sdk/types/private';
+import type { KmsSigncryptedShare } from '@fhevm-base/types/private';
 
 export type RelayerSuccessStatus = 200 | 202;
 export type RelayerFailureStatus = 400 | 401 | 404 | 429 | 500 | 503;
@@ -26,6 +26,45 @@ export type FetchPublicDecryptResult = {
 
 export type FetchUserDecryptResult = readonly KmsSigncryptedShare[];
 export type FetchDelegatedUserDecryptResult = readonly KmsSigncryptedShare[];
+
+/**
+ * Configuration for fetching a TFHE Public Key Encryption (PKE) Common Reference
+ * String (CRS) from a remote URL.
+ *
+ * Typically obtained from the <relayer-url>/keyurl response, which provides
+ * the URLs for fetching the data.
+ */
+export type TfhePkeCrsUrl = {
+  /** Unique identifier for the CRS provided by the relayer */
+  id: string;
+  /** URL from which to fetch the CRS bytes */
+  srcUrl: string;
+  /** The CRS capacity (always 2048 in the current configuration). */
+  capacity: number;
+};
+
+/**
+ * Configuration for fetching a TFHE public key from a remote URL.
+ *
+ * Typically obtained from the <relayer-url>/keyurl response, which provides
+ * the URLs for fetching the data.
+ */
+export type TfhePublicKeyUrl = {
+  /** Unique identifier for the public key provided by the relayer */
+  id: string;
+  /** URL from which to fetch the public key bytes */
+  srcUrl: string;
+};
+
+/**
+ * URL configuration for fetching TFHE PKE (Public Key Encryption) parameters.
+ */
+export type TfhePkeUrls = {
+  /** URL configuration for the TFHE compact public key */
+  publicKeyUrl: TfhePublicKeyUrl;
+  /** URL configuration for the PKE CRS (Common Reference String) */
+  pkeCrsUrl: TfhePkeCrsUrl;
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 // Auth

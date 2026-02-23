@@ -1,6 +1,6 @@
 import { bytesToHex } from '@base/bytes';
 import { createInstance, SepoliaConfigV2 } from './index';
-import { keyUrl } from '@relayer/keyUrl';
+import { keyUrl } from '@relayer/fetchTfhePublicEncryptionParams';
 
 ////////////////////////////////////////////////////////////////////////////////
 //

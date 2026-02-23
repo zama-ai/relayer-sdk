@@ -17,9 +17,10 @@ import type {
   Uint8,
   Uint8Number,
   UintBigInt,
+  UintNormalizedMap,
   UintNumber,
-  UintXXType,
   UintXXTypeName,
+  UintXXMap,
 } from './types/primitives';
 import type { TypeName } from './typedvalue';
 import type {
@@ -287,19 +288,19 @@ export function assertIsUint(
   }
 }
 
-export function assertIsUintForType(
+export function assertIsUintForType<T extends UintXXTypeName>(
   value: unknown,
+  typeName: T,
   options: {
-    typeName: UintXXTypeName;
     subject?: string;
   } & ErrorMetadataParams,
-): asserts value is UintXXType {
-  if (!isUintForType(value, options.typeName)) {
+): asserts value is UintXXMap[T] {
+  if (!isUintForType(value, typeName)) {
     throw new InvalidTypeError(
       {
         subject: options.subject,
         type: typeof value,
-        expectedType: options.typeName,
+        expectedType: typeName,
       },
       options,
     );
@@ -435,17 +436,37 @@ export function assertIsUint256(
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// normalizeUintForType
+////////////////////////////////////////////////////////////////////////////////
+
+export function normalizeUintForType<T extends UintXXTypeName>(
+  value: Uint,
+  typeName: T,
+): UintNormalizedMap[T] {
+  switch (typeName) {
+    case 'uint8':
+    case 'uint16':
+    case 'uint32':
+      return Number(value) as UintNormalizedMap[T];
+    case 'uint64':
+    case 'uint128':
+    case 'uint256':
+      return BigInt(value) as UintNormalizedMap[T];
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////
 // asUintXX
 ////////////////////////////////////////////////////////////////////////////////
 
-export function asUintForType(
+export function asUintForType<T extends UintXXTypeName>(
   value: unknown,
+  typeName: T,
   options: {
-    typeName: UintXXTypeName;
     subject?: string;
   } & ErrorMetadataParams,
-): UintXXType {
-  assertIsUintForType(value, options);
+): UintXXMap[T] {
+  assertIsUintForType(value, typeName, options);
   return value;
 }
 

@@ -1,46 +1,299 @@
-import type {
-  Bytes,
-  ChecksummedAddress,
-  Uint64BigInt,
-} from '@base/types/primitives';
-import type { EncryptionBits, FhevmHandle } from '@fhevm-base/types/public-api';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import type { BytesHex, ChecksummedAddress } from '@base/types/primitives';
+import type { KmsEIP712Domain } from '@fhevm-base/types/public-api';
+
+/**
+ * TFHE Public Key Encryption (PKE) Common Reference String (CRS) compact data with
+ * raw bytes representation.
+ */
+export type TFHEPkeCrsBytes = {
+  /** Unique identifier for the public key provided by the relayer */
+  id: string;
+  /** The CRS capacity (always 2048 in the current configuration). */
+  capacity: number;
+  /** Serialized TFHE compact PKE CRS bytes */
+  bytes: Uint8Array;
+  /** Optional URL from which the CRS bytes were fetched */
+  srcUrl?: string | undefined;
+};
+
+/**
+ * TFHE Public Key Encryption (PKE) Common Reference String (CRS) compact data
+ * with 0x-prefixed hex-encoded bytes representation.
+ */
+export type TFHEPkeCrsBytesHex = {
+  /** Unique identifier for the public key provided by the relayer */
+  id: string;
+  /** The CRS capacity (always 2048 in the current configuration). */
+  capacity: number;
+  /** 0x-prefixed hex-encoded serialized TFHE compact PKE CRS bytes */
+  bytesHex: BytesHex;
+  /** Optional URL from which the CRS bytes were fetched */
+  srcUrl?: string | undefined;
+};
+
+/**
+ * Configuration for fetching a TFHE Public Key Encryption (PKE) Common Reference
+ * String (CRS) from a remote URL.
+ *
+ * Typically obtained from the <relayer-url>/keyurl response, which provides
+ * the URLs for fetching the data.
+ */
+export type TFHEPkeCrsUrl = {
+  /** Unique identifier for the CRS provided by the relayer */
+  id: string;
+  /** The CRS capacity (always 2048 in the current configuration). */
+  capacity: number;
+  /** URL from which to fetch the CRS bytes */
+  srcUrl: string;
+};
+
+/**
+ * TFHE public key data with raw bytes representation.
+ */
+export type TFHEPublicKeyBytes = {
+  /** Unique identifier for the public key provided by the relayer */
+  id: string;
+  /** Serialized TFHE compact public key bytes */
+  bytes: Uint8Array;
+  /** Optional URL from which the public key bytes were fetched */
+  srcUrl?: string | undefined;
+};
+
+/**
+ * TFHE public key data with 0x-prefixed hex-encoded bytes representation.
+ */
+export type TFHEPublicKeyBytesHex = {
+  /** Unique identifier for the public key provided by the relayer */
+  id: string;
+  /** 0x-prefixed hex-encoded serialized TFHE compact public key bytes */
+  bytesHex: BytesHex;
+  /** Optional URL from which the public key bytes were fetched */
+  srcUrl?: string | undefined;
+};
+
+/**
+ * Configuration for fetching a TFHE public key from a remote URL.
+ *
+ * Typically obtained from the <relayer-url>/keyurl response, which provides
+ * the URLs for fetching the data.
+ */
+export type TFHEPublicKeyUrl = {
+  /** Unique identifier for the public key provided by the relayer */
+  id: string;
+  /** URL from which to fetch the public key bytes */
+  srcUrl: string;
+};
+
+/**
+ * URL configuration for fetching TFHE PKE (Public Key Encryption) parameters.
+ */
+export type TFHEPkeUrls = {
+  /** URL configuration for the TFHE compact public key */
+  publicKeyUrl: TFHEPublicKeyUrl;
+  /** URL configuration for the PKE CRS (Common Reference String) */
+  pkeCrsUrl: TFHEPkeCrsUrl;
+};
+
+/**
+ * Parameters for fetching TFHE resources with retry support.
+ */
+export type TFHEFetchParams = {
+  /** Optional fetch init options (headers, signal, etc.) */
+  init?: RequestInit | undefined;
+  /** Number of retry attempts on network failure (default: 3) */
+  retries?: number | undefined;
+  /** Delay in milliseconds between retries (default: 1000) */
+  retryDelayMs?: number | undefined;
+};
+
+export type WasmObject = object;
 
 ////////////////////////////////////////////////////////////////////////////////
-//
-// ZKProof
-//
+// tkms.d.ts
 ////////////////////////////////////////////////////////////////////////////////
 
-export interface ZKProofLike {
-  readonly chainId: bigint | number;
-  readonly aclContractAddress: string;
-  readonly contractAddress: string;
-  readonly userAddress: string;
-  readonly ciphertextWithZKProof: Uint8Array | string;
-  readonly encryptionBits?: readonly number[];
+declare const TKMSModuleBrand: unique symbol;
+declare const PrivateEncKeyMlKem512WasmTypeBrand: unique symbol;
+declare const PublicEncKeyMlKem512WasmTypeBrand: unique symbol;
+declare const ServerIdAddrWasmTypeBrand: unique symbol;
+declare const ClientWasmTypeBrand: unique symbol;
+
+export interface PrivateEncKeyMlKem512WasmShape {
+  free(): void;
+}
+export interface PrivateEncKeyMlKem512WasmType
+  extends PrivateEncKeyMlKem512WasmShape {
+  readonly [PrivateEncKeyMlKem512WasmTypeBrand]: never;
 }
 
-export interface ZKProof {
-  readonly chainId: Uint64BigInt;
-  readonly aclContractAddress: ChecksummedAddress;
-  readonly contractAddress: ChecksummedAddress;
-  readonly userAddress: ChecksummedAddress;
-  readonly ciphertextWithZKProof: Bytes;
-  readonly encryptionBits: readonly EncryptionBits[];
-  getUnsafeRawBytes(): Bytes;
-  getFhevmHandles(): FhevmHandle[];
+export interface PublicEncKeyMlKem512WasmShape {
+  free(): void;
+}
+export interface PublicEncKeyMlKem512WasmType
+  extends PublicEncKeyMlKem512WasmShape {
+  readonly [PublicEncKeyMlKem512WasmTypeBrand]: never;
+}
+
+export interface ServerIdAddrWasmShape {
+  free(): void;
+}
+export interface ServerIdAddrWasmType extends ServerIdAddrWasmShape {
+  readonly [ServerIdAddrWasmTypeBrand]: never;
+}
+
+export interface ClientWasmShape {
+  free(): void;
+}
+export interface ClientWasmType extends ClientWasmShape {
+  readonly [ClientWasmTypeBrand]: never;
+}
+
+export type KmsEIP712DomainWasmType = Readonly<
+  Omit<KmsEIP712Domain, 'chainId' | 'verifyingContract'> & {
+    readonly chain_id: Uint8Array;
+    readonly verifying_contract: ChecksummedAddress;
+    readonly salt: null;
+  }
+>;
+
+export interface TypedPlaintextWasmType {
+  bytes: Uint8Array;
+  fhe_type: number;
+}
+
+interface TKMSTypeShape {
+  default?: (module_or_path?: any) => Promise<any>;
+  u8vec_to_ml_kem_pke_pk(v: Uint8Array): PublicEncKeyMlKem512WasmShape;
+  u8vec_to_ml_kem_pke_sk(v: Uint8Array): PrivateEncKeyMlKem512WasmShape;
+  new_client(
+    server_addrs: ServerIdAddrWasmShape[],
+    client_address_hex: string,
+    fhe_parameter: string,
+  ): ClientWasmShape;
+  new_server_id_addr(id: number, addr: string): ServerIdAddrWasmShape;
+  process_user_decryption_resp_from_js(
+    client: ClientWasmShape,
+    request: any,
+    eip712_domain: KmsEIP712DomainWasmType,
+    agg_resp: any,
+    enc_pk: PublicEncKeyMlKem512WasmShape,
+    enc_sk: PrivateEncKeyMlKem512WasmShape,
+    verify: boolean,
+  ): TypedPlaintextWasmType[];
+  ml_kem_pke_keygen(): PrivateEncKeyMlKem512WasmShape;
+  ml_kem_pke_pk_to_u8vec(pk: PublicEncKeyMlKem512WasmShape): Uint8Array;
+  ml_kem_pke_sk_to_u8vec(sk: PrivateEncKeyMlKem512WasmShape): Uint8Array;
+  ml_kem_pke_get_pk(
+    sk: PrivateEncKeyMlKem512WasmShape,
+  ): PublicEncKeyMlKem512WasmShape;
+}
+
+export interface TKMSType extends TKMSTypeShape {
+  readonly [TKMSModuleBrand]: never;
+  default?: (module_or_path?: any) => Promise<any>;
+  u8vec_to_ml_kem_pke_pk(v: Uint8Array): PublicEncKeyMlKem512WasmType;
+  u8vec_to_ml_kem_pke_sk(v: Uint8Array): PrivateEncKeyMlKem512WasmType;
+  new_client(
+    server_addrs: ServerIdAddrWasmType[],
+    client_address_hex: string,
+    fhe_parameter: string,
+  ): ClientWasmType;
+  new_server_id_addr(id: number, addr: string): ServerIdAddrWasmType;
+  process_user_decryption_resp_from_js(
+    client: ClientWasmType,
+    request: any,
+    eip712_domain: KmsEIP712DomainWasmType,
+    agg_resp: any,
+    enc_pk: PublicEncKeyMlKem512WasmType,
+    enc_sk: PrivateEncKeyMlKem512WasmType,
+    verify: boolean,
+  ): TypedPlaintextWasmType[];
+  ml_kem_pke_keygen(): PrivateEncKeyMlKem512WasmType;
+  ml_kem_pke_pk_to_u8vec(pk: PublicEncKeyMlKem512WasmType): Uint8Array;
+  ml_kem_pke_sk_to_u8vec(sk: PrivateEncKeyMlKem512WasmType): Uint8Array;
+  ml_kem_pke_get_pk(
+    sk: PrivateEncKeyMlKem512WasmType,
+  ): PublicEncKeyMlKem512WasmType;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// Keypair
+// tfhe.d.ts
 ////////////////////////////////////////////////////////////////////////////////
 
-export interface Keypair<T> {
-  publicKey: T;
-  privateKey: T;
+export interface ProvenCompactCiphertextListStaticWasmType {
+  constructor: { name: string };
+  safe_deserialize(
+    buffer: Uint8Array,
+    serialized_size_limit: bigint,
+  ): ProvenCompactCiphertextListWasmType;
 }
 
-export declare const KmsSigncryptedSharesBrand: unique symbol;
-export interface KmsSigncryptedShares {
-  readonly [KmsSigncryptedSharesBrand]: never;
+export interface ProvenCompactCiphertextListWasmType {
+  constructor: { name: string };
+  safe_serialize(serialized_size_limit: bigint): Uint8Array;
+  get_kind_of(index: number): unknown;
+  is_empty(): boolean;
+  len(): number;
+  free(): void;
+}
+
+export interface CompactCiphertextListBuilderWasmType {
+  constructor: { name: string };
+  push_boolean(value: boolean): void;
+  push_u8(value: number): void;
+  push_u16(value: number): void;
+  push_u32(value: number): void;
+  push_u64(value: bigint): void;
+  push_u128(value: bigint): void;
+  push_u160(value: bigint): void;
+  push_u256(value: bigint): void;
+  build_with_proof_packed(
+    crs: CompactPkeCrsWasmType,
+    metadata: Uint8Array,
+    compute_load: unknown,
+  ): ProvenCompactCiphertextListWasmType;
+  free(): void;
+}
+
+export interface TfheCompactPublicKeyWasmType {
+  safe_serialize(serialized_size_limit: bigint): Uint8Array;
+}
+
+export interface TfheCompactPublicKeyStaticWasmType {
+  constructor: { name: string };
+  safe_deserialize(
+    buffer: Uint8Array,
+    serialized_size_limit: bigint,
+  ): TfheCompactPublicKeyWasmType;
+}
+
+export interface CompactPkeCrsWasmType {
+  safe_serialize(serialized_size_limit: bigint): Uint8Array;
+}
+
+export interface CompactPkeCrsStaticWasmType {
+  constructor: { name: string };
+  safe_deserialize(
+    buffer: Uint8Array,
+    serialized_size_limit: bigint,
+  ): CompactPkeCrsWasmType;
+}
+
+export interface TFHEType {
+  default?: (module_or_path?: any) => Promise<any>;
+  TfheCompactPublicKey: TfheCompactPublicKeyStaticWasmType;
+  CompactPkeCrs: CompactPkeCrsStaticWasmType;
+  initThreadPool?: (num_threads: number) => Promise<any>;
+  init_panic_hook: () => void;
+  CompactCiphertextList: {
+    builder(
+      publicKey: TfheCompactPublicKeyWasmType,
+    ): CompactCiphertextListBuilderWasmType;
+  };
+  ProvenCompactCiphertextList: ProvenCompactCiphertextListStaticWasmType;
+  ZkComputeLoad: {
+    Verify: number;
+    Proof: number;
+  };
 }

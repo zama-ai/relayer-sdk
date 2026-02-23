@@ -34,7 +34,6 @@ export abstract class RelayerRequestErrorBase extends RelayerErrorBase {
 
     super({
       ...params,
-      name: params.name ?? 'RelayerRequestErrorBase',
       metaMessages,
     });
 

@@ -1,6 +1,6 @@
 // ESM explicit named re-export is required.
-import type { TFHEType, TKMSType } from '@sdk/lowlevel/public-api';
-import { setTFHE, setTKMS } from '@sdk/lowlevel/wasm-modules';
+import type { TFHEType, TKMSType, TKMSTypeShape } from '@sdk/types/public-api';
+import { setTFHE, setTKMS } from '@sdk/wasm-modules';
 
 import initTFHE, {
   initThreadPool,
@@ -47,34 +47,28 @@ setTKMS({
   ml_kem_pke_pk_to_u8vec,
   ml_kem_pke_sk_to_u8vec,
   ml_kem_pke_get_pk,
-} satisfies TKMSType);
+} satisfies TKMSTypeShape as unknown as TKMSType);
 
 export type { InitInput as TFHEInput } from 'tfhe';
 export type { InitInput as KMSInput } from 'tkms';
 
-// Re-export everything from main entry point
-export * from './index';
+export type {
+  FhevmInstanceConfig,
+  FhevmInstance,
+  FhevmInstanceOptions,
+} from './index';
+export type { FhevmHandle, ZKProofLike } from '@fhevm-base/types/public-api';
+export type {
+  RelayerInputProofOptions,
+  RelayerKeyUrlOptions,
+  RelayerPublicDecryptOptions,
+  RelayerUserDecryptOptions,
+} from '@relayer/types/public-api';
 
-// Additional type exports for node consumers
-export type * from '@base/types/primitives';
-export type * from '@base/types/utils';
-export type * from '@relayer/types/public-api';
-
-// Base utils
-export { isChecksummedAddress, isAddress } from '@base/address';
-
-// SDK classes, constants and types
-export type * from '@sdk/types/public-api';
+export { createInstance } from './index';
 
 // Constant Configs
-export {
-  SepoliaConfig,
-  SepoliaConfigV1,
-  SepoliaConfigV2,
-  MainnetConfig,
-  MainnetConfigV1,
-  MainnetConfigV2,
-} from './index';
+export { SepoliaConfig, MainnetConfig } from './index';
 
 // Web-specific functions
 export { initSDK } from './web_init';

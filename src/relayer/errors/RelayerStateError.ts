@@ -1,4 +1,6 @@
+import type { Prettify } from '@base/types/utils';
 import type { RelayerAsyncRequestState } from '../types/private-api';
+import type { RelayerErrorBaseParams } from './RelayerErrorBase';
 import { RelayerErrorBase } from './RelayerErrorBase';
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -9,10 +11,12 @@ export type RelayerStateErrorType = RelayerErrorBase & {
   name: 'RelayerStateError';
 };
 
-export type RelayerStateErrorParams = {
-  readonly state: RelayerAsyncRequestState;
-  readonly message: string;
-};
+export type RelayerStateErrorParams = Prettify<
+  Omit<RelayerErrorBaseParams, 'name'> & {
+    readonly state: RelayerAsyncRequestState;
+    readonly message: string;
+  }
+>;
 
 /**
  * The request cannot run (already terminated, canceled, succeeded, failed, aborted, or running).

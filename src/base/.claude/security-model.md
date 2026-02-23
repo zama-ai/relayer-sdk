@@ -112,13 +112,13 @@ class AuthenticData {
 
 ### Why Immutability is Critical
 
-| Threat                      | Without Immutability                                    | With Immutability                  |
-| --------------------------- | ------------------------------------------------------- | ---------------------------------- |
-| Post-construction tampering | ❌ Attacker modifies data after validation              | ✅ Impossible — no mutators exist  |
-| Reference retention attack  | ❌ Caller keeps reference to input, mutates later       | ✅ Blocked — input is copied       |
-| verifyFn mutation           | ❌ Malicious verifyFn modifies data during verification | ✅ Blocked — copy is passed        |
+| Threat                      | Without Immutability                                    | With Immutability                         |
+| --------------------------- | ------------------------------------------------------- | ----------------------------------------- |
+| Post-construction tampering | ❌ Attacker modifies data after validation              | ✅ Impossible — no mutators exist         |
+| Reference retention attack  | ❌ Caller keeps reference to input, mutates later       | ✅ Blocked — input is copied              |
+| verifyFn mutation           | ❌ Malicious verifyFn modifies data during verification | ✅ Blocked — copy is passed               |
 | SharedArrayBuffer race      | ❌ Another thread mutates during use                    | ✅ Blocked — defensive copy isolates data |
-| TOCTOU attacks              | ❌ Data changes between check and use                   | ✅ Impossible — data cannot change |
+| TOCTOU attacks              | ❌ Data changes between check and use                   | ✅ Impossible — data cannot change        |
 
 ### Threading Assumption
 
@@ -234,15 +234,15 @@ class AuthenticData {
 
 ### Security Analysis
 
-| Property                    | Implementation                            | Status                                       |
-| --------------------------- | ----------------------------------------- | -------------------------------------------- |
-| Data privacy                | `#authenticPublicData` is a private field | ✅ Inaccessible externally                   |
-| Data integrity              | `new Uint8Array(...)` passes a copy       | ✅ Original cannot be mutated                |
-| Brand check                 | `#brand in object` (ES2022)               | ✅ Unforgeable - only real instances pass    |
-| Verification guarantee      | `verify()` always calls `verifyFn`        | ✅ No conditional bypass                     |
+| Property                    | Implementation                               | Status                                       |
+| --------------------------- | -------------------------------------------- | -------------------------------------------- |
+| Data privacy                | `#authenticPublicData` is a private field    | ✅ Inaccessible externally                   |
+| Data integrity              | `new Uint8Array(...)` passes a copy          | ✅ Original cannot be mutated                |
+| Brand check                 | `#brand in object` (ES2022)                  | ✅ Unforgeable - only real instances pass    |
+| Verification guarantee      | `verify()` always calls `verifyFn`           | ✅ No conditional bypass                     |
 | Immutability (construction) | Defensive copy + private field encapsulation | ✅ Input cannot be mutated post-construction |
-| Immutability (access)       | No mutator methods exposed                | ✅ No way to modify after creation           |
-| Controlled creation         | Factory token + runtime check             | ✅ Only validated data can be wrapped        |
+| Immutability (access)       | No mutator methods exposed                   | ✅ No way to modify after creation           |
+| Controlled creation         | Factory token + runtime check                | ✅ Only validated data can be wrapped        |
 
 ### Why `#brand in object` is unforgeable
 
@@ -399,12 +399,12 @@ Authentic data must be created through controlled entry points that guarantee au
 
 Factory methods are the **trust boundary**. They MUST validate everything before construction:
 
-| Input Type | Validation Required | Example |
-| --- | --- | --- |
-| Primitives | Type + semantic validation | `assertIsUint64(chainId)` |
-| Nested AuthenticData | `Class.isValid()` check | `if (!NestedClass.isValid(obj)) throw` |
-| Arrays of AuthenticData | `isValid()` on each element | `items.every(x => Item.isValid(x))` |
-| Raw bytes | Type + length + format validation | `assertIsBytes32(hash)` |
+| Input Type              | Validation Required               | Example                                |
+| ----------------------- | --------------------------------- | -------------------------------------- |
+| Primitives              | Type + semantic validation        | `assertIsUint64(chainId)`              |
+| Nested AuthenticData    | `Class.isValid()` check           | `if (!NestedClass.isValid(obj)) throw` |
+| Arrays of AuthenticData | `isValid()` on each element       | `items.every(x => Item.isValid(x))`    |
+| Raw bytes               | Type + length + format validation | `assertIsBytes32(hash)`                |
 
 ```typescript
 // ❌ INSECURE — trusts input without validation
@@ -436,11 +436,11 @@ static from(source: unknown): AuthenticData {
 
 ### Entry Points
 
-| Method                              | Input Type      | Validation Required                           |
-| ----------------------------------- | --------------- | --------------------------------------------- |
-| `AuthenticData.from(source)`        | `unknown`       | Full validation of all fields                 |
-| `AuthenticData.fromComponents(...)` | `unknown`       | Type + semantic validation of each component  |
-| `AuthenticData.fromValidated(...)`  | `unknown`       | Cryptographic or trusted-source validation    |
+| Method                              | Input Type | Validation Required                          |
+| ----------------------------------- | ---------- | -------------------------------------------- |
+| `AuthenticData.from(source)`        | `unknown`  | Full validation of all fields                |
+| `AuthenticData.fromComponents(...)` | `unknown`  | Type + semantic validation of each component |
+| `AuthenticData.fromValidated(...)`  | `unknown`  | Cryptographic or trusted-source validation   |
 
 ### Validation-Based Creation
 

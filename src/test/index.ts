@@ -2,7 +2,7 @@ import type {
   TFHEPkeParams,
   TFHEPkeCrsBytes,
   TFHEPublicKeyBytes,
-} from '@sdk/lowlevel/public-api';
+} from '@sdk/types/public-api';
 import { CompactPkeCrs, TfheClientKey, TfheCompactPublicKey } from 'node-tfhe';
 import fs from 'fs';
 import {

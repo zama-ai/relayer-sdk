@@ -1,14 +1,14 @@
 import type { ErrorMetadataParams } from '@base/errors/ErrorBase';
+import type {
+  RelayerInputProofSucceeded,
+  RelayerResult200InputProofAccepted,
+  RelayerResult200InputProofRejected,
+} from '../types/private-api';
 import { assertRecordStringProperty } from '@base/string';
 import {
   assertRecordBooleanProperty,
   assertRecordNonNullableProperty,
 } from '@base/record';
-import {
-  RelayerInputProofSucceeded,
-  RelayerResult200InputProofAccepted,
-  RelayerResult200InputProofRejected,
-} from '../types/private-api';
 import {
   assertRecordBytes32HexArrayProperty,
   assertRecordBytesHexArrayProperty,

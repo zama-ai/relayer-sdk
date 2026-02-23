@@ -1,17 +1,22 @@
 import type {
+  Bytes,
   Bytes32,
   Bytes32Hex,
   Bytes32HexAble,
   Bytes65Hex,
   BytesHex,
+  ChecksummedAddress,
   Uint,
 } from '@base/types/primitives';
 import type {
+  BaseInputProof,
   ExternalFhevmHandle,
-  FhevmConfig,
   FhevmHandle,
   InputProof,
   InputProofBytes,
+  InputVerifierContractData,
+  UnverifiedInputProof,
+  VerifiedInputProof,
   ZKProof,
 } from '../types/public-api';
 import { MAX_UINT8, uintToBytesHexNo0x } from '@base/uint';
@@ -34,61 +39,95 @@ import {
 import {
   assertFhevmHandleArrayEquals,
   toExternalFhevmHandle,
-} from '@fhevm-base/FhevmHandle';
+} from '../FhevmHandle';
 import type { EIP712Lib } from '@fhevm-base-types/public-api';
-import type { RelayerFetchOptions, RelayerLib } from '@fhevm-base/types/libs';
-import { verifyZKProofCoprocessorSignatures } from './verifyCoprocessorSignatures';
+import type { ErrorMetadataParams } from '@base/errors/ErrorBase';
+import type { RelayerFetchOptions, RelayerLib } from '../types/libs';
+import { verifyHandlesCoprocessorSignatures } from './verifyCoprocessorSignatures';
+import { assertIsChecksummedAddress } from '@base/address';
+import { InvalidTypeError } from '@base/errors/InvalidTypeError';
 
 ////////////////////////////////////////////////////////////////////////////////
 // Private class InputProof
 ////////////////////////////////////////////////////////////////////////////////
 
-class InputProofImpl implements InputProof {
-  readonly #handles: ExternalFhevmHandle[];
-  readonly #proof: BytesHex;
-  readonly #coprocessorSignatures: Bytes65Hex[];
+class InputProofImpl implements BaseInputProof {
+  readonly #inputProofBytesHex: BytesHex;
+
+  // Components of the proof
+  readonly #externalHandles: readonly ExternalFhevmHandle[];
+  readonly #coprocessorSignatures: readonly Bytes65Hex[];
   readonly #extraData: BytesHex;
+  readonly #coprocessorSignedParams?: {
+    readonly userAddress: ChecksummedAddress;
+    readonly contractAddress: ChecksummedAddress;
+  };
 
   constructor({
-    proof,
+    inputProofBytesHex,
     coprocessorSignatures,
-    handles,
+    externalHandles,
     extraData,
+    coprocessorSignedParams,
   }: {
-    proof: BytesHex;
-    coprocessorSignatures: Bytes65Hex[];
-    handles: ExternalFhevmHandle[];
-    extraData: BytesHex;
+    readonly inputProofBytesHex: BytesHex;
+    readonly coprocessorSignatures: readonly Bytes65Hex[];
+    readonly externalHandles: readonly ExternalFhevmHandle[];
+    readonly extraData: BytesHex;
+    readonly coprocessorSignedParams?:
+      | {
+          readonly userAddress: ChecksummedAddress;
+          readonly contractAddress: ChecksummedAddress;
+        }
+      | undefined;
   }) {
-    this.#proof = proof;
+    // Note: it is not possible to create a ZKProof with zero values.
+    // consequently, the handles array cannot be empty
+    assert(externalHandles.length > 0);
+    assert(coprocessorSignatures.length > 0);
+
+    this.#inputProofBytesHex = inputProofBytesHex;
     this.#coprocessorSignatures = coprocessorSignatures;
-    this.#handles = handles;
+    this.#externalHandles = externalHandles;
     this.#extraData = extraData;
+    if (coprocessorSignedParams !== undefined) {
+      this.#coprocessorSignedParams = { ...coprocessorSignedParams };
+    }
 
     Object.freeze(this.#coprocessorSignatures);
-    Object.freeze(this.#handles);
+    Object.freeze(this.#externalHandles);
+    Object.freeze(this.#coprocessorSignedParams);
   }
 
-  public get proof(): BytesHex {
-    return this.#proof;
+  public get bytesHex(): BytesHex {
+    return this.#inputProofBytesHex;
   }
 
-  public get coprocessorSignatures(): Bytes65Hex[] {
+  public get coprocessorSignatures(): readonly Bytes65Hex[] {
     return this.#coprocessorSignatures;
   }
 
-  public get handles(): readonly ExternalFhevmHandle[] {
-    return this.#handles;
+  public get externalHandles(): readonly ExternalFhevmHandle[] {
+    return this.#externalHandles;
   }
 
   public get extraData(): BytesHex {
     return this.#extraData;
   }
 
+  public get coprocessorSignedParams():
+    | {
+        readonly contractAddress: ChecksummedAddress;
+        readonly userAddress: ChecksummedAddress;
+      }
+    | undefined {
+    return this.#coprocessorSignedParams;
+  }
+
   public toBytes(): InputProofBytes {
     return {
-      handles: this.#handles.map((h) => h.bytes32),
-      inputProof: hexToBytes(this.#proof),
+      handles: this.#externalHandles.map((h) => h.bytes32),
+      inputProof: hexToBytes(this.#inputProofBytesHex),
     };
   }
 }
@@ -97,27 +136,78 @@ class InputProofImpl implements InputProof {
 // Public API
 ////////////////////////////////////////////////////////////////////////////////
 
-export function createInputProofFromCoprocessorSignatures({
-  coprocessorSignatures,
-  handles,
-  extraData,
-}: {
-  readonly coprocessorSignatures: readonly Bytes65Hex[];
-  readonly handles:
+export async function createVerifiedInputProofFromComponents(
+  fhevm: {
+    readonly libs: { readonly eip712Lib: EIP712Lib };
+    readonly config: { readonly inputVerifier: InputVerifierContractData };
+  },
+  args: {
+    readonly coprocessorEIP712Signatures: readonly Bytes65Hex[];
+    readonly externalHandles:
+      | readonly Bytes32Hex[]
+      | readonly Bytes32[]
+      | readonly Bytes32HexAble[];
+    readonly extraData: BytesHex;
+    readonly coprocessorSignedParams: {
+      readonly userAddress: ChecksummedAddress;
+      readonly contractAddress: ChecksummedAddress;
+    };
+  },
+): Promise<VerifiedInputProof> {
+  const inputProof = _createInputProofFromComponents(args);
+  return await verifyInputProof(fhevm, { inputProof });
+}
+
+export function createUnverifiedInputProofFromComponents(args: {
+  readonly coprocessorEIP712Signatures: readonly Bytes65Hex[];
+  readonly externalHandles:
     | readonly Bytes32Hex[]
     | readonly Bytes32[]
     | readonly Bytes32HexAble[];
   readonly extraData: BytesHex;
-}): InputProof {
-  const fhevmHandles: ExternalFhevmHandle[] = handles.map(
+}): UnverifiedInputProof {
+  return _createInputProofFromComponents(args) as UnverifiedInputProof;
+}
+
+function _createInputProofFromComponents({
+  coprocessorEIP712Signatures,
+  externalHandles,
+  extraData,
+  coprocessorSignedParams,
+}: {
+  readonly coprocessorEIP712Signatures: readonly Bytes65Hex[];
+  readonly externalHandles:
+    | readonly Bytes32Hex[]
+    | readonly Bytes32[]
+    | readonly Bytes32HexAble[];
+  readonly extraData: BytesHex;
+  readonly coprocessorSignedParams?:
+    | {
+        readonly userAddress: ChecksummedAddress;
+        readonly contractAddress: ChecksummedAddress;
+      }
+    | undefined;
+}): BaseInputProof {
+  if (externalHandles.length === 0) {
+    throw new InputProofError({
+      message: `Input proof must contain at least one external handle`,
+    });
+  }
+
+  if (coprocessorSignedParams !== undefined) {
+    assertIsChecksummedAddress(coprocessorSignedParams.userAddress, {});
+    assertIsChecksummedAddress(coprocessorSignedParams.contractAddress, {});
+  }
+
+  const externalFhevmHandles: ExternalFhevmHandle[] = externalHandles.map(
     toExternalFhevmHandle,
   );
 
-  assertIsBytes65HexArray(coprocessorSignatures, {});
+  assertIsBytes65HexArray(coprocessorEIP712Signatures, {});
   assertIsBytesHex(extraData, {});
 
-  const numberOfHandles = handles.length;
-  const numberOfSignatures = coprocessorSignatures.length;
+  const numberOfHandles = externalHandles.length;
+  const numberOfSignatures = coprocessorEIP712Signatures.length;
 
   if (numberOfHandles > MAX_UINT8) {
     throw new TooManyHandlesError({ numberOfHandles });
@@ -143,16 +233,16 @@ export function createInputProofFromCoprocessorSignatures({
   let proof: string = '';
 
   // Add number of handles (uint8 | Byte1)
-  proof += uintToBytesHexNo0x(handles.length as Uint);
+  proof += uintToBytesHexNo0x(externalHandles.length as Uint);
 
   // Add number of signatures (uint8 | Byte1)
-  proof += uintToBytesHexNo0x(coprocessorSignatures.length as Uint);
+  proof += uintToBytesHexNo0x(coprocessorEIP712Signatures.length as Uint);
 
   // Add handles: (uint256 | Byte32) x numHandles
-  fhevmHandles.map((h) => (proof += h.bytes32HexNo0x));
+  externalFhevmHandles.map((h) => (proof += h.bytes32HexNo0x));
 
   // Add signatures: (uint256 | Byte32) x numSignatures
-  coprocessorSignatures.map(
+  coprocessorEIP712Signatures.map(
     (signatureBytesHex: BytesHex) => (proof += remove0x(signatureBytesHex)),
   );
 
@@ -167,10 +257,11 @@ export function createInputProofFromCoprocessorSignatures({
   );
 
   const inputProof = new InputProofImpl({
-    proof: `0x${proof}` as BytesHex,
-    coprocessorSignatures: [...coprocessorSignatures],
-    handles: fhevmHandles,
+    inputProofBytesHex: `0x${proof}` as BytesHex,
+    coprocessorSignatures: [...coprocessorEIP712Signatures],
+    externalHandles: externalFhevmHandles,
     extraData,
+    coprocessorSignedParams,
   });
 
   return inputProof;
@@ -178,19 +269,60 @@ export function createInputProofFromCoprocessorSignatures({
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export function createInputProofFromRawBytes(
-  proofBytes: Uint8Array,
-): InputProof {
-  assertIsBytes(proofBytes, {});
+export function createUnverifiedInputProofFromRawBytes(
+  inputProofBytes: Bytes,
+): UnverifiedInputProof {
+  return _createInputProofFromRawBytes({
+    inputProofBytes,
+  }) as UnverifiedInputProof;
+}
 
-  if (proofBytes.length < 2) {
+export async function createVerifiedInputProofFromRawBytes(
+  fhevm: {
+    readonly libs: { readonly eip712Lib: EIP712Lib };
+    readonly config: { readonly inputVerifier: InputVerifierContractData };
+  },
+  args: {
+    readonly inputProofBytes: Bytes;
+    readonly coprocessorSignedParams: {
+      readonly userAddress: ChecksummedAddress;
+      readonly contractAddress: ChecksummedAddress;
+    };
+  },
+): Promise<VerifiedInputProof> {
+  const inputProof = _createInputProofFromRawBytes(args);
+  return await verifyInputProof(fhevm, { inputProof });
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+function _createInputProofFromRawBytes({
+  inputProofBytes,
+  coprocessorSignedParams,
+}: {
+  readonly inputProofBytes: Bytes;
+  readonly coprocessorSignedParams?: {
+    readonly userAddress: ChecksummedAddress;
+    readonly contractAddress: ChecksummedAddress;
+  };
+}): BaseInputProof {
+  assertIsBytes(inputProofBytes, {});
+
+  if (inputProofBytes.length < 2) {
     throw new InputProofError({
       message: `Invalid proof: too short`,
     });
   }
 
-  const numHandles = proofBytes[0];
-  const numSignatures = proofBytes[1];
+  const numHandles = inputProofBytes[0];
+
+  if (numHandles === 0) {
+    throw new InputProofError({
+      message: `Input proof must contain at least one external handle`,
+    });
+  }
+
+  const numSignatures = inputProofBytes[1];
 
   const HANDLE_SIZE = 32;
   const SIGNATURE_SIZE = 65;
@@ -202,9 +334,9 @@ export function createInputProofFromRawBytes(
   const signaturesEnd = signaturesStart + numSignatures * SIGNATURE_SIZE;
   const extraDataStart = signaturesEnd;
 
-  if (proofBytes.length < signaturesEnd) {
+  if (inputProofBytes.length < signaturesEnd) {
     throw new InputProofError({
-      message: `Invalid proof: expected at least ${signaturesEnd} bytes, got ${proofBytes.length}`,
+      message: `Invalid proof: expected at least ${signaturesEnd} bytes, got ${inputProofBytes.length}`,
     });
   }
 
@@ -213,7 +345,7 @@ export function createInputProofFromRawBytes(
   for (let i = 0; i < numHandles; i++) {
     const start = handlesStart + i * HANDLE_SIZE;
     const end = start + HANDLE_SIZE;
-    const handleBytes = proofBytes.slice(start, end);
+    const handleBytes = inputProofBytes.slice(start, end);
     const handleBytes32Hex = bytes32ToHex(handleBytes);
     handles.push(handleBytes32Hex);
   }
@@ -223,23 +355,24 @@ export function createInputProofFromRawBytes(
   for (let i = 0; i < numSignatures; i++) {
     const start = signaturesStart + i * SIGNATURE_SIZE;
     const end = start + SIGNATURE_SIZE;
-    const signatureBytes = proofBytes.slice(start, end);
+    const signatureBytes = inputProofBytes.slice(start, end);
     const signatureBytes65Hex = bytes65ToHex(signatureBytes);
     signatures.push(signatureBytes65Hex);
   }
 
   // Extract extra data
-  const extraDataBytes = proofBytes.slice(extraDataStart);
+  const extraDataBytes = inputProofBytes.slice(extraDataStart);
   const extraData = bytesToHex(extraDataBytes);
 
-  const inputProof = createInputProofFromCoprocessorSignatures({
-    coprocessorSignatures: signatures,
-    handles,
+  const inputProof = _createInputProofFromComponents({
+    coprocessorEIP712Signatures: signatures,
+    externalHandles: handles,
     extraData,
+    coprocessorSignedParams,
   });
 
   /// Debug TO BE REMOVED
-  assert(bytesToHex(proofBytes) === inputProof.proof);
+  assert(bytesToHex(inputProofBytes) === inputProof.bytesHex);
   //////////
 
   return inputProof;
@@ -249,7 +382,9 @@ export function createInputProofFromRawBytes(
 
 export async function fetchInputProof(
   fhevm: {
-    readonly config: FhevmConfig;
+    readonly config: {
+      readonly inputVerifier: InputVerifierContractData;
+    };
     readonly relayerUrl: string;
     readonly libs: {
       readonly relayerLib: RelayerLib;
@@ -261,33 +396,46 @@ export async function fetchInputProof(
     readonly extraData: BytesHex;
     readonly options?: RelayerFetchOptions;
   },
-): Promise<InputProof> {
+): Promise<VerifiedInputProof> {
   const { zkProof, extraData, options } = args;
 
-  // 1. Request coprocessor signatures from the relayer for the given ZK proof
-  const fetchResult = await fhevm.libs.relayerLib.fetchCoprocessorSignatures(
+  // 1. extract FhevmHandles from the given ZK proof
+  const fhevmHandles: readonly FhevmHandle[] = zkProof.getFhevmHandles();
+
+  if (fhevmHandles.length === 0) {
+    throw new InputProofError({
+      message: `Input proof must contain at least one external handle`,
+    });
+  }
+
+  // 2. Request coprocessor signatures from the relayer for the given ZK proof
+  const {
+    handles: coprocessorSignedHandles,
+    coprocessorEIP712Signatures: coprocessorSignatures,
+  } = await fhevm.libs.relayerLib.fetchCoprocessorSignatures(
     fhevm.relayerUrl,
     {
       zkProof,
-      extraData: args.extraData,
+      extraData,
     },
     options,
   );
-
-  // 2. extract FhevmHandles from the given ZK proof
-  const fhevmHandles: readonly FhevmHandle[] = zkProof.getFhevmHandles();
 
   // 3. Check that the handles and the one in the fetch result
   // Note: this check is theoretically unecessary
   // We prefer to perform this test since we do not trust the relayer
   // The purpose is to check if the relayer is possibly malicious
-  assertFhevmHandleArrayEquals(fhevmHandles, fetchResult.handles);
+  assertFhevmHandleArrayEquals(fhevmHandles, coprocessorSignedHandles);
 
-  // 2. Verify ZK proof and compute the final Input proof
-  return _createInputProofFromZKProof(fhevm, {
-    zkProof,
-    coprocessorSignatures: fetchResult.signatures,
-    extraData,
+  // 4. Verify ZK proof and Compute the final Input proof
+  return await createVerifiedInputProofFromComponents(fhevm, {
+    coprocessorEIP712Signatures: coprocessorSignatures,
+    externalHandles: fhevmHandles,
+    extraData: extraData,
+    coprocessorSignedParams: {
+      userAddress: zkProof.userAddress,
+      contractAddress: zkProof.contractAddress,
+    },
   });
 }
 
@@ -312,29 +460,85 @@ export function inputProofBytesEquals(
   return unsafeBytesEquals(bytesA.inputProof, bytesB.inputProof);
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Private Helpers
-////////////////////////////////////////////////////////////////////////////////
-
-async function _createInputProofFromZKProof(
+export async function verifyInputProof(
   fhevm: {
     readonly libs: { readonly eip712Lib: EIP712Lib };
-    readonly config: FhevmConfig;
+    readonly config: { readonly inputVerifier: InputVerifierContractData };
   },
   args: {
-    readonly zkProof: ZKProof;
-    readonly coprocessorSignatures: readonly Bytes65Hex[];
-    readonly extraData: BytesHex;
+    readonly inputProof: InputProof;
+    readonly coprocessorSignedParams?: {
+      readonly userAddress: ChecksummedAddress;
+      readonly contractAddress: ChecksummedAddress;
+    };
   },
-): Promise<InputProof> {
-  const fhevmHandles: readonly FhevmHandle[] = args.zkProof.getFhevmHandles();
+): Promise<VerifiedInputProof> {
+  const coprocessorSignedParams =
+    args.coprocessorSignedParams ?? args.inputProof.coprocessorSignedParams;
+  if (coprocessorSignedParams === undefined) {
+    throw new InputProofError({
+      message: 'Missing coprocessorSignedParams argument.',
+    });
+  }
 
-  // Throws exception if message properties are invalid
-  await verifyZKProofCoprocessorSignatures(fhevm, args);
-
-  return createInputProofFromCoprocessorSignatures({
-    coprocessorSignatures: args.coprocessorSignatures,
-    handles: fhevmHandles,
-    extraData: args.extraData,
+  const chainId = args.inputProof.externalHandles[0].chainId;
+  await verifyHandlesCoprocessorSignatures(fhevm, {
+    chainId,
+    coprocessorSignatures: args.inputProof.coprocessorSignatures,
+    extraData: args.inputProof.extraData,
+    handles: args.inputProof.externalHandles,
+    userAddress: coprocessorSignedParams.userAddress,
+    contractAddress: coprocessorSignedParams.contractAddress,
   });
+
+  return args.inputProof as VerifiedInputProof;
+}
+
+export function isInputProof(value: unknown): value is InputProof {
+  return value instanceof InputProofImpl;
+}
+
+export function assertIsInputProof(
+  value: unknown,
+  options: { subject?: string } & ErrorMetadataParams,
+): asserts value is InputProof {
+  if (!isInputProof(value)) {
+    throw new InvalidTypeError(
+      {
+        subject: options.subject,
+        type: typeof value,
+        expectedType: 'Custom',
+        expectedCustomType: 'InputProof',
+      },
+      options,
+    );
+  }
+}
+
+export function isVerifiedInputProof(
+  value: unknown,
+): value is VerifiedInputProof & {
+  readonly coprocessorSignedParams: {
+    readonly userAddress: ChecksummedAddress;
+    readonly contractAddress: ChecksummedAddress;
+  };
+} {
+  return isInputProof(value) && value.coprocessorSignedParams !== undefined;
+}
+
+export function assertIsVerifiedInputProof(
+  value: unknown,
+  options: { subject?: string } & ErrorMetadataParams,
+): asserts value is VerifiedInputProof {
+  if (!isVerifiedInputProof(value)) {
+    throw new InvalidTypeError(
+      {
+        subject: options.subject,
+        type: typeof value,
+        expectedType: 'Custom',
+        expectedCustomType: 'VerifiedInputProof',
+      },
+      options,
+    );
+  }
 }

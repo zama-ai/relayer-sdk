@@ -1,5 +1,4 @@
 import type { Prettify } from '@base/types/utils';
-import type { RelayerErrorBaseParams } from './RelayerErrorBase';
 import type { RelayerResponseErrorBaseParams } from './RelayerResponseErrorBase';
 import { RelayerResponseErrorBase } from './RelayerResponseErrorBase';
 
@@ -13,7 +12,7 @@ export type RelayerResponseInputProofRejectedErrorType =
   };
 
 export type RelayerResponseInputProofRejectedErrorParams = Prettify<
-  Omit<RelayerResponseErrorBaseParams, keyof RelayerErrorBaseParams>
+  Omit<RelayerResponseErrorBaseParams, 'name' | 'message'>
 >;
 
 /**

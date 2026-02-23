@@ -1,48 +1,35 @@
 import type {
   EncryptionBits,
   FheTypeName,
-  FhevmConfig,
+  FhevmHostChainConfig,
 } from '@fhevm-base/types/public-api';
-import type {
-  Address,
-  Bytes20,
-  Bytes32,
-  Uint128,
-  Uint128BigInt,
-  Uint16,
-  Uint16Number,
-  Uint256,
-  Uint256BigInt,
-  Uint32,
-  Uint32Number,
-  Uint64,
-  Uint64BigInt,
-  Uint8,
-  Uint8Number,
-  UintNumber,
-} from '@base/types/primitives';
+import type { Bytes20, Bytes32, UintNumber } from '@base/types/primitives';
 import type { ZKProof } from '../types/public-api';
 import { assert } from '@base/errors/InternalError';
+import { isUint64, uint256ToBytes32 } from '@base/uint';
 import {
-  isUint128,
-  isUint16,
-  isUint256,
-  isUint32,
-  isUint64,
-  isUint8,
-  MAX_UINT16,
-  MAX_UINT32,
-  MAX_UINT8,
-  uint256ToBytes32,
-} from '@base/uint';
-import { encryptionBitsFromFheTypeName } from '../FheType';
+  encryptionBitsFromFheTypeName,
+  fheTypeNameFromTypeName,
+} from '../FheType';
 import { isAddress } from '@base/address';
 import { hexToBytes20 } from '@base/bytes';
 import { ZKProofError } from '../errors/ZKProofError';
-import { createTypedValue, isTypedValue } from '@base/typedvalue';
-import type { InputTypedValue, TypedValue } from '@base/typedvalue';
-import type { FHELib, FHEPublicKey } from '@fhevm-base/types/libs';
-import { createZKProofInternal } from './ZKProof';
+import { createTypedValue, TypedValueArrayBuilder } from '@base/typedvalue';
+import type {
+  TypedValueLike,
+  TypedValue,
+  Uint32ValueLike,
+  Uint64ValueLike,
+  Uint128ValueLike,
+  Uint256ValueLike,
+  Uint8ValueLike,
+  Uint16ValueLike,
+  BoolValueLike,
+  AddressValueLike,
+} from '@base/typedvalue';
+import type { TFHELib } from '@fhevm-base/types/libs';
+import type { TfhePublicEncryptionParams } from '@fhevm-base/types/private';
+import { toZKProof } from './ZKProof';
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -53,15 +40,32 @@ export const TFHE_ZKPROOF_CIPHERTEXT_CAPACITY = 256 as UintNumber;
 // ZKProofBuilder
 ////////////////////////////////////////////////////////////////////////////////
 
-interface ZKProofBuilder {
-  addBool(value: unknown): this;
-  addUint8(value: unknown): this;
-  addUint16(value: unknown): this;
-  addUint32(value: unknown): this;
-  addUint64(value: unknown): this;
-  addUint128(value: unknown): this;
-  addUint256(value: unknown): this;
-  addAddress(value: unknown): this;
+export interface ZKProofBuilder {
+  addBool(value: boolean | number | bigint | BoolValueLike): this;
+  addUint8(value: number | bigint | Uint8ValueLike): this;
+  addUint16(value: number | bigint | Uint16ValueLike): this;
+  addUint32(value: number | bigint | Uint32ValueLike): this;
+  addUint64(value: number | bigint | Uint64ValueLike): this;
+  addUint128(value: number | bigint | Uint128ValueLike): this;
+  addUint256(value: number | bigint | Uint256ValueLike): this;
+  addAddress(value: string | AddressValueLike): this;
+  addTypedValue(typedValue: TypedValue): this;
+  getBits(): EncryptionBits[];
+  build(
+    fhevm: {
+      readonly libs: { readonly tfheLib: TFHELib };
+      readonly config: { readonly hostChainConfig: FhevmHostChainConfig };
+    },
+    {
+      contractAddress,
+      userAddress,
+      tfhePublicEncryptionParams,
+    }: {
+      readonly contractAddress: string;
+      readonly userAddress: string;
+      readonly tfhePublicEncryptionParams: TfhePublicEncryptionParams;
+    },
+  ): ZKProof;
 }
 
 class ZKProofBuilderImpl implements ZKProofBuilder {
@@ -69,7 +73,7 @@ class ZKProofBuilderImpl implements ZKProofBuilder {
   readonly #bits: EncryptionBits[] = [];
   readonly #bitsCapacity: UintNumber;
   readonly #ciphertextCapacity: UintNumber;
-  readonly #typedValues: TypedValue[] = [];
+  readonly #builder = new TypedValueArrayBuilder();
 
   constructor(params: {
     readonly ciphertextCapacity: UintNumber;
@@ -96,227 +100,72 @@ class ZKProofBuilderImpl implements ZKProofBuilder {
   }
 
   public addTypedValue(typedValue: TypedValue): this {
-    if (!isTypedValue(typedValue)) {
-      throw new ZKProofError({
-        message: 'Invalid typed value',
-      });
-    }
-
-    this.#typedValues.push(typedValue);
-    this.#addType(`e${typedValue.type}`);
+    this.#builder.addTypedValue(typedValue);
+    this.#addType(fheTypeNameFromTypeName(typedValue.type));
     return this;
   }
 
-  public addBool(value: unknown): this {
-    if (value === null || value === undefined) {
-      throw new ZKProofError({ message: 'Missing value' });
-    }
-
-    let boolValue: boolean | undefined;
-    if (typeof value === 'boolean') {
-      boolValue = value;
-    } else if (typeof value === 'bigint') {
-      if (value === 0n || value === 1n) {
-        boolValue = value === 1n;
-      }
-    } else if (typeof value === 'number') {
-      if (value === 0 || value === 1) {
-        boolValue = value === 1;
-      }
-    } else if (isTypedValue(value) && value.type === 'bool') {
-      boolValue = value.value;
-    }
-
-    if (boolValue === undefined) {
-      throw new ZKProofError({
-        message: 'The value must be true, false, 0 or 1.',
-      });
-    }
-
-    this.#typedValues.push(
-      createTypedValue({
-        type: 'bool',
-        value: boolValue,
-      }),
-    );
-
-    this.#addType('ebool');
+  public addBool(value: boolean | number | bigint | BoolValueLike): this {
+    this.#builder.addBool(value);
+    this.#addType(fheTypeNameFromTypeName('bool'));
     return this;
   }
 
-  public addUint8(value: unknown): this {
-    let num: Uint8;
-    if (isUint8(value)) {
-      num = value;
-    } else if (isTypedValue(value) && value.type === 'uint8') {
-      num = value.value;
-    } else {
-      throw new ZKProofError({
-        message: `The value must be a number or bigint in uint8 range (0-${String(MAX_UINT8)}).`,
-      });
-    }
-
-    this.#typedValues.push(
-      createTypedValue({
-        type: 'uint8',
-        value: Number(num) as Uint8Number,
-      }),
-    );
-
-    this.#addType('euint8');
+  public addUint8(value: number | bigint | Uint8ValueLike): this {
+    this.#builder.addUint8(value);
+    this.#addType(fheTypeNameFromTypeName('uint8'));
     return this;
   }
 
-  public addUint16(value: unknown): this {
-    let num: Uint16;
-    if (isUint16(value)) {
-      num = value;
-    } else if (isTypedValue(value) && value.type === 'uint16') {
-      num = value.value;
-    } else {
-      throw new ZKProofError({
-        message: `The value must be a number or bigint in uint16 range (0-${String(MAX_UINT16)}).`,
-      });
-    }
-
-    this.#typedValues.push(
-      createTypedValue({
-        type: 'uint16',
-        value: Number(num) as Uint16Number,
-      }),
-    );
-
-    this.#addType('euint16');
+  public addUint16(value: number | bigint | Uint16ValueLike): this {
+    this.#builder.addUint16(value);
+    this.#addType(fheTypeNameFromTypeName('uint16'));
     return this;
   }
 
-  public addUint32(value: unknown): this {
-    let num: Uint32;
-    if (isUint32(value)) {
-      num = value;
-    } else if (isTypedValue(value) && value.type === 'uint32') {
-      num = value.value;
-    } else {
-      throw new ZKProofError({
-        message: `The value must be a number or bigint in uint32 range (0-${String(MAX_UINT32)}).`,
-      });
-    }
-
-    this.#typedValues.push(
-      createTypedValue({
-        type: 'uint32',
-        value: Number(num) as Uint32Number,
-      }),
-    );
-
-    this.#addType('euint32');
+  public addUint32(value: number | bigint | Uint32ValueLike): this {
+    this.#builder.addUint32(value);
+    this.#addType(fheTypeNameFromTypeName('uint32'));
     return this;
   }
 
-  public addUint64(value: unknown): this {
-    let num: Uint64;
-    if (isUint64(value)) {
-      num = value;
-    } else if (isTypedValue(value) && value.type === 'uint64') {
-      num = value.value;
-    } else {
-      throw new ZKProofError({
-        message: 'The value must be a number or bigint in uint64 range.',
-      });
-    }
-
-    this.#typedValues.push(
-      createTypedValue({
-        type: 'uint64',
-        value: BigInt(num) as Uint64BigInt,
-      }),
-    );
-
-    this.#addType('euint64');
+  public addUint64(value: number | bigint | Uint64ValueLike): this {
+    this.#builder.addUint64(value);
+    this.#addType(fheTypeNameFromTypeName('uint64'));
     return this;
   }
 
-  public addUint128(value: unknown): this {
-    let num: Uint128;
-    if (isUint128(value)) {
-      num = value;
-    } else if (isTypedValue(value) && value.type === 'uint128') {
-      num = value.value;
-    } else {
-      throw new ZKProofError({
-        message: 'The value must be a number or bigint in uint128 range.',
-      });
-    }
-
-    this.#typedValues.push(
-      createTypedValue({
-        type: 'uint128',
-        value: BigInt(num) as Uint128BigInt,
-      }),
-    );
-
-    this.#addType('euint128');
+  public addUint128(value: number | bigint | Uint128ValueLike): this {
+    this.#builder.addUint128(value);
+    this.#addType(fheTypeNameFromTypeName('uint128'));
     return this;
   }
 
-  public addUint256(value: unknown): this {
-    let num: Uint256;
-    if (isUint256(value)) {
-      num = value;
-    } else if (isTypedValue(value) && value.type === 'uint256') {
-      num = value.value;
-    } else {
-      throw new ZKProofError({
-        message: 'The value must be a number or bigint in uint256 range.',
-      });
-    }
-
-    this.#typedValues.push(
-      createTypedValue({
-        type: 'uint256',
-        value: BigInt(num) as Uint256BigInt,
-      }),
-    );
-
-    this.#addType('euint256');
+  public addUint256(value: number | bigint | Uint256ValueLike): this {
+    this.#builder.addUint256(value);
+    this.#addType(fheTypeNameFromTypeName('uint256'));
     return this;
   }
 
-  public addAddress(value: unknown): this {
-    let addr: Address;
-    if (isAddress(value)) {
-      addr = value;
-    } else if (isTypedValue(value) && value.type === 'address') {
-      addr = value.value;
-    } else {
-      throw new ZKProofError({
-        message: 'The value must be a valid address.',
-      });
-    }
-
-    this.#typedValues.push(
-      createTypedValue({
-        type: 'address',
-        value: addr,
-      }),
-    );
-
-    this.#addType('eaddress');
+  public addAddress(value: string | AddressValueLike): this {
+    this.#builder.addAddress(value);
+    this.#addType(fheTypeNameFromTypeName('address'));
     return this;
   }
 
-  public generateZKProof(
+  public build(
     fhevm: {
-      readonly libs: { fheLib: FHELib };
-      readonly fhePublicKey: FHEPublicKey;
-      readonly config: FhevmConfig;
+      readonly libs: { readonly tfheLib: TFHELib };
+      readonly config: { readonly hostChainConfig: FhevmHostChainConfig };
     },
     {
       contractAddress,
       userAddress,
+      tfhePublicEncryptionParams,
     }: {
       readonly contractAddress: string;
       readonly userAddress: string;
+      readonly tfhePublicEncryptionParams: TfhePublicEncryptionParams;
     },
   ): ZKProof {
     if (this.#totalBits === 0) {
@@ -381,9 +230,13 @@ class ZKProofBuilderImpl implements ZKProofBuilder {
     assert(metaData.length - chainIdBytes32.length === 60);
 
     const ciphertextWithZKProofBytes: Uint8Array =
-      fhevm.libs.fheLib.buildWithProofPacked(fhevm.fhePublicKey, metaData);
+      fhevm.libs.tfheLib.buildWithProofPacked({
+        typedValues: [...this.#builder.build()],
+        publicEncryptionParams: tfhePublicEncryptionParams,
+        metaData,
+      });
 
-    return createZKProofInternal(
+    return toZKProof(
       {
         chainId: BigInt(chainId),
         aclContractAddress,
@@ -435,32 +288,25 @@ export function createZKProofBuilder(): ZKProofBuilder {
 
 export function generateZKProof(
   fhevm: {
-    readonly libs: { fheLib: FHELib };
-    readonly config: FhevmConfig;
-    readonly fhePublicKey: FHEPublicKey;
+    readonly libs: { readonly tfheLib: TFHELib };
+    readonly config: { readonly hostChainConfig: FhevmHostChainConfig };
   },
   args: {
+    readonly tfhePublicEncryptionParams: TfhePublicEncryptionParams;
     readonly contractAddress: string;
     readonly userAddress: string;
-    readonly values: readonly InputTypedValue[];
+    readonly values: readonly TypedValueLike[];
   },
 ): ZKProof {
-  const { values, contractAddress, userAddress } = args;
-  const builder = new ZKProofBuilderImpl({
-    ciphertextCapacity: TFHE_ZKPROOF_CIPHERTEXT_CAPACITY,
-    bitsCapacity: TFHE_CRS_BITS_CAPACITY,
-  });
+  const { values, contractAddress, userAddress, tfhePublicEncryptionParams } =
+    args;
+  const builder = createZKProofBuilder();
   for (let i = 0; i < values.length; ++i) {
     builder.addTypedValue(createTypedValue(values[i]));
   }
-  return builder.generateZKProof(fhevm, {
+  return builder.build(fhevm, {
+    tfhePublicEncryptionParams,
     contractAddress,
     userAddress,
   });
 }
-
-/*
-1. generate a ZKProof
-2. use relayer to fetch InputProof Signatures using ZKProof
-3. build InputProof using signatures and ZKProof
-*/

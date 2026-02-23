@@ -22,19 +22,21 @@ import {
 
 class PublicDecryptionProofImpl implements PublicDecryptionProof {
   // numSigners + KMS signatures + extraData
-  readonly #proof: BytesHex;
-  readonly #orderedHandles: readonly DecryptedFhevmHandle[];
-  readonly #extraData: BytesHex;
+  readonly #decryptionProof: BytesHex;
+  readonly #orderedDecryptedHandles: readonly DecryptedFhevmHandle[];
   readonly #orderedAbiEncodedClearValues: BytesHex;
+  readonly #extraData: BytesHex;
 
   constructor(params: {
-    readonly orderedHandles: readonly DecryptedFhevmHandle[];
-    readonly proof: BytesHex;
-    readonly extraData: BytesHex;
+    readonly decryptionProof: BytesHex;
+    readonly orderedDecryptedHandles: readonly DecryptedFhevmHandle[];
     readonly orderedAbiEncodedClearValues: BytesHex;
+    readonly extraData: BytesHex;
   }) {
-    this.#proof = params.proof;
-    this.#orderedHandles = Object.freeze([...params.orderedHandles]);
+    this.#decryptionProof = params.decryptionProof;
+    this.#orderedDecryptedHandles = Object.freeze([
+      ...params.orderedDecryptedHandles,
+    ]);
     this.#extraData = params.extraData;
     this.#orderedAbiEncodedClearValues = params.orderedAbiEncodedClearValues;
   }
@@ -43,12 +45,12 @@ class PublicDecryptionProofImpl implements PublicDecryptionProof {
   // Getters
   //////////////////////////////////////////////////////////////////////////////
 
-  public get proof(): BytesHex {
-    return this.#proof;
+  public get decryptionProof(): BytesHex {
+    return this.#decryptionProof;
   }
 
-  public get orderedHandles(): readonly DecryptedFhevmHandle[] {
-    return this.#orderedHandles;
+  public get orderedDecryptedHandles(): readonly DecryptedFhevmHandle[] {
+    return this.#orderedDecryptedHandles;
   }
 
   public get orderedAbiEncodedClearValues(): BytesHex {
@@ -100,39 +102,45 @@ export async function createPublicDecryptionProof(
   },
   args: {
     readonly orderedHandles: readonly FhevmHandle[];
-    readonly orderedDecryptedResult: BytesHex;
-    readonly signatures: readonly Bytes65Hex[];
+    readonly orderedAbiEncodedClearValues: BytesHex;
+    readonly kmsPublicDecryptEIP712Signatures: readonly Bytes65Hex[];
     readonly extraData: BytesHex;
   },
 ): Promise<PublicDecryptionProof> {
   await verifyKmsPublicDecryptEIP712(fhevm, args);
 
-  const { orderedHandles, orderedDecryptedResult, signatures, extraData } =
-    args;
+  const {
+    orderedHandles,
+    orderedAbiEncodedClearValues,
+    kmsPublicDecryptEIP712Signatures,
+    extraData,
+  } = args;
 
-  ////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
   // Compute the proof as numSigners + KMS signatures + extraData
-  ////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
 
   const packedNumSigners: BytesHex = fhevm.libs.abiLib.encodePacked({
     types: ['uint8'],
-    values: [signatures.length],
+    values: [kmsPublicDecryptEIP712Signatures.length],
   });
 
   const packedSignatures = fhevm.libs.abiLib.encodePacked({
-    types: Array(signatures.length).fill('bytes') as string[],
-    values: signatures,
+    types: Array(kmsPublicDecryptEIP712Signatures.length).fill(
+      'bytes',
+    ) as string[],
+    values: kmsPublicDecryptEIP712Signatures,
   });
 
-  const proof: BytesHex = concatBytesHex([
+  const decryptionProof: BytesHex = concatBytesHex([
     packedNumSigners,
     packedSignatures,
     extraData,
   ]);
 
-  ////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
   // Deserialize ordered decrypted result
-  ////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
 
   const orderedAbiTypes: SolidityPrimitiveTypeName[] = orderedHandles.map(
     (h) => h.solidityPrimitiveTypeName,
@@ -140,7 +148,7 @@ export async function createPublicDecryptionProof(
 
   const decoded = fhevm.libs.abiLib.decode({
     types: orderedAbiTypes,
-    encodedData: orderedDecryptedResult,
+    encodedData: orderedAbiEncodedClearValues,
   });
 
   if (decoded.length !== orderedHandles.length) {
@@ -166,10 +174,10 @@ export async function createPublicDecryptionProof(
   );
 
   return new PublicDecryptionProofImpl({
-    orderedHandles: orderedDecryptedFhevmHandles,
-    proof,
-    extraData,
+    decryptionProof: decryptionProof,
+    orderedDecryptedHandles: orderedDecryptedFhevmHandles,
     orderedAbiEncodedClearValues:
       orderedAbiEncodedDecryptedFhevmHandles.abiEncodedClearValues,
+    extraData,
   });
 }

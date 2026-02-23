@@ -1,4 +1,4 @@
-import type { TFHEType, TKMSType } from './public-api';
+import type { TFHEType, TKMSType } from './types/public-api';
 
 ////////////////////////////////////////////////////////////////////////////////
 //

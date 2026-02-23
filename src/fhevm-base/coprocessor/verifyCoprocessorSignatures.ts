@@ -8,8 +8,8 @@ import type {
 import type { EIP712Lib } from '@fhevm-base-types/public-api';
 import type {
   CoprocessorEIP712Message,
-  FhevmConfig,
   FhevmHandle,
+  InputVerifierContractData,
   ZKProof,
 } from '../types/public-api';
 import { assertCoprocessorSignerThreshold } from '@fhevm-base/host-contracts/InputVerifierContractData';
@@ -19,7 +19,7 @@ import { assertIsZKProof } from './ZKProof';
 export async function verifyHandlesCoprocessorSignatures(
   fhevm: {
     readonly libs: { readonly eip712Lib: EIP712Lib };
-    readonly config: FhevmConfig;
+    readonly config: { readonly inputVerifier: InputVerifierContractData };
   },
   args: {
     readonly coprocessorSignatures: readonly Bytes65Hex[];
@@ -57,7 +57,7 @@ export async function verifyHandlesCoprocessorSignatures(
 export async function verifyZKProofCoprocessorSignatures(
   fhevm: {
     readonly libs: { readonly eip712Lib: EIP712Lib };
-    readonly config: FhevmConfig;
+    readonly config: { readonly inputVerifier: InputVerifierContractData };
   },
   args: {
     readonly zkProof: ZKProof;

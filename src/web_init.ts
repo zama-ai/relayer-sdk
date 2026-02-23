@@ -1,8 +1,8 @@
 import type { InitInput as TFHEInput } from 'tfhe';
 import type { InitInput as KMSInput } from 'tkms';
 
-import { TFHE as TFHEModule } from './sdk/lowlevel/wasm-modules';
-import { TKMS as TKMSModule } from './sdk/lowlevel/wasm-modules';
+import { TFHE as TFHEModule } from '@sdk/wasm-modules';
+import { TKMS as TKMSModule } from '@sdk/wasm-modules';
 
 import { threads } from 'wasm-feature-detect';
 

@@ -21,7 +21,7 @@ export class UnknownSignerError extends FhevmErrorBase {
   constructor(params: UnknownSignerErrorParams) {
     super({
       ...params,
-      name: 'TooManyHandlesError',
+      name: 'UnknownSignerError',
       message: `Invalid address found: ${params.unknownAddress} is not in the list of ${params.type} signers`,
     });
   }

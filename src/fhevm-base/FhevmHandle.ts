@@ -18,6 +18,7 @@ import type {
   FhevmHandleLike,
   SolidityPrimitiveTypeName,
 } from './types/public-api';
+import type { Prettify } from '@base/types/utils';
 import { FhevmHandleError } from './errors/FhevmHandleError';
 import {
   asBytes21,
@@ -42,7 +43,6 @@ import {
 import { remove0x } from '@base/string';
 import { asUint8Number, uint64ToBytes32 } from '@base/uint';
 import { InvalidTypeError } from '@base/errors/InvalidTypeError';
-import { Prettify } from '@base/types/utils';
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -557,6 +557,23 @@ export function assertIsFhevmHandleLikeArray(
         },
         options ?? {},
       );
+    }
+  }
+}
+
+export function assertFhevmHandlesBelongToSameChainId(
+  fhevmHandles: readonly FhevmHandle[],
+  chainId?: Uint64BigInt,
+): void {
+  if (fhevmHandles.length === 0) {
+    return;
+  }
+  const theChainId = chainId ?? fhevmHandles[0].chainId;
+  for (let i = 0; i < fhevmHandles.length; ++i) {
+    if (fhevmHandles[i].chainId !== theChainId) {
+      throw new FhevmHandleError({
+        message: `Handle at index ${i} (${fhevmHandles[i].bytes32Hex}) has chainId ${fhevmHandles[i].chainId}, expected ${chainId}`,
+      });
     }
   }
 }

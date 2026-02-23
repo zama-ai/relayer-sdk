@@ -1,41 +1,32 @@
 import { asAddress } from './address';
-import { asBoolean } from './boolean';
+import { toBoolean } from './boolean';
 import type { ErrorMetadataParams } from './errors/ErrorBase';
 import { InvalidTypeError } from './errors/InvalidTypeError';
-import type {
-  Address,
-  Uint128,
-  Uint16,
-  Uint256,
-  Uint32,
-  Uint64,
-  Uint8,
-  UintXXType,
-  UintXXTypeName,
-} from './types/primitives';
-import { asUintForType } from './uint';
+import type { Address, UintNormalizedMap } from './types/primitives';
+import type { Prettify } from './types/utils';
+import { asUintForType, normalizeUintForType } from './uint';
 
 // ============================================================================
 // Public API
 // ============================================================================
 
-export type TypeName = UintXXTypeName | 'bool' | 'address';
+export type TypeName = Prettify<keyof ValueTypeMap>;
 
-export type TypedValueLike<T extends TypeName, V> = Readonly<{
-  value: V;
+export type TypedValueLikeOf<T extends TypeName> = Readonly<{
+  value: ValueLikeMap[T];
   type: T;
 }>;
 
-export type BoolValueLike = TypedValueLike<'bool', boolean>;
-export type Uint8ValueLike = TypedValueLike<'uint8', number | bigint>;
-export type Uint16ValueLike = TypedValueLike<'uint16', number | bigint>;
-export type Uint32ValueLike = TypedValueLike<'uint32', number | bigint>;
-export type Uint64ValueLike = TypedValueLike<'uint64', number | bigint>;
-export type Uint128ValueLike = TypedValueLike<'uint128', number | bigint>;
-export type Uint256ValueLike = TypedValueLike<'uint256', number | bigint>;
-export type AddressValueLike = TypedValueLike<'address', string>;
+export type BoolValueLike = TypedValueLikeOf<'bool'>;
+export type Uint8ValueLike = TypedValueLikeOf<'uint8'>;
+export type Uint16ValueLike = TypedValueLikeOf<'uint16'>;
+export type Uint32ValueLike = TypedValueLikeOf<'uint32'>;
+export type Uint64ValueLike = TypedValueLikeOf<'uint64'>;
+export type Uint128ValueLike = TypedValueLikeOf<'uint128'>;
+export type Uint256ValueLike = TypedValueLikeOf<'uint256'>;
+export type AddressValueLike = TypedValueLikeOf<'address'>;
 
-export type InputTypedValue =
+export type TypedValueLike =
   | BoolValueLike
   | Uint8ValueLike
   | Uint16ValueLike
@@ -54,20 +45,22 @@ export type InputTypedValue =
  * @template T - The type name literal ('uint8', 'bool', 'address', etc.)
  * @template V - The validated value type (Uint8, boolean, ChecksummedAddress, etc.)
  */
-export interface TypedValueOf<T extends TypeName, V> {
+export interface TypedValueOf<T extends TypeName> {
   readonly type: T;
-  readonly value: V;
+  readonly value: ValueTypeMap[T];
 }
 
 export type TypedValue = TypedValueMap[TypeName];
-export type BoolValue = TypedValueOf<'bool', boolean>;
-export type Uint8Value = TypedValueOf<'uint8', Uint8>;
-export type Uint16Value = TypedValueOf<'uint16', Uint16>;
-export type Uint32Value = TypedValueOf<'uint32', Uint32>;
-export type Uint64Value = TypedValueOf<'uint64', Uint64>;
-export type Uint128Value = TypedValueOf<'uint128', Uint128>;
-export type Uint256Value = TypedValueOf<'uint256', Uint256>;
-export type AddressValue = TypedValueOf<'address', Address>;
+export type BoolValue = TypedValueOf<'bool'>;
+export type Uint8Value = TypedValueOf<'uint8'>;
+export type Uint16Value = TypedValueOf<'uint16'>;
+export type Uint32Value = TypedValueOf<'uint32'>;
+export type Uint64Value = TypedValueOf<'uint64'>;
+export type Uint128Value = TypedValueOf<'uint128'>;
+export type Uint256Value = TypedValueOf<'uint256'>;
+export type AddressValue = TypedValueOf<'address'>;
+
+export type ValueType = ValueTypeMap[TypeName];
 
 // ============================================================================
 // Private API
@@ -88,18 +81,28 @@ interface TypedValueMap {
   address: AddressValue;
 }
 
+interface ValueTypeMap extends UintNormalizedMap {
+  bool: boolean;
+  address: Address;
+}
+
+interface ValueLikeMap {
+  bool: boolean | number | bigint;
+  uint8: number | bigint;
+  uint16: number | bigint;
+  uint32: number | bigint;
+  uint64: number | bigint;
+  uint128: number | bigint;
+  uint256: number | bigint;
+  address: string;
+}
+
 /**
  * Resolves an input typed-value to its validated counterpart via
  * {@link TypedValueMap} lookup.
  * @internal
  */
-type TypedValueFrom<T extends InputTypedValue> = TypedValueMap[T['type']];
-
-/**
- * Union of all valid value types for TypedValue.
- * @internal
- */
-type ValueType = UintXXType | boolean | Address;
+type TypedValueFrom<T extends TypedValueLike> = TypedValueMap[T['type']];
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -112,13 +115,11 @@ type ValueType = UintXXType | boolean | Address;
  * - Private fields (`#type`, `#value`) inaccessible from outside
  * - `Object.freeze` on prototype (no prototype pollution)
  */
-class TypedValueImpl<T extends TypeName, V extends ValueType>
-  implements TypedValueOf<T, V>
-{
+class TypedValueImpl<T extends TypeName> implements TypedValueOf<T> {
   readonly #type: T;
-  readonly #value: V;
+  readonly #value: ValueTypeMap[T];
 
-  constructor(value: V, type: T) {
+  constructor(value: ValueTypeMap[T], type: T) {
     this.#value = value;
     this.#type = type;
   }
@@ -127,7 +128,7 @@ class TypedValueImpl<T extends TypeName, V extends ValueType>
     return this.#type;
   }
 
-  public get value(): V {
+  public get value(): ValueTypeMap[T] {
     return this.#value;
   }
 
@@ -156,8 +157,22 @@ Object.freeze(TypedValueImpl.prototype);
  * Uses `instanceof` against the non-exported `TypedValueImpl` class,
  * which is unforgeable in same-realm contexts.
  */
-export function isTypedValue(value: unknown): value is TypedValue {
-  return value instanceof TypedValueImpl;
+export function isTypedValue<T extends TypeName>(
+  value: unknown,
+  options: { type: T },
+): value is TypedValue & { readonly type: T };
+export function isTypedValue(value: unknown): value is TypedValue;
+export function isTypedValue(
+  value: unknown,
+  options?: { type: TypeName },
+): value is TypedValue {
+  if (!(value instanceof TypedValueImpl)) {
+    return false;
+  }
+  if (options?.type !== undefined) {
+    return value.type === options.type;
+  }
+  return true;
 }
 
 /**
@@ -165,17 +180,33 @@ export function isTypedValue(value: unknown): value is TypedValue {
  *
  * @throws {InvalidTypeError} If the value is not a `TypedValue` instance.
  */
+export function assertIsTypedValue<T extends TypeName>(
+  value: unknown,
+  options: { type: T; subject?: string } & ErrorMetadataParams,
+): asserts value is TypedValue & { readonly type: T };
 export function assertIsTypedValue(
   value: unknown,
   options: { subject?: string } & ErrorMetadataParams,
-): asserts value is TypedValueOf<TypeName, ValueType> {
-  if (!isTypedValue(value)) {
+): asserts value is TypedValue;
+export function assertIsTypedValue(
+  value: unknown,
+  options: { type?: TypeName; subject?: string } & ErrorMetadataParams,
+): asserts value is TypedValue {
+  const expectedType =
+    options.type !== undefined ? `TypedValue<${options.type}>` : 'TypedValue';
+
+  const isValid =
+    options.type !== undefined
+      ? isTypedValue(value, { type: options.type })
+      : isTypedValue(value);
+
+  if (!isValid) {
     throw new InvalidTypeError(
       {
         subject: options.subject,
         type: typeof value,
         expectedType: 'Custom',
-        expectedCustomType: 'TypedValue',
+        expectedCustomType: expectedType,
       },
       options,
     );
@@ -192,7 +223,7 @@ export function assertIsTypedValue(
 export function assertIsTypedValueArray(
   values: unknown,
   options: { subject?: string } & ErrorMetadataParams,
-): asserts values is ReadonlyArray<TypedValueOf<TypeName, ValueType>> {
+): asserts values is ReadonlyArray<TypedValueOf<TypeName>> {
   if (!Array.isArray(values)) {
     throw new InvalidTypeError(
       {
@@ -244,9 +275,9 @@ export function assertIsTypedValueArray(
  * // Type: TypedValue<'address', ChecksummedAddress>
  * ```
  */
-export function createTypedValue<InputType extends InputTypedValue>(
+export function createTypedValue<InputType extends TypedValueLike>(
   input: InputType,
-): TypedValueFrom<InputType> {
+): TypedValue & { readonly type: InputType['type'] } {
   if ((input as unknown) == null || typeof input !== 'object') {
     throw new InvalidTypeError(
       {
@@ -259,21 +290,26 @@ export function createTypedValue<InputType extends InputTypedValue>(
     );
   }
 
+  if (isTypedValue(input)) {
+    return input;
+  }
+
   const expectedType = input.type;
 
   let validatedValue: ValueType;
 
   if (expectedType === 'bool') {
-    validatedValue = asBoolean(input.value);
+    validatedValue = toBoolean(input.value, {});
   } else if (expectedType === 'address') {
     validatedValue = asAddress(input.value);
   } else {
-    validatedValue = asUintForType(input.value, {
-      typeName: expectedType,
-    });
+    validatedValue = normalizeUintForType(
+      asUintForType(input.value, expectedType, {}),
+      expectedType,
+    );
   }
 
-  const v: TypedValueOf<typeof expectedType, ValueType> = new TypedValueImpl(
+  const v: TypedValueOf<typeof expectedType> = new TypedValueImpl(
     validatedValue,
     expectedType,
   );
@@ -285,7 +321,7 @@ export function createTypedValue<InputType extends InputTypedValue>(
  * Mapped tuple type that preserves per-element type narrowing.
  * @internal
  */
-type TypedValuesFrom<T extends readonly InputTypedValue[]> = {
+type TypedValueArrayFrom<T extends readonly TypedValueLike[]> = {
   [K in keyof T]: TypedValueFrom<T[K]>;
 };
 
@@ -301,17 +337,100 @@ type TypedValuesFrom<T extends readonly InputTypedValue[]> = {
  * // b: BoolValue, n: Uint8Value
  * ```
  */
-export function createTypedValueArray<T extends readonly InputTypedValue[]>(
+export function createTypedValueArray<T extends readonly TypedValueLike[]>(
   inputs: [...T],
-): TypedValuesFrom<T> {
-  return inputs.map(createTypedValue) as unknown as TypedValuesFrom<T>;
+): TypedValueArrayFrom<T> {
+  return inputs.map(createTypedValue) as unknown as TypedValueArrayFrom<T>;
 }
 
 /**
  * Returns `true` if every element was created via {@link createTypedValue}.
  */
 export function isTypedValueArray(
-  values: readonly unknown[],
-): values is ReadonlyArray<TypedValueOf<TypeName, ValueType>> {
-  return values.every(isTypedValue);
+  arr: readonly unknown[],
+): arr is ReadonlyArray<TypedValueOf<TypeName>> {
+  return arr.every((v) => isTypedValue(v));
+}
+
+export class TypedValueArrayBuilder {
+  readonly #arr: TypedValue[] = [];
+
+  public addBool(value: boolean | number | bigint | BoolValueLike): this {
+    return this.#push('bool', value);
+  }
+
+  public addUint8(value: number | bigint | Uint8ValueLike): this {
+    return this.#push('uint8', value);
+  }
+
+  public addUint16(value: number | bigint | Uint16ValueLike): this {
+    return this.#push('uint16', value);
+  }
+
+  public addUint32(value: number | bigint | Uint32ValueLike): this {
+    return this.#push('uint32', value);
+  }
+
+  public addUint64(value: number | bigint | Uint64ValueLike): this {
+    return this.#push('uint64', value);
+  }
+
+  public addUint128(value: number | bigint | Uint128ValueLike): this {
+    return this.#push('uint128', value);
+  }
+
+  public addUint256(value: number | bigint | Uint256ValueLike): this {
+    return this.#push('uint256', value);
+  }
+
+  public addAddress(value: string | AddressValueLike): this {
+    return this.#push('address', value);
+  }
+
+  public addTypedValue(typedValue: TypedValue): this {
+    if (!isTypedValue(typedValue)) {
+      throw new InvalidTypeError(
+        {
+          subject: 'typedValue',
+          type: typeof typedValue,
+          expectedType: 'Custom',
+          expectedCustomType: 'TypedValue',
+        },
+        {},
+      );
+    }
+    this.#arr.push(typedValue);
+    return this;
+  }
+
+  #push(typeName: TypeName, value: unknown): this {
+    if (isTypedValue(value, { type: typeName })) {
+      this.#arr.push(value);
+    } else if (typeof value === 'object' && value !== null) {
+      const tv = value as TypedValueLikeOf<TypeName>;
+      if (tv.type !== typeName) {
+        throw new InvalidTypeError(
+          {
+            subject: 'value',
+            type: tv.type,
+            expectedType: 'Custom',
+            expectedCustomType: typeName,
+          },
+          {},
+        );
+      }
+      this.#arr.push(
+        createTypedValue({ type: typeName, value: tv.value } as TypedValueLike),
+      );
+    } else {
+      this.#arr.push(
+        createTypedValue({ type: typeName, value } as TypedValueLike),
+      );
+    }
+    return this;
+  }
+
+  public build(): readonly TypedValue[] {
+    return Object.freeze([...this.#arr]);
+  }
 }

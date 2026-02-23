@@ -12,8 +12,8 @@ import {
   TooManyHandlesError,
 } from '../errors/InputProofError';
 import {
-  createInputProofFromRawBytes,
-  createInputProofFromCoprocessorSignatures,
+  createUnverifiedInputProofFromRawBytes,
+  createUnverifiedInputProofFromComponents,
 } from './InputProof';
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -51,27 +51,30 @@ describe('InputProof', () => {
 
   describe('from', () => {
     it('creates InputProof with single handle and signature', () => {
-      const inputProof = createInputProofFromCoprocessorSignatures({
-        coprocessorSignatures: [VALID_SIGNATURE_1],
-        handles: [VALID_HANDLE_1],
+      const inputProof = createUnverifiedInputProofFromComponents({
+        coprocessorEIP712Signatures: [VALID_SIGNATURE_1],
+        externalHandles: [VALID_HANDLE_1],
         extraData: VALID_EXTRA_DATA,
       });
 
-      expect(inputProof.handles).toEqual([VALID_HANDLE_1]);
+      expect(inputProof.externalHandles).toEqual([VALID_HANDLE_1]);
       expect(inputProof.coprocessorSignatures).toEqual([VALID_SIGNATURE_1]);
       expect(inputProof.extraData).toBe(VALID_EXTRA_DATA);
     });
 
     it('creates InputProof with multiple handles and signatures', () => {
-      const inputProof = createInputProofFromCoprocessorSignatures({
-        coprocessorSignatures: [VALID_SIGNATURE_1, VALID_SIGNATURE_2],
-        handles: [VALID_HANDLE_1, VALID_HANDLE_2],
+      const inputProof = createUnverifiedInputProofFromComponents({
+        coprocessorEIP712Signatures: [VALID_SIGNATURE_1, VALID_SIGNATURE_2],
+        externalHandles: [VALID_HANDLE_1, VALID_HANDLE_2],
         extraData: VALID_EXTRA_DATA,
       });
 
-      expect(inputProof.handles).toHaveLength(2);
+      expect(inputProof.externalHandles).toHaveLength(2);
       expect(inputProof.coprocessorSignatures).toHaveLength(2);
-      expect(inputProof.handles).toEqual([VALID_HANDLE_1, VALID_HANDLE_2]);
+      expect(inputProof.externalHandles).toEqual([
+        VALID_HANDLE_1,
+        VALID_HANDLE_2,
+      ]);
       expect(inputProof.coprocessorSignatures).toEqual([
         VALID_SIGNATURE_1,
         VALID_SIGNATURE_2,
@@ -79,9 +82,9 @@ describe('InputProof', () => {
     });
 
     it('creates InputProof with empty extra data', () => {
-      const inputProof = createInputProofFromCoprocessorSignatures({
-        coprocessorSignatures: [VALID_SIGNATURE_1],
-        handles: [VALID_HANDLE_1],
+      const inputProof = createUnverifiedInputProofFromComponents({
+        coprocessorEIP712Signatures: [VALID_SIGNATURE_1],
+        externalHandles: [VALID_HANDLE_1],
         extraData: EMPTY_EXTRA_DATA,
       });
 
@@ -93,14 +96,14 @@ describe('InputProof', () => {
         0xde,
       ) as unknown as Bytes32;
 
-      const inputProof = createInputProofFromCoprocessorSignatures({
-        coprocessorSignatures: [VALID_SIGNATURE_1],
-        handles: [handleBytes],
+      const inputProof = createUnverifiedInputProofFromComponents({
+        coprocessorEIP712Signatures: [VALID_SIGNATURE_1],
+        externalHandles: [handleBytes],
         extraData: VALID_EXTRA_DATA,
       });
 
-      expect(inputProof.handles).toHaveLength(1);
-      expect(inputProof.handles[0]).toBe('0x' + 'de'.repeat(32));
+      expect(inputProof.externalHandles).toHaveLength(1);
+      expect(inputProof.externalHandles[0]).toBe('0x' + 'de'.repeat(32));
     });
 
     it('creates InputProof with multiple Bytes32 handles', () => {
@@ -111,25 +114,25 @@ describe('InputProof', () => {
         0xcd,
       ) as unknown as Bytes32;
 
-      const inputProof = createInputProofFromCoprocessorSignatures({
-        coprocessorSignatures: [VALID_SIGNATURE_1, VALID_SIGNATURE_2],
-        handles: [handleBytes1, handleBytes2],
+      const inputProof = createUnverifiedInputProofFromComponents({
+        coprocessorEIP712Signatures: [VALID_SIGNATURE_1, VALID_SIGNATURE_2],
+        externalHandles: [handleBytes1, handleBytes2],
         extraData: VALID_EXTRA_DATA,
       });
 
-      expect(inputProof.handles).toHaveLength(2);
-      expect(inputProof.handles[0]).toBe('0x' + 'ab'.repeat(32));
-      expect(inputProof.handles[1]).toBe('0x' + 'cd'.repeat(32));
+      expect(inputProof.externalHandles).toHaveLength(2);
+      expect(inputProof.externalHandles[0]).toBe('0x' + 'ab'.repeat(32));
+      expect(inputProof.externalHandles[1]).toBe('0x' + 'cd'.repeat(32));
     });
 
     it('accepts empty handles and signatures arrays', () => {
-      const inputProof = createInputProofFromCoprocessorSignatures({
-        coprocessorSignatures: [],
-        handles: [],
+      const inputProof = createUnverifiedInputProofFromComponents({
+        coprocessorEIP712Signatures: [],
+        externalHandles: [],
         extraData: VALID_EXTRA_DATA,
       });
 
-      expect(inputProof.handles).toEqual([]);
+      expect(inputProof.externalHandles).toEqual([]);
       expect(inputProof.coprocessorSignatures).toEqual([]);
     });
   });
@@ -140,13 +143,13 @@ describe('InputProof', () => {
 
   describe('from proof format', () => {
     it('generates correct proof format with single handle and signature', () => {
-      const inputProof = createInputProofFromCoprocessorSignatures({
-        coprocessorSignatures: [VALID_SIGNATURE_1],
-        handles: [VALID_HANDLE_1],
+      const inputProof = createUnverifiedInputProofFromComponents({
+        coprocessorEIP712Signatures: [VALID_SIGNATURE_1],
+        externalHandles: [VALID_HANDLE_1],
         extraData: VALID_EXTRA_DATA,
       });
 
-      const proof = inputProof.proof;
+      const proof = inputProof.bytesHex;
 
       // Proof format: <numHandles:1byte><numSignatures:1byte><handles><signatures><extraData>
       expect(proof.startsWith('0x')).toBe(true);
@@ -171,13 +174,13 @@ describe('InputProof', () => {
     });
 
     it('generates correct proof size', () => {
-      const inputProof = createInputProofFromCoprocessorSignatures({
-        coprocessorSignatures: [VALID_SIGNATURE_1, VALID_SIGNATURE_2],
-        handles: [VALID_HANDLE_1, VALID_HANDLE_2],
+      const inputProof = createUnverifiedInputProofFromComponents({
+        coprocessorEIP712Signatures: [VALID_SIGNATURE_1, VALID_SIGNATURE_2],
+        externalHandles: [VALID_HANDLE_1, VALID_HANDLE_2],
         extraData: VALID_EXTRA_DATA,
       });
 
-      const proof = inputProof.proof;
+      const proof = inputProof.bytesHex;
       // Size: 2 (header) + 2*32 (handles) + 2*65 (signatures) + 4 (extra data) = 200 bytes
       // Hex string: 0x + 200*2 = 402 chars
       const expectedSize = 2 + 2 * 32 + 2 * 65 + 4;
@@ -194,9 +197,9 @@ describe('InputProof', () => {
       const manyHandles = Array(256).fill(VALID_HANDLE_1) as Bytes32Hex[];
 
       expect(() =>
-        createInputProofFromCoprocessorSignatures({
-          coprocessorSignatures: [VALID_SIGNATURE_1],
-          handles: manyHandles,
+        createUnverifiedInputProofFromComponents({
+          coprocessorEIP712Signatures: [VALID_SIGNATURE_1],
+          externalHandles: manyHandles,
           extraData: VALID_EXTRA_DATA,
         }),
       ).toThrow(TooManyHandlesError);
@@ -206,20 +209,20 @@ describe('InputProof', () => {
       const maxHandles = Array(255).fill(VALID_HANDLE_1) as Bytes32Hex[];
       const maxSignatures = Array(255).fill(VALID_SIGNATURE_1) as Bytes65Hex[];
 
-      const inputProof = createInputProofFromCoprocessorSignatures({
-        coprocessorSignatures: maxSignatures,
-        handles: maxHandles,
+      const inputProof = createUnverifiedInputProofFromComponents({
+        coprocessorEIP712Signatures: maxSignatures,
+        externalHandles: maxHandles,
         extraData: VALID_EXTRA_DATA,
       });
 
-      expect(inputProof.handles).toHaveLength(255);
+      expect(inputProof.externalHandles).toHaveLength(255);
     });
 
     it('throws for invalid signature format', () => {
       expect(() =>
-        createInputProofFromCoprocessorSignatures({
-          coprocessorSignatures: ['0xinvalid' as Bytes65Hex],
-          handles: [VALID_HANDLE_1],
+        createUnverifiedInputProofFromComponents({
+          coprocessorEIP712Signatures: ['0xinvalid' as Bytes65Hex],
+          externalHandles: [VALID_HANDLE_1],
           extraData: VALID_EXTRA_DATA,
         }),
       ).toThrow(InvalidTypeError);
@@ -227,9 +230,9 @@ describe('InputProof', () => {
 
     it('throws for invalid handle format', () => {
       expect(() =>
-        createInputProofFromCoprocessorSignatures({
-          coprocessorSignatures: [VALID_SIGNATURE_1],
-          handles: ['0xinvalid' as Bytes32Hex],
+        createUnverifiedInputProofFromComponents({
+          coprocessorEIP712Signatures: [VALID_SIGNATURE_1],
+          externalHandles: ['0xinvalid' as Bytes32Hex],
           extraData: VALID_EXTRA_DATA,
         }),
       ).toThrow(InputProofError);
@@ -237,9 +240,9 @@ describe('InputProof', () => {
 
     it('throws for invalid extra data format', () => {
       expect(() =>
-        createInputProofFromCoprocessorSignatures({
-          coprocessorSignatures: [VALID_SIGNATURE_1],
-          handles: [VALID_HANDLE_1],
+        createUnverifiedInputProofFromComponents({
+          coprocessorEIP712Signatures: [VALID_SIGNATURE_1],
+          externalHandles: [VALID_HANDLE_1],
           extraData: 'invalid' as BytesHex,
         }),
       ).toThrow(InvalidTypeError);
@@ -251,75 +254,75 @@ describe('InputProof', () => {
   //////////////////////////////////////////////////////////////////////////////
 
   describe('fromProofBytes', () => {
-    it('parses proof bytes created by from()', () => {
-      const original = createInputProofFromCoprocessorSignatures({
-        coprocessorSignatures: [VALID_SIGNATURE_1],
-        handles: [VALID_HANDLE_1],
+    it('parses proof bytes created by from()', async () => {
+      const original = createUnverifiedInputProofFromComponents({
+        coprocessorEIP712Signatures: [VALID_SIGNATURE_1],
+        externalHandles: [VALID_HANDLE_1],
         extraData: VALID_EXTRA_DATA,
       });
 
-      const proofBytes = hexToBytes(original.proof);
-      const parsed = createInputProofFromRawBytes(proofBytes);
+      const proofBytes = hexToBytes(original.bytesHex);
+      const parsed = createUnverifiedInputProofFromRawBytes(proofBytes);
 
-      expect(parsed.handles).toEqual(original.handles);
+      expect(parsed.externalHandles).toEqual(original.externalHandles);
       expect(parsed.coprocessorSignatures).toEqual(
         original.coprocessorSignatures,
       );
       expect(parsed.extraData).toBe(original.extraData);
-      expect(parsed.proof).toBe(original.proof);
+      expect(parsed.bytesHex).toBe(original.bytesHex);
     });
 
-    it('parses proof with multiple handles and signatures', () => {
-      const original = createInputProofFromCoprocessorSignatures({
-        coprocessorSignatures: [VALID_SIGNATURE_1, VALID_SIGNATURE_2],
-        handles: [VALID_HANDLE_1, VALID_HANDLE_2],
+    it('parses proof with multiple handles and signatures', async () => {
+      const original = createUnverifiedInputProofFromComponents({
+        coprocessorEIP712Signatures: [VALID_SIGNATURE_1, VALID_SIGNATURE_2],
+        externalHandles: [VALID_HANDLE_1, VALID_HANDLE_2],
         extraData: VALID_EXTRA_DATA,
       });
 
-      const proofBytes = hexToBytes(original.proof);
-      const parsed = createInputProofFromRawBytes(proofBytes);
+      const proofBytes = hexToBytes(original.bytesHex);
+      const parsed = await createUnverifiedInputProofFromRawBytes(proofBytes);
 
-      expect(parsed.handles).toEqual(original.handles);
+      expect(parsed.externalHandles).toEqual(original.externalHandles);
       expect(parsed.coprocessorSignatures).toEqual(
         original.coprocessorSignatures,
       );
     });
 
-    it('parses proof with empty extra data', () => {
-      const original = createInputProofFromCoprocessorSignatures({
-        coprocessorSignatures: [VALID_SIGNATURE_1],
-        handles: [VALID_HANDLE_1],
+    it('parses proof with empty extra data', async () => {
+      const original = createUnverifiedInputProofFromComponents({
+        coprocessorEIP712Signatures: [VALID_SIGNATURE_1],
+        externalHandles: [VALID_HANDLE_1],
         extraData: EMPTY_EXTRA_DATA,
       });
 
-      const proofBytes = hexToBytes(original.proof);
-      const parsed = createInputProofFromRawBytes(proofBytes);
+      const proofBytes = hexToBytes(original.bytesHex);
+      const parsed = await createUnverifiedInputProofFromRawBytes(proofBytes);
 
       expect(parsed.extraData).toBe(EMPTY_EXTRA_DATA);
     });
 
-    it('parses proof with no handles or signatures', () => {
-      const original = createInputProofFromCoprocessorSignatures({
-        coprocessorSignatures: [],
-        handles: [],
+    it('parses proof with no handles or signatures', async () => {
+      const original = createUnverifiedInputProofFromComponents({
+        coprocessorEIP712Signatures: [],
+        externalHandles: [],
         extraData: VALID_EXTRA_DATA,
       });
 
-      const proofBytes = hexToBytes(original.proof);
-      const parsed = createInputProofFromRawBytes(proofBytes);
+      const proofBytes = hexToBytes(original.bytesHex);
+      const parsed = createUnverifiedInputProofFromRawBytes(proofBytes);
 
-      expect(parsed.handles).toEqual([]);
+      expect(parsed.externalHandles).toEqual([]);
       expect(parsed.coprocessorSignatures).toEqual([]);
       expect(parsed.extraData).toBe(VALID_EXTRA_DATA);
     });
 
     it('throws RelayerInvalidProofError for proof too short (< 2 bytes)', () => {
-      expect(() => createInputProofFromRawBytes(new Uint8Array([]))).toThrow(
-        InputProofError,
-      );
+      expect(
+        createUnverifiedInputProofFromRawBytes(new Uint8Array([])),
+      ).toThrow(InputProofError);
 
-      expect(() =>
-        createInputProofFromRawBytes(new Uint8Array([0x01])),
+      expect(
+        createUnverifiedInputProofFromRawBytes(new Uint8Array([0x01])),
       ).toThrow(InputProofError);
     });
 
@@ -327,7 +330,7 @@ describe('InputProof', () => {
       // Header says 1 handle, but no handle data present
       const invalidProof = new Uint8Array([0x01, 0x00]); // 1 handle, 0 signatures, no data
 
-      expect(() => createInputProofFromRawBytes(invalidProof)).toThrow(
+      expect(createUnverifiedInputProofFromRawBytes(invalidProof)).toThrow(
         InputProofError,
       );
     });
@@ -336,9 +339,9 @@ describe('InputProof', () => {
       // Header says 0 handles, 1 signature, but no signature data
       const invalidProof = new Uint8Array([0x00, 0x01]); // 0 handles, 1 signature, no data
 
-      expect(() => createInputProofFromRawBytes(invalidProof)).toThrow(
-        InputProofError,
-      );
+      expect(() =>
+        createUnverifiedInputProofFromRawBytes(invalidProof),
+      ).toThrow(InputProofError);
     });
   });
 
@@ -350,21 +353,24 @@ describe('InputProof', () => {
     let inputProof: InputProof;
 
     beforeEach(() => {
-      inputProof = createInputProofFromCoprocessorSignatures({
-        coprocessorSignatures: [VALID_SIGNATURE_1, VALID_SIGNATURE_2],
-        handles: [VALID_HANDLE_1, VALID_HANDLE_2],
+      inputProof = createUnverifiedInputProofFromComponents({
+        coprocessorEIP712Signatures: [VALID_SIGNATURE_1, VALID_SIGNATURE_2],
+        externalHandles: [VALID_HANDLE_1, VALID_HANDLE_2],
         extraData: VALID_EXTRA_DATA,
       });
     });
 
     it('proof returns BytesHex string', () => {
-      expect(typeof inputProof.proof).toBe('string');
-      expect(inputProof.proof.startsWith('0x')).toBe(true);
+      expect(typeof inputProof.bytesHex).toBe('string');
+      expect(inputProof.bytesHex.startsWith('0x')).toBe(true);
     });
 
     it('handles returns Bytes32Hex array', () => {
-      expect(Array.isArray(inputProof.handles)).toBe(true);
-      expect(inputProof.handles).toEqual([VALID_HANDLE_1, VALID_HANDLE_2]);
+      expect(Array.isArray(inputProof.externalHandles)).toBe(true);
+      expect(inputProof.externalHandles).toEqual([
+        VALID_HANDLE_1,
+        VALID_HANDLE_2,
+      ]);
     });
 
     it('signatures returns Bytes65Hex array', () => {
@@ -387,19 +393,19 @@ describe('InputProof', () => {
 
   describe('immutability', () => {
     it('handles array is frozen', () => {
-      const inputProof = createInputProofFromCoprocessorSignatures({
-        coprocessorSignatures: [VALID_SIGNATURE_1],
-        handles: [VALID_HANDLE_1],
+      const inputProof = createUnverifiedInputProofFromComponents({
+        coprocessorEIP712Signatures: [VALID_SIGNATURE_1],
+        externalHandles: [VALID_HANDLE_1],
         extraData: VALID_EXTRA_DATA,
       });
 
-      expect(Object.isFrozen(inputProof.handles)).toBe(true);
+      expect(Object.isFrozen(inputProof.externalHandles)).toBe(true);
     });
 
     it('signatures array is frozen', () => {
-      const inputProof = createInputProofFromCoprocessorSignatures({
-        coprocessorSignatures: [VALID_SIGNATURE_1],
-        handles: [VALID_HANDLE_1],
+      const inputProof = createUnverifiedInputProofFromComponents({
+        coprocessorEIP712Signatures: [VALID_SIGNATURE_1],
+        externalHandles: [VALID_HANDLE_1],
         extraData: VALID_EXTRA_DATA,
       });
 
@@ -407,25 +413,25 @@ describe('InputProof', () => {
     });
 
     it('modifying original handles array does not affect InputProof', () => {
-      const handles: Bytes32Hex[] = [VALID_HANDLE_1];
+      const externalHandles: Bytes32Hex[] = [VALID_HANDLE_1];
 
-      const inputProof = createInputProofFromCoprocessorSignatures({
-        coprocessorSignatures: [VALID_SIGNATURE_1],
-        handles,
+      const inputProof = createUnverifiedInputProofFromComponents({
+        coprocessorEIP712Signatures: [VALID_SIGNATURE_1],
+        externalHandles,
         extraData: VALID_EXTRA_DATA,
       });
 
-      handles.push(VALID_HANDLE_2);
+      externalHandles.push(VALID_HANDLE_2);
 
-      expect(inputProof.handles).toEqual([VALID_HANDLE_1]);
+      expect(inputProof.externalHandles).toEqual([VALID_HANDLE_1]);
     });
 
     it('modifying original signatures array does not affect InputProof', () => {
       const signatures: Bytes65Hex[] = [VALID_SIGNATURE_1];
 
-      const inputProof = createInputProofFromCoprocessorSignatures({
-        coprocessorSignatures: signatures,
-        handles: [VALID_HANDLE_1],
+      const inputProof = createUnverifiedInputProofFromComponents({
+        coprocessorEIP712Signatures: signatures,
+        externalHandles: [VALID_HANDLE_1],
         extraData: VALID_EXTRA_DATA,
       });
 
@@ -443,34 +449,34 @@ describe('InputProof', () => {
     it('from() and fromProofBytes() produce identical results', () => {
       const testCases = [
         {
-          coprocessorSignatures: [VALID_SIGNATURE_1],
-          handles: [VALID_HANDLE_1],
+          coprocessorEIP712Signatures: [VALID_SIGNATURE_1],
+          externalHandles: [VALID_HANDLE_1],
           extraData: VALID_EXTRA_DATA,
         },
         {
-          coprocessorSignatures: [VALID_SIGNATURE_1, VALID_SIGNATURE_2],
-          handles: [VALID_HANDLE_1, VALID_HANDLE_2],
+          coprocessorEIP712Signatures: [VALID_SIGNATURE_1, VALID_SIGNATURE_2],
+          externalHandles: [VALID_HANDLE_1, VALID_HANDLE_2],
           extraData: VALID_EXTRA_DATA,
         },
         {
-          coprocessorSignatures: [],
-          handles: [],
+          coprocessorEIP712Signatures: [],
+          externalHandles: [],
           extraData: VALID_EXTRA_DATA,
         },
         {
-          coprocessorSignatures: [VALID_SIGNATURE_1],
-          handles: [VALID_HANDLE_1],
+          coprocessorEIP712Signatures: [VALID_SIGNATURE_1],
+          externalHandles: [VALID_HANDLE_1],
           extraData: EMPTY_EXTRA_DATA,
         },
       ];
 
       for (const testCase of testCases) {
-        const original = createInputProofFromCoprocessorSignatures(testCase);
-        const proofBytes = hexToBytes(original.proof);
-        const parsed = createInputProofFromRawBytes(proofBytes);
+        const original = createUnverifiedInputProofFromComponents(testCase);
+        const proofBytes = hexToBytes(original.bytesHex);
+        const parsed = createUnverifiedInputProofFromRawBytes(proofBytes);
 
-        expect(parsed.proof).toBe(original.proof);
-        expect(parsed.handles).toEqual(original.handles);
+        expect(parsed.bytesHex).toBe(original.bytesHex);
+        expect(parsed.externalHandles).toEqual(original.externalHandles);
         expect(parsed.coprocessorSignatures).toEqual(
           original.coprocessorSignatures,
         );
@@ -492,41 +498,41 @@ describe('InputProof', () => {
     const PAYLOAD_EXTRA_DATA = '0xabcdef' as BytesHex;
 
     it('creates InputProof from real payload handles and signatures', () => {
-      const inputProof = createInputProofFromCoprocessorSignatures({
-        coprocessorSignatures: [PAYLOAD_SIGNATURE],
-        handles: [PAYLOAD_HANDLE],
+      const inputProof = createUnverifiedInputProofFromComponents({
+        coprocessorEIP712Signatures: [PAYLOAD_SIGNATURE],
+        externalHandles: [PAYLOAD_HANDLE],
         extraData: PAYLOAD_EXTRA_DATA,
       });
 
-      expect(inputProof.handles).toEqual([PAYLOAD_HANDLE]);
+      expect(inputProof.externalHandles).toEqual([PAYLOAD_HANDLE]);
       expect(inputProof.coprocessorSignatures).toEqual([PAYLOAD_SIGNATURE]);
       expect(inputProof.extraData).toBe(PAYLOAD_EXTRA_DATA);
     });
 
     it('round-trips real payload data through from() and fromProofBytes()', () => {
-      const original = createInputProofFromCoprocessorSignatures({
-        coprocessorSignatures: [PAYLOAD_SIGNATURE],
-        handles: [PAYLOAD_HANDLE],
+      const original = createUnverifiedInputProofFromComponents({
+        coprocessorEIP712Signatures: [PAYLOAD_SIGNATURE],
+        externalHandles: [PAYLOAD_HANDLE],
         extraData: PAYLOAD_EXTRA_DATA,
       });
 
-      const proofBytes = hexToBytes(original.proof);
-      const parsed = createInputProofFromRawBytes(proofBytes);
+      const proofBytes = hexToBytes(original.bytesHex);
+      const parsed = createUnverifiedInputProofFromRawBytes(proofBytes);
 
-      expect(parsed.proof).toBe(original.proof);
-      expect(parsed.handles).toEqual([PAYLOAD_HANDLE]);
+      expect(parsed.bytesHex).toBe(original.bytesHex);
+      expect(parsed.externalHandles).toEqual([PAYLOAD_HANDLE]);
       expect(parsed.coprocessorSignatures).toEqual([PAYLOAD_SIGNATURE]);
       expect(parsed.extraData).toBe(PAYLOAD_EXTRA_DATA);
     });
 
     it('generates correct proof structure with real payload data', () => {
-      const inputProof = createInputProofFromCoprocessorSignatures({
-        coprocessorSignatures: [PAYLOAD_SIGNATURE],
-        handles: [PAYLOAD_HANDLE],
+      const inputProof = createUnverifiedInputProofFromComponents({
+        coprocessorEIP712Signatures: [PAYLOAD_SIGNATURE],
+        externalHandles: [PAYLOAD_HANDLE],
         extraData: PAYLOAD_EXTRA_DATA,
       });
 
-      const proof = inputProof.proof;
+      const proof = inputProof.bytesHex;
 
       // Verify header bytes
       expect(proof.slice(2, 4)).toBe('01'); // 1 handle

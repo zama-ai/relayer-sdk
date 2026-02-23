@@ -11,7 +11,6 @@ import type {
 import type { EncryptionBits, FheTypeId } from '@fhevm-base/types/public-api';
 import type { ZKProofLike, ZKProof } from '../types/public-api';
 import type { FhevmHandle } from '@fhevm-base/index';
-import type { FHELib } from '@fhevm-base/types/libs';
 import type { ErrorMetadataParams } from '@base/errors/ErrorBase';
 import {
   assertIsChecksummedAddress,
@@ -38,6 +37,7 @@ import {
 import { buildFhevmHandle } from '@fhevm-base/index';
 import { keccak_256 } from '@noble/hashes/sha3.js';
 import { InvalidTypeError } from '@base/errors/InvalidTypeError';
+import type { TFHELib } from '@fhevm-base/types/libs';
 
 ////////////////////////////////////////////////////////////////////////////////
 // ZKProof
@@ -231,10 +231,10 @@ export function assertIsZKProof(
  * @throws A {@link ZKProofError} if ciphertextWithZKProof is invalid or empty.
  * @throws A {@link InvalidTypeError} if any field fails validation.
  */
-export function createZKProofInternal(
+export function toZKProof(
   zkProofLike: ZKProofLike,
   options?: {
-    readonly fheLib?: FHELib;
+    readonly tfheLib?: TFHELib;
     readonly copy?: boolean;
   },
 ): ZKProof {
@@ -268,7 +268,7 @@ export function createZKProofInternal(
   const encryptionBits = _getOrParseEncryptionBits(
     zkProofLike.encryptionBits,
     ciphertextWithZKProof,
-    options?.fheLib,
+    options?.tfheLib,
   );
 
   return new ZKProofImpl({
@@ -289,7 +289,7 @@ export function zkProofToFhevmHandles(
   zkProofLike: ZKProofLike,
   options?: {
     readonly version?: number;
-    readonly fheLib?: FHELib;
+    readonly tfheLib?: TFHELib;
   },
 ): readonly FhevmHandle[] {
   if (zkProofLike instanceof ZKProofImpl) {
@@ -303,7 +303,7 @@ export function zkProofToFhevmHandles(
   const encryptionBits = _getOrParseEncryptionBits(
     zkProofLike.encryptionBits,
     zkProofLike.ciphertextWithZKProof,
-    options?.fheLib,
+    options?.tfheLib,
   );
 
   const ciphertextWithZKProof = toBytes(zkProofLike.ciphertextWithZKProof, {
@@ -406,7 +406,7 @@ function _zkProofToFhevmHandles(
 function _getOrParseEncryptionBits(
   encryptionBits: readonly number[] | undefined,
   ciphertextWithZKProof: Uint8Array | string,
-  fheLib?: FHELib,
+  tfheLib?: TFHELib,
 ): readonly EncryptionBits[] {
   // Case 1: encryptionBits provided — validate, and verify against parsed if possible
   if (encryptionBits != null) {
@@ -414,8 +414,8 @@ function _getOrParseEncryptionBits(
       subject: 'encryptionBits',
     });
 
-    if (fheLib != null) {
-      const parsed = fheLib.parseTFHEProvenCompactCiphertextList(
+    if (tfheLib != null) {
+      const parsed = tfheLib.parseTFHEProvenCompactCiphertextList(
         ciphertextWithZKProof,
       );
       _assertEncryptionBitsMatch(parsed.encryptionBits, encryptionBits);
@@ -425,8 +425,8 @@ function _getOrParseEncryptionBits(
   }
 
   // Case 2: encryptionBits not provided — extract if parse function available
-  if (fheLib != null) {
-    const parsed = fheLib.parseTFHEProvenCompactCiphertextList(
+  if (tfheLib != null) {
+    const parsed = tfheLib.parseTFHEProvenCompactCiphertextList(
       ciphertextWithZKProof,
     );
     return parsed.encryptionBits;

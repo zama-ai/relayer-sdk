@@ -117,12 +117,6 @@ export type Uint128 = UintNumber | Uint128BigInt;
 export type Uint256 = UintNumber | Uint256BigInt;
 
 /**
- * Union type of all unsigned integer branded types (Uint8, Uint16, Uint32, Uint64, Uint128, Uint256).
- * Each member is a branded type that guarantees the value is within the valid range for that bit width.
- */
-export type UintXXType = Uint8 | Uint16 | Uint32 | Uint64 | Uint128 | Uint256;
-
-/**
  * String literal union of unsigned integer type names.
  */
 export type UintXXTypeName =
@@ -134,6 +128,26 @@ export type UintXXTypeName =
   | 'uint256';
 
 export type UintTypeName = 'uint' | UintXXTypeName;
+
+export type UintNormalized = UintNormalizedMap[keyof UintNormalizedMap];
+
+export interface UintNormalizedMap {
+  uint8: Uint8Number;
+  uint16: Uint16Number;
+  uint32: Uint32Number;
+  uint64: Uint64BigInt;
+  uint128: Uint128BigInt;
+  uint256: Uint256BigInt;
+}
+
+export interface UintXXMap {
+  uint8: Uint8;
+  uint16: Uint16;
+  uint32: Uint32;
+  uint64: Uint64;
+  uint128: Uint128;
+  uint256: Uint256;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 //

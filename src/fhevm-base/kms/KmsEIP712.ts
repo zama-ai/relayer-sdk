@@ -17,6 +17,7 @@ import type {
   KmsPublicDecryptEIP712Message,
   KmsPublicDecryptEIP712Types,
   KmsUserDecryptEIP712,
+  KmsUserDecryptEIP712Message,
   KmsUserDecryptEIP712Types,
 } from '@fhevm-base/types/public-api';
 import type { EIP712Lib } from '@fhevm-base-types/public-api';
@@ -38,6 +39,10 @@ import {
   fhevmHandleLikeToFhevmHandle,
 } from '@fhevm-base/FhevmHandle';
 import { assertKmsSignerThreshold } from '../host-contracts/KMSVerifierContractData';
+import {
+  ThresholdSignerError,
+  UnknownSignerError,
+} from '@fhevm-base/errors/SignersError';
 
 /*
     See: in KMS (eip712Domain)
@@ -329,8 +334,8 @@ export async function verifyKmsPublicDecryptEIP712(
   },
   args: {
     readonly orderedHandles: readonly FhevmHandle[];
-    readonly orderedDecryptedResult: BytesHex;
-    readonly signatures: readonly Bytes65Hex[];
+    readonly orderedAbiEncodedClearValues: BytesHex;
+    readonly kmsPublicDecryptEIP712Signatures: readonly Bytes65Hex[];
     readonly extraData: BytesHex;
   },
 ): Promise<void> {
@@ -340,7 +345,7 @@ export async function verifyKmsPublicDecryptEIP712(
 
   const message: KmsPublicDecryptEIP712Message = {
     ctHandles: handlesBytes32Hex,
-    decryptedResult: args.orderedDecryptedResult,
+    decryptedResult: args.orderedAbiEncodedClearValues,
     extraData: args.extraData,
   };
 
@@ -355,13 +360,50 @@ export async function verifyKmsPublicDecryptEIP712(
     fhevm,
     {
       domain,
-      signatures: args.signatures,
+      signatures: args.kmsPublicDecryptEIP712Signatures,
       message,
     },
   );
 
   // 2. Verify signature theshold is reached
   assertKmsSignerThreshold(fhevm.config.kmsVerifier, recoveredAddresses);
+}
+
+export async function verifyKmsUserDecryptEIP712(
+  fhevm: {
+    readonly libs: { readonly eip712Lib: EIP712Lib };
+    readonly config: FhevmConfig;
+  },
+  args: {
+    readonly signer: ChecksummedAddress;
+    readonly message: KmsUserDecryptEIP712Message;
+    readonly signature: Bytes65Hex;
+  },
+): Promise<void> {
+  const domain = _createKmsEIP712Domain({
+    chainId: fhevm.config.hostChainConfig.chainId,
+    verifyingContractAddressDecryption:
+      fhevm.config.kmsVerifier.verifyingContractAddressDecryption,
+  });
+
+  const recoveredAddresses = await _recoverKmsUserDecryptEIP712Signers(fhevm, {
+    domain,
+    signatures: [args.signature],
+    message: args.message,
+  });
+
+  if (recoveredAddresses.length !== 1) {
+    throw new ThresholdSignerError({
+      type: 'kms',
+    });
+  }
+
+  if (recoveredAddresses[0] !== args.signer) {
+    throw new UnknownSignerError({
+      unknownAddress: recoveredAddresses[0],
+      type: 'kms',
+    });
+  }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -415,28 +457,28 @@ function _verifyPublicKeyArg(value: unknown): BytesHex {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-// async function _recoverKmsUserDecryptEIP712Signers(
-//   fhevm: {
-//     readonly libs: { readonly eip712Lib: EIP712Lib };
-//   },
-//   {
-//     domain,
-//     signatures,
-//     message,
-//   }: {
-//     readonly domain: KmsEIP712Domain;
-//     readonly signatures: readonly string[];
-//     readonly message: KmsUserDecryptEIP712Message;
-//   },
-// ): Promise<ChecksummedAddress[]> {
-//   return await _recoverKmsEIP712Signers(fhevm, {
-//     domain,
-//     types: kmsUserDecryptEIP712Types,
-//     primaryType: 'UserDecryptRequestVerification',
-//     signatures,
-//     message,
-//   });
-// }
+async function _recoverKmsUserDecryptEIP712Signers(
+  fhevm: {
+    readonly libs: { readonly eip712Lib: EIP712Lib };
+  },
+  {
+    domain,
+    signatures,
+    message,
+  }: {
+    readonly domain: KmsEIP712Domain;
+    readonly signatures: readonly string[];
+    readonly message: KmsUserDecryptEIP712Message;
+  },
+): Promise<ChecksummedAddress[]> {
+  return await _recoverKmsEIP712Signers(fhevm, {
+    domain,
+    types: kmsUserDecryptEIP712Types,
+    primaryType: 'UserDecryptRequestVerification',
+    signatures,
+    message,
+  });
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // TODO

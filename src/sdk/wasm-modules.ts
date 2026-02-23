@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-condition */
-import type { TFHEType, TKMSType } from './public-api';
+import type { TFHEType, TKMSType } from './types/public-api';
 
 const SILENT = true;
 
@@ -280,7 +280,9 @@ class TKMSModule {
     ];
     for (const fn of requiredFunctions) {
       if (typeof tkms[fn] !== 'function') {
-        throw new Error(`Invalid TKMS module: ${fn} is not a function`);
+        throw new Error(
+          `Invalid TKMS module: ${Object.prototype.toString.call(fn)} is not a function`,
+        );
       }
     }
 

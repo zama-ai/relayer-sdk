@@ -1,28 +1,59 @@
-import type { RelayerKeyUrlOptions } from '@relayer/types/public-api';
-import type { FetchKeyUrlResult } from '@relayer/types/private-api';
-import { setAuth } from '../auth/auth';
-import { sdkName, version } from '../_version';
+import type { RelayerKeyUrlOptions } from './types/public-api';
+import type { FetchKeyUrlResult, TfheFetchParams } from './types/private-api';
+import type { TfhePkeUrls } from './types/public-api';
+import type { Bytes, UintNumber } from '@base/types/primitives';
 import {
   assertRecordStringArrayProperty,
   assertRecordStringProperty,
   removeSuffix,
 } from '@base/string';
-import { fetchWithRetry } from '@base/fetch';
+import { fetchWithRetry, getResponseBytes } from '@base/fetch';
 import { RelayerFetchError } from '@relayer/errors/RelayerFetchError';
 import {
   assertRecordArrayProperty,
   assertRecordNonNullableProperty,
 } from '@base/record';
-import type { TFHEPkeUrls } from '@sdk/lowlevel/public-api';
+import { setAuth } from './auth/auth';
+import { sdkName, version } from './_version';
+import type { TfhePublicEncryptionParamsBytes } from '@fhevm-base/types/private';
+import type { RelayerFetchOptions } from '@fhevm-base/types/libs';
 
 ////////////////////////////////////////////////////////////////////////////////
 // fetchKeyUrl
 ////////////////////////////////////////////////////////////////////////////////
 
-export async function fetchKeyUrl(
+export async function fetchTfhePublicEncryptionParams(
+  relayerUrl: string,
+  options?: RelayerFetchOptions,
+): Promise<TfhePublicEncryptionParamsBytes> {
+  const relayerOptions = options as RelayerKeyUrlOptions | undefined;
+
+  // 1. Ask the relayer for the URLs where the keys are hosted
+  const tfhePkeUrls = await _fetchKeyUrl(relayerUrl, relayerOptions);
+
+  const init: RequestInit | undefined =
+    relayerOptions?.signal !== undefined
+      ? { signal: relayerOptions.signal }
+      : undefined;
+
+  // 2. Download the actual keys from those URLs
+  const tfhePkeParams = await _downloadTfhePkeMaterial(tfhePkeUrls, {
+    retries: relayerOptions?.fetchRetries,
+    retryDelayMs: relayerOptions?.fetchRetryDelayInMilliseconds,
+    init,
+  });
+
+  return tfhePkeParams;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// _fetchKeyUrl
+////////////////////////////////////////////////////////////////////////////////
+
+async function _fetchKeyUrl(
   relayerUrl: string,
   options?: RelayerKeyUrlOptions,
-): Promise<TFHEPkeUrls> {
+): Promise<TfhePkeUrls> {
   const init = setAuth(
     {
       method: 'GET',
@@ -89,6 +120,75 @@ export async function fetchKeyUrl(
       capacity: 2048,
     },
   };
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// _fetchTfhePublicEncryptionParams
+////////////////////////////////////////////////////////////////////////////////
+
+async function _downloadTfhePkeMaterial(
+  urls: TfhePkeUrls,
+  options?: TfheFetchParams,
+): Promise<TfhePublicEncryptionParamsBytes> {
+  if (urls.pkeCrsUrl.capacity !== 2048) {
+    _throwFetchError({
+      url: urls.pkeCrsUrl.srcUrl,
+      message: `Invalid pke crs capacity ${urls.pkeCrsUrl.capacity.toString()}. Expecting 2048.`,
+    });
+  }
+
+  const [publicKeyBytes, pkeCrsBytes]: [Bytes, Bytes] = await Promise.all([
+    _fetchBytes({ url: urls.publicKeyUrl.srcUrl, ...options }),
+    _fetchBytes({ url: urls.pkeCrsUrl.srcUrl, ...options }),
+  ]);
+
+  return Object.freeze({
+    publicKey: Object.freeze({
+      id: urls.publicKeyUrl.id,
+      bytes: publicKeyBytes,
+    }),
+    crs: Object.freeze({
+      id: urls.pkeCrsUrl.id,
+      capacity: urls.pkeCrsUrl.capacity as UintNumber,
+      bytes: pkeCrsBytes,
+    }),
+  }) as TfhePublicEncryptionParamsBytes;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// _fetchBytes
+////////////////////////////////////////////////////////////////////////////////
+
+async function _fetchBytes(
+  params: { url: string } & TfheFetchParams,
+): Promise<Bytes> {
+  const url = params.url;
+
+  // Fetching a public key must use GET (the default method)
+  if (params.init?.method !== undefined && params.init.method !== 'GET') {
+    _throwFetchError({
+      url,
+      message: `Invalid fetch method: expected 'GET', got '${params.init.method}'`,
+    });
+  }
+
+  const response = await fetchWithRetry({
+    url,
+    init: params.init,
+    retries: params.retries,
+    retryDelayMs: params.retryDelayMs,
+  });
+
+  if (!response.ok) {
+    _throwFetchError({
+      url,
+      message: `HTTP error! status: ${response.status} on ${response.url}`,
+    });
+  }
+
+  const compactPkeCrsBytes: Uint8Array = await getResponseBytes(response);
+
+  return compactPkeCrsBytes;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -191,3 +291,5 @@ function _assertIsFetchKeyUrlResult(
     throw new Error(`Unexpected '${valueName}.crs[2048].urls' array length.`);
   }
 }
+
+////////////////////////////////////////////////////////////////////////////////

@@ -1,39 +1,64 @@
 import type {
   RelayerInputProofOptions,
+  RelayerKeyUrlOptions,
   RelayerPublicDecryptOptions,
   RelayerUserDecryptOptions,
 } from '@relayer/types/public-api';
 import type { Auth } from '@relayer/types/public-api';
 import type { Prettify } from '@base/types/utils';
 import type {
+  Bytes,
   Bytes32Hex,
   BytesHex,
   BytesHexNo0x,
   ChecksummedAddress,
+  UintNumber,
 } from '@base/types/primitives';
-import type { Keypair, ZKProofLike } from '@sdk/types/public-api';
-import type { InputProofBytes } from '@sdk/coprocessor/public-api';
-import type {
-  ClearValues,
-  KmsUserDecryptEIP712,
-  PublicDecryptResults,
-} from '@sdk/kms/public-api';
 import type { Eip1193Provider, Provider } from 'ethers';
-import type { EncryptionBits } from '@fhevm-base/types/public-api';
-import { parseZamaRelayerUrl } from '@relayer/relayerUrl';
+import type {
+  DecryptedFhevmHandle,
+  EncryptionBits,
+  FhevmHostChainConfig,
+  InputProofBytes,
+  InputVerifierContractData,
+  KmsUserDecryptEIP712,
+  PublicDecryptionProof,
+  ZKProofLike,
+} from '@fhevm-base/types/public-api';
 import { fetchFhevmConfig } from '@fhevm-base/FhevmConfig';
 import { createFhevmLibs } from '@fhevm-ethers/index';
 import { BrowserProvider, JsonRpcProvider } from 'ethers';
-import { FhevmChainClient } from '@fhevm-base-types/public-api';
-import { RelayerClient } from '@relayer/types/private-api';
-import { TFHEPkeCrsBytes, TFHEPublicKeyBytes } from '@sdk/lowlevel/public-api';
-import { isBytes } from '@base/bytes';
-import { keyUrl } from '@relayer/keyUrl';
-import { generateTKMSPkeKeypair } from '@sdk/lowlevel/TKMSPkeKeypair';
-import { createKmsEIP712Builder } from '@sdk/kms/KmsEIP712Builder';
-import { publicDecrypt } from '@relayer/publicDecrypt';
+import { EIP712Lib, FhevmChainClient } from '@fhevm-base-types/public-api';
+import {
+  asBytes65Hex,
+  bytesToHexLarge,
+  hexToBytesFaster,
+  isBytes,
+} from '@base/bytes';
+import { publicDecrypt, userDecrypt } from '@fhevm-base/decrypt';
 import { toFhevmHandle } from '@fhevm-base/FhevmHandle';
-import { createRelayerZKProofBuilder } from '@relayer/RelayerZKProofBuilder';
+import { createRelayerLib } from './relayer';
+import { deserializeOrFetchTfhePublicEncryptionParams } from '@fhevm-base/keys/tfhe/TfhePublicEncryptionParams';
+import { createTFHELib, createTKMSLib } from '@sdk/index';
+import { createKmsUserDecryptEIP712 } from '@fhevm-base/kms/KmsEIP712';
+import {
+  addressToChecksummedAddress,
+  asAddress,
+  assertIsAddressArray,
+} from '@base/address';
+import { remove0x, removeSuffix } from '@base/string';
+import { fetchInputProof } from '@fhevm-base/coprocessor/InputProof';
+import {
+  TfheCrsBytes,
+  TfhePublicEncryptionParams,
+  TfhePublicKeyBytes,
+} from '@fhevm-base/types/private';
+import { toZKProof } from '@fhevm-base/coprocessor/ZKProof';
+import {
+  createZKProofBuilder,
+  ZKProofBuilder,
+} from '@fhevm-base/coprocessor/ZKProofBuilder';
+import { RelayerLib, TFHELib } from '@fhevm-base/types/libs';
 
 ////////////////////////////////////////////////////////////////////////////////
 // FhevmInstanceConfig
@@ -69,6 +94,12 @@ export type FhevmInstanceConfig = Prettify<
   } & FhevmInstanceOptions
 >;
 
+const ZamaMainnetRelayerBaseUrl = 'https://relayer.mainnet.zama.org';
+const ZamaMainnetRelayerUrlV2 = `${ZamaMainnetRelayerBaseUrl}/v2`;
+
+const ZamaSepoliaRelayerBaseUrl = 'https://relayer.testnet.zama.org';
+const ZamaSepoliaRelayerUrlV2 = `${ZamaSepoliaRelayerBaseUrl}/v2`;
+
 ////////////////////////////////////////////////////////////////////////////////
 // FhevmInstance
 ////////////////////////////////////////////////////////////////////////////////
@@ -97,12 +128,126 @@ export type RelayerEncryptedInput = {
   }>;
 };
 
+type FhevmRelayerEncryptedInput = {
+  readonly config: {
+    readonly hostChainConfig: FhevmHostChainConfig;
+    readonly inputVerifier: InputVerifierContractData;
+  };
+  readonly relayerUrl: string;
+  readonly libs: {
+    readonly relayerLib: RelayerLib;
+    readonly eip712Lib: EIP712Lib;
+    readonly tfheLib: TFHELib;
+  };
+  readonly batchRpcCalls?: boolean;
+};
+
+class RelayerEncryptedInputImpl implements RelayerEncryptedInput {
+  readonly #builder: ZKProofBuilder;
+  readonly #fhevm: FhevmRelayerEncryptedInput;
+  readonly #contractAddress: string;
+  readonly #userAddress: string;
+  readonly #tfhePublicEncryptionParams: TfhePublicEncryptionParams;
+
+  constructor(
+    fhevm: FhevmRelayerEncryptedInput,
+    params: {
+      readonly contractAddress: string;
+      readonly userAddress: string;
+      readonly tfhePublicEncryptionParams: TfhePublicEncryptionParams;
+    },
+  ) {
+    this.#builder = createZKProofBuilder();
+    this.#fhevm = fhevm;
+    this.#contractAddress = params.contractAddress;
+    this.#userAddress = params.userAddress;
+    this.#tfhePublicEncryptionParams = params.tfhePublicEncryptionParams;
+  }
+
+  addBool(value: boolean | number | bigint): this {
+    this.#builder.addBool(value);
+    return this;
+  }
+
+  add8(value: number | bigint): this {
+    this.#builder.addUint8(value);
+    return this;
+  }
+
+  add16(value: number | bigint): this {
+    this.#builder.addUint16(value);
+    return this;
+  }
+
+  add32(value: number | bigint): this {
+    this.#builder.addUint32(value);
+    return this;
+  }
+
+  add64(value: number | bigint): this {
+    this.#builder.addUint64(value);
+    return this;
+  }
+
+  add128(value: number | bigint): this {
+    this.#builder.addUint128(value);
+    return this;
+  }
+
+  add256(value: number | bigint): this {
+    this.#builder.addUint256(value);
+    return this;
+  }
+
+  addAddress(value: string): this {
+    this.#builder.addAddress(value);
+    return this;
+  }
+
+  getBits(): readonly EncryptionBits[] {
+    return this.#builder.getBits();
+  }
+
+  generateZKProof() {
+    return this.#builder.build(this.#fhevm, {
+      contractAddress: this.#contractAddress,
+      userAddress: this.#userAddress,
+      tfhePublicEncryptionParams: this.#tfhePublicEncryptionParams,
+    });
+  }
+
+  async encrypt(options?: RelayerInputProofOptions): Promise<InputProofBytes> {
+    const zkProof = this.generateZKProof();
+    const inputProof = await fetchInputProof(this.#fhevm, {
+      zkProof: toZKProof(zkProof, {
+        tfheLib: this.#fhevm.libs.tfheLib,
+        copy: true,
+      }),
+      extraData: '0x00' as BytesHex,
+      options,
+    });
+
+    return {
+      handles: inputProof.externalHandles.map((h) => h.bytes32),
+      inputProof: hexToBytesFaster(inputProof.bytesHex, { strict: true }),
+    };
+  }
+}
+
 export type HandleContractPair = {
   // Hex encoded bytes32 with 0x prefix.
   readonly handle: Bytes32Hex;
   // Hex encoded address with 0x prefix.
   readonly contractAddress: ChecksummedAddress;
 };
+
+export type ClearValueType = bigint | boolean | `0x${string}`;
+export type ClearValues = Readonly<Record<`0x${string}`, ClearValueType>>;
+export type PublicDecryptResults = Readonly<{
+  clearValues: ClearValues;
+  abiEncodedClearValues: `0x${string}`;
+  decryptionProof: `0x${string}`;
+}>;
 
 export interface FhevmInstance {
   createEncryptedInput(
@@ -116,7 +261,10 @@ export interface FhevmInstance {
     handles: Uint8Array[];
     inputProof: Uint8Array;
   }>;
-  generateKeypair(): Keypair<BytesHexNo0x>;
+  generateKeypair(): {
+    publicKey: BytesHexNo0x;
+    privateKey: BytesHexNo0x;
+  };
   createEIP712(
     publicKey: string,
     contractAddresses: string[],
@@ -167,112 +315,276 @@ export const createInstance = async (
 ): Promise<FhevmInstance> => {
   // 1. Create Ethers Relayer Config
   const ethersProvider = getEthersProvider(config.network);
+
+  // 2. Libs
+  const relayerLib = await createRelayerLib();
+  const tfheLib = await createTFHELib();
+  const tkmsLib = await createTKMSLib();
   const fhevmLibs = await createFhevmLibs();
-  const client: FhevmChainClient = {
+
+  const fhevmChainClient: FhevmChainClient = {
     batchRpcCalls: config.batchRpcCalls,
     libs: fhevmLibs,
     nativeClient: ethersProvider,
   };
-  Object.freeze(client);
+  Object.freeze(fhevmChainClient);
 
-  const relayerUrl = parseZamaRelayerUrl(config.relayerUrl);
+  const relayerUrl = _parseZamaRelayerUrl(config.relayerUrl);
   if (relayerUrl === null) {
     throw new Error(
       `Invalid relayerUrl: ${Object.prototype.toString.call(config.relayerUrl)}`,
     );
   }
 
-  // 2. Fetch keys
-  const tfhePkeParams = await keyUrl({
-    relayerUrl,
-    tfhePkeParams: _convertPublicKeySchema(config),
-  });
+  const keyUrlOptions: RelayerKeyUrlOptions = {
+    auth: config.auth,
+    debug: config.debug,
+  };
 
-  const fhevmConfig = await fetchFhevmConfig(client, {
+  // 3. Fetch keys
+  const tfhePublicEncryptionParams: TfhePublicEncryptionParams =
+    await deserializeOrFetchTfhePublicEncryptionParams(
+      {
+        relayerUrl,
+        libs: { tfheLib, relayerLib },
+      },
+      {
+        options: keyUrlOptions,
+        paramsBytes: _convertPublicKeySchema(config),
+      },
+    );
+
+  // 4. Fetch config
+  const fhevmConfig = await fetchFhevmConfig(fhevmChainClient, {
     ...config,
     kmsVerifierContractAddress: config.kmsContractAddress,
   });
 
-  const relayerClient: RelayerClient = {
-    fhevmChainClient: client,
-    fhevmConfig,
-    relayerUrl,
+  const requestZKProofVerification = async (
+    zkProof: ZKProofLike,
+    options?: RelayerInputProofOptions,
+  ): Promise<InputProofBytes> => {
+    const fhevm = {
+      config: fhevmConfig,
+      batchRpcCalls: config.batchRpcCalls,
+      libs: {
+        ...fhevmLibs,
+        relayerLib,
+      },
+      nativeClient: ethersProvider,
+      relayerUrl,
+    };
+
+    const inputProof = await fetchInputProof(fhevm, {
+      zkProof: toZKProof(zkProof, { tfheLib, copy: true }),
+      extraData: '0x00' as BytesHex,
+      options,
+    });
+
+    return {
+      handles: inputProof.externalHandles.map((h) => h.bytes32),
+      inputProof: hexToBytesFaster(inputProof.bytesHex, { strict: true }),
+    };
   };
-  Object.freeze(relayerClient);
 
   return {
+    ////////////////////////////////////////////////////////////////////////////
+    // createEncryptedInput
+    ////////////////////////////////////////////////////////////////////////////
+
     createEncryptedInput: (
       contractAddress: string,
       userAddress: string,
     ): RelayerEncryptedInput => {
-      return createRelayerZKProofBuilder(relayerClient, {
+      const fhevm: FhevmRelayerEncryptedInput = {
+        relayerUrl,
+        libs: { tfheLib, relayerLib, eip712Lib: fhevmLibs.eip712Lib },
+        config: fhevmConfig,
+        batchRpcCalls: config.batchRpcCalls,
+      };
+
+      return new RelayerEncryptedInputImpl(fhevm, {
         contractAddress,
         userAddress,
-        pkeParams: tfhePkeParams,
+        tfhePublicEncryptionParams,
       });
     },
-    requestZKProofVerification: async (
-      _zkProof: ZKProofLike,
-      _options?: RelayerInputProofOptions,
-    ): Promise<InputProofBytes> => {
-      throw new Error(`requestZKProofVerification is not implemented`);
+
+    ////////////////////////////////////////////////////////////////////////////
+    // requestZKProofVerification
+    ////////////////////////////////////////////////////////////////////////////
+
+    requestZKProofVerification,
+
+    ////////////////////////////////////////////////////////////////////////////
+    // createEIP712
+    ////////////////////////////////////////////////////////////////////////////
+
+    generateKeypair: (): {
+      publicKey: BytesHexNo0x;
+      privateKey: BytesHexNo0x;
+    } => {
+      const tkmsPrivateKey = tkmsLib.generateTkmsPrivateKey();
+      const tkmsPrivateKeyBytes =
+        tkmsLib.serializeTkmsPrivateKey(tkmsPrivateKey);
+
+      return {
+        publicKey: remove0x(
+          tkmsLib.getTkmsPublicKeyHex(tkmsPrivateKey),
+        ) as BytesHexNo0x,
+        privateKey: bytesToHexLarge(tkmsPrivateKeyBytes, true /* no0x */),
+      };
     },
-    generateKeypair: () => {
-      return generateTKMSPkeKeypair().toBytesHexNo0x();
-    },
+
+    ////////////////////////////////////////////////////////////////////////////
+    // createEIP712
+    ////////////////////////////////////////////////////////////////////////////
+
     createEIP712: (
       publicKey: string,
       contractAddresses: string[],
       startTimestamp: number,
       durationDays: number,
     ): KmsUserDecryptEIP712 => {
-      const builder = createKmsEIP712Builder({
-        chainId: fhevmConfig.hostChainConfig.chainId,
-        verifyingContractAddressDecryption:
-          fhevmConfig.kmsVerifier.verifyingContractAddressDecryption,
-      });
-      return builder.createUserDecrypt({
-        publicKey,
-        contractAddresses,
-        startTimestamp,
-        durationDays,
-        extraData: '0x00' as BytesHex,
-      });
+      return createKmsUserDecryptEIP712(
+        { config: fhevmConfig },
+        {
+          publicKey,
+          startTimestamp,
+          durationDays,
+          contractAddresses,
+          extraData: '0x00',
+        },
+      );
     },
+
+    ////////////////////////////////////////////////////////////////////////////
+    // publicDecrypt
+    ////////////////////////////////////////////////////////////////////////////
+
     publicDecrypt: async (
       handles: readonly (string | Uint8Array)[],
       options?: RelayerPublicDecryptOptions,
     ): Promise<PublicDecryptResults> => {
-      const res = await publicDecrypt(relayerClient, {
+      const fhevm = {
+        config: fhevmConfig,
+        batchRpcCalls: config.batchRpcCalls,
+        libs: {
+          ...fhevmLibs,
+          relayerLib,
+        },
+        nativeClient: ethersProvider,
+        relayerUrl,
+      };
+
+      const proof: PublicDecryptionProof = await publicDecrypt(fhevm, {
         handles: handles.map(toFhevmHandle),
-        options,
         extraData: '0x00' as BytesHex,
+        options,
       });
-      return res.toPublicDecryptResults();
+
+      return _toPublicDecryptResults(proof);
     },
-    userDecrypt: userDecryptRequest({
-      kmsSigners,
-      gatewayChainId: Number(gatewayChainId),
-      chainId: chainId,
-      verifyingContractAddressDecryption,
-      aclContractAddress,
-      relayerProvider: relayerFhevm.relayerProvider,
-      provider,
-      defaultOptions,
-    }),
+
+    ////////////////////////////////////////////////////////////////////////////
+    // userDecrypt
+    ////////////////////////////////////////////////////////////////////////////
+
+    userDecrypt: async (
+      handles: HandleContractPair[],
+      privateKey: string,
+      _publicKey: string,
+      signature: string,
+      contractAddresses: string[],
+      userAddress: string,
+      startTimestamp: string | number,
+      durationDays: string | number,
+      options?: RelayerUserDecryptOptions,
+    ): Promise<ClearValues> => {
+      const fhevm = {
+        config: fhevmConfig,
+        batchRpcCalls: config.batchRpcCalls,
+        libs: {
+          ...fhevmLibs,
+          relayerLib,
+          tkmsLib,
+        },
+        nativeClient: ethersProvider,
+        relayerUrl,
+      };
+
+      const handleContractPairs = handles.map((h) => {
+        return {
+          handle: toFhevmHandle(h.handle),
+          contractAddress: addressToChecksummedAddress(
+            asAddress(h.contractAddress),
+          ),
+        };
+      });
+      assertIsAddressArray(contractAddresses, {});
+
+      const tkmsPrivateKeyBytes: Bytes = hexToBytesFaster(privateKey, {
+        strict: true,
+      });
+      const tkmsPrivateKey =
+        tkmsLib.deserializeTkmsPrivateKey(tkmsPrivateKeyBytes);
+
+      // 1. Call user decrypt
+      const decryptedHandles: readonly DecryptedFhevmHandle[] =
+        await userDecrypt(fhevm, {
+          handleContractPairs,
+          tkmsPrivateKey,
+          userDecryptEIP712Message: {
+            contractAddresses: contractAddresses.map(
+              addressToChecksummedAddress,
+            ),
+            durationDays: String(durationDays),
+            startTimestamp: String(startTimestamp),
+            extraData: '0x00' as BytesHex,
+          },
+          userDecryptEIP712Signature: asBytes65Hex(signature),
+          userDecryptEIP712Signer: addressToChecksummedAddress(
+            asAddress(userAddress),
+          ),
+          options,
+        });
+
+      // 2. Build the return type in the expected format
+      const clearValues: Record<string, ClearValueType> = {};
+      decryptedHandles.forEach(
+        (decryptedHandle) =>
+          (clearValues[decryptedHandle.handle.bytes32Hex] =
+            decryptedHandle.value as ClearValueType),
+      );
+      Object.freeze(clearValues);
+      return clearValues;
+    },
+
+    ////////////////////////////////////////////////////////////////////////////
+    // getPublicKey
+    ////////////////////////////////////////////////////////////////////////////
+
     getPublicKey: () => {
-      const pk = tfhePkeParams.tfhePublicKey.toBytes();
+      const publicKeyBytes = tfheLib.serializeTfhePublicKey(
+        tfhePublicEncryptionParams.publicKey,
+      );
       return {
-        publicKeyId: pk.id,
-        publicKey: pk.bytes,
+        publicKeyId: publicKeyBytes.id,
+        publicKey: publicKeyBytes.bytes,
       };
     },
+
+    ////////////////////////////////////////////////////////////////////////////
+    // getPublicParams
+    ////////////////////////////////////////////////////////////////////////////
+
     getPublicParams: () => {
       // 2048 is the only supported capacity
-      const crs = tfhePkeParams.tfhePkeCrs.getBytesForCapacity(2048);
+      // Assert 2048 mis?
+      const crsBytes = tfheLib.serializeTfheCrs(tfhePublicEncryptionParams.crs);
       return {
-        publicParamsId: crs.id,
-        publicParams: crs.bytes,
+        publicParamsId: crsBytes.id,
+        publicParams: crsBytes.bytes,
       };
     },
   };
@@ -340,8 +652,8 @@ function _convertPublicKeySchema(params: {
   };
 }):
   | {
-      publicKey: TFHEPublicKeyBytes;
-      pkeCrs: TFHEPkeCrsBytes & { capacity: 2048 };
+      publicKey: TfhePublicKeyBytes;
+      crs: TfheCrsBytes;
     }
   | undefined {
   if (params.publicKey === undefined || params.publicParams === undefined) {
@@ -368,11 +680,69 @@ function _convertPublicKeySchema(params: {
     publicKey: {
       id: params.publicKey.id,
       bytes: params.publicKey.data,
-    },
-    pkeCrs: {
+    } as TfhePublicKeyBytes,
+    crs: {
       bytes: publicParams.publicParams,
       id: publicParams.publicParamsId,
-      capacity: 2048,
-    },
+      capacity: 2048 as UintNumber,
+    } as TfheCrsBytes,
   };
+}
+
+function _toPublicDecryptResults(
+  proof: PublicDecryptionProof,
+): PublicDecryptResults {
+  const clearValues: Record<string, ClearValueType> = {};
+
+  proof.orderedDecryptedHandles.forEach(
+    (decryptedHandle, idx) =>
+      (clearValues[decryptedHandle.handle.bytes32Hex] =
+        decryptedHandle.value as ClearValueType),
+  );
+
+  Object.freeze(clearValues);
+
+  return Object.freeze({
+    clearValues,
+    decryptionProof: proof.decryptionProof,
+    abiEncodedClearValues: proof.orderedAbiEncodedClearValues,
+  });
+}
+
+function _parseZamaRelayerUrl(relayerUrl: unknown): string | null {
+  if (
+    relayerUrl === undefined ||
+    relayerUrl === null ||
+    typeof relayerUrl !== 'string'
+  ) {
+    return null;
+  }
+
+  const urlNoSlash = removeSuffix(relayerUrl, '/');
+  if (!URL.canParse(urlNoSlash)) {
+    return null;
+  }
+
+  if (
+    urlNoSlash.startsWith(ZamaMainnetRelayerBaseUrl) ||
+    urlNoSlash.startsWith(ZamaSepoliaRelayerBaseUrl)
+  ) {
+    const zamaUrls = [
+      ZamaSepoliaRelayerBaseUrl,
+      ZamaSepoliaRelayerUrlV2,
+      ZamaMainnetRelayerBaseUrl,
+      ZamaMainnetRelayerUrlV2,
+    ];
+    const isZamaUrl = zamaUrls.includes(urlNoSlash);
+    if (isZamaUrl) {
+      if (urlNoSlash.endsWith('/v2')) {
+        return urlNoSlash;
+      }
+      return `${urlNoSlash}/v2`;
+    }
+    // malformed Zama url
+    return null;
+  }
+
+  return urlNoSlash;
 }

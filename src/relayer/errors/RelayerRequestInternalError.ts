@@ -12,8 +12,7 @@ export type RelayerInternalRequestErrorType = RelayerRequestInternalError & {
 };
 
 export type RelayerInternalRequestErrorParams = Prettify<
-  Omit<RelayerRequestErrorBaseParams, 'name' | 'message'> & {
-    readonly message?: string;
+  Omit<RelayerRequestErrorBaseParams, 'name'> & {
     readonly status?: number;
     readonly state?: string;
   }

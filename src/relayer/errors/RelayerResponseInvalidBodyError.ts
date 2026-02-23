@@ -1,5 +1,4 @@
 import type { Prettify } from '@base/types/utils';
-import type { RelayerErrorBaseParams } from './RelayerErrorBase';
 import type { RelayerResponseErrorBaseParams } from './RelayerResponseErrorBase';
 import type { InvalidPropertyError } from '@base/errors/InvalidPropertyError';
 import { RelayerResponseErrorBase } from './RelayerResponseErrorBase';
@@ -16,7 +15,7 @@ export type RelayerResponseInvalidBodyErrorType =
   };
 
 export type RelayerResponseInvalidBodyErrorParams = Prettify<
-  Omit<RelayerResponseErrorBaseParams, keyof RelayerErrorBaseParams> & {
+  Omit<RelayerResponseErrorBaseParams, 'cause' | 'name' | 'message'> & {
     readonly cause: InvalidPropertyError;
     readonly bodyJson: string;
   }

@@ -3,7 +3,7 @@ import fs from 'fs';
 import { ethers } from 'ethers';
 import {
   encryptionBitsFromFheTypeName,
-  FhevmHandle,
+  toFhevmHandle,
   isFheTypeName,
   isChecksummedAddress,
 } from '../lib/internal.js';
@@ -48,10 +48,10 @@ export function parseHandles(handles) {
     if (handles[i].indexOf(' ') >= 0) {
       const list = handles[i].split(' ');
       for (let j = 0; j < list.length; ++j) {
-        fhevmHandles.push(FhevmHandle.fromBytes32Hex(list[j]));
+        fhevmHandles.push(toFhevmHandle(list[j]));
       }
     } else {
-      fhevmHandles.push(FhevmHandle.fromBytes32Hex(handles[i]));
+      fhevmHandles.push(toFhevmHandle(handles[i]));
     }
   }
   return fhevmHandles;

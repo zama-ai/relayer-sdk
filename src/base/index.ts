@@ -266,7 +266,7 @@ export {
 } from './typedvalue';
 export type {
   TypeName,
-  TypedValueLike,
+  TypedValueLikeOf as TypedValueLike,
   BoolValueLike,
   Uint8ValueLike,
   Uint16ValueLike,
@@ -275,7 +275,7 @@ export type {
   Uint128ValueLike,
   Uint256ValueLike,
   AddressValueLike,
-  InputTypedValue,
+  TypedValueLike as InputTypedValue,
   TypedValueOf as TypedValue,
   BoolValue,
   Uint8Value,
@@ -314,7 +314,6 @@ export type {
   Uint64,
   Uint128,
   Uint256,
-  UintXXType,
   UintXXTypeName,
   UintTypeName,
   Uint8Number,

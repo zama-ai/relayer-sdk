@@ -196,8 +196,8 @@ export type DecryptedEaddress = DecryptedFhevmHandle<'eaddress'>;
 ////////////////////////////////////////////////////////////////////////////////
 
 export interface PublicDecryptionProof {
-  readonly proof: BytesHex;
-  readonly orderedHandles: readonly DecryptedFhevmHandle[];
+  readonly decryptionProof: BytesHex;
+  readonly orderedDecryptedHandles: readonly DecryptedFhevmHandle[];
   readonly orderedAbiEncodedClearValues: BytesHex;
   readonly extraData: BytesHex;
 }
@@ -603,13 +603,26 @@ export type InputProofBytes = Readonly<{
   inputProof: Uint8Array;
 }>;
 
-export interface InputProof {
-  readonly proof: BytesHex;
+export interface BaseInputProof {
+  readonly bytesHex: BytesHex;
   readonly coprocessorSignatures: readonly Bytes65Hex[];
-  readonly handles: readonly ExternalFhevmHandle[];
+  readonly externalHandles: readonly ExternalFhevmHandle[];
   readonly extraData: BytesHex;
   toBytes(): InputProofBytes;
 }
+
+export interface UnverifiedInputProof extends BaseInputProof {
+  readonly coprocessorSignedParams?: undefined;
+}
+
+export interface VerifiedInputProof extends BaseInputProof {
+  readonly coprocessorSignedParams: {
+    readonly contractAddress: ChecksummedAddress;
+    readonly userAddress: ChecksummedAddress;
+  };
+}
+
+export type InputProof = UnverifiedInputProof | VerifiedInputProof;
 
 export declare const KmsSigncryptedSharesBrand: unique symbol;
 export interface KmsSigncryptedShares {

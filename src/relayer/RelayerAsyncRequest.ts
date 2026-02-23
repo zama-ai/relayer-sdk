@@ -2,6 +2,7 @@
 import type {
   Auth,
   FetchDelegatedUserDecryptResult,
+  RelayerDelegatedUserDecryptOptions,
   RelayerDelegatedUserDecryptProgressArgs,
   RelayerInputProofOptions,
   RelayerInputProofProgressArgs,
@@ -15,14 +16,14 @@ import type {
   RelayerPublicDecryptProgressArgs,
   RelayerUserDecryptOptions,
   RelayerUserDecryptProgressArgs,
-} from '../types/public-api';
+} from './types/public-api';
 import {
   assertIsRelayerResponseFailedWithError500,
   assertIsRelayerResponseFailedWithError400,
   assertIsRelayerResponseFailedWithError429,
   assertIsRelayerResponseFailedWithError503,
   assertIsRelayerResponseFailedWithError404,
-} from '../guards/RelayerResponseFailed';
+} from './guards/RelayerResponseFailed';
 import type {
   RelayerPostResponseStatus,
   RelayerGetResponseStatus,
@@ -34,36 +35,36 @@ import type {
   RelayerResult200PublicDecrypt,
   RelayerResult200UserDecrypt,
   RelayerApiError,
-} from '../types/private-api';
+} from './types/private-api';
 import type {
   FetchInputProofResult,
   FetchPublicDecryptResult,
   FetchUserDecryptResult,
-} from '../types/public-api';
-import type { RelayerFailureStatus } from '../types/private-api';
+} from './types/public-api';
+import type { RelayerFailureStatus } from './types/private-api';
 import { isUint } from '@base/uint';
 import { isNonEmptyString, safeJSONstringify } from '@base/string';
 import { formatFetchErrorMetaMessages } from '@base/fetch';
 import { InvalidPropertyError } from '@base/errors/InvalidPropertyError';
-import { setAuth } from '../auth/auth';
-import { RelayerResponseInvalidBodyError } from '../errors/RelayerResponseInvalidBodyError';
-import { RelayerResponseStatusError } from '../errors/RelayerResponseStatusError';
-import { assertIsRelayerInputProofSucceeded } from '../guards/RelayerInputProofSucceeded';
-import { assertIsRelayerPublicDecryptSucceeded } from '../guards/RelayerPublicDecryptSucceeded';
-import { assertIsRelayerUserDecryptSucceeded } from '../guards/RelayerUserDecryptSucceeded';
-import { RelayerRequestInternalError } from '../errors/RelayerRequestInternalError';
-import { RelayerResponseApiError } from '../errors/RelayerResponseApiError';
-import { RelayerFetchError } from '../errors/RelayerFetchError';
-import { RelayerResponseInputProofRejectedError } from '../errors/RelayerResponseInputProofRejectedError';
-import { RelayerStateError } from '../errors/RelayerStateError';
-import { RelayerMaxRetryError } from '../errors/RelayerMaxRetryError';
-import { RelayerTimeoutError } from '../errors/RelayerTimeoutError';
-import { RelayerAbortError } from '../errors/RelayerAbortError';
+import { setAuth } from './auth/auth';
+import { RelayerResponseInvalidBodyError } from './errors/RelayerResponseInvalidBodyError';
+import { RelayerResponseStatusError } from './errors/RelayerResponseStatusError';
+import { assertIsRelayerInputProofSucceeded } from './guards/RelayerInputProofSucceeded';
+import { assertIsRelayerPublicDecryptSucceeded } from './guards/RelayerPublicDecryptSucceeded';
+import { assertIsRelayerUserDecryptSucceeded } from './guards/RelayerUserDecryptSucceeded';
+import { RelayerRequestInternalError } from './errors/RelayerRequestInternalError';
+import { RelayerResponseApiError } from './errors/RelayerResponseApiError';
+import { RelayerFetchError } from './errors/RelayerFetchError';
+import { RelayerResponseInputProofRejectedError } from './errors/RelayerResponseInputProofRejectedError';
+import { RelayerStateError } from './errors/RelayerStateError';
+import { RelayerMaxRetryError } from './errors/RelayerMaxRetryError';
+import { RelayerTimeoutError } from './errors/RelayerTimeoutError';
+import { RelayerAbortError } from './errors/RelayerAbortError';
 import {
   assertIsRelayerGetResponse202Queued,
   assertIsRelayerPostResponse202Queued,
-} from '../guards/RelayerResponseQueued';
-import { sdkName, version } from '../_version';
+} from './guards/RelayerResponseQueued';
+import { sdkName, version } from './_version';
 import { assertNever } from '@base/errors/utils';
 import { bytes32HexToFhevmHandle } from '@fhevm-base/FhevmHandle';
 
@@ -113,6 +114,7 @@ type RelayerAsyncRequestParams = {
   options?:
     | RelayerInputProofOptions
     | RelayerUserDecryptOptions
+    | RelayerDelegatedUserDecryptOptions
     | RelayerPublicDecryptOptions
     | undefined;
 };

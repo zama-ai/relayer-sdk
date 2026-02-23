@@ -1,7 +1,7 @@
 import * as NodeTFHEPkg from 'node-tfhe';
 import * as NodeTKMSPkg from 'node-tkms';
-import type { TFHEType, TKMSType } from '@sdk/lowlevel/public-api';
-import { setTFHE, setTKMS } from '@sdk/lowlevel/wasm-modules';
+import type { TFHEType, TKMSType, TKMSTypeShape } from '@sdk/types/public-api';
+import { setTFHE, setTKMS } from '@sdk/wasm-modules';
 
 // Initialize module-scoped variables instead of globals
 export function initSDK({
@@ -19,7 +19,7 @@ export function initSDK({
   if (TKMSPkg) {
     setTKMS(TKMSPkg);
   } else {
-    setTKMS(NodeTKMSPkg satisfies TKMSType);
+    setTKMS(NodeTKMSPkg satisfies TKMSTypeShape as unknown as TKMSType);
   }
 }
 
@@ -34,14 +34,7 @@ export type * from '@base/types/utils';
 export { isChecksummedAddress, isAddress } from '@base/address';
 
 // Constant Configs
-export {
-  SepoliaConfig,
-  SepoliaConfigV1,
-  SepoliaConfigV2,
-  MainnetConfig,
-  MainnetConfigV1,
-  MainnetConfigV2,
-} from './index';
+export { SepoliaConfig, MainnetConfig } from './index';
 
 // Node-specific functions
 export { createTfheKeypair, createTfhePublicKey } from './node_tfhe';

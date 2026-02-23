@@ -1,7 +1,7 @@
 import type { ErrorMetadataParams } from '@base/errors/ErrorBase';
 import { assertRecordStringProperty } from '@base/string';
 import { assertRecordNonNullableProperty } from '@base/record';
-import {
+import type {
   RelayerPublicDecryptSucceeded,
   RelayerResult200PublicDecrypt,
 } from '../types/private-api';

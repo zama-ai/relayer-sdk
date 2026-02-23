@@ -7,25 +7,12 @@ import type {
   ChecksummedAddress,
 } from '@base/types/primitives';
 import type { NonEmptyExtract } from '@base/types/utils';
-import type { FhevmChainClient } from '@fhevm-base-types/public-api';
-import type {
-  FhevmConfig,
-  FhevmHandleBytes32Hex,
-} from '@fhevm-base/types/public-api';
+import type { FhevmHandleBytes32Hex } from '@fhevm-base/types/public-api';
 import type {
   FetchInputProofResult,
   FetchPublicDecryptResult,
   FetchUserDecryptResult,
 } from './public-api';
-
-////////////////////////////////////////////////////////////////////////////////
-// RelayerClient
-////////////////////////////////////////////////////////////////////////////////
-
-export interface RelayerClient extends FhevmChainClient {
-  readonly relayerUrl: string;
-  readonly config: FhevmConfig;
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 // RelayerOperation
@@ -421,4 +408,16 @@ export type FetchKeyUrlResult = {
       readonly urls: readonly [string];
     };
   };
+};
+
+/**
+ * Parameters for fetching TFHE resources with retry support.
+ */
+export type TfheFetchParams = {
+  /** Optional fetch init options (headers, signal, etc.) */
+  init?: RequestInit | undefined;
+  /** Number of retry attempts on network failure (default: 3) */
+  retries?: number | undefined;
+  /** Delay in milliseconds between retries (default: 1000) */
+  retryDelayMs?: number | undefined;
 };

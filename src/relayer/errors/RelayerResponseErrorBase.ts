@@ -25,7 +25,6 @@ export abstract class RelayerResponseErrorBase extends RelayerFetchErrorBase {
     super({
       ...params,
       metaMessages,
-      name: params.name ?? 'RelayerResponseErrorBase',
     });
     this.#status = params.status;
   }

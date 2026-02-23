@@ -1,5 +1,4 @@
 import type { RelayerFetchErrorBaseParams } from './RelayerFetchErrorBase';
-import type { RelayerErrorBaseParams } from './RelayerErrorBase';
 import type { Prettify } from '@base/types/utils';
 import { ensureError } from '@base/errors/utils';
 import { RelayerFetchErrorBase } from './RelayerFetchErrorBase';
@@ -14,7 +13,7 @@ export type RelayerFetchErrorType = RelayerFetchError & {
 };
 
 export type RelayerFetchErrorParams = Prettify<
-  Omit<RelayerFetchErrorBaseParams, keyof RelayerErrorBaseParams> & {
+  Omit<RelayerFetchErrorBaseParams, 'cause' | 'name'> & {
     readonly cause?: unknown;
     readonly message: string;
   }
