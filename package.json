@@ -93,7 +93,7 @@
     "ethers": "^6.15.0",
     "fetch-retry": "^6.0.0",
     "keccak": "^3.0.4",
-    "node-tfhe": "1.4.0-alpha.3",
+    "node-tfhe": "file:../tfhe-rs/tfhe/pkg",
     "node-tkms": "^0.12.0",
     "tfhe": "1.4.0-alpha.3",
     "tkms": "^0.12.0",

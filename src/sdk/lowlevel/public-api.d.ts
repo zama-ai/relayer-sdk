@@ -139,6 +139,12 @@ export interface CompactCiphertextListBuilderWasmType {
     metadata: Uint8Array,
     compute_load: unknown,
   ): ProvenCompactCiphertextListWasmType;
+  build_with_proof_packed_seeded(
+    crs: CompactPkeCrsWasmType,
+    metadata: Uint8Array,
+    compute_load: unknown,
+    seed: Uint8Array,
+  ): ProvenCompactCiphertextListWasmType;
 }
 
 export interface TfheCompactPublicKeyWasmType {

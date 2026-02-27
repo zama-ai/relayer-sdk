@@ -50,6 +50,7 @@ interface EncryptInputParams {
   contractAddress: string;
   userAddress: string;
   capacity: number;
+  seed?: Uint8Array;
 }
 
 export const createEncryptedInput = ({
@@ -60,6 +61,7 @@ export const createEncryptedInput = ({
   contractAddress,
   userAddress,
   capacity,
+  seed,
 }: EncryptInputParams): EncryptedInput => {
   if (!isChecksummedAddress(contractAddress)) {
     throw new Error('Contract address is not a valid address.');
@@ -181,11 +183,18 @@ export const createEncryptedInput = ({
       metaData.set(aclContractAddressBytes20, 40);
       metaData.set(chainIdBytes32, metaData.length - chainIdBytes32.length);
 
-      const encrypted = builder.build_with_proof_packed(
-        tfheCompactPkeCrs,
-        metaData,
-        TFHEModule.ZkComputeLoadVerify,
-      );
+      const encrypted = seed
+        ? builder.build_with_proof_packed_seeded(
+            tfheCompactPkeCrs,
+            metaData,
+            TFHEModule.ZkComputeLoadVerify,
+            seed,
+          )
+        : builder.build_with_proof_packed(
+            tfheCompactPkeCrs,
+            metaData,
+            TFHEModule.ZkComputeLoadVerify,
+          );
 
       ciphertextWithZKProof = encrypted.safe_serialize(
         SERIALIZED_SIZE_LIMIT_CIPHERTEXT,

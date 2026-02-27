@@ -114,6 +114,14 @@ class CompactCiphertextListBuilderMock
   ): ProvenCompactCiphertextListWasmType {
     throw new Error('Method not implemented.');
   }
+  build_with_proof_packed_seeded(
+    crs: CompactPkeCrsWasmType,
+    metadata: Uint8Array,
+    compute_load: unknown,
+    seed: Uint8Array,
+  ): ProvenCompactCiphertextListWasmType {
+    throw new Error('Method not implemented.');
+  }
 }
 
 function init_panic_hook_mock(): void {}
