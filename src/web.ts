@@ -2,15 +2,9 @@
 import type { TFHEType, TKMSType } from './sdk/lowlevel/public-api';
 import { setTFHE, setTKMS } from './sdk/lowlevel/wasm-modules';
 
-import initTFHE, {
-  initThreadPool,
-  init_panic_hook,
-  TfheCompactPublicKey,
-  CompactPkeCrs,
-  CompactCiphertextList,
-  ZkComputeLoad,
-  ProvenCompactCiphertextList,
-} from 'tfhe';
+// Namespace import: raw wasm-pack output (e.g. tfhe-rs 1.4.0-alpha.3 tag) does not export
+// default, initThreadPool, or InitInput; the published node-tfhe npm package may add them.
+import * as tfheModule from 'tfhe';
 
 import {
   default as initTKMS,
@@ -26,14 +20,14 @@ import {
 } from 'tkms';
 
 setTFHE({
-  default: initTFHE,
-  initThreadPool,
-  init_panic_hook,
-  TfheCompactPublicKey: TfheCompactPublicKey as any,
-  CompactPkeCrs: CompactPkeCrs as any,
-  CompactCiphertextList: CompactCiphertextList as any,
-  ZkComputeLoad: ZkComputeLoad as any,
-  ProvenCompactCiphertextList: ProvenCompactCiphertextList as any,
+  default: (tfheModule as TFHEType).default,
+  initThreadPool: (tfheModule as TFHEType).initThreadPool,
+  init_panic_hook: tfheModule.init_panic_hook,
+  TfheCompactPublicKey: tfheModule.TfheCompactPublicKey as any,
+  CompactPkeCrs: tfheModule.CompactPkeCrs as any,
+  CompactCiphertextList: tfheModule.CompactCiphertextList as any,
+  ZkComputeLoad: tfheModule.ZkComputeLoad as any,
+  ProvenCompactCiphertextList: tfheModule.ProvenCompactCiphertextList as any,
 } satisfies TFHEType);
 
 setTKMS({
@@ -73,7 +67,8 @@ setTKMS({
 //   ml_kem_pke_get_pk,
 // } satisfies TKMSType;
 
-export type { InitInput as TFHEInput } from 'tfhe';
+// InitInput may be missing in raw wasm-pack builds (e.g. tfhe-rs 1.4.0-alpha.3)
+export type TFHEInput = WebAssembly.Module | BufferSource | string;
 export type { InitInput as KMSInput } from 'tkms';
 
 // Re-export everything from main entry point
