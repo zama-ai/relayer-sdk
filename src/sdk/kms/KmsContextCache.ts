@@ -83,9 +83,7 @@ export class KmsContextCache {
    * Concurrent calls for the same context ID share one RPC call (dedup).
    * On rejection, the entry is evicted so subsequent calls can retry.
    */
-  async getSignersForContext(
-    contextId: bigint,
-  ): Promise<ChecksummedAddress[]> {
+  async getSignersForContext(contextId: bigint): Promise<ChecksummedAddress[]> {
     const cached = this.#signerCache.get(contextId);
     if (cached !== undefined) {
       return cached;
@@ -111,19 +109,17 @@ export class KmsContextCache {
     try {
       signers = await this.#contract.getSignersForKmsContext(contextId);
     } catch (error) {
-      throw new Error(
-        `Failed to fetch signers for KMS context ${contextId}`,
-        { cause: error },
-      );
+      throw new Error(`Failed to fetch signers for KMS context ${contextId}`, {
+        cause: error,
+      });
     }
 
     try {
       assertIsChecksummedAddressArray(signers);
     } catch (error) {
-      throw new Error(
-        `Invalid signer addresses for KMS context ${contextId}`,
-        { cause: error },
-      );
+      throw new Error(`Invalid signer addresses for KMS context ${contextId}`, {
+        cause: error,
+      });
     }
 
     return signers as ChecksummedAddress[];
