@@ -23,6 +23,12 @@ import { solidityPrimitiveTypeNameFromFheTypeId } from '@sdk/FheType';
 import { FhevmHandle } from '@sdk/FhevmHandle';
 import { fhevmHandleCheck2048EncryptedBits } from './decryptUtils';
 import { ACL } from '@sdk/ACL';
+import type { KmsContextCache } from '@sdk/kms/KmsContextCache';
+import {
+  isLegacyExtraData,
+  parseExtraData,
+  buildRequestExtraData,
+} from '@sdk/kms/extraData';
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -208,6 +214,7 @@ export const publicDecryptRequest =
     aclContractAddress,
     relayerProvider,
     provider,
+    kmsContextCache,
     defaultOptions,
   }: {
     kmsSigners: ChecksummedAddress[];
@@ -217,13 +224,16 @@ export const publicDecryptRequest =
     aclContractAddress: ChecksummedAddress;
     relayerProvider: AbstractRelayerProvider;
     provider: EthersProviderType;
+    kmsContextCache: KmsContextCache;
     defaultOptions?: FhevmInstanceOptions;
   }) =>
   async (
     _handles: (Uint8Array | string)[],
     options?: RelayerPublicDecryptOptionsType,
   ): Promise<PublicDecryptResults> => {
-    const extraData: `0x${string}` = '0x00';
+    // Request side: build dynamic extraData from current context ID
+    const currentContextId = await kmsContextCache.getCurrentContextId();
+    const extraData = buildRequestExtraData(currentContextId);
 
     const orderedFhevmHandles: FhevmHandle[] = _handles.map(FhevmHandle.from);
     const orderedHandlesBytes32Hex: Bytes32Hex[] = orderedFhevmHandles.map(
@@ -256,12 +266,10 @@ export const publicDecryptRequest =
     const decryptedResult: `0x${string}` = ensure0x(json.decryptedValue);
     const kmsSignatures: `0x${string}`[] = json.signatures.map(ensure0x);
 
-    ////////////////////////////////////////////////////////////////////////////
-    //
-    // Warning!!!! Do not use '0x00' here!! Only '0x' is permitted!
-    //
-    ////////////////////////////////////////////////////////////////////////////
-    const signedExtraData = '0x';
+    // Always use the raw response extraData for EIP-712 signature verification.
+    // The KMS signs whatever extraData bytes it receives — the SDK must verify
+    // against the same bytes, whether legacy or context-bearing.
+    const signedExtraData: `0x${string}` = json.extraData;
 
     ////////////////////////////////////////////////////////////////////////////
     // Compute the PublicDecryptionProof
@@ -287,6 +295,20 @@ export const publicDecryptRequest =
     ////////////////////////////////////////////////////////////////////////////
 
     // verify signatures on decryption:
+
+    // Response side: resolve signers based on response extraData
+    let effectiveSigners: string[];
+    if (isLegacyExtraData(signedExtraData)) {
+      // Legacy path: use init-time signers
+      effectiveSigners = [...kmsSigners];
+    } else {
+      // Context path: parse contextId, fetch context-specific signers
+      // Fail closed: RPC errors propagate — no silent fallback to init-time signers
+      const { contextId } = parseExtraData(signedExtraData);
+      effectiveSigners = await kmsContextCache.getSignersForContext(contextId);
+    }
+
+    // Verify signatures on decryption
     const domain = {
       name: 'Decryption',
       version: '1',
@@ -318,7 +340,7 @@ export const publicDecryptRequest =
     );
 
     const thresholdReached = isThresholdReached(
-      kmsSigners,
+      effectiveSigners,
       recoveredAddresses,
       thresholdSigners,
     );

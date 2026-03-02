@@ -1,4 +1,5 @@
 import type { RelayerPublicDecryptPayload } from '../relayer-provider/types/public-api';
+import type { KmsContextCache } from '../sdk/kms/KmsContextCache';
 import { publicDecryptRequest } from './publicDecrypt';
 import fetchMock from 'fetch-mock';
 import { ethers } from 'ethers';
@@ -7,6 +8,12 @@ import { createRelayerProvider } from '../relayer-provider/createRelayerProvider
 import { TEST_CONFIG, TEST_KMS } from '../test/config';
 import { fetchRelayerV1Post } from '../relayer-provider/v1/fetchRelayerV1';
 import { ChecksummedAddress } from 'src/node';
+
+// Mock KmsContextCache that returns init-time signers (legacy behavior)
+const mockKmsContextCache = {
+  getCurrentContextId: jest.fn().mockResolvedValue(0n),
+  getSignersForContext: jest.fn().mockResolvedValue(TEST_KMS.addresses),
+} as unknown as KmsContextCache;
 
 // Jest Command line
 // =================
@@ -58,6 +65,7 @@ describeIfFetchMock('publicDecrypt', () => {
         .aclContractAddress as ChecksummedAddress,
       relayerProvider,
       provider: new ethers.JsonRpcProvider('https://devnet.zama.ai'),
+      kmsContextCache: mockKmsContextCache,
     });
   });
 });
