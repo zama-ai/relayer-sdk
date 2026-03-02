@@ -122,7 +122,7 @@ export class KmsContextCache {
       });
     }
 
-    return signers as ChecksummedAddress[];
+    return signers;
   }
 
   /**
@@ -190,7 +190,7 @@ export class KmsContextCache {
 
       try {
         return await this.#contract.getCurrentKmsContextId();
-      } catch (secondError) {
+      } catch (_secondError) {
         throw new Error(
           `Failed to fetch current KMS context ID (both attempts failed)`,
           { cause: firstError },
