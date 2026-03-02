@@ -16,6 +16,7 @@ import {
   assertIsRelayerPublicDecryptResult,
   assertIsRelayerUserDecryptResult,
 } from '../AbstractRelayerProvider';
+import { InvalidPropertyError } from '../../errors/InvalidPropertyError';
 
 export class RelayerV1Provider extends AbstractRelayerProvider {
   public override get version(): number {
@@ -86,11 +87,26 @@ export class RelayerV1Provider extends AbstractRelayerProvider {
       payload,
       options,
     );
-    assertIsRelayerUserDecryptResult(
-      json.response,
-      'RelayerUserDecryptResult()',
+
+    // Guard: ensure response is an array before normalizing
+    if (!Array.isArray(json.response)) {
+      throw InvalidPropertyError.invalidObject({
+        objName: 'RelayerUserDecryptResult()',
+        expectedType: 'Array',
+        type: typeof json.response,
+      });
+    }
+
+    // Normalize: ensure each item has extraData (legacy responses may omit it or use snake_case)
+    const response = (json.response as Array<Record<string, unknown>>).map(
+      (item) => ({
+        ...item,
+        extraData: (item.extraData ?? item.extra_data ?? '0x') as BytesHex,
+      }),
     );
-    return json.response;
+
+    assertIsRelayerUserDecryptResult(response, 'RelayerUserDecryptResult()');
+    return response;
   }
 
   public override fetchPostDelegatedUserDecrypt(

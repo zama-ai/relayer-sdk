@@ -3,12 +3,11 @@ import { assertIsRelayerV2ResultUserDecrypt } from './RelayerV2ResultUserDecrypt
 
 // Jest Command line
 // =================
-// npx jest --colors --passWithNoTests ./src/relayer-provider/v2/types/RelayerV2ResultUserDecrypt.test.ts
-// npx jest --colors --passWithNoTests --coverage ./src/relayer-provider/v2/types/RelayerV2ResultUserDecrypt.test.ts --collectCoverageFrom=./src/relayer-provider/v2/types/RelayerV2ResultUserDecrypt.ts
+// npx jest --colors --passWithNoTests ./src/relayer-provider/v2/guards/RelayerV2ResultUserDecrypt.test.ts
 
 describe('RelayerV2ResultUserDecrypt', () => {
   it('assertIsRelayerV2ResultUserDecrypt', () => {
-    // True
+    // True — valid response with extraData
     expect(() =>
       assertIsRelayerV2ResultUserDecrypt(
         {
@@ -16,7 +15,7 @@ describe('RelayerV2ResultUserDecrypt', () => {
             {
               payload: 'deadbeef',
               signature: 'deadbeef',
-              //extraData: '0x00',
+              extraData: '0x00',
             },
           ],
         },
@@ -107,6 +106,45 @@ describe('RelayerV2ResultUserDecrypt', () => {
         objName: 'Foo.result[0]',
         property: 'signature',
         expectedType: 'BytesHexNo0x',
+        type: 'string',
+      }),
+    );
+
+    // Missing extraData on item throws
+    expect(() =>
+      assertIsRelayerV2ResultUserDecrypt(
+        {
+          result: [{ payload: 'deadbeef', signature: 'deadbeef' }],
+        },
+        'Foo',
+      ),
+    ).toThrow(
+      InvalidPropertyError.missingProperty({
+        objName: 'Foo.result[0]',
+        property: 'extraData',
+        expectedType: 'BytesHex',
+      }),
+    );
+
+    // Invalid (non-hex) extraData throws
+    expect(() =>
+      assertIsRelayerV2ResultUserDecrypt(
+        {
+          result: [
+            {
+              payload: 'deadbeef',
+              signature: 'deadbeef',
+              extraData: 'not-hex',
+            },
+          ],
+        },
+        'Foo',
+      ),
+    ).toThrow(
+      new InvalidPropertyError({
+        objName: 'Foo.result[0]',
+        property: 'extraData',
+        expectedType: 'BytesHex',
         type: 'string',
       }),
     );

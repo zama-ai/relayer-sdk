@@ -247,7 +247,7 @@ describeIfFetchMock('RelayerV2Provider', () => {
             {
               payload: 'deadbeef',
               signature: 'deadbeef',
-              //extraData: '0x00',
+              extraData: '0x00',
             },
           ],
         },

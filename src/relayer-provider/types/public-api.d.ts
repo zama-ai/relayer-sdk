@@ -66,6 +66,8 @@ export type RelayerUserDecryptOptionsType = Prettify<
     signal?: AbortSignal;
     timeout?: number;
     onProgress?: (args: RelayerUserDecryptProgressArgs) => void;
+    /** Context-aware extraData from getExtraData(). Optional — defaults to legacy '0x00' when omitted. */
+    extraData?: BytesHex;
   }
 >;
 
@@ -283,7 +285,7 @@ export type RelayerPublicDecryptResult = {
 export type RelayerUserDecryptResult = Array<{
   payload: BytesHexNo0x;
   signature: BytesHexNo0x;
-  //extraData: BytesHex;
+  extraData: BytesHex;
 }>;
 
 export type RelayerInputProofResult = {

@@ -259,6 +259,7 @@ describeIfFetchMock('RelayerV2Provider - Delegated User Decrypt', () => {
             {
               payload: 'deadbeef',
               signature: 'deadbeef',
+              extraData: '0x00',
             },
           ],
         },
