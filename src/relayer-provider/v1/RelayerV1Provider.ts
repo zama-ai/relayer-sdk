@@ -16,7 +16,6 @@ import {
   assertIsRelayerPublicDecryptResult,
   assertIsRelayerUserDecryptResult,
 } from '../AbstractRelayerProvider';
-
 export class RelayerV1Provider extends AbstractRelayerProvider {
   public override get version(): number {
     return 1;
@@ -86,6 +85,7 @@ export class RelayerV1Provider extends AbstractRelayerProvider {
       payload,
       options,
     );
+
     assertIsRelayerUserDecryptResult(
       json.response,
       'RelayerUserDecryptResult()',
