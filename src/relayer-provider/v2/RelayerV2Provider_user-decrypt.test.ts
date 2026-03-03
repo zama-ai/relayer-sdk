@@ -25,6 +25,8 @@ import type {
 } from '../../base/types/primitives';
 import type { RelayerUserDecryptPayload } from '../types/public-api';
 import type { FhevmInstanceConfig } from '../../types/relayer';
+import { buildRequestExtraData } from '../../sdk/kms/extraData';
+import { TEST_KMS_CONTEXT_ID } from '../../test/config';
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -258,6 +260,48 @@ describeIfFetchMock('RelayerV2Provider', () => {
     const result = await relayerProvider.fetchPostUserDecrypt(payload);
     console.log(JSON.stringify(result, null, 2));
   });
+
+  it('v2:user-decrypt: context-bearing extraData round-trips through provider', async () => {
+    const contextExtraData = buildRequestExtraData(TEST_KMS_CONTEXT_ID);
+    const contextPayload: RelayerUserDecryptPayload = {
+      ...payload,
+      extraData: contextExtraData,
+    };
+
+    const bodyJson = {
+      status: 'queued',
+      requestId: 'ctx-req',
+      result: { jobId: '456' },
+    };
+
+    fetchMock.post(TEST_CONFIG.v2.urls.userDecrypt, {
+      status: 202,
+      body: bodyJson,
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    fetchMock.get(`${TEST_CONFIG.v2.urls.userDecrypt}/456`, {
+      status: 200,
+      body: {
+        status: 'succeeded',
+        requestId: 'ctx-req',
+        result: {
+          result: [
+            {
+              payload: 'deadbeef',
+              signature: 'deadbeef',
+              extraData: contextExtraData,
+            },
+          ],
+        },
+      },
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    const result = await relayerProvider.fetchPostUserDecrypt(contextPayload);
+    expect(result).toHaveLength(1);
+    expect(result[0].extraData).toBe(contextExtraData);
+  });
 });
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -389,7 +433,10 @@ describe('FhevmInstance.createEIP712', () => {
     consoleLogSpy.mockRestore();
   });
 
-  async function testCreateEIP712(config: FhevmInstanceConfig) {
+  async function testCreateEIP712(
+    config: FhevmInstanceConfig,
+    extraData: BytesHex = '0x00',
+  ) {
     const mnemonic = TEST_CONFIG.mnemonic;
     if (typeof mnemonic !== 'string' || mnemonic.length === 0) {
       throw new Error(`Missing MNEMONIC env variable in .env file!`);
@@ -406,7 +453,6 @@ describe('FhevmInstance.createEIP712', () => {
 
     const startTimestamp = timestampNow();
     const durationDays = 365;
-    const extraData = '0x00';
     const contractAddress = TEST_CONFIG.testContracts.FHETestAddress;
     const contractAddresses = [contractAddress];
 
@@ -480,5 +526,37 @@ describe('FhevmInstance.createEIP712', () => {
       enableInputProofRoutes: false,
     });
     await testCreateEIP712(TEST_CONFIG.v2.fhevmInstanceConfig);
+  }, 600000);
+
+  it('v2: createEIP712 with context-bearing extraData', async () => {
+    setupAllFetchMockRoutes({
+      enableInputProofRoutes: false,
+    });
+    await testCreateEIP712(
+      TEST_CONFIG.v2.fhevmInstanceConfig,
+      buildRequestExtraData(TEST_KMS_CONTEXT_ID),
+    );
+  }, 600000);
+});
+
+////////////////////////////////////////////////////////////////////////////////
+
+describeIfFetchMock('FhevmInstance.getExtraData', () => {
+  beforeEach(() => {
+    removeAllFetchMockRoutes();
+  });
+
+  afterAll(() => {
+    consoleLogSpy.mockRestore();
+  });
+
+  it('v2: getExtraData returns context-bearing extraData from KMS contract', async () => {
+    setupAllFetchMockRoutes({
+      enableInputProofRoutes: false,
+    });
+
+    const instance = await createInstance(TEST_CONFIG.v2.fhevmInstanceConfig);
+    const extraData = await instance.getExtraData();
+    expect(extraData).toBe(buildRequestExtraData(TEST_KMS_CONTEXT_ID));
   }, 600000);
 });

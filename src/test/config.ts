@@ -169,6 +169,9 @@ export const TEST_KMS_VERIFIER = {
   ],
 };
 
+// Used by the KMSVerifier contract mock (getCurrentKmsContextId / getSignersForKmsContext)
+export const TEST_KMS_CONTEXT_ID = 42n;
+
 // Must have the same number of signers as TEST_COPROCESSORS
 // Lazy initialization to avoid issues with jest mocking
 let _testKms: KmsSigners | null = null;
@@ -360,6 +363,14 @@ export function setupEthersJestMock() {
           getKmsSigners: () => Promise.resolve(getTestKms().addresses),
           getThreshold: () =>
             Promise.resolve(BigInt(getTestKms().addresses.length)),
+          getCurrentKmsContextId: () => Promise.resolve(TEST_KMS_CONTEXT_ID),
+          getSignersForKmsContext: (contextId: bigint) => {
+            if (contextId === TEST_KMS_CONTEXT_ID)
+              return Promise.resolve(getTestKms().addresses);
+            return Promise.reject(
+              new Error(`Unknown KMS context ${contextId}`),
+            );
+          },
         };
       } else if (
         contractAddress === config.fhevmInstanceConfig.aclContractAddress

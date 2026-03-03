@@ -148,5 +148,22 @@ describe('RelayerV2ResultUserDecrypt', () => {
         type: 'string',
       }),
     );
+
+    // Context-bearing extraData (0x01 + 32-byte contextId) passes validation
+    expect(() =>
+      assertIsRelayerV2ResultUserDecrypt(
+        {
+          result: [
+            {
+              payload: 'deadbeef',
+              signature: 'deadbeef',
+              extraData:
+                '0x01000000000000000000000000000000000000000000000000000000000000002a',
+            },
+          ],
+        },
+        'Foo',
+      ),
+    ).not.toThrow();
   });
 });

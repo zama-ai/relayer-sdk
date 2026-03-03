@@ -162,8 +162,10 @@ function buildUserDecryptResults(
  * Per RFC 003, all items in one aggregated response share the same context.
  * The SDK asserts uniformity and throws on mismatch. Mixed-context responses
  * are an explicit non-goal.
+ *
+ * @internal Exported for unit testing only — not part of the public API.
  */
-async function resolveEffectiveSigners(
+export async function resolveEffectiveSigners(
   json: RelayerUserDecryptResult,
   kmsSigners: string[],
   kmsContextCache: KmsContextCache,
