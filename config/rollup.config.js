@@ -116,6 +116,36 @@ export default [
     external: ['ethers', 'fetch-retry', 'node-tfhe', 'node-tkms', 'keccak'],
   },
   */
+  // Cleartext mode entry point (no TFHE/TKMS WASM required)
+  {
+    input: 'src/cleartext.ts',
+    output: {
+      file: 'lib/cleartext.cjs',
+      name: 'relayer-sdk-cleartext',
+      format: 'cjs',
+    },
+    plugins: [...nodePlugins],
+    external: ['ethers', 'fetch-retry', 'node-tfhe', 'node-tkms', 'keccak'],
+  },
+  {
+    input: 'src/cleartext.ts',
+    output: {
+      file: 'lib/cleartext.js',
+      name: 'relayer-sdk-cleartext',
+      format: 'es',
+    },
+    plugins: [...nodePlugins],
+    external: ['ethers', 'fetch-retry', 'node-tfhe', 'node-tkms', 'keccak'],
+  },
+  {
+    input: 'src/cleartext.ts',
+    output: {
+      file: 'lib/cleartext.web.js',
+      name: 'relayer-sdk-cleartext',
+      format: 'es',
+    },
+    plugins: [...webPlugins],
+  },
   // Internal entry point for bin/ scripts (not part of public API)
   {
     input: 'src/internal.ts',
