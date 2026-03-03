@@ -326,6 +326,7 @@ describeIfFetch('FhevmInstance.delegatedUserDecrypt:sepolia:', () => {
       delegatorAddress,
       startTimestamp,
       durationDays,
+      extraData,
     );
 
     const kmsEIP712 = new KmsEIP712({
@@ -366,6 +367,7 @@ describeIfFetch('FhevmInstance.delegatedUserDecrypt:sepolia:', () => {
       delegatorAddress,
       startTimestamp,
       durationDays,
+      extraData,
     );
 
     expect(eCount in res).toBe(true);
@@ -447,6 +449,7 @@ defaultDescribe('FhevmInstance.createDelegatedUserDecryptEIP712', () => {
       delegatorAddress,
       startTimestamp,
       durationDays,
+      extraData,
     );
 
     const kmsEIP712 = new KmsEIP712({

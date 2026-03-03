@@ -312,6 +312,7 @@ describeIfFetch('FhevmInstance.userDecrypot:sepolia:', () => {
       contractAddresses,
       startTimestamp,
       durationDays,
+      extraData,
     );
 
     const kmsEIP712 = new KmsEIP712({
@@ -350,6 +351,7 @@ describeIfFetch('FhevmInstance.userDecrypot:sepolia:', () => {
       userAddress,
       startTimestamp,
       durationDays,
+      extraData,
     );
 
     expect(eCount in res).toBe(true);
@@ -429,6 +431,7 @@ describe('FhevmInstance.createEIP712', () => {
       contractAddresses,
       startTimestamp,
       durationDays,
+      extraData,
     );
 
     const kmsEIP712 = new KmsEIP712({

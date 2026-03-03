@@ -100,33 +100,23 @@ export interface FhevmInstance {
   generateKeypair(): KeypairType<BytesHexNo0x>;
   /**
    * Returns the current KMS context extraData for user/delegated user decrypt.
-   * Pass the returned value to both `createEIP712()` and `userDecrypt(options.extraData)`.
+   * Pass the returned value to both `createEIP712`, `createDelegatedUserDecryptEIP712`, `userDecrypt`, and `delegatedUserDecrypt`.
    */
   getExtraData(): Promise<BytesHex>;
-  /**
-   * NOTE: Calling without extraData uses legacy '0x00'. Use:
-   *   const extraData = await instance.getExtraData();
-   *   const eip712 = instance.createEIP712(pubKey, contracts, start, days, extraData);
-   */
   createEIP712(
     publicKey: string,
     contractAddresses: string[],
     startTimestamp: number,
     durationDays: number,
-    extraData?: BytesHex,
+    extraData: BytesHex,
   ): KmsUserDecryptEIP712Type;
-  /**
-   * NOTE: Calling without extraData uses legacy '0x00'. Use:
-   *   const extraData = await instance.getExtraData();
-   *   const eip712 = instance.createDelegatedUserDecryptEIP712(pubKey, contracts, delegator, start, days, extraData);
-   */
   createDelegatedUserDecryptEIP712(
     publicKey: string,
     contractAddresses: string[],
     delegatorAddress: string,
     startTimestamp: number,
     durationDays: number,
-    extraData?: BytesHex,
+    extraData: BytesHex,
   ): KmsDelegatedUserDecryptEIP712Type;
   publicDecrypt(
     handles: (string | Uint8Array)[],
@@ -141,6 +131,7 @@ export interface FhevmInstance {
     userAddress: string,
     startTimestamp: number,
     durationDays: number,
+    extraData: BytesHex,
     options?: RelayerUserDecryptOptionsType,
   ): Promise<UserDecryptResults>;
   delegatedUserDecrypt(
@@ -153,6 +144,7 @@ export interface FhevmInstance {
     delegateAddress: string,
     startTimestamp: number,
     durationDays: number,
+    extraData: BytesHex,
     options?: RelayerUserDecryptOptionsType,
   ): Promise<UserDecryptResults>;
   getPublicKey(): { publicKeyId: string; publicKey: Uint8Array } | null;

@@ -245,11 +245,9 @@ export const userDecryptRequest =
     userAddress: string,
     startTimestamp: string | number,
     durationDays: string | number,
+    extraData: BytesHex,
     options?: RelayerUserDecryptOptionsType,
   ): Promise<UserDecryptResults> => {
-    // Accept caller-provided extraData, default to legacy '0x00' when omitted
-    const extraData: BytesHex = options?.extraData ?? '0x00';
-
     const { pubKey, privKey } = parseKeys(publicKey, privateKey);
 
     // Sanitize hex strings
@@ -370,11 +368,9 @@ export const delegatedUserDecryptRequest =
     delegateAddress: string,
     startTimestamp: string | number,
     durationDays: string | number,
+    extraData: BytesHex,
     options?: RelayerUserDecryptOptionsType,
   ): Promise<UserDecryptResults> => {
-    // Accept caller-provided extraData, default to legacy '0x00' when omitted
-    const extraData: BytesHex = options?.extraData ?? '0x00';
-
     const { pubKey, privKey } = parseKeys(publicKey, privateKey);
 
     // Sanitize hex strings
