@@ -1,6 +1,9 @@
 import { computeCleartextHandles } from './cleartextHandles';
 import { FhevmHandle } from '@sdk/FhevmHandle';
-import type { ChecksummedAddress, EncryptionBits } from '@base/types/primitives';
+import type {
+  ChecksummedAddress,
+  EncryptionBits,
+} from '@base/types/primitives';
 
 ////////////////////////////////////////////////////////////////////////////////
 //

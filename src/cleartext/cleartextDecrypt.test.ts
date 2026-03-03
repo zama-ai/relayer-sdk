@@ -1,4 +1,7 @@
-import { cleartextPublicDecrypt, cleartextUserDecrypt } from './cleartextDecrypt';
+import {
+  cleartextPublicDecrypt,
+  cleartextUserDecrypt,
+} from './cleartextDecrypt';
 import { CleartextExecutor } from './CleartextExecutor';
 import { ACL } from '@sdk/ACL';
 import { FhevmHandle } from '@sdk/FhevmHandle';
@@ -68,8 +71,8 @@ function createMockACL(opts: {
   const acl = Object.create(ACL.prototype) as ACL;
 
   // Override checkAllowedForDecryption
-  (acl as unknown as Record<string, unknown>).checkAllowedForDecryption = jest.fn(
-    async (handles: FhevmHandle[] | FhevmHandle) => {
+  (acl as unknown as Record<string, unknown>).checkAllowedForDecryption =
+    jest.fn(async (handles: FhevmHandle[] | FhevmHandle) => {
       const arr = Array.isArray(handles) ? handles : [handles];
       const checker = opts.isAllowedForDecryption ?? (() => true);
       const failed = arr
@@ -81,34 +84,34 @@ function createMockACL(opts: {
           handles: failed,
         });
       }
-    },
-  );
+    });
 
   // Override checkUserAllowedForDecryption
-  (acl as unknown as Record<string, unknown>).checkUserAllowedForDecryption = jest.fn(
-    async (params: {
-      userAddress: ChecksummedAddress;
-      handleContractPairs: Array<{
-        contractAddress: ChecksummedAddress;
-        handle: FhevmHandle;
-      }>;
-    }) => {
-      const checker = opts.persistAllowed ?? (() => true);
-      for (const pair of params.handleContractPairs) {
-        const handleHex = pair.handle.toBytes32Hex();
-        if (!checker(handleHex, params.userAddress)) {
-          throw new Error(
-            `User ${params.userAddress} is not authorized to user decrypt handle ${handleHex}!`,
-          );
+  (acl as unknown as Record<string, unknown>).checkUserAllowedForDecryption =
+    jest.fn(
+      async (params: {
+        userAddress: ChecksummedAddress;
+        handleContractPairs: Array<{
+          contractAddress: ChecksummedAddress;
+          handle: FhevmHandle;
+        }>;
+      }) => {
+        const checker = opts.persistAllowed ?? (() => true);
+        for (const pair of params.handleContractPairs) {
+          const handleHex = pair.handle.toBytes32Hex();
+          if (!checker(handleHex, params.userAddress)) {
+            throw new Error(
+              `User ${params.userAddress} is not authorized to user decrypt handle ${handleHex}!`,
+            );
+          }
+          if (!checker(handleHex, pair.contractAddress)) {
+            throw new Error(
+              `dapp contract ${pair.contractAddress} is not authorized to user decrypt handle ${handleHex}!`,
+            );
+          }
         }
-        if (!checker(handleHex, pair.contractAddress)) {
-          throw new Error(
-            `dapp contract ${pair.contractAddress} is not authorized to user decrypt handle ${handleHex}!`,
-          );
-        }
-      }
-    },
-  );
+      },
+    );
 
   return acl;
 }

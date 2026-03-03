@@ -1,7 +1,4 @@
-import type {
-  Bytes32Hex,
-  ChecksummedAddress,
-} from '@base/types/primitives';
+import type { Bytes32Hex, ChecksummedAddress } from '@base/types/primitives';
 import type {
   ClearValueType,
   HandleContractPair,

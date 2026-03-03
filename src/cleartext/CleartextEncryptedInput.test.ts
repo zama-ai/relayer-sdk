@@ -145,11 +145,7 @@ describe('CleartextEncryptedInput', () => {
     });
 
     // Each method should return self for chaining
-    const result = input
-      .addBool(false)
-      .add8(255)
-      .add16(65535)
-      .add32(100000);
+    const result = input.addBool(false).add8(255).add16(65535).add32(100000);
 
     expect(result).toBe(input);
     expect(input.getBits()).toEqual([2, 8, 16, 32]);
