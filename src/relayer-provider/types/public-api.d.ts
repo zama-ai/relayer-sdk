@@ -346,7 +346,11 @@ export type RelayerApiError400Type =
   | RelayerApiError400WithDetailsType;
 
 export type RelayerApiError400NoDetailsType = {
-  label: 'malformed_json' | 'request_error' | 'not_ready_for_decryption';
+  label:
+    | 'malformed_json'
+    | 'request_error'
+    | 'not_ready_for_decryption'
+    | 'not_allowed_on_host_acl';
   message: string;
 };
 
