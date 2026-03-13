@@ -1,0 +1,342 @@
+import { Worker } from "node:worker_threads";
+import { describe, it } from "node:test";
+import { readFile } from "node:fs/promises";
+import { resolve } from "node:path";
+import { threads } from "wasm-feature-detect";
+import {
+  isBrowserLike,
+  runCodeInIsomorphicWorker,
+} from "./core/base/isomorphicWorker.js";
+import initTFHE from "./wasm/tfhe/tfhe.v1.5.3.js";
+import {
+  init_panic_hook,
+  initThreadPool,
+  terminateWorkers,
+} from "./wasm/tfhe/tfhe.v1.5.3.js";
+import { initTfheModule } from "./core/modules/encrypt/module/index.js";
+
+// node --test --import tsx ./src/index.hello.test.ts
+
+export function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function getDirname(): Promise<string> {
+  const { fileURLToPath } = await import("node:url");
+  const { dirname } = await import("node:path");
+  return dirname(fileURLToPath(import.meta.url));
+}
+
+async function readWasmBytes() {
+  const dir = await getDirname();
+  const wasmBytes = await readFile(
+    resolve(dir, "./wasm/tfhe/tfhe_bg.v1.5.3.wasm"),
+  );
+  return wasmBytes;
+}
+
+// numThreads=20, 267ms
+function preloadTfheBase64FetchBlobThen(numThreads: number) {
+  return import("./wasm/tfhe/tfhe_bg.v1.5.3.wasm.base64.js")
+    .then(({ tfheWasmBase64 }) =>
+      fetch(`data:application/octet-stream;base64,${tfheWasmBase64}`),
+    )
+    .then((res) => res.arrayBuffer())
+    .then((buf) => new Uint8Array(buf))
+    .then((wasmBytes) => initTFHE({ module_or_path: wasmBytes }))
+    .then(() => {
+      init_panic_hook();
+      return initThreadPool(numThreads);
+    });
+}
+
+async function preloadTfheBase64FetchBlobAwait(
+  numThreads: number,
+): Promise<any> {
+  const { tfheWasmBase64 } = await import(
+    "./wasm/tfhe/tfhe_bg.v1.5.3.wasm.base64.js"
+  );
+  const res = await fetch(
+    `data:application/octet-stream;base64,${tfheWasmBase64}`,
+  );
+  const buf = await res.arrayBuffer();
+  const wasmBytes = new Uint8Array(buf);
+  await initTFHE({ module_or_path: wasmBytes });
+  init_panic_hook();
+  return initThreadPool(numThreads);
+}
+
+// numThreads=20, 126ms
+async function preloadTfheBytes(numThreads: number) {
+  const wasmBytes = await readWasmBytes();
+  await initTFHE({ module_or_path: wasmBytes });
+  init_panic_hook();
+  await initThreadPool(numThreads);
+}
+
+function compileWasmV2(): Promise<WebAssembly.Module> {
+  return new Promise((resolve, reject) => {
+    try {
+      const worker = new Worker(
+        new URL("./wasm/tfhe/compile-worker.js", import.meta.url),
+      );
+      worker.on("message", (data) => resolve(data));
+      worker.on("error", (e) => reject(e));
+    } catch (e) {
+      console.log(e);
+    }
+  });
+}
+
+async function compileWasmV1(): Promise<WebAssembly.Module> {
+  // `data` is the input argument
+  const code = `const res = await fetch("data:application/octet-stream;base64," + data);
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    return await WebAssembly.compile(bytes);`;
+
+  const { tfheWasmBase64 } = await import(
+    "./wasm/tfhe/tfhe_bg.v1.5.3.wasm.base64.js"
+  );
+
+  const module = runCodeInIsomorphicWorker<WebAssembly.Module>(
+    code,
+    tfheWasmBase64, // === data
+  );
+
+  return module;
+}
+
+async function compileWasmV3(): Promise<WebAssembly.Module> {
+  const wasmUrl = new URL("./wasm/tfhe/tfhe_bg.v1.5.3.wasm", import.meta.url);
+
+  const isbrowser = isBrowserLike();
+
+  let bytes: BufferSource;
+
+  if (!isbrowser && wasmUrl.protocol === "file:") {
+    // Node + file url
+    const { readFile } = await import("node:fs/promises");
+    const { fileURLToPath } = await import("node:url");
+
+    bytes = await readFile(fileURLToPath(wasmUrl));
+  } else {
+    // fetch wasm
+    const res = await fetch(wasmUrl);
+
+    if (isbrowser) {
+      // use compile streaming
+      if (typeof WebAssembly.compileStreaming === "function") {
+        return WebAssembly.compileStreaming(res);
+      }
+    }
+
+    bytes = await res.arrayBuffer();
+  }
+
+  return WebAssembly.compile(bytes);
+}
+
+/*
+given a URL of a WASM
+
+1. How to compile the Wasm Module given the WASM url ?
+
+1. Blob supported ? use blob. to compile
+2. I have the compile-wasm url : use it (not sure it's interesting...)
+3. Compile in main thread
+
+// Node.js: read from filesystem
+const { readFile } = await import("node:fs/promises");
+const { fileURLToPath } = await import("node:url");
+const bytes = await readFile(fileURLToPath(wasmUrl));
+return WebAssembly.compile(bytes);
+
+const module = await WebAssembly.compileStreaming(fetch(wasmUrl));
+const module = await WebAssembly.compile(bytes);
+
+- packages/js-sdk-final/src/wasm/tfhe/compile-wasm.js
+- packages/js-sdk-final/src/wasm/tfhe/tfhe.v1.5.3.js (big)
+- packages/js-sdk-final/src/wasm/tfhe/tfhe_bg.v1.5.3.wasm (big)
+- packages/js-sdk-final/src/wasm/tfhe/tfhe-worker.v1.5.3.mjs (small)
+
+*/
+
+/**
+ * toBlobURL fetches data from an URL and return a blob URL.
+ *
+ * Example:
+ *
+ * ```ts
+ * await toBlobURL("http://localhost:3000/ffmpeg.js", "text/javascript");
+ * ```
+ */
+// export const toBlobURL = async (
+//   url: string,
+//   mimeType: string,
+//   progress = false,
+//   cb?: ProgressCallback
+// ): Promise<string> => {
+//   const buf = progress
+//     ? await downloadWithProgress(url, cb)
+//     : await (await fetch(url)).arrayBuffer();
+//   const blob = new Blob([buf], { type: mimeType });
+//   return URL.createObjectURL(blob);
+// };
+
+// function compileWasmInWorkerBrowser(
+//   base64: string,
+// ): Promise<WebAssembly.Module> {
+//   const code = `
+//     self.onmessage = async ({ data }) => {
+//       const res = await fetch("data:application/octet-stream;base64," + data);
+//       const bytes = new Uint8Array(await res.arrayBuffer());
+//       const module = await WebAssembly.compile(bytes);
+//       self.postMessage(module);
+//     };
+//   `;
+//   const blob = new Blob([code], { type: "application/javascript" });
+//   const worker = new Worker(URL.createObjectURL(blob));
+//   return new Promise((resolve, reject) => {
+//     worker.onmessage = ({ data }) => {
+//       resolve(data);
+//       worker.terminate();
+//     };
+//     worker.onerror = (e) => reject(e);
+//     worker.postMessage(base64);
+//   });
+// }
+
+// async function compileWasmInWorkerNode(
+//   base64: string,
+// ): Promise<WebAssembly.Module> {
+//   const code = `const res = await fetch("data:application/octet-stream;base64," + data);
+//       const bytes = new Uint8Array(await res.arrayBuffer());
+//       const module = await WebAssembly.compile(bytes);`;
+//   const browserCode = `
+//     self.onmessage = async ({ data }) => {
+//       ${code}
+//       self.postMessage(module);
+//     };
+//   `;
+//   const nodeCjsCode = `
+//     const { parentPort } = require("worker_threads");
+//     parentPort.on("message", async (data) => {
+//       ${code}
+//       parentPort.postMessage(module);
+//     });
+//   `;
+//   const dataUrl = `data:text/javascript;base64,${Buffer.from(code).toString("base64")}`;
+//   const worker = await createIsomorphicWorker(dataUrl);
+//   return new Promise((resolve, reject) => {
+//     if ("on" in worker) {
+//       worker.on("message", (data) => {
+//         resolve(data);
+//         (worker as Worker).terminate();
+//       });
+//       worker.on("error", (e) => reject(e));
+//       worker.postMessage(base64);
+//     } else {
+//       worker.onmessage = ({ data }) => {
+//         resolve(data);
+//         worker.terminate();
+//       };
+//       worker.onerror = (e) => reject(e);
+//       worker.postMessage(base64);
+//     }
+//   });
+// }
+
+async function preloadTfheUsingWorker(numThreads: number) {
+  const module = await compileWasmV3();
+  await initTFHE({ module_or_path: module }); // will call const instance = await WebAssembly.instantiate(module)
+  init_panic_hook();
+  await initThreadPool(numThreads);
+}
+
+async function preloadTfheUsingWorker2(numThreads: number) {
+  await setTfheModuleConfig({
+    numberOfThreads: numThreads,
+    // locateFile: (_file: string): URL => {
+    //   return undefined as unknown as URL;
+    // },
+    logger: {
+      debug: (message: string) => {
+        console.log(message);
+      },
+      error: (message: string, cause: unknown) => {
+        console.log(message);
+        if (cause !== undefined) {
+          console.log(cause);
+        }
+      },
+    },
+  });
+  await initTfheModule();
+}
+
+// const preload = import("./wasm/tfhe/tfhe_bg.v1.5.3.wasm.base64.js");
+// async function readWasmBytes64() {
+//   const { tfheWasmBase64 } = await import(
+//     "./wasm/tfhe/tfhe_bg.v1.5.3.wasm.base64.js"
+//   );
+//   return Uint8Array.from(atob(tfheWasmBase64), (c) => c.charCodeAt(0));
+// }
+
+describe("hello", () => {
+  it("should say hello", async () => {
+    const supportsThreads = await threads();
+    console.log("threads supported:", supportsThreads);
+
+    //const p = preloadTfheBase64FetchBlobThen(20);
+    //const p = preloadTfheBase64FetchBlobAwait(20);
+    const p = preloadTfheUsingWorker2(20);
+
+    for (let i = 0; i < 5; ++i) {
+      // why is p completed even before the first iteration ?
+      console.log(`sleep ${i + 1}`);
+      await sleep(1000);
+    }
+
+    const t0 = Date.now();
+    // const wasmBytes = await readWasmBytes();
+    await p;
+    const t1 = Date.now();
+
+    console.log(`preloadTfheBase64Atob Time=${t1 - t0}ms`);
+
+    // console.log("wasmBytes=" + wasmBytes.length);
+    // console.log("wasmBytes=" + wasmBytes.length);
+
+    // await initTFHE({ module_or_path: wasmBytes });
+
+    // console.log("init_panic_hook...");
+    // init_panic_hook();
+
+    // const numThreads = 20;
+    // await initThreadPool(numThreads);
+
+    await terminateWorkers();
+  });
+});
+
+//const { tfheWasmBase64 } = await import("./tfhe_bg.v1.5.3.wasm.base64.js");
+
+/*
+
+I want a to be able to dynamically load a large js file.
+I dont want this large js file to be downloaded by the browser when the page is loading
+But rather have the browser downloading it when necessary.
+Can I use 'dynamic import' ?
+async function do_not_load_the_js_if_function_is_not_called() {
+  const module = import("./super-big.js");
+  // do something with my module
+}
+
+I have a 5MB Wasm in my SDK.
+Some parts of the SDK needs the WASM to be loaded
+Is it possible to create a single js file that would contain a Base64 6.5MB string representing the WASM bytes encoded in base64
+when needed, i do a dynamic import of this big js file
+converts the 6.5MB of base64 into a bytes array
+pass this bytes array as argument of my WASM loader
+Would it work ?
+*/

@@ -1,38 +1,11 @@
 {
+  "files": [],
+  "references": [
+    { "path": "./src/tsconfig.json" },
+    { "path": "./test/tsconfig.json" }
+  ],
   "compilerOptions": {
-    "noEmit": false,
-    "rootDir": "src",
-    "outDir": "bundle",
-    "declaration": false,
-    // Use `ES2021` for native `Node v16+` support.
-    "target": "es2021",
-    // Use ES2022 to access to the Error `.cause` property.
-    "lib": ["es2022", "DOM", "WebWorker"],
-    "module": "commonjs",
-    // skipLibCheck is set to 'true' to skip typing errors due to DOM + WebWorker.
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "allowJs": true,
-    "strict": true,
-    "baseUrl": ".",
-    "resolveJsonModule": true,
-    "paths": {
-      "@base/*": ["./src/base/*"],
-      "@sdk/*": ["./src/sdk/*"],
-      "@fhevm-base/*": ["./src/fhevm-base/*"],
-      "@fhevm-base-types/*": ["./src/fhevm-base-types/*"],
-      "@fhevm-ethers/*": ["./src/ethers/*"],
-      "@relayer/*": ["./src/relayer/*"],
-      "*": ["*"]
-    },
-    // Add a bit of extra testing
-    "noEmitOnError": true,
-    "noFallthroughCasesInSwitch": true,
-    "noImplicitAny": true,
-    "noImplicitReturns": true,
-    "noImplicitThis": true,
-    "noUnusedLocals": true
-  },
-  "include": ["src", "types"],
-  "exclude": ["node_modules"]
+    "module": "nodenext",
+    "moduleResolution": "nodenext"
+  }
 }

@@ -1,0 +1,1 @@
+{"version":3,"file":"FhevmConfigError.js","sourceRoot":"","sources":["../../../core/errors/FhevmConfigError.ts"],"names":[],"mappings":";;;AAEA,2DAAqD;AAcrD,MAAa,gBAAiB,SAAQ,kCAAc;IAClD,YAAY,MAA8B;QACxC,KAAK,CAAC;YACJ,GAAG,MAAM;YACT,IAAI,EAAE,kBAAkB;SACzB,CAAC,CAAC;IACL,CAAC;CACF;AAPD,4CAOC"}

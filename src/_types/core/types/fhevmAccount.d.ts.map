@@ -1,0 +1,1 @@
+{"version":3,"file":"fhevmAccount.d.ts","sourceRoot":"","sources":["../../../core/types/fhevmAccount.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,kBAAkB,EAAE,MAAM,iBAAiB,CAAC;AAE1D,MAAM,CAAC,OAAO,CAAC,MAAM,iBAAiB,EAAE,OAAO,MAAM,CAAC;AAEtD,MAAM,MAAM,YAAY,GAAG;IACzB,QAAQ,CAAC,CAAC,iBAAiB,CAAC,EAAE,KAAK,CAAC;IACpC,QAAQ,CAAC,WAAW,EAAE,kBAAkB,CAAC;CAC1C,CAAC"}

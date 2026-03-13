@@ -1,1 +1,0 @@
-- use WeakMap pattern for 'createInstance' and FhevmInstance

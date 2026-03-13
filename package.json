@@ -1,163 +1,32 @@
 {
-  "name": "@zama-fhe/relayer-sdk",
-  "version": "0.4.0-4",
-  "description": "fhevm Relayer SDK",
-  "main": "lib/node.js",
-  "types": "lib/node.d.ts",
-  "browser": "lib/web.js",
+  "name": "@fhevm/sdk",
+  "private": true,
   "type": "module",
-  "bin": {
-    "relayer": "bin/relayer.js"
-  },
-  "files": [
-    "bin",
-    "bundle",
-    "lib",
-    "LICENCE",
-    "README.md",
-    "bundle.d.ts",
-    "bundle.js",
-    "node.d.ts",
-    "node.js",
-    "node-mock.d.ts",
-    "node-mock.js",
-    "web.d.ts",
-    "web.js"
-  ],
-  "exports": {
-    "./web": {
-      "types": "./lib/web.d.ts",
-      "import": "./lib/web.js",
-      "require": "./lib/web.js"
-    },
-    "./bundle": {
-      "types": "./bundle.d.ts",
-      "import": "./bundle.js",
-      "require": "./bundle.js"
-    },
-    "./node": {
-      "types": "./lib/node.d.ts",
-      "import": "./lib/node.js",
-      "require": "./lib/node.cjs"
-    },
-    "./node-mock": {
-      "types": "./lib/node-mock.d.ts",
-      "import": "./lib/node-mock.js",
-      "require": "./lib/node-mock.cjs"
-    },
-    "./package.json": "./package.json"
-  },
   "scripts": {
-    "pr-check": "npm run clean && npm run prettier:check && npm run lint && npm run build:strict && npm run build && npm run test && npm run test:playwright && npm run test:testnet && npm run test:cli && npm run test:cli:mainnet",
-    "rebuild:cdn:test": "npm run clean && BASE_PATH=http://test.cdn.zama.ai:5173/libs/relayer-sdk-js/ npm run build && mkdir -p ./e2e/servers/cdn/libs && cp -R ./bundle ./e2e/servers/cdn/libs/relayer-sdk-js",
-    "test:playwright": "npm run rebuild:cdn:test && cd ./e2e && npm run test:playwright",
-    "playwright:install": "playwright install",
-    "generateKeys": "./generateKeys.js",
-    "build": "npm run build:lib && npm run build:bundle",
-    "build:lib": "npm run rollup:lib && npm run build:dts && npm run build:strict:lib",
-    "build:bundle": "vite build --config config/vite.config.js",
-    "build:strict:relayer": "tsc --project ./src/relayer/tsconfig.json --noEmit",
-    "build:strict:ethers": "tsc --project ./src/ethers/tsconfig.json --noEmit",
-    "build:strict:base": "tsc --project ./src/base/tsconfig.json --noEmit",
-    "build:strict:core": "tsc --project ./src/fhevm-base/tsconfig.json --noEmit",
-    "build:strict:sdk": "tsc --project ./src/sdk/tsconfig.json --noEmit",
-    "build:strict:lib": "tsc --project ./tsconfig.strict.lib.json",
-    "build:strict": "npm run build:strict:base && npm run build:strict:ethers && npm run build:strict:sdk && npm run build:strict:relayer",
-    "test": "jest --colors --passWithNoTests --coverage",
-    "test:cli": "./src/test/scripts/test-testnet.sh",
-    "test:cli:mainnet": "./src/test/scripts/test-mainnet.sh",
-    "test:testnet": "jest --colors --passWithNoTests --coverage --config jest.testnet.config.cjs",
-    "test:devnet": "jest --colors --passWithNoTests --coverage --config jest.devnet.config.cjs",
-    "test:mock": "jest --colors --passWithNoTests --coverage --config jest.mock.config.cjs",
-    "test:dom": "jest --colors --passWithNoTests --coverage --config jest.dom.config.cjs",
-    "test:watch": "jest --colors --passWithNoTests --watch",
-    "prettier": "prettier --write \"**/*.{js,json,md,sol,ts,yml}\"",
-    "prettier:check": "prettier --check \"**/*.{js,json,md,sol,ts,yml}\"",
-    "lint": "eslint",
-    "rollup:lib": "rollup -c config/rollup.config.js",
-    "clean": "rm -rf dist.tmp lib bundle coverage e2e/servers/cdn/libs",
-    "clean:dts": "rm -rf dist.tmp",
-    "tsc:dts": "tsc --project config/tsconfig.dts.json",
-    "tsc:ts": "tsc --project ./tsconfig.json --noEmit",
-    "tsc:ts:test": "tsc --project ./tsconfig.test.json --noEmit",
-    "flatten:node:dts": "api-extractor run --local --config config/api-extractor.node.json",
-    "flatten:node-mock:dts": "api-extractor run --local --config config/api-extractor.node-mock.json",
-    "flatten:web:dts": "api-extractor run --local --config config/api-extractor.web.json",
-    "flatten:dts": "npm run flatten:node:dts && npm run flatten:node-mock:dts && npm run flatten:web:dts",
-    "copy:dts": "mkdir -p dist.tmp/base/types dist.tmp/fhevm-base/types dist.tmp/fhevm-base-types dist.tmp/sdk/types dist.tmp/relayer/types && cp src/base/types/*.d.ts dist.tmp/base/types/ && cp src/fhevm-base/types/*.d.ts dist.tmp/fhevm-base/types/ && cp src/fhevm-base-types/public-api.d.ts dist.tmp/fhevm-base-types/ && cp src/sdk/types/public-api.d.ts dist.tmp/sdk/types/ && cp src/relayer/types/*.d.ts dist.tmp/relayer/types/",
-    "build:dts": "npm run clean:dts && npm run tsc:dts && npm run copy:dts && npx tsc-alias -p config/tsc-alias.json && npm run flatten:dts && npm run clean:dts",
-    "version": "cd ./scripts && node ./generate-version.cjs"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/zama-ai/relayer-sdk.git"
-  },
-  "author": "",
-  "license": "BSD-3-Clause-Clear",
-  "bugs": {
-    "url": "https://github.com/zama-ai/relayer-sdk/issues"
-  },
-  "homepage": "https://github.com/zama-ai/relayer-sdk#readme",
-  "dependencies": {
-    "@noble/hashes": "2.0.1",
-    "commander": "^14.0.0",
-    "ethers": "^6.15.0",
-    "fetch-retry": "^6.0.0",
-    "keccak": "^3.0.4",
-    "node-tfhe": "1.4.0-alpha.3",
-    "node-tkms": "^0.12.0",
-    "tfhe": "1.4.0-alpha.3",
-    "tkms": "^0.12.0",
-    "wasm-feature-detect": "^1.8.0"
+    "build": "npm run clean && npm run build:cjs && npm run build:esm && npm run build:types",
+    "build:cjs": "tsc --project ./tsconfig.build.cjs.json --module commonjs --moduleResolution node --outDir ./src/_cjs --removeComments --verbatimModuleSyntax false && printf '{\"type\":\"commonjs\"}' > ./src/_cjs/package.json",
+    "build:esm": "tsc --project ./tsconfig.build.esm.json --outDir ./src/_esm && printf '{\"type\": \"module\",\"sideEffects\":false}' > ./src/_esm/package.json",
+    "build:types": "tsc --project ./tsconfig.build.esm.json --declarationDir ./src/_types --emitDeclarationOnly --declaration --declarationMap",
+    "clean": "rm -rf *.tsbuildinfo src/*.tsbuildinfo src/_esm src/_cjs src/_types",
+    "lint": "eslint"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.2",
-    "@fetch-mock/jest": "^0.2.20",
-    "@jest/globals": "^30.2.0",
-    "@microsoft/api-extractor": "^7.55.2",
-    "@playwright/test": "^1.57.0",
-    "@rollup/plugin-alias": "5.1.1",
-    "@rollup/plugin-commonjs": "28.0.6",
-    "@rollup/plugin-json": "6.1.0",
-    "@rollup/plugin-node-resolve": "16.0.1",
-    "@rollup/plugin-replace": "6.0.2",
-    "@rollup/plugin-typescript": "12.1.4",
-    "@rollup/plugin-url": "8.0.2",
-    "@rollup/plugin-wasm": "6.2.2",
-    "@surma/rollup-plugin-off-main-thread": "2.2.3",
-    "@types/jest": "30.0.0",
-    "@types/keccak": "3.0.5",
-    "@types/node-fetch": "2.6.12",
-    "@typescript-eslint/eslint-plugin": "^8.51.0",
-    "@typescript-eslint/parser": "^8.51.0",
-    "buffer": "6.0.3",
-    "crypto-browserify": "3.12.1",
-    "dotenv": "^17.2.3",
-    "eslint": "^9.39.2",
-    "fetch-mock": "^12.6.0",
-    "jest": "^30.2.0",
-    "jest-environment-jsdom": "^30.2.0",
-    "jest-raw-loader": "^1.0.1",
-    "path-browserify": "1.0.1",
-    "prettier": "3.6.2",
-    "rollup-plugin-copy": "3.5.0",
-    "rollup-plugin-polyfill-node": "0.13.0",
-    "serve": "^14.2.5",
-    "stream-browserify": "3.0.0",
-    "to-array-buffer": "3.2.0",
-    "ts-jest": "^29.4.6",
-    "ts-loader": "9.5.2",
-    "tsc-alias": "1.8.16",
-    "tslib": "2.8.1",
-    "typedoc": "^0.28.17",
-    "typedoc-plugin-markdown": "^4.10.0",
-    "typescript": "5.8.3",
-    "typescript-eslint": "^8.51.0",
-    "vite": "^7.0.7",
-    "vite-plugin-node-polyfills": "^0.24.0",
-    "vite-plugin-static-copy": "^3.1.4"
+    "@types/node": "^22.0.0",
+    "ethers": "^6.15.0",
+    "viem": "^2.46.3",
+    "eslint": "^10.0.2",
+    "test": "vitest -c ./test/vitest.config.ts",
+    "typescript-eslint": "^8.56.1",
+    "typescript": "5.9.3",
+    "vitest": "^4.0.18"
+  },
+  "imports": {
+    "#wasm/baseUrl": {
+      "import": "./src/wasm/wasmBaseUrl.js",
+      "require": "./src/wasm/wasmBaseUrl.cjs"
+    }
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=22.0"
   }
 }
