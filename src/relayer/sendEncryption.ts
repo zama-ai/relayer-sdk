@@ -52,6 +52,30 @@ export type RelayerEncryptedInputInternal = RelayerEncryptedInput & {
   _input: EncryptedInput;
 };
 
+export const createRelayerEncryptedInputAuditable =
+  ({
+    fhevm,
+    capacity,
+    defaultOptions,
+  }: {
+    fhevm: AbstractRelayerFhevm;
+    capacity: number;
+    defaultOptions?: FhevmInstanceOptions;
+  }) =>
+  (
+    contractAddress: string,
+    userAddress: string,
+    seed: Uint8Array,
+  ): RelayerEncryptedInputInternal =>
+    _createRelayerEncryptedInput({
+      fhevm,
+      capacity,
+      defaultOptions,
+      contractAddress,
+      userAddress,
+      seed,
+    });
+
 export const createRelayerEncryptedInput =
   ({
     fhevm,
@@ -65,7 +89,30 @@ export const createRelayerEncryptedInput =
   (
     contractAddress: string,
     userAddress: string,
-  ): RelayerEncryptedInputInternal => {
+  ): RelayerEncryptedInputInternal =>
+    _createRelayerEncryptedInput({
+      fhevm,
+      capacity,
+      defaultOptions,
+      contractAddress,
+      userAddress,
+    });
+
+function _createRelayerEncryptedInput({
+  fhevm,
+  capacity,
+  defaultOptions,
+  contractAddress,
+  userAddress,
+  seed,
+}: {
+  fhevm: AbstractRelayerFhevm;
+  capacity: number;
+  defaultOptions?: FhevmInstanceOptions;
+  contractAddress: string;
+  userAddress: string;
+  seed?: Uint8Array;
+}): RelayerEncryptedInputInternal {
     if (!isChecksummedAddress(contractAddress)) {
       throw new Error('Contract address is not a valid address.');
     }
@@ -92,6 +139,7 @@ export const createRelayerEncryptedInput =
       contractAddress,
       userAddress,
       capacity,
+      seed,
     });
 
     return {
@@ -185,4 +233,4 @@ export const createRelayerEncryptedInput =
         return ip.toBytes();
       },
     };
-  };
+}

@@ -1,4 +1,5 @@
-import type { InitInput as TFHEInput } from 'tfhe';
+// Use local types: raw wasm-pack tfhe build may not export InitInput
+export type TFHEInput = WebAssembly.Module | BufferSource | string;
 import type { InitInput as KMSInput } from 'tkms';
 
 import { TFHE as TFHEModule } from './sdk/lowlevel/wasm-modules';
@@ -6,7 +7,7 @@ import { TKMS as TKMSModule } from './sdk/lowlevel/wasm-modules';
 
 import { threads } from 'wasm-feature-detect';
 
-export type { KMSInput, TFHEInput };
+export type { KMSInput };
 
 let initialized = false;
 

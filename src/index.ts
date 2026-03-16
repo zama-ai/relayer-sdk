@@ -37,6 +37,7 @@ import {
 } from './relayer/userDecrypt';
 import {
   createRelayerEncryptedInput,
+  createRelayerEncryptedInputAuditable,
   requestCiphertextWithZKProofVerification,
 } from './relayer/sendEncryption';
 import { publicDecryptRequest } from './relayer/publicDecrypt';
@@ -91,6 +92,11 @@ export interface FhevmInstance {
   createEncryptedInput(
     contractAddress: string,
     userAddress: string,
+  ): RelayerEncryptedInput;
+  createEncryptedInputAuditable(
+    contractAddress: string,
+    userAddress: string,
+    seed: Uint8Array,
   ): RelayerEncryptedInput;
   requestZKProofVerification(
     zkProof: ZKProofLike,
@@ -180,6 +186,11 @@ export const createInstance = async (
   return {
     config: relayerFhevm.fhevmHostChain,
     createEncryptedInput: createRelayerEncryptedInput({
+      fhevm: relayerFhevm,
+      capacity: 2048,
+      defaultOptions,
+    }),
+    createEncryptedInputAuditable: createRelayerEncryptedInputAuditable({
       fhevm: relayerFhevm,
       capacity: 2048,
       defaultOptions,
