@@ -1,1 +1,0 @@
-{"version":3,"file":"createTrustedClient.d.ts","sourceRoot":"","sources":["../../../../core/modules/ethereum/createTrustedClient.ts"],"names":[],"mappings":"AAIA,OAAO,KAAK,EAAE,aAAa,EAAsB,MAAM,YAAY,CAAC;AAEpE,wBAAgB,mBAAmB,CAAC,MAAM,EACxC,YAAY,EAAE,MAAM,EACpB,KAAK,EAAE,MAAM,GACZ,aAAa,CAAC,MAAM,CAAC,CAKvB"}

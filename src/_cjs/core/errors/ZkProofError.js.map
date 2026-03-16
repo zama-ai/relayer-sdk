@@ -1,1 +1,0 @@
-{"version":3,"file":"ZkProofError.js","sourceRoot":"","sources":["../../../core/errors/ZkProofError.ts"],"names":[],"mappings":";;;AAEA,2DAAqD;AAYrD,MAAa,YAAa,SAAQ,kCAAc;IAC9C,YAAY,MAA0B;QACpC,KAAK,CAAC;YACJ,GAAG,MAAM;YACT,OAAO,EAAE,MAAM,CAAC,OAAO,IAAI,2BAA2B;YACtD,IAAI,EAAE,cAAc;SACrB,CAAC,CAAC;IACL,CAAC;CACF;AARD,oCAQC"}
