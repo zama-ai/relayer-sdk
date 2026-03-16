@@ -17,12 +17,12 @@ import {
   deserializeGlobalFhePkeParamsFromHex,
   type DeserializeGlobalFhePkeParamsFromHexParameters,
   type DeserializeGlobalFhePkeParamsFromHexReturnType,
-} from "../../actions/runtime/deserializeGlobalFhePkeParams.js";
+} from "../../actions/encrypt/deserializeGlobalFhePkeParams.js";
 import {
   serializeGlobalFhePkeParamsToHex,
   type SerializeGlobalFhePkeParamsToHexParameters,
   type SerializeGlobalFhePkeParamsToHexReturnType,
-} from "../../actions/runtime/serializeGlobalFhePkeParams.js";
+} from "../../actions/encrypt/serializeGlobalFhePkeParams.js";
 import type {
   Fhevm,
   OptionalNativeClient,
@@ -32,10 +32,10 @@ import type { FhevmChain } from "../../types/fhevmChain.js";
 
 export type GlobalFhePkeActions = {
   readonly fetchGlobalFhePkeParams: (
-    parameters: FetchGlobalFhePkeParamsParameters,
+    parameters?: FetchGlobalFhePkeParamsParameters | undefined,
   ) => Promise<FetchGlobalFhePkeParamsReturnType>;
   readonly fetchGlobalFhePkeParamsBytes: (
-    parameters: FetchGlobalFhePkeParamsBytesParameters,
+    parameters?: FetchGlobalFhePkeParamsBytesParameters | undefined,
   ) => Promise<FetchGlobalFhePkeParamsBytesReturnType>;
   readonly deserializeGlobalFhePkeParamsFromHex: (
     parameters: DeserializeGlobalFhePkeParamsFromHexParameters,

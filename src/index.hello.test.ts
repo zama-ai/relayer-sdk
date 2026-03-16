@@ -12,15 +12,11 @@ import {
 import { createFhevm } from "./ethers/clients/createFhevm.js";
 import { sepolia } from "./core/chains/index.js";
 import { ethers } from "ethers";
-import {
-  decryptModule,
-  tkmsKeyModule,
-} from "./core/modules/decrypt/module/index.js";
+import { decryptModule } from "./core/modules/decrypt/module/index.js";
 import {
   createFhevmDecryptionKey,
   type FhevmDecryptionKey,
 } from "./core/user/FhevmDecryptionKey-p.js";
-import { createKmsUserDecryptEIP712 } from "./core/kms/createKmsUserDecryptEIP712.js";
 
 // node --test --import tsx ./src/index.hello.test.ts
 
@@ -95,9 +91,9 @@ describe("hello", () => {
         ),
       });
 
-      const r = fhevm.runtime.extend(tkmsKeyModule).extend(decryptModule);
-      const pk = await r.tkmsKey.generateTkmsPrivateKey();
-      const pkBytes = await r.tkmsKey.serializeTkmsPrivateKey({
+      const r = fhevm.runtime.extend(decryptModule);
+      const pk = await r.decrypt.generateTkmsPrivateKey();
+      const pkBytes = await r.decrypt.serializeTkmsPrivateKey({
         tkmsPrivateKey: pk,
       });
 
@@ -106,11 +102,8 @@ describe("hello", () => {
         { tkmsPrivateKey: pkBytes },
       );
 
-      const eip712 = createKmsUserDecryptEIP712({
-        chainId: sepolia.id,
+      const eip712 = fhevmDecryptClient.createUserDecryptEIP712({
         contractAddresses: ["0x1E7eA8fE4877E6ea5dc8856f0dA92da8d5066241"],
-        verifyingContractAddressDecryption:
-          fhevmDecryptClient.chain.fhevm.gateway.contracts.decryption.address,
         durationDays: 356,
         startTimestamp: timestampNow(),
         extraData: "0x00",
@@ -125,7 +118,7 @@ describe("hello", () => {
       });
 
       const globalFhePkeParams =
-        await fhevmEncryptClient.fetchGlobalFhePkeParams({});
+        await fhevmEncryptClient.fetchGlobalFhePkeParams();
 
       console.log(fhevm.uid);
       console.log(fhevmDecryptClient.uid);

@@ -9,10 +9,7 @@ import type { FhevmRuntime } from "../types/coreFhevmRuntime.js";
 import type { FhevmUser } from "../types/fhevmUser.js";
 import type { ChecksummedAddress, Bytes } from "../types/primitives.js";
 import type { TkmsPrivateKey } from "../types/tkms-p.js";
-import type {
-  WithDecryptModule,
-  WithTkmsKeyModule,
-} from "../modules/decrypt/types.js";
+import type { WithDecryptModule } from "../modules/decrypt/types.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 // FhevmUserImpl
@@ -70,7 +67,7 @@ export function assertIsFhevmUser(
 
 /** Creates a {@link FhevmUser} by binding an address and a private key into an immutable object. */
 export async function createFhevmUser(
-  fhevmRuntime: FhevmRuntime<WithTkmsKeyModule & WithDecryptModule>,
+  fhevmRuntime: FhevmRuntime<WithDecryptModule>,
   parameters: {
     address: ChecksummedAddress;
     privateKey: Bytes | TkmsPrivateKey | FhevmDecryptionKey;

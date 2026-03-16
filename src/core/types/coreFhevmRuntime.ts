@@ -12,10 +12,7 @@ import type {
 import type {
   DecryptModule,
   DecryptModuleFactory,
-  TkmsKeyModule,
-  TkmsKeyModuleFactory,
   WithDecryptModule,
-  WithTkmsKeyModule,
 } from "../modules/decrypt/types.js";
 import type { Logger } from "./logger.js";
 
@@ -41,10 +38,6 @@ interface FhevmRuntime_Base {
   ): this & { readonly encrypt: EncryptModule };
 
   extend(
-    factory: TkmsKeyModuleFactory,
-  ): this & { readonly tkmsKey: TkmsKeyModule };
-
-  extend(
     factory: RelayerModuleFactory,
   ): this & { readonly relayer: RelayerModule };
 }
@@ -56,7 +49,6 @@ export type FhevmRuntime<Extensions extends object = object> =
 export type WithDecrypt = FhevmRuntime<WithDecryptModule>;
 export type WithEncrypt = FhevmRuntime<WithEncryptModule>;
 export type WithRelayer = FhevmRuntime<WithRelayerModule>;
-export type WithTkmsKey = FhevmRuntime<WithTkmsKeyModule>;
 
 export type WithEncryptAndRelayer = FhevmRuntime<
   WithEncryptModule & WithRelayerModule

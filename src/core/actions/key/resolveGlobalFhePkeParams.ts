@@ -9,7 +9,7 @@ import type {
   GlobalFhePkeParams,
   GlobalFhePkeParamsBytes,
 } from "../../types/globalFhePkeParams.js";
-import { deserializeGlobalFhePkeParams } from "../runtime/deserializeGlobalFhePkeParams.js";
+import { deserializeGlobalFhePkeParams } from "../encrypt/deserializeGlobalFhePkeParams.js";
 import { fetchGlobalFhePkeParams } from "./fetchGlobalFhePkeParams.js";
 
 export type ResolveGlobalFhePkeParamsParameters = {

@@ -186,26 +186,6 @@ export type VerifyTkmsPrivateKeyModuleFunction = {
 };
 
 ////////////////////////////////////////////////////////////////////////////////
-// TkmsKeyModule
-////////////////////////////////////////////////////////////////////////////////
-
-export type WithTkmsKeyModule = {
-  readonly tkmsKey: TkmsKeyModule;
-};
-
-export type TkmsKeyModule = Prettify<
-  InitTkmsModuleFunction &
-    GenerateTkmsPrivateKeyModuleFunction &
-    SerializeTkmsPrivateKeyModuleFunction &
-    DeserializeTkmsPrivateKeyModuleFunction &
-    VerifyTkmsPrivateKeyModuleFunction
->;
-
-export type TkmsKeyModuleFactory = (runtime: FhevmRuntime) => {
-  readonly tkmsKey: TkmsKeyModule;
-};
-
-////////////////////////////////////////////////////////////////////////////////
 // DecryptModule
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -217,7 +197,10 @@ export type DecryptModule = Prettify<
   InitTkmsModuleFunction &
     DecryptAndReconstructModuleFunction &
     GetTkmsPublicKeyHexModuleFunction &
-    SerializeTkmsPrivateKeyModuleFunction
+    GenerateTkmsPrivateKeyModuleFunction &
+    SerializeTkmsPrivateKeyModuleFunction &
+    DeserializeTkmsPrivateKeyModuleFunction &
+    VerifyTkmsPrivateKeyModuleFunction
 >;
 
 export type DecryptModuleFactory = (runtime: FhevmRuntime) => {

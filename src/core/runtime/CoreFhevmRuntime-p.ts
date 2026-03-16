@@ -16,9 +16,7 @@ import type {
 } from "../types/coreFhevmRuntime.js";
 import type {
   DecryptModule,
-  TkmsKeyModule,
   WithDecryptModule,
-  WithTkmsKeyModule,
 } from "../modules/decrypt/types.js";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -59,7 +57,7 @@ function createExtendFn<T extends FhevmRuntime>(
     // Call factory to get { moduleName: moduleFunctions }
     const module = moduleFactory(selfRuntime);
 
-    // Extract the single key (e.g. "decrypt", "encrypt", "tkmsKey", "relayer")
+    // Extract the single key (e.g. "decrypt", "encrypt", "relayer")
     const keys = Object.keys(module);
     if (keys.length !== 1 || keys[0] === undefined) {
       throw new Error("Factory must return exactly one key");
@@ -103,7 +101,6 @@ type WithModuleMap = {
   decrypt: WithDecryptModule;
   encrypt: WithEncryptModule;
   relayer: WithRelayerModule;
-  tkmsKey: WithTkmsKeyModule;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -115,7 +112,7 @@ type WithModuleMap = {
 // Owner token: captured in verify() closure, verified by assertIsFhevmRuntime
 //
 // Extension mechanism:
-// - Empty placeholders (#tkmsKey, #encrypt, #decrypt, #relayer) created at construction
+// - Empty placeholders (#encrypt, #decrypt, #relayer) created at construction
 // - extend() fills a placeholder exactly once, then freezes it
 // - Throws if a placeholder is already filled (no double-extend)
 //
@@ -138,7 +135,6 @@ class CoreFhevmRuntimeImpl {
   readonly #ethereum: EthereumModule;
 
   // Optional modules
-  readonly #tkmsKey: ModulePlaceholder<TkmsKeyModule> = {};
   readonly #encrypt: ModulePlaceholder<EncryptModule> = {};
   readonly #decrypt: ModulePlaceholder<DecryptModule> = {};
   readonly #relayer: ModulePlaceholder<RelayerModule> = {};
@@ -165,7 +161,6 @@ class CoreFhevmRuntimeImpl {
         ? { ...parameters.config.logger }
         : undefined,
     };
-    const tkmsKey = this.#tkmsKey;
     const decrypt = this.#decrypt;
     const encrypt = this.#encrypt;
     const relayer = this.#relayer;
@@ -182,7 +177,6 @@ class CoreFhevmRuntimeImpl {
     >([
       ["decrypt", { placeholder: decrypt }],
       ["encrypt", { placeholder: encrypt }],
-      ["tkmsKey", { placeholder: tkmsKey }],
       ["relayer", { placeholder: relayer }],
     ]);
 
@@ -208,10 +202,6 @@ class CoreFhevmRuntimeImpl {
 
   public get ethereum(): EthereumModule {
     return this.#ethereum;
-  }
-
-  public get tkmsKey(): TkmsKeyModule {
-    return asModule(this.#tkmsKey, "tkmsKey");
   }
 
   public get decrypt(): DecryptModule {

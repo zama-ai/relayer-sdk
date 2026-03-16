@@ -6,7 +6,6 @@ import type {
   DecryptAndReconstructUserParameters,
   GetTkmsPublicKeyHexUserModuleFunction,
   WithDecryptModule,
-  WithTkmsKeyModule,
 } from "../modules/decrypt/types.js";
 import type { FhevmRuntime } from "../types/coreFhevmRuntime.js";
 import type { Bytes } from "../types/primitives.js";
@@ -76,7 +75,7 @@ export function assertIsFhevmDecryptionKey(
 
 /** Creates a {@link FhevmDecryptionKey} by binding a private key (raw bytes or deserialized) into closures. */
 export async function createFhevmDecryptionKey(
-  fhevmRuntime: FhevmRuntime<WithTkmsKeyModule & WithDecryptModule>,
+  fhevmRuntime: FhevmRuntime<WithDecryptModule>,
   parameters: {
     tkmsPrivateKey: Bytes | TkmsPrivateKey;
   },
@@ -84,12 +83,12 @@ export async function createFhevmDecryptionKey(
   let tkmsPrivateKey: TkmsPrivateKey;
 
   if (isBytes(parameters.tkmsPrivateKey)) {
-    tkmsPrivateKey = await fhevmRuntime.tkmsKey.deserializeTkmsPrivateKey({
+    tkmsPrivateKey = await fhevmRuntime.decrypt.deserializeTkmsPrivateKey({
       tkmsPrivateKeyBytes: parameters.tkmsPrivateKey,
     });
   } else {
     tkmsPrivateKey = parameters.tkmsPrivateKey;
-    fhevmRuntime.tkmsKey.verifyTkmsPrivateKey({ tkmsPrivateKey });
+    fhevmRuntime.decrypt.verifyTkmsPrivateKey({ tkmsPrivateKey });
   }
 
   return new FhevmDecryptionKeyImpl({

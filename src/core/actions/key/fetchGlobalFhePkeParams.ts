@@ -6,7 +6,7 @@ import type {
 import type { WithEncryptAndRelayer } from "../../types/coreFhevmRuntime.js";
 import type { FhevmChain } from "../../types/fhevmChain.js";
 import type { GlobalFhePkeParams } from "../../types/globalFhePkeParams.js";
-import { deserializeGlobalFhePkeParams } from "../runtime/deserializeGlobalFhePkeParams.js";
+import { deserializeGlobalFhePkeParams } from "../encrypt/deserializeGlobalFhePkeParams.js";
 import { fetchGlobalFhePkeParamsBytes } from "./fetchGlobalFhePkeParamsBytes.js";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -22,7 +22,7 @@ export type FetchGlobalFhePkeParamsReturnType = GlobalFhePkeParams;
 
 export async function fetchGlobalFhePkeParams(
   fhevm: Fhevm<FhevmChain, WithEncryptAndRelayer, OptionalNativeClient>,
-  parameters: FetchGlobalFhePkeParamsParameters,
+  parameters?: FetchGlobalFhePkeParamsParameters | undefined,
 ): Promise<FetchGlobalFhePkeParamsReturnType> {
   const paramsBytes = await fetchGlobalFhePkeParamsBytes(fhevm, parameters);
   return deserializeGlobalFhePkeParams(fhevm, paramsBytes);

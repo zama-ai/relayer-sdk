@@ -6,7 +6,6 @@ import type {
   DeserializeTkmsPrivateKeyParameters,
   GetTkmsPublicKeyHexParameters,
   SerializeTkmsPrivateKeyParameters,
-  TkmsKeyModuleFactory,
   UserDecryptModuleFactory,
   UserDecryptModuleParameters,
   VerifyTkmsPrivateKeyParameters,
@@ -22,26 +21,6 @@ import {
 import { initTkmsModule } from "./init-p.js";
 
 //////////////////////////////////////////////////////////////////////////////
-// tkmsKeysModule
-//////////////////////////////////////////////////////////////////////////////
-
-export const tkmsKeyModule: TkmsKeyModuleFactory = (runtime: FhevmRuntime) => {
-  return Object.freeze({
-    tkmsKey: Object.freeze({
-      initTkmsModule: () => initTkmsModule(runtime),
-      generateTkmsPrivateKey: () => generateTkmsPrivateKey(runtime),
-      serializeTkmsPrivateKey: (args: SerializeTkmsPrivateKeyParameters) =>
-        serializeTkmsPrivateKey(runtime, args),
-      deserializeTkmsPrivateKey: (args: DeserializeTkmsPrivateKeyParameters) =>
-        deserializeTkmsPrivateKey(runtime, args),
-      verifyTkmsPrivateKey: (args: VerifyTkmsPrivateKeyParameters) => {
-        verifyTkmsPrivateKey(runtime, args);
-      },
-    }),
-  });
-};
-
-//////////////////////////////////////////////////////////////////////////////
 // decryptModule
 //////////////////////////////////////////////////////////////////////////////
 
@@ -51,10 +30,16 @@ export const decryptModule: DecryptModuleFactory = (runtime: FhevmRuntime) => {
       initTkmsModule: () => initTkmsModule(runtime),
       decryptAndReconstruct: (args: DecryptAndReconstructParameters) =>
         decryptAndReconstruct(runtime, args),
-      getTkmsPublicKeyHex: (args: GetTkmsPublicKeyHexParameters) =>
-        getTkmsPublicKeyHex(runtime, args),
+      generateTkmsPrivateKey: () => generateTkmsPrivateKey(runtime),
       serializeTkmsPrivateKey: (args: SerializeTkmsPrivateKeyParameters) =>
         serializeTkmsPrivateKey(runtime, args),
+      deserializeTkmsPrivateKey: (args: DeserializeTkmsPrivateKeyParameters) =>
+        deserializeTkmsPrivateKey(runtime, args),
+      getTkmsPublicKeyHex: (args: GetTkmsPublicKeyHexParameters) =>
+        getTkmsPublicKeyHex(runtime, args),
+      verifyTkmsPrivateKey: (args: VerifyTkmsPrivateKeyParameters) => {
+        verifyTkmsPrivateKey(runtime, args);
+      },
     }),
   });
 };

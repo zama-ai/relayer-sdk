@@ -10,15 +10,11 @@ export type {
   WithEncrypt,
   WithDecrypt,
   WithRelayer,
-  WithTkmsKey,
 } from "../core/types/coreFhevmRuntime.js";
 
 export type { WithEncryptModule } from "../core/modules/encrypt/types.js";
 
-export type {
-  WithDecryptModule,
-  WithTkmsKeyModule,
-} from "../core/modules/decrypt/types.js";
+export type { WithDecryptModule } from "../core/modules/decrypt/types.js";
 
 export type { WithRelayerModule } from "../core/modules/relayer/types.js";
 
@@ -55,29 +51,29 @@ export type {
   GlobalFhePkeParamsBytesHex,
 } from "../core/types/globalFhePkeParams.js";
 
-export { deserializeGlobalFhePkeParams } from "../core/actions/runtime/deserializeGlobalFhePkeParams.js";
+export { deserializeGlobalFhePkeParams } from "../core/actions/encrypt/deserializeGlobalFhePkeParams.js";
 export type {
   DeserializeGlobalFhePkeParamsParameters,
   DeserializeGlobalFhePkeParamsReturnType,
-} from "../core/actions/runtime/deserializeGlobalFhePkeParams.js";
+} from "../core/actions/encrypt/deserializeGlobalFhePkeParams.js";
 
-export { deserializeGlobalFhePkeParamsFromHex } from "../core/actions/runtime/deserializeGlobalFhePkeParams.js";
+export { deserializeGlobalFhePkeParamsFromHex } from "../core/actions/encrypt/deserializeGlobalFhePkeParams.js";
 export type {
   DeserializeGlobalFhePkeParamsFromHexParameters,
   DeserializeGlobalFhePkeParamsFromHexReturnType,
-} from "../core/actions/runtime/deserializeGlobalFhePkeParams.js";
+} from "../core/actions/encrypt/deserializeGlobalFhePkeParams.js";
 
-export { serializeGlobalFhePkeParams } from "../core/actions/runtime/serializeGlobalFhePkeParams.js";
+export { serializeGlobalFhePkeParams } from "../core/actions/encrypt/serializeGlobalFhePkeParams.js";
 export type {
   SerializeGlobalFhePkeParamsParameters,
   SerializeGlobalFhePkeParamsReturnType,
-} from "../core/actions/runtime/serializeGlobalFhePkeParams.js";
+} from "../core/actions/encrypt/serializeGlobalFhePkeParams.js";
 
-export { serializeGlobalFhePkeParamsToHex } from "../core/actions/runtime/serializeGlobalFhePkeParams.js";
+export { serializeGlobalFhePkeParamsToHex } from "../core/actions/encrypt/serializeGlobalFhePkeParams.js";
 export type {
   SerializeGlobalFhePkeParamsToHexParameters,
   SerializeGlobalFhePkeParamsToHexReturnType,
-} from "../core/actions/runtime/serializeGlobalFhePkeParams.js";
+} from "../core/actions/encrypt/serializeGlobalFhePkeParams.js";
 
 export { fetchGlobalFhePkeParams } from "../core/actions/key/fetchGlobalFhePkeParams.js";
 export type {

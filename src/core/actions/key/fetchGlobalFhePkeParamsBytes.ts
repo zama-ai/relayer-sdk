@@ -47,9 +47,9 @@ export function deleteGlobalFhePkeParamsCache(relayerUrl: string): boolean {
 
 export async function fetchGlobalFhePkeParamsBytes(
   fhevm: Fhevm<FhevmChain, WithEncryptAndRelayer, OptionalNativeClient>,
-  parameters: FetchGlobalFhePkeParamsBytesParameters,
+  parameters?: FetchGlobalFhePkeParamsBytesParameters | undefined,
 ): Promise<FetchGlobalFhePkeParamsBytesReturnType> {
-  if (parameters.ignoreCache !== true) {
+  if (parameters?.ignoreCache !== true) {
     // 1. Check if already stored in cache
     const cached = __globalFhePkeParamsGlobalCache.get(
       fhevm.chain.fhevm.relayerUrl,
@@ -64,7 +64,7 @@ export async function fetchGlobalFhePkeParamsBytes(
   // so that future callers benefit from the fresh fetch.
   const promise = _fetchGlobalFhePkeParamsBytes(
     fhevm,
-    parameters.options,
+    parameters?.options,
   ).catch((err: unknown) => {
     // Only remove from cache if this promise is still the cached one.
     // A concurrent deleteGlobalFhePkeParamsCache + re-fetch may have replaced it.
