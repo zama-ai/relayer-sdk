@@ -18,6 +18,7 @@
     "test": "vitest -c ./test/vitest.config.ts",
     "typescript-eslint": "^8.56.1",
     "typescript": "5.9.3",
+    "tsx": "^4.21.0",
     "vitest": "^4.0.18"
   },
   "imports": {
