@@ -51,6 +51,7 @@ import { RelayerZKProofBuilder } from './relayer-provider/RelayerZKProofBuilder'
 import { CoprocessorSignersVerifier } from './sdk/coprocessor/CoprocessorSignersVerifier';
 import { InputProof } from './sdk/coprocessor/InputProof';
 import { KmsEIP712, TKMSPkeKeypair } from './sdk';
+import { buildRequestExtraData } from './sdk/kms/extraData';
 
 export { getErrorCauseStatus, getErrorCauseCode } from './relayer/error';
 export type { EncryptionBits } from './base/types/primitives';
@@ -97,11 +98,17 @@ export interface FhevmInstance {
     options?: RelayerInputProofOptionsType,
   ): Promise<InputProofBytesType>;
   generateKeypair(): KeypairType<BytesHexNo0x>;
+  /**
+   * Returns the current KMS context extraData for user/delegated user decrypt.
+   * Pass the returned value to both `createEIP712`, `createDelegatedUserDecryptEIP712`, `userDecrypt`, and `delegatedUserDecrypt`.
+   */
+  getExtraData(): Promise<BytesHex>;
   createEIP712(
     publicKey: string,
     contractAddresses: string[],
     startTimestamp: number,
     durationDays: number,
+    extraData: BytesHex,
   ): KmsUserDecryptEIP712Type;
   createDelegatedUserDecryptEIP712(
     publicKey: string,
@@ -109,6 +116,7 @@ export interface FhevmInstance {
     delegatorAddress: string,
     startTimestamp: number,
     durationDays: number,
+    extraData: BytesHex,
   ): KmsDelegatedUserDecryptEIP712Type;
   publicDecrypt(
     handles: (string | Uint8Array)[],
@@ -123,6 +131,7 @@ export interface FhevmInstance {
     userAddress: string,
     startTimestamp: number,
     durationDays: number,
+    extraData: BytesHex,
     options?: RelayerUserDecryptOptionsType,
   ): Promise<UserDecryptResults>;
   delegatedUserDecrypt(
@@ -135,6 +144,7 @@ export interface FhevmInstance {
     delegateAddress: string,
     startTimestamp: number,
     durationDays: number,
+    extraData: BytesHex,
     options?: RelayerUserDecryptOptionsType,
   ): Promise<UserDecryptResults>;
   getPublicKey(): { publicKeyId: string; publicKey: Uint8Array } | null;
@@ -176,6 +186,7 @@ export const createInstance = async (
   const thresholdCoprocessorSigners =
     relayerFhevm.fhevmHostChain.coprocessorSignerThreshold;
   const provider = relayerFhevm.fhevmHostChain.ethersProvider;
+  const kmsContextCache = relayerFhevm.fhevmHostChain.kmsContextCache;
 
   return {
     config: relayerFhevm.fhevmHostChain,
@@ -221,11 +232,16 @@ export const createInstance = async (
     generateKeypair: () => {
       return TKMSPkeKeypair.generate().toBytesHexNo0x();
     },
+    getExtraData: async (): Promise<BytesHex> => {
+      const contextId = await kmsContextCache.getCurrentContextId();
+      return buildRequestExtraData(contextId);
+    },
     createEIP712: (
       publicKey: string,
       contractAddresses: string[],
       startTimestamp: number,
       durationDays: number,
+      extraData: BytesHex = '0x00',
     ): KmsUserDecryptEIP712Type => {
       const kmsEIP712 = new KmsEIP712({
         chainId: BigInt(chainId),
@@ -236,7 +252,7 @@ export const createInstance = async (
         contractAddresses,
         startTimestamp,
         durationDays,
-        extraData: '0x00',
+        extraData,
       });
     },
     createDelegatedUserDecryptEIP712: (
@@ -245,6 +261,7 @@ export const createInstance = async (
       delegatorAddress: string,
       startTimestamp: number,
       durationDays: number,
+      extraData: BytesHex = '0x00',
     ): KmsDelegatedUserDecryptEIP712Type => {
       const kmsEIP712 = new KmsEIP712({
         chainId: BigInt(chainId),
@@ -256,7 +273,7 @@ export const createInstance = async (
         delegatorAddress,
         startTimestamp,
         durationDays,
-        extraData: '0x00',
+        extraData,
       });
     },
     publicDecrypt: publicDecryptRequest({
@@ -268,6 +285,7 @@ export const createInstance = async (
       relayerProvider: relayerFhevm.relayerProvider,
       provider,
       defaultOptions,
+      kmsContextCache,
     }),
     userDecrypt: userDecryptRequest({
       kmsSigners,
@@ -278,6 +296,7 @@ export const createInstance = async (
       relayerProvider: relayerFhevm.relayerProvider,
       provider,
       defaultOptions,
+      kmsContextCache,
     }),
     delegatedUserDecrypt: delegatedUserDecryptRequest({
       kmsSigners,
@@ -288,6 +307,7 @@ export const createInstance = async (
       relayerProvider: relayerFhevm.relayerProvider,
       provider,
       defaultOptions,
+      kmsContextCache,
     }),
     getPublicKey: () => {
       const pk = relayerFhevm.getPublicKeyBytes();

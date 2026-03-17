@@ -26,6 +26,12 @@ describe('RelayerV2ApiError400NoDetails', () => {
         message: 'hello',
       }),
     ).toBe(true);
+    expect(
+      isRelayerApiError400NoDetailsType({
+        label: 'not_allowed_on_host_acl',
+        message: 'hello',
+      }),
+    ).toBe(true);
     expect(isRelayerApiError400NoDetailsType(undefined)).toBe(false);
     expect(isRelayerApiError400NoDetailsType(null)).toBe(false);
     expect(isRelayerApiError400NoDetailsType({})).toBe(false);
@@ -81,6 +87,16 @@ describe('RelayerV2ApiError400NoDetails', () => {
       ),
     ).not.toThrow();
 
+    expect(() =>
+      assertIsRelayerApiError400NoDetailsType(
+        {
+          label: 'not_allowed_on_host_acl',
+          message: 'hello',
+        },
+        'Foo',
+      ),
+    ).not.toThrow();
+
     // False
     expect(() => assertIsRelayerApiError400NoDetailsType({}, 'Foo')).toThrow(
       new InvalidPropertyError({
@@ -109,6 +125,7 @@ describe('RelayerV2ApiError400NoDetails', () => {
           'malformed_json',
           'request_error',
           'not_ready_for_decryption',
+          'not_allowed_on_host_acl',
         ],
       }),
     );

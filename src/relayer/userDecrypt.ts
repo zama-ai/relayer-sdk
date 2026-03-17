@@ -17,6 +17,9 @@ import { Contract, getAddress as ethersGetAddress } from 'ethers';
 import { bytesToBigInt, bytesToHex, hexToBytes } from '@base/bytes';
 import { AbstractRelayerProvider } from '@relayer-provider/AbstractRelayerProvider';
 import { check2048EncryptedBits } from './decryptUtils';
+import type { KmsContextCache } from '@sdk/kms/KmsContextCache';
+import { isLegacyExtraData, parseExtraData } from '@sdk/kms/extraData';
+import type { RelayerUserDecryptResult } from '@relayer-provider/types/public-api';
 
 interface DelegatedUserDecryptRequest {
   kmsSigners: string[];
@@ -26,6 +29,7 @@ interface DelegatedUserDecryptRequest {
   aclContractAddress: string;
   relayerProvider: AbstractRelayerProvider;
   provider: EthersProviderType;
+  kmsContextCache: KmsContextCache;
   defaultOptions?: FhevmInstanceOptions;
 }
 
@@ -152,6 +156,44 @@ function buildUserDecryptResults(
   return results;
 }
 
+/**
+ * Resolves effective signers from a user decrypt response's extraData.
+ *
+ * Per RFC 003, all items in one aggregated response share the same context.
+ * The SDK asserts uniformity and throws on mismatch. Mixed-context responses
+ * are an explicit non-goal.
+ *
+ * @internal Exported for unit testing only — not part of the public API.
+ */
+export async function resolveEffectiveSigners(
+  json: RelayerUserDecryptResult,
+  kmsSigners: string[],
+  kmsContextCache: KmsContextCache,
+): Promise<string[]> {
+  // Empty response: use init-time signers (no extraData to extract context from)
+  if (json.length === 0) {
+    return [...kmsSigners];
+  }
+
+  // Take extraData from first item, assert all items are identical
+  const responseExtraData = json[0].extraData;
+  for (let i = 1; i < json.length; i++) {
+    if (json[i].extraData !== responseExtraData) {
+      throw new Error(
+        'Mixed context IDs in user decrypt response are not supported',
+      );
+    }
+  }
+
+  if (isLegacyExtraData(responseExtraData)) {
+    return [...kmsSigners];
+  }
+
+  // Context path: fail closed — RPC errors propagate
+  const { contextId } = parseExtraData(responseExtraData);
+  return kmsContextCache.getSignersForContext(contextId);
+}
+
 function checkDeadlineValidity(startTimestamp: bigint, durationDays: bigint) {
   if (durationDays === BigInt(0)) {
     throw Error('durationDays is null');
@@ -184,6 +226,7 @@ export const userDecryptRequest =
     relayerProvider,
     provider,
     defaultOptions,
+    kmsContextCache,
   }: {
     kmsSigners: string[];
     gatewayChainId: number;
@@ -192,6 +235,7 @@ export const userDecryptRequest =
     aclContractAddress: string;
     relayerProvider: AbstractRelayerProvider;
     provider: EthersProviderType;
+    kmsContextCache: KmsContextCache;
     defaultOptions?: FhevmInstanceOptions;
   }) =>
   async (
@@ -203,10 +247,9 @@ export const userDecryptRequest =
     userAddress: string,
     startTimestamp: string | number,
     durationDays: string | number,
+    extraData: BytesHex,
     options?: RelayerUserDecryptOptionsType,
   ): Promise<UserDecryptResults> => {
-    const extraData: BytesHex = '0x00';
-
     const { pubKey, privKey } = parseKeys(publicKey, privateKey);
 
     // Sanitize hex strings
@@ -236,13 +279,20 @@ export const userDecryptRequest =
       extraData,
     };
 
-    const json = await relayerProvider.fetchPostUserDecrypt(payloadForRequest, {
-      ...defaultOptions,
-      ...options,
-    });
+    const relayerUserDecryptResults =
+      await relayerProvider.fetchPostUserDecrypt(payloadForRequest, {
+        ...defaultOptions,
+        ...options,
+      });
 
-    // assume the KMS Signers have the correct order
-    let indexedKmsSigners = kmsSigners.map((signer, index) => {
+    // Response side: resolve context-aware signers
+    const effectiveSigners = await resolveEffectiveSigners(
+      relayerUserDecryptResults,
+      kmsSigners,
+      kmsContextCache,
+    );
+
+    let indexedKmsSigners = effectiveSigners.map((signer, index) => {
       return TKMSModule.new_server_id_addr(index + 1, signer);
     });
 
@@ -275,11 +325,20 @@ export const userDecryptRequest =
         eip712_verifying_contract: verifyingContractAddressDecryption,
       };
 
+      // Transform response to match node-tkms expected format
+      const tkmsUserDecryptResults = relayerUserDecryptResults.map(
+        (result) => ({
+          payload: result.payload,
+          signature: result.signature,
+          extra_data: result.extraData.replace(/^0x/, ''),
+        }),
+      );
+
       const decryption = TKMSModule.process_user_decryption_resp_from_js(
         client,
         payloadForVerification,
         eip712Domain,
-        json, //json.response,
+        tkmsUserDecryptResults,
         pubKey,
         privKey,
         true,
@@ -309,6 +368,7 @@ export const delegatedUserDecryptRequest =
     relayerProvider,
     provider,
     defaultOptions,
+    kmsContextCache,
   }: DelegatedUserDecryptRequest) =>
   async (
     handleContractPairs: HandleContractPair[],
@@ -320,10 +380,9 @@ export const delegatedUserDecryptRequest =
     delegateAddress: string,
     startTimestamp: string | number,
     durationDays: string | number,
+    extraData: BytesHex,
     options?: RelayerUserDecryptOptionsType,
   ): Promise<UserDecryptResults> => {
-    const extraData: BytesHex = '0x00';
-
     const { pubKey, privKey } = parseKeys(publicKey, privateKey);
 
     // Sanitize hex strings
@@ -358,16 +417,23 @@ export const delegatedUserDecryptRequest =
       extraData,
     };
 
-    const json = await relayerProvider.fetchPostDelegatedUserDecrypt(
-      delegatedUserDecryptPayload,
-      {
-        ...defaultOptions,
-        ...options,
-      },
+    const relayerUserDecryptResults =
+      await relayerProvider.fetchPostDelegatedUserDecrypt(
+        delegatedUserDecryptPayload,
+        {
+          ...defaultOptions,
+          ...options,
+        },
+      );
+
+    // Response side: resolve context-aware signers
+    const effectiveSigners = await resolveEffectiveSigners(
+      relayerUserDecryptResults,
+      kmsSigners,
+      kmsContextCache,
     );
 
-    // Assume the KMS signers have the correct order.
-    let indexedKmsSigners = kmsSigners.map((signer, index) => {
+    let indexedKmsSigners = effectiveSigners.map((signer, index) => {
       return TKMSModule.new_server_id_addr(index + 1, signer);
     });
 
@@ -400,11 +466,20 @@ export const delegatedUserDecryptRequest =
         eip712_verifying_contract: verifyingContractAddressDecryption,
       };
 
+      // Transform response to match node-tkms expected format
+      const tkmsUserDecryptResults = relayerUserDecryptResults.map(
+        (result) => ({
+          payload: result.payload,
+          signature: result.signature,
+          extra_data: result.extraData.replace(/^0x/, ''),
+        }),
+      );
+
       const decryption = TKMSModule.process_user_decryption_resp_from_js(
         client,
         payloadForVerification,
         eip712Domain,
-        json,
+        tkmsUserDecryptResults,
         pubKey,
         privKey,
         true,

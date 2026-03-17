@@ -52,6 +52,16 @@ describe('RelayerV2ResponseFailed', () => {
       assertIsRelayerV2ResponseFailed(
         {
           status: 'failed',
+          error: { ...err, label: 'not_allowed_on_host_acl' },
+        },
+        'Foo',
+      ),
+    ).not.toThrow();
+
+    expect(() =>
+      assertIsRelayerV2ResponseFailed(
+        {
+          status: 'failed',
           error: { ...err, label: 'missing_fields', details: [] },
         },
         'Foo',
@@ -169,6 +179,7 @@ describe('RelayerV2ResponseFailed', () => {
           'malformed_json',
           'request_error',
           'not_ready_for_decryption',
+          'not_allowed_on_host_acl',
           'missing_fields',
           'validation_failed',
           'rate_limited',

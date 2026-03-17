@@ -337,9 +337,9 @@ export function assertIsRelayerUserDecryptResult(
     });
   }
   for (let i = 0; i < value.length; ++i) {
-    // Missing extraData
     assertRecordBytesHexNo0xProperty(value[i], 'payload', `${name}[i]`);
     assertRecordBytesHexNo0xProperty(value[i], 'signature', `${name}[i]`);
+    assertRecordBytesHexProperty(value[i], 'extraData', `${name}[i]`);
   }
 }
 
