@@ -279,14 +279,15 @@ export const userDecryptRequest =
       extraData,
     };
 
-    const json = await relayerProvider.fetchPostUserDecrypt(payloadForRequest, {
-      ...defaultOptions,
-      ...options,
-    });
+    const relayerUserDecryptResults =
+      await relayerProvider.fetchPostUserDecrypt(payloadForRequest, {
+        ...defaultOptions,
+        ...options,
+      });
 
     // Response side: resolve context-aware signers
     const effectiveSigners = await resolveEffectiveSigners(
-      json,
+      relayerUserDecryptResults,
       kmsSigners,
       kmsContextCache,
     );
@@ -324,11 +325,20 @@ export const userDecryptRequest =
         eip712_verifying_contract: verifyingContractAddressDecryption,
       };
 
+      // Transform response to match node-tkms expected format
+      const tkmsUserDecryptResults = relayerUserDecryptResults.map(
+        (result) => ({
+          payload: result.payload,
+          signature: result.signature,
+          extra_data: result.extraData.replace(/^0x/, ''),
+        }),
+      );
+
       const decryption = TKMSModule.process_user_decryption_resp_from_js(
         client,
         payloadForVerification,
         eip712Domain,
-        json, //json.response,
+        tkmsUserDecryptResults,
         pubKey,
         privKey,
         true,
@@ -407,17 +417,18 @@ export const delegatedUserDecryptRequest =
       extraData,
     };
 
-    const json = await relayerProvider.fetchPostDelegatedUserDecrypt(
-      delegatedUserDecryptPayload,
-      {
-        ...defaultOptions,
-        ...options,
-      },
-    );
+    const relayerUserDecryptResults =
+      await relayerProvider.fetchPostDelegatedUserDecrypt(
+        delegatedUserDecryptPayload,
+        {
+          ...defaultOptions,
+          ...options,
+        },
+      );
 
     // Response side: resolve context-aware signers
     const effectiveSigners = await resolveEffectiveSigners(
-      json,
+      relayerUserDecryptResults,
       kmsSigners,
       kmsContextCache,
     );
@@ -455,11 +466,20 @@ export const delegatedUserDecryptRequest =
         eip712_verifying_contract: verifyingContractAddressDecryption,
       };
 
+      // Transform response to match node-tkms expected format
+      const tkmsUserDecryptResults = relayerUserDecryptResults.map(
+        (result) => ({
+          payload: result.payload,
+          signature: result.signature,
+          extra_data: result.extraData.replace(/^0x/, ''),
+        }),
+      );
+
       const decryption = TKMSModule.process_user_decryption_resp_from_js(
         client,
         payloadForVerification,
         eip712Domain,
-        json,
+        tkmsUserDecryptResults,
         pubKey,
         privKey,
         true,

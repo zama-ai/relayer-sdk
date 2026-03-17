@@ -232,6 +232,8 @@ export const publicDecryptRequest =
     options?: RelayerPublicDecryptOptionsType,
   ): Promise<PublicDecryptResults> => {
     // Request side: build dynamic extraData from current context ID
+    // Contrary to the userDecrypt flow, the publicDecrypt doesn't require for an EIP-712 signature from the user,
+    // so the SDK can safely fetch the current context ID and build the extraData transparently to the user.
     const currentContextId = await kmsContextCache.getCurrentContextId();
     const extraData = buildRequestExtraData(currentContextId);
 
