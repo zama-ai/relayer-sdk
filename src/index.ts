@@ -246,7 +246,7 @@ export const createInstance = async (
       contractAddresses: string[],
       startTimestamp: number,
       durationDays: number,
-      extraData: BytesHex = '0x00',
+      extraData: BytesHex,
     ): KmsUserDecryptEIP712Type => {
       const kmsEIP712 = new KmsEIP712({
         chainId: BigInt(chainId),
@@ -266,7 +266,7 @@ export const createInstance = async (
       delegatorAddress: string,
       startTimestamp: number,
       durationDays: number,
-      extraData: BytesHex = '0x00',
+      extraData: BytesHex,
     ): KmsDelegatedUserDecryptEIP712Type => {
       const kmsEIP712 = new KmsEIP712({
         chainId: BigInt(chainId),
