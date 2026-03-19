@@ -370,7 +370,6 @@ export class FhevmHostChain implements FhevmConfigType {
   public get gatewayChainId(): bigint {
     return this.#inputVerifier.gatewayChainId;
   }
-
 }
 
 ////////////////////////////////////////////////////////////////////////////////
