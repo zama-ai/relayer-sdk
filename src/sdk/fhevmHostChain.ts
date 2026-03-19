@@ -11,7 +11,6 @@ import { isUint64 } from '@base/uint';
 import { FhevmConfigError } from '../errors/FhevmConfigError';
 import { InputVerifier } from './InputVerifier';
 import { KMSVerifier } from './KMSVerifier';
-import { KmsContextCache } from './kms/KmsContextCache';
 import { executeWithBatching } from '@base/promise';
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -244,7 +243,6 @@ export class FhevmHostChain implements FhevmConfigType {
   readonly #config: FhevmHostChainConfig;
   readonly #inputVerifier: InputVerifier;
   readonly #kmsVerifier: KMSVerifier;
-  readonly #kmsContextCache: KmsContextCache;
 
   private constructor(params: {
     config: FhevmHostChainConfig;
@@ -254,11 +252,6 @@ export class FhevmHostChain implements FhevmConfigType {
     this.#config = params.config;
     this.#inputVerifier = params.inputVerifier;
     this.#kmsVerifier = params.kmsVerifier;
-    // Structurally eager, operationally lazy: no RPC calls until first use.
-    this.#kmsContextCache = KmsContextCache.create({
-      kmsContractAddress: this.#config.kmsContractAddress,
-      provider: this.#config.ethersProvider,
-    });
   }
 
   public static async loadFromChain(
@@ -378,9 +371,6 @@ export class FhevmHostChain implements FhevmConfigType {
     return this.#inputVerifier.gatewayChainId;
   }
 
-  public get kmsContextCache(): KmsContextCache {
-    return this.#kmsContextCache;
-  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////

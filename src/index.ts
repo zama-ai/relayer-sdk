@@ -51,6 +51,7 @@ import { RelayerZKProofBuilder } from './relayer-provider/RelayerZKProofBuilder'
 import { CoprocessorSignersVerifier } from './sdk/coprocessor/CoprocessorSignersVerifier';
 import { InputProof } from './sdk/coprocessor/InputProof';
 import { KmsEIP712, TKMSPkeKeypair } from './sdk';
+import { KmsContextCache } from './sdk/kms/KmsContextCache';
 import { buildRequestExtraData } from './sdk/kms/extraData';
 
 export { getErrorCauseStatus, getErrorCauseCode } from './relayer/error';
@@ -186,7 +187,11 @@ export const createInstance = async (
   const thresholdCoprocessorSigners =
     relayerFhevm.fhevmHostChain.coprocessorSignerThreshold;
   const provider = relayerFhevm.fhevmHostChain.ethersProvider;
-  const kmsContextCache = relayerFhevm.fhevmHostChain.kmsContextCache;
+  // Structurally eager, operationally lazy: no RPC calls until first use.
+  const kmsContextCache = KmsContextCache.create({
+    kmsContractAddress: relayerFhevm.fhevmHostChain.kmsContractAddress,
+    provider,
+  });
 
   return {
     config: relayerFhevm.fhevmHostChain,

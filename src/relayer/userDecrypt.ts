@@ -315,7 +315,7 @@ export const userDecryptRequest =
         salt: null,
       };
 
-      const payloadForVerification = {
+      const dataInRequest = {
         signature: signatureSanitized,
         client_address: userAddress,
         enc_key: publicKeySanitized,
@@ -336,7 +336,7 @@ export const userDecryptRequest =
 
       const decryption = TKMSModule.process_user_decryption_resp_from_js(
         client,
-        payloadForVerification,
+        dataInRequest,
         eip712Domain,
         tkmsUserDecryptResults,
         pubKey,
@@ -456,7 +456,7 @@ export const delegatedUserDecryptRequest =
         salt: null,
       };
 
-      const payloadForVerification = {
+      const dataInRequest = {
         signature: signatureSanitized,
         client_address: delegateAddress,
         enc_key: publicKeySanitized,
@@ -477,7 +477,7 @@ export const delegatedUserDecryptRequest =
 
       const decryption = TKMSModule.process_user_decryption_resp_from_js(
         client,
-        payloadForVerification,
+        dataInRequest,
         eip712Domain,
         tkmsUserDecryptResults,
         pubKey,
