@@ -1,5 +1,8 @@
 import type { RelayerV2ResultUserDecrypt } from '../types';
-import { assertRecordBytesHexNo0xProperty } from '@base/bytes';
+import {
+  assertRecordBytesHexNo0xProperty,
+  assertRecordBytesHexProperty,
+} from '@base/bytes';
 import { assertRecordArrayProperty } from '@base/record';
 
 /**
@@ -21,7 +24,6 @@ export function assertIsRelayerV2ResultUserDecrypt(
 
   assertRecordArrayProperty(value, 'result' satisfies keyof T, name);
   for (let i = 0; i < value.result.length; ++i) {
-    // Missing extraData
     assertRecordBytesHexNo0xProperty(
       value.result[i],
       'payload' satisfies keyof ResultItem,
@@ -30,6 +32,11 @@ export function assertIsRelayerV2ResultUserDecrypt(
     assertRecordBytesHexNo0xProperty(
       value.result[i],
       'signature' satisfies keyof ResultItem,
+      `${name}.result[${i}]`,
+    );
+    assertRecordBytesHexProperty(
+      value.result[i],
+      'extraData' satisfies keyof ResultItem,
       `${name}.result[${i}]`,
     );
   }
