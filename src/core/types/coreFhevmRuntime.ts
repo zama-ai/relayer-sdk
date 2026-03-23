@@ -1,9 +1,5 @@
 import type { EthereumModule } from "../modules/ethereum/types.js";
-import type {
-  RelayerModule,
-  RelayerModuleFactory,
-  WithRelayerModule,
-} from "../modules/relayer/types.js";
+import type { RelayerModule } from "../modules/relayer/types.js";
 import type {
   EncryptModule,
   EncryptModuleFactory,
@@ -26,6 +22,7 @@ export type FhevmRuntimeConfig = {
 // eslint-disable-next-line @typescript-eslint/naming-convention
 interface FhevmRuntime_Base {
   readonly ethereum: EthereumModule;
+  readonly relayer: RelayerModule;
   readonly uid: string;
   readonly config: FhevmRuntimeConfig;
 
@@ -36,10 +33,6 @@ interface FhevmRuntime_Base {
   extend(
     factory: EncryptModuleFactory,
   ): this & { readonly encrypt: EncryptModule };
-
-  extend(
-    factory: RelayerModuleFactory,
-  ): this & { readonly relayer: RelayerModule };
 }
 
 export type FhevmRuntime<Extensions extends object = object> =
@@ -48,16 +41,5 @@ export type FhevmRuntime<Extensions extends object = object> =
 // Convenience types for CoreFhevmClient<R> generics
 export type WithDecrypt = FhevmRuntime<WithDecryptModule>;
 export type WithEncrypt = FhevmRuntime<WithEncryptModule>;
-export type WithRelayer = FhevmRuntime<WithRelayerModule>;
 
-export type WithEncryptAndRelayer = FhevmRuntime<
-  WithEncryptModule & WithRelayerModule
->;
-
-export type WithDecryptAndRelayer = FhevmRuntime<
-  WithDecryptModule & WithRelayerModule
->;
-
-export type WithAll = FhevmRuntime<
-  WithEncryptModule & WithDecryptModule & WithRelayerModule
->;
+export type WithAll = FhevmRuntime<WithEncryptModule & WithDecryptModule>;

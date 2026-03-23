@@ -1,6 +1,5 @@
 export { setFhevmRuntimeConfig } from "./internal/ethers-p.js";
 export { createFhevmClient } from "./clients/createFhevmClient.js";
-export { createFhevm as createFhevmHostClient } from "./clients/createFhevm.js";
 export { createFhevmDecryptClient } from "./clients/createFhevmDecryptClient.js";
 export { createFhevmEncryptClient } from "./clients/createFhevmEncryptClient.js";
 
@@ -9,7 +8,6 @@ export type {
   FhevmRuntime,
   WithEncrypt,
   WithDecrypt,
-  WithRelayer,
 } from "../core/types/coreFhevmRuntime.js";
 
 export type { WithEncryptModule } from "../core/modules/encrypt/types.js";

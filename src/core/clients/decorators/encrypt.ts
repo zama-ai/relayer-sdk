@@ -14,7 +14,7 @@ import {
   type FetchGlobalFhePkeParamsBytesReturnType,
 } from "../../actions/key/fetchGlobalFhePkeParamsBytes.js";
 import type { Fhevm } from "../../types/coreFhevmClient.js";
-import type { WithEncryptAndRelayer } from "../../types/coreFhevmRuntime.js";
+import type { WithEncrypt } from "../../types/coreFhevmRuntime.js";
 import type { FhevmChain } from "../../types/fhevmChain.js";
 
 export type EncryptActions = {
@@ -30,7 +30,7 @@ export type EncryptActions = {
 };
 
 export function encryptActions(
-  fhevm: Fhevm<FhevmChain, WithEncryptAndRelayer>,
+  fhevm: Fhevm<FhevmChain, WithEncrypt>,
 ): EncryptActions {
   return {
     encrypt: (parameters) => encrypt(fhevm, parameters),

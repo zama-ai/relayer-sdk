@@ -1,27 +1,29 @@
-import type { WithDecryptAndRelayer } from "../types/coreFhevmRuntime.js";
-import { decryptActions, type DecryptActions } from "./decorators/decrypt.js";
-import {
-  createCoreFhevm,
-  extendCoreFhevm,
-  type CreateCoreFhevmParameters,
-} from "../runtime/CoreFhevm-p.js";
+import type { FhevmRuntime, WithDecrypt } from "../types/coreFhevmRuntime.js";
+import type { DecryptActions } from "./decorators/decrypt.js";
 import type { FhevmChain } from "../types/fhevmChain.js";
-import type { Fhevm, NativeClient } from "../types/coreFhevmClient.js";
+import type {
+  Fhevm,
+  NativeClient,
+  OptionalNativeClient,
+} from "../types/coreFhevmClient.js";
+import { asFhevmRuntimeWith } from "../runtime/CoreFhevmRuntime-p.js";
 
 export type FhevmDecryptClient<
   chain extends FhevmChain = FhevmChain,
-  runtime extends WithDecryptAndRelayer = WithDecryptAndRelayer,
+  runtime extends WithDecrypt = WithDecrypt,
   client extends NativeClient = NativeClient,
 > = Fhevm<chain, runtime, client> & DecryptActions;
 
-export function createFhevmDecryptClient<
+/**
+ * @internal
+ */
+export function asFhevmDecryptClient<
   chain extends FhevmChain = FhevmChain,
-  runtime extends WithDecryptAndRelayer = WithDecryptAndRelayer,
-  client extends NativeClient = NativeClient,
+  runtime extends FhevmRuntime = FhevmRuntime,
+  client extends OptionalNativeClient = NativeClient,
 >(
-  ownerToken: symbol,
-  parameters: CreateCoreFhevmParameters<chain, runtime, client>,
-): FhevmDecryptClient<chain, runtime, client> {
-  const c = createCoreFhevm(ownerToken, parameters);
-  return extendCoreFhevm(c, decryptActions);
+  fhevm: Fhevm<chain, runtime, client>,
+): Fhevm<chain, runtime & WithDecrypt, client> {
+  asFhevmRuntimeWith(fhevm.runtime, "decrypt");
+  return fhevm as Fhevm<chain, runtime & WithDecrypt, client>;
 }

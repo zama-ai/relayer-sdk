@@ -4,12 +4,19 @@ import type { FhevmDecryptionKey } from "./FhevmDecryptionKey-p.js";
 import {
   createFhevmDecryptionKey,
   isFhevmDecryptionKey,
+  loadFhevmDecryptionKey,
 } from "./FhevmDecryptionKey-p.js";
-import type { FhevmRuntime } from "../types/coreFhevmRuntime.js";
+import type { WithDecrypt } from "../types/coreFhevmRuntime.js";
 import type { FhevmUser } from "../types/fhevmUser.js";
-import type { ChecksummedAddress, Bytes } from "../types/primitives.js";
+import type {
+  ChecksummedAddress,
+  Bytes,
+  BytesHex,
+} from "../types/primitives.js";
 import type { TkmsPrivateKey } from "../types/tkms-p.js";
-import type { WithDecryptModule } from "../modules/decrypt/types.js";
+import type { Fhevm, OptionalNativeClient } from "../types/coreFhevmClient.js";
+import type { FhevmChain } from "../types/fhevmChain.js";
+import { isBytes } from "../base/bytes.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 // FhevmUserImpl
@@ -67,17 +74,27 @@ export function assertIsFhevmUser(
 
 /** Creates a {@link FhevmUser} by binding an address and a private key into an immutable object. */
 export async function createFhevmUser(
-  fhevmRuntime: FhevmRuntime<WithDecryptModule>,
+  fhevm: Fhevm<FhevmChain | undefined, WithDecrypt, OptionalNativeClient>,
   parameters: {
-    address: ChecksummedAddress;
-    privateKey: Bytes | TkmsPrivateKey | FhevmDecryptionKey;
+    readonly address: ChecksummedAddress;
+    readonly privateKey: BytesHex | Bytes | TkmsPrivateKey | FhevmDecryptionKey;
   },
 ): Promise<FhevmUser> {
-  const decryptionKey = isFhevmDecryptionKey(parameters.privateKey)
-    ? parameters.privateKey
-    : await createFhevmDecryptionKey(fhevmRuntime, {
-        tkmsPrivateKey: parameters.privateKey,
-      });
+  let decryptionKey: FhevmDecryptionKey;
+  if (isFhevmDecryptionKey(parameters.privateKey)) {
+    decryptionKey = parameters.privateKey;
+  } else if (
+    typeof parameters.privateKey === "string" ||
+    isBytes(parameters.privateKey)
+  ) {
+    decryptionKey = await loadFhevmDecryptionKey(fhevm, {
+      tkmsPrivateKeyBytes: parameters.privateKey,
+    });
+  } else {
+    decryptionKey = await createFhevmDecryptionKey(fhevm.runtime, {
+      tkmsPrivateKey: parameters.privateKey,
+    });
+  }
 
   return new FhevmUserImpl({
     address: parameters.address,

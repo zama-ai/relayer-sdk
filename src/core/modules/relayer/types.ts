@@ -1,4 +1,10 @@
-import type { FhevmRuntime } from "../../types/coreFhevmRuntime.js";
+import type {
+  RelayerDelegatedUserDecryptOptions,
+  RelayerInputProofOptions,
+  RelayerKeyUrlOptions,
+  RelayerPublicDecryptOptions,
+  RelayerUserDecryptOptions,
+} from "../../types/relayer.js";
 import type { FhevmHandle } from "../../types/fhevmHandle.js";
 import type {
   GlobalFhePkeParamsBytes,
@@ -25,14 +31,12 @@ import type { ZkProof } from "../../types/zkProof.js";
 
 export type RelayerClient = { readonly relayerUrl: string };
 
-export type RelayerFetchOptions = unknown;
-
 ////////////////////////////////////////////////////////////////////////////////
 // 1.1 fetchGlobalFhePkeParamsSource
 ////////////////////////////////////////////////////////////////////////////////
 
 export type FetchGlobalFhePkeParamsSourceParameters = {
-  readonly options?: RelayerFetchOptions;
+  readonly options?: RelayerKeyUrlOptions | undefined;
 };
 
 export type FetchGlobalFhePkeParamsSourceReturnType = GlobalFhePkeParamsSource;
@@ -49,7 +53,7 @@ export type FetchGlobalFhePkeParamsSourceModuleFunction = {
 ////////////////////////////////////////////////////////////////////////////////
 
 export type FetchGlobalFhePkeParamsBytesParameters = {
-  readonly options?: RelayerFetchOptions;
+  readonly options?: RelayerKeyUrlOptions | undefined;
 };
 
 export type FetchGlobalFhePkeParamsBytesReturnType = GlobalFhePkeParamsBytes;
@@ -70,7 +74,7 @@ export type FetchCoprocessorSignaturesParameters = {
     readonly zkProof: ZkProof;
     readonly extraData: BytesHex;
   };
-  readonly options?: RelayerFetchOptions;
+  readonly options?: RelayerInputProofOptions | undefined;
 };
 
 export type FetchCoprocessorSignaturesReturnType = {
@@ -95,7 +99,7 @@ export type FetchPublicDecryptParameters = {
     readonly orderedHandles: readonly FhevmHandle[];
     readonly extraData: BytesHex;
   };
-  readonly options?: RelayerFetchOptions;
+  readonly options?: RelayerPublicDecryptOptions | undefined;
 };
 
 export type FetchPublicDecryptReturnType = {
@@ -124,7 +128,7 @@ export type FetchUserDecryptParameters = {
     readonly kmsUserDecryptEIP712Message: KmsUserDecryptEIP712Message;
     readonly kmsUserDecryptEIP712Signature: Bytes65Hex;
   };
-  readonly options?: RelayerFetchOptions;
+  readonly options?: RelayerUserDecryptOptions | undefined;
 };
 
 export type FetchUserDecryptReturnType = readonly KmsSigncryptedShare[];
@@ -150,7 +154,7 @@ export type FetchDelegatedUserDecryptParameters = {
     readonly kmsDelegatedUserDecryptEIP712Message: KmsDelegatedUserDecryptEIP712Message;
     readonly kmsDelegatedUserDecryptEIP712Signature: Bytes65Hex;
   };
-  readonly options?: RelayerFetchOptions;
+  readonly options?: RelayerDelegatedUserDecryptOptions | undefined;
 };
 
 export type FetchDelegatedUserDecryptReturnType =
@@ -176,7 +180,8 @@ export type RelayerModule = Prettify<
     FetchDelegatedUserDecryptModuleFunction
 >;
 
-export type RelayerModuleFactory = (runtime: FhevmRuntime) => {
+// Relayer is a base module. It does not take any runtime argument
+export type RelayerModuleFactory = () => {
   readonly relayer: RelayerModule;
 };
 

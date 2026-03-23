@@ -1,8 +1,7 @@
+import type { RelayerPublicDecryptOptions } from "../../../types/relayer.js";
 import { assertFhevmHandlesBelongToSameChainId } from "../../../handle/FhevmHandle.js";
 import { assertKmsDecryptionBitLimit } from "../../../kms/utils.js";
-import type { RelayerFetchOptions } from "../../../modules/relayer/types.js";
 import type { Fhevm } from "../../../types/coreFhevmClient.js";
-import type { WithRelayer } from "../../../types/coreFhevmRuntime.js";
 import type { FhevmChain } from "../../../types/fhevmChain.js";
 import type { FhevmHandle } from "../../../types/fhevmHandle.js";
 import type { BytesHex, Uint64BigInt } from "../../../types/primitives.js";
@@ -13,13 +12,13 @@ import { createPublicDecryptionProof } from "./createPublicDecryptionProof.js";
 export type PublicDecryptParameters = {
   readonly handles: readonly FhevmHandle[];
   readonly extraData: BytesHex;
-  readonly options?: RelayerFetchOptions;
+  readonly options?: RelayerPublicDecryptOptions | undefined;
 };
 
 export type PublicDecryptReturnType = PublicDecryptionProof;
 
 export async function publicDecrypt(
-  fhevm: Fhevm<FhevmChain, WithRelayer>,
+  fhevm: Fhevm<FhevmChain>,
   parameters: PublicDecryptParameters,
 ): Promise<PublicDecryptReturnType> {
   const fhevmHandles = parameters.handles;
@@ -53,7 +52,7 @@ export async function publicDecrypt(
           orderedHandles: fhevmHandles,
           extraData: parameters.extraData,
         },
-        options: parameters.options,
+        options: parameters.options ?? {},
       },
     );
 

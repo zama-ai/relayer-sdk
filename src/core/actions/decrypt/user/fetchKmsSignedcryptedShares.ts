@@ -4,9 +4,7 @@ import {
   assertKmsDecryptionBitLimit,
   assertKmsEIP712DeadlineValidity,
 } from "../../../kms/utils.js";
-import type { RelayerFetchOptions } from "../../../modules/relayer/types.js";
 import type { Fhevm } from "../../../types/coreFhevmClient.js";
-import type { WithRelayer } from "../../../types/coreFhevmRuntime.js";
 import type { FhevmHandle } from "../../../types/fhevmHandle.js";
 import type {
   KmsSigncryptedShare,
@@ -29,6 +27,7 @@ import { checkUserAllowedForDecryption } from "./checkUserAllowedForDecryption.j
 import { createKmsEIP712Domain } from "../../chain/createKmsEIP712Domain.js";
 import { verifyKmsUserDecryptEIP712 } from "../../chain/verifyKmsUserDecryptEIP712.js";
 import type { FhevmChain } from "../../../types/fhevmChain.js";
+import type { RelayerUserDecryptOptions } from "../../../types/relayer.js";
 
 /*
     See: in KMS (eip712Domain)
@@ -53,7 +52,7 @@ type FetchKmsSignedcryptedSharesParameters = Prettify<{
   readonly userDecryptEIP712Signer: ChecksummedAddress;
   readonly userDecryptEIP712Message: KmsUserDecryptEIP712Message;
   readonly userDecryptEIP712Signature: Bytes65Hex;
-  readonly options?: RelayerFetchOptions;
+  readonly options?: RelayerUserDecryptOptions | undefined;
 }>;
 
 export type FetchKmsSignedcryptedSharesReturnType = KmsSigncryptedShares;
@@ -66,7 +65,7 @@ const MAX_USER_DECRYPT_CONTRACT_ADDRESSES = 10;
 const MAX_USER_DECRYPT_DURATION_DAYS = 365 as UintNumber;
 
 export async function fetchKmsSignedcryptedShares(
-  fhevm: Fhevm<FhevmChain, WithRelayer>,
+  fhevm: Fhevm<FhevmChain>,
   parameters: FetchKmsSignedcryptedSharesParameters,
 ): Promise<FetchKmsSignedcryptedSharesReturnType> {
   const {

@@ -9,14 +9,9 @@ import {
   createFhevmEncryptClient,
   setFhevmRuntimeConfig,
 } from "./ethers/index.js";
-import { createFhevm } from "./ethers/clients/createFhevm.js";
 import { sepolia } from "./core/chains/index.js";
 import { ethers } from "ethers";
-import { decryptModule } from "./core/modules/decrypt/module/index.js";
-import {
-  createFhevmDecryptionKey,
-  type FhevmDecryptionKey,
-} from "./core/user/FhevmDecryptionKey-p.js";
+import { decryptActions } from "./ethers/clients/createFhevmDecryptClient.js";
 
 // node --test --import tsx ./src/index.hello.test.ts
 
@@ -83,7 +78,7 @@ describe("hello", () => {
       console.log("threads supported:", supportsThreads);
 
       setConfig(20);
-      const fhevm = createFhevm();
+
       const fhevmDecryptClient = createFhevmDecryptClient({
         chain: sepolia,
         provider: new ethers.JsonRpcProvider(
@@ -91,23 +86,15 @@ describe("hello", () => {
         ),
       });
 
-      const r = fhevm.runtime.extend(decryptModule);
-      const pk = await r.decrypt.generateTkmsPrivateKey();
-      const pkBytes = await r.decrypt.serializeTkmsPrivateKey({
-        tkmsPrivateKey: pk,
-      });
-
-      const decryptionKey: FhevmDecryptionKey = await createFhevmDecryptionKey(
-        r,
-        { tkmsPrivateKey: pkBytes },
-      );
+      const privateDecryptionKey =
+        await fhevmDecryptClient.generateFhevmDecryptionKey();
 
       const eip712 = fhevmDecryptClient.createUserDecryptEIP712({
         contractAddresses: ["0x1E7eA8fE4877E6ea5dc8856f0dA92da8d5066241"],
         durationDays: 356,
         startTimestamp: timestampNow(),
         extraData: "0x00",
-        publicKey: await decryptionKey.getTkmsPublicKeyHex(),
+        publicKey: await privateDecryptionKey.getTkmsPublicKeyHex(),
       });
 
       const fhevmEncryptClient = createFhevmEncryptClient({
@@ -117,10 +104,14 @@ describe("hello", () => {
         ),
       });
 
+      const encryptClientWithDecryptFeatures =
+        fhevmEncryptClient.extend(decryptActions);
+      await encryptClientWithDecryptFeatures.init();
+      await encryptClientWithDecryptFeatures.ready;
+
       const globalFhePkeParams =
         await fhevmEncryptClient.fetchGlobalFhePkeParams();
 
-      console.log(fhevm.uid);
       console.log(fhevmDecryptClient.uid);
 
       //   console.log(fhevmEncryptClient.uid);

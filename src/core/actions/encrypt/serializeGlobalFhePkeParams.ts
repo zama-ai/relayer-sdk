@@ -1,14 +1,10 @@
 import { bytesToHexLarge } from "../../base/bytes.js";
 import { assertGlobalFhePkeParamsOwnedBy } from "../../globalFheKey/GlobalFhePkeParams-p.js";
-import type { WithEncryptModule } from "../../modules/encrypt/types.js";
 import type {
   Fhevm,
   OptionalNativeClient,
 } from "../../types/coreFhevmClient.js";
-import type {
-  FhevmRuntime,
-  WithEncrypt,
-} from "../../types/coreFhevmRuntime.js";
+import type { WithEncrypt } from "../../types/coreFhevmRuntime.js";
 import type { FhevmChain } from "../../types/fhevmChain.js";
 import {
   type GlobalFheCrsBytes,
@@ -26,18 +22,18 @@ export type SerializeGlobalFhePkeParamsParameters = GlobalFhePkeParams;
 export type SerializeGlobalFhePkeParamsReturnType = GlobalFhePkeParamsBytes;
 
 export async function serializeGlobalFhePkeParams(
-  fhevmRuntime: FhevmRuntime<WithEncryptModule>,
+  fhevm: Fhevm<FhevmChain | undefined, WithEncrypt, OptionalNativeClient>,
   parameters: SerializeGlobalFhePkeParamsParameters,
 ): Promise<SerializeGlobalFhePkeParamsReturnType> {
-  assertGlobalFhePkeParamsOwnedBy(parameters, fhevmRuntime);
+  assertGlobalFhePkeParamsOwnedBy(parameters, fhevm.runtime);
 
   const publicKeyBytes: GlobalFhePublicKeyBytes =
-    await fhevmRuntime.encrypt.serializeGlobalFhePublicKey({
+    await fhevm.runtime.encrypt.serializeGlobalFhePublicKey({
       globalFhePublicKey: parameters.publicKey,
     });
 
   const crsBytes: GlobalFheCrsBytes =
-    await fhevmRuntime.encrypt.serializeGlobalFheCrs({
+    await fhevm.runtime.encrypt.serializeGlobalFheCrs({
       globalFheCrs: parameters.crs,
     });
 

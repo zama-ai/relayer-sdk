@@ -11,6 +11,7 @@ import type {
 } from "../../core/types/coreFhevmRuntime.js";
 import { createTrustedClient } from "../../core/modules/ethereum/createTrustedClient.js";
 import { ethereumModule } from "./ethereum.js";
+import { relayerModule } from "../../core/modules/relayer/module/index.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -60,8 +61,11 @@ export function getEthersRuntime(): FhevmRuntime {
   }
 
   const em = ethereumModule();
+  const rm = relayerModule();
+
   cachedEthersRuntime ??= createFhevmRuntime({
     ethereum: em.ethereum,
+    relayer: rm.relayer,
     config: globalFhevmRuntimeConfig,
   });
   return cachedEthersRuntime;
@@ -98,6 +102,8 @@ export function trustedClientToEthersContractRunner<
 >(trustedClient: TrustedClient<client>): client {
   return verifyTrustedValue(trustedClient, PRIVATE_ETHERS_TOKEN);
 }
+
+////////////////////////////////////////////////////////////////////////////////
 
 export function createFhevmRuntime(
   parameters: CreateFhevmRuntimeParameters,

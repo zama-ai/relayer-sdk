@@ -1,4 +1,5 @@
-import { isBytes } from "../base/bytes.js";
+import type { Fhevm, OptionalNativeClient } from "../types/coreFhevmClient.js";
+import { bytesToHexLarge, hexToBytesFaster } from "../base/bytes.js";
 import type { ErrorMetadataParams } from "../base/errors/ErrorBase.js";
 import { InvalidTypeError } from "../base/errors/InvalidTypeError.js";
 import type {
@@ -7,14 +8,17 @@ import type {
   GetTkmsPublicKeyHexUserModuleFunction,
   WithDecryptModule,
 } from "../modules/decrypt/types.js";
-import type { FhevmRuntime } from "../types/coreFhevmRuntime.js";
-import type { Bytes } from "../types/primitives.js";
+import type { FhevmRuntime, WithDecrypt } from "../types/coreFhevmRuntime.js";
+import type { Bytes, BytesHex } from "../types/primitives.js";
 import type { TkmsPrivateKey } from "../types/tkms-p.js";
+import type { FhevmChain } from "../types/fhevmChain.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 export type FhevmDecryptionKey = GetTkmsPublicKeyHexUserModuleFunction &
-  DecryptAndReconstructUserModuleFunction;
+  DecryptAndReconstructUserModuleFunction & {
+    readonly serialize: () => Promise<BytesHex>;
+  };
 
 ////////////////////////////////////////////////////////////////////////////////
 // FhevmDecryptionKeyImpl
@@ -29,13 +33,16 @@ export type FhevmDecryptionKey = GetTkmsPublicKeyHexUserModuleFunction &
 class FhevmDecryptionKeyImpl implements FhevmDecryptionKey {
   readonly decryptAndReconstruct: DecryptAndReconstructUserModuleFunction["decryptAndReconstruct"];
   readonly getTkmsPublicKeyHex: GetTkmsPublicKeyHexUserModuleFunction["getTkmsPublicKeyHex"];
+  readonly serialize: () => Promise<BytesHex>;
 
   constructor(parameters: {
     decryptAndReconstruct: DecryptAndReconstructUserModuleFunction["decryptAndReconstruct"];
     getTkmsPublicKeyHex: GetTkmsPublicKeyHexUserModuleFunction["getTkmsPublicKeyHex"];
+    serialize: () => Promise<BytesHex>;
   }) {
     this.decryptAndReconstruct = parameters.decryptAndReconstruct;
     this.getTkmsPublicKeyHex = parameters.getTkmsPublicKeyHex;
+    this.serialize = parameters.serialize;
     Object.freeze(this);
   }
 }
@@ -77,19 +84,13 @@ export function assertIsFhevmDecryptionKey(
 export async function createFhevmDecryptionKey(
   fhevmRuntime: FhevmRuntime<WithDecryptModule>,
   parameters: {
-    tkmsPrivateKey: Bytes | TkmsPrivateKey;
+    tkmsPrivateKey: TkmsPrivateKey;
   },
 ): Promise<FhevmDecryptionKey> {
-  let tkmsPrivateKey: TkmsPrivateKey;
-
-  if (isBytes(parameters.tkmsPrivateKey)) {
-    tkmsPrivateKey = await fhevmRuntime.decrypt.deserializeTkmsPrivateKey({
-      tkmsPrivateKeyBytes: parameters.tkmsPrivateKey,
-    });
-  } else {
-    tkmsPrivateKey = parameters.tkmsPrivateKey;
-    fhevmRuntime.decrypt.verifyTkmsPrivateKey({ tkmsPrivateKey });
-  }
+  // TkmsPrivateKey
+  const tkmsPrivateKey = parameters.tkmsPrivateKey;
+  // sync fn
+  fhevmRuntime.decrypt.verifyTkmsPrivateKey({ tkmsPrivateKey });
 
   return new FhevmDecryptionKeyImpl({
     async decryptAndReconstruct(
@@ -105,7 +106,42 @@ export async function createFhevmDecryptionKey(
         tkmsPrivateKey,
       });
     },
+    async serialize() {
+      const pkBytes = await fhevmRuntime.decrypt.serializeTkmsPrivateKey({
+        tkmsPrivateKey,
+      });
+      return bytesToHexLarge(pkBytes, false /* no0x */);
+    },
   });
 }
 
-////////////////////////////////////////////////////////////////////////////////
+/** Generates a fresh {@link FhevmDecryptionKey}. */
+export async function generateFhevmDecryptionKey(
+  fhevm: Fhevm<FhevmChain | undefined, WithDecrypt, OptionalNativeClient>,
+): Promise<FhevmDecryptionKey> {
+  const tkmsPrivateKey = await fhevm.runtime.decrypt.generateTkmsPrivateKey();
+  return createFhevmDecryptionKey(fhevm.runtime, { tkmsPrivateKey });
+}
+
+/** Restores a {@link FhevmDecryptionKey} from serialized form (Bytes or BytesHex). */
+export async function loadFhevmDecryptionKey(
+  fhevm: Fhevm<FhevmChain | undefined, WithDecrypt, OptionalNativeClient>,
+  parameters: {
+    readonly tkmsPrivateKeyBytes: Bytes | BytesHex;
+  },
+): Promise<FhevmDecryptionKey> {
+  let tkmsPrivateKeyBytes: Bytes;
+  if (typeof parameters.tkmsPrivateKeyBytes === "string") {
+    tkmsPrivateKeyBytes = hexToBytesFaster(parameters.tkmsPrivateKeyBytes, {
+      strict: true,
+    });
+  } else {
+    tkmsPrivateKeyBytes = parameters.tkmsPrivateKeyBytes;
+  }
+
+  const tkmsPrivateKey = await fhevm.runtime.decrypt.deserializeTkmsPrivateKey({
+    tkmsPrivateKeyBytes,
+  });
+
+  return createFhevmDecryptionKey(fhevm.runtime, { tkmsPrivateKey });
+}

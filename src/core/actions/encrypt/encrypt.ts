@@ -1,6 +1,6 @@
-import type { RelayerFetchOptions } from "../../modules/relayer/types.js";
+import type { RelayerInputProofOptions } from "../../types/relayer.js";
 import type { Fhevm } from "../../types/coreFhevmClient.js";
-import type { WithEncryptAndRelayer } from "../../types/coreFhevmRuntime.js";
+import type { WithEncrypt } from "../../types/coreFhevmRuntime.js";
 import type { FhevmChain } from "../../types/fhevmChain.js";
 import type { GlobalFhePkeParams } from "../../types/globalFhePkeParams.js";
 import type { VerifiedInputProof } from "../../types/inputProof.js";
@@ -15,13 +15,13 @@ export type EncryptParameters = {
   readonly userAddress: string;
   readonly values: readonly TypedValueLike[];
   readonly extraData: BytesHex;
-  readonly options?: RelayerFetchOptions;
+  readonly options?: RelayerInputProofOptions | undefined;
 };
 
 export type EncryptReturnType = VerifiedInputProof;
 
 export async function encrypt(
-  fhevm: Fhevm<FhevmChain, WithEncryptAndRelayer>,
+  fhevm: Fhevm<FhevmChain, WithEncrypt>,
   parameters: EncryptParameters,
 ): Promise<EncryptReturnType> {
   const {

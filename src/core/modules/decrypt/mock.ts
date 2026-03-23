@@ -86,7 +86,7 @@ export function verifyTkmsPrivateKey(
 // decryptActions
 //////////////////////////////////////////////////////////////////////////////
 
-export const decryptActions: DecryptModuleFactory = (runtime: FhevmRuntime) => {
+export const decryptModule: DecryptModuleFactory = (runtime: FhevmRuntime) => {
   return Object.freeze({
     decrypt: Object.freeze({
       initTkmsModule: () => Promise.resolve(),
@@ -110,7 +110,7 @@ export const decryptActions: DecryptModuleFactory = (runtime: FhevmRuntime) => {
 // userDecryptActions
 //////////////////////////////////////////////////////////////////////////////
 
-export const userDecryptActions: UserDecryptModuleFactory = (
+export const userDecryptModule: UserDecryptModuleFactory = (
   runtime: FhevmRuntime,
   parameters: UserDecryptModuleParameters,
 ) => {

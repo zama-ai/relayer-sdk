@@ -9,6 +9,8 @@ import type {
 import type { FhevmChain } from "../types/fhevmChain.js";
 import type {
   Fhevm,
+  FhevmBase,
+  FhevmExtension,
   FhevmOptions,
   NativeClient,
   OptionalNativeClient,
@@ -35,14 +37,23 @@ class CoreFhevmImpl<
   chain extends FhevmChain | undefined,
   runtime extends FhevmRuntime,
   client extends OptionalNativeClient,
-> implements Fhevm<chain, FhevmRuntime, client>
-{
+> implements Fhevm<chain, FhevmRuntime, client> {
   // Private fields (truly inaccessible from outside)
   readonly #uid: string;
   readonly #runtime: runtime;
   readonly #trustedClient: TrustedClient<client> | undefined;
   readonly #chain: chain | undefined;
   readonly #options: FhevmOptions;
+  readonly #initFns: Set<
+    (
+      client: FhevmBase<
+        FhevmChain | undefined,
+        FhevmRuntime,
+        OptionalNativeClient
+      >,
+    ) => Promise<void>
+  >;
+  #readyPromise: Promise<void> | undefined;
 
   // Declared for TypeScript — defined at runtime via Object.defineProperties
   declare readonly uid: string;
@@ -55,6 +66,16 @@ class CoreFhevmImpl<
   declare readonly runtime: runtime;
   declare readonly ethereum: EthereumModule;
   declare readonly verify: (token: symbol) => void;
+  declare readonly extend: <
+    const A extends Record<string, unknown>,
+    RT extends FhevmRuntime,
+  >(
+    actionsFactory: (
+      client: FhevmBase<chain, FhevmRuntime, client>,
+    ) => FhevmExtension<A, RT>,
+  ) => this & A & { readonly runtime: RT };
+  declare readonly init: () => Promise<void>;
+  declare readonly ready: Promise<void>;
 
   constructor(
     privateToken: symbol,
@@ -78,6 +99,8 @@ class CoreFhevmImpl<
         : undefined;
     this.#chain = parameters.chain;
     this.#options = Object.freeze(parameters.options ?? {});
+    this.#initFns = new Set();
+    this.#readyPromise = undefined;
 
     // verify runtime
     (this.#runtime as unknown as { verify: (token: symbol) => void }).verify(
@@ -133,6 +156,32 @@ class CoreFhevmImpl<
         configurable: false,
         enumerable: false,
         writable: false,
+      },
+      extend: {
+        value: (actionsFactory: (client: typeof this) => FhevmExtension) =>
+          extendCoreFhevm(this, actionsFactory, (fn) => {
+            this.#initFns.add(fn);
+            this.#readyPromise = undefined;
+          }),
+        configurable: false,
+        enumerable: false,
+        writable: false,
+      },
+      init: {
+        value: (): Promise<void> => {
+          this.#readyPromise ??= Promise.all(
+            [...this.#initFns].map((fn) => fn(this)),
+          ).then(() => {});
+          return this.#readyPromise;
+        },
+        configurable: false,
+        enumerable: false,
+        writable: false,
+      },
+      ready: {
+        get: (): Promise<void> => this.init(),
+        configurable: false,
+        enumerable: true,
       },
     });
   }
@@ -260,21 +309,36 @@ export function createCoreFhevm<
 
 ////////////////////////////////////////////////////////////////////////////////
 
-type Actions = Record<string, (...args: never[]) => unknown>;
-type ActionsFactory<T extends Fhevm> = (fhevmClient: T) => Actions;
-
-export function extendCoreFhevm<T extends Fhevm, F extends ActionsFactory<T>>(
+function extendCoreFhevm<
+  T extends Fhevm<FhevmChain | undefined, FhevmRuntime, OptionalNativeClient>,
+>(
   client: T,
-  actionsFactory: F,
-): T & ReturnType<F> {
-  const actions = actionsFactory(client);
+  actionsFactory: (client: T) => FhevmExtension,
+  pushInitFn: (
+    fn: (
+      client: FhevmBase<
+        FhevmChain | undefined,
+        FhevmRuntime,
+        OptionalNativeClient
+      >,
+    ) => Promise<void>,
+  ) => void,
+): T {
+  const { actions, runtime, init } = actionsFactory(client);
+
+  if (runtime !== client.runtime) {
+    throw new Error(
+      `actionsFactory must return the same runtime instance (id=${client.uid})`,
+    );
+  }
+
+  if (init !== undefined) {
+    pushInitFn(init);
+  }
+
   for (const [key, value] of Object.entries(actions)) {
     if (key in client) {
-      // Some action groups may share the same action
       continue;
-      // throw new Error(
-      //   `Cannot override existing property: ${key} (id=${client.uid})`,
-      // );
     }
 
     Object.defineProperty(client, key, {
@@ -284,5 +348,5 @@ export function extendCoreFhevm<T extends Fhevm, F extends ActionsFactory<T>>(
       enumerable: true,
     });
   }
-  return client as T & ReturnType<F>;
+  return client;
 }

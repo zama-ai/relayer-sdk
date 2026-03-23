@@ -1,8 +1,7 @@
 import { InputProofError } from "../../errors/InputProofError.js";
 import { assertFhevmHandleArrayEquals } from "../../handle/FhevmHandle.js";
-import type { RelayerFetchOptions } from "../../modules/relayer/types.js";
+import type { RelayerInputProofOptions } from "../../types/relayer.js";
 import type { Fhevm } from "../../types/coreFhevmClient.js";
-import type { WithRelayer } from "../../types/coreFhevmRuntime.js";
 import type { FhevmChain } from "../../types/fhevmChain.js";
 import type { FhevmHandle } from "../../types/fhevmHandle.js";
 import type { VerifiedInputProof } from "../../types/inputProof.js";
@@ -13,13 +12,13 @@ import { createVerifiedInputProofFromComponents } from "./createVerifiedInputPro
 export type FetchInputProofParameters = {
   readonly zkProof: ZkProof;
   readonly extraData: BytesHex;
-  readonly options?: RelayerFetchOptions;
+  readonly options?: RelayerInputProofOptions | undefined;
 };
 
 export type FetchInputProofReturnType = VerifiedInputProof;
 
 export async function fetchVerifiedInputProof(
-  fhevm: Fhevm<FhevmChain, WithRelayer>,
+  fhevm: Fhevm<FhevmChain>,
   parameters: FetchInputProofParameters,
 ): Promise<FetchInputProofReturnType> {
   const { zkProof, extraData, options } = parameters;

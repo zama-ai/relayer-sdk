@@ -39,31 +39,33 @@ export type RelayerCommonOptions = {
 
 export type RelayerKeyUrlOptions = Prettify<
   Omit<RelayerCommonOptions, "timeout"> & {
-    onProgress?: (args: RelayerKeyUrlProgressArgs) => void;
+    onProgress?: ((args: RelayerKeyUrlProgressArgs) => void) | undefined;
   }
 >;
 
 export type RelayerInputProofOptions = Prettify<
   RelayerCommonOptions & {
-    onProgress?: (args: RelayerInputProofProgressArgs) => void;
+    onProgress?: ((args: RelayerInputProofProgressArgs) => void) | undefined;
   }
 >;
 
 export type RelayerUserDecryptOptions = Prettify<
   RelayerCommonOptions & {
-    onProgress?: (args: RelayerUserDecryptProgressArgs) => void;
+    onProgress?: ((args: RelayerUserDecryptProgressArgs) => void) | undefined;
   }
 >;
 
 export type RelayerDelegatedUserDecryptOptions = Prettify<
   RelayerCommonOptions & {
-    onProgress?: (args: RelayerDelegatedUserDecryptProgressArgs) => void;
+    onProgress?:
+      | ((args: RelayerDelegatedUserDecryptProgressArgs) => void)
+      | undefined;
   }
 >;
 
 export type RelayerPublicDecryptOptions = Prettify<
   RelayerCommonOptions & {
-    onProgress?: (args: RelayerPublicDecryptProgressArgs) => void;
+    onProgress?: ((args: RelayerPublicDecryptProgressArgs) => void) | undefined;
   }
 >;
 

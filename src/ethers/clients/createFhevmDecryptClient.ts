@@ -1,16 +1,24 @@
 import type { ethers as EthersT } from "ethers";
 import { decryptModule } from "../../core/modules/decrypt/module/index.js";
-import { relayerModule } from "../../core/modules/relayer/module/index.js";
 import type { FhevmChain } from "../../core/types/fhevmChain.js";
-import type { WithDecryptAndRelayer } from "../../core/types/coreFhevmRuntime.js";
-import {
-  createFhevmDecryptClient as createFhevmDecryptClient_,
-  type FhevmDecryptClient,
-} from "../../core/clients/fhevmDecryptClient.js";
+import type { WithDecrypt } from "../../core/types/coreFhevmRuntime.js";
+import type { FhevmDecryptClient } from "../../core/clients/fhevmDecryptClient.js";
 import {
   getEthersRuntime,
   PRIVATE_ETHERS_TOKEN,
 } from "../internal/ethers-p.js";
+import {
+  decryptActions as decryptActions_,
+  type DecryptActions,
+} from "../../core/clients/decorators/decrypt.js";
+import type {
+  Fhevm,
+  FhevmBase,
+  FhevmExtension,
+  OptionalNativeClient,
+} from "../../core/types/coreFhevmClient.js";
+import type { FhevmRuntime } from "../../core/types/coreFhevmRuntime.js";
+import { createCoreFhevm } from "../../core/runtime/CoreFhevm-p.js";
 
 export function createFhevmDecryptClient<
   chain extends FhevmChain,
@@ -18,14 +26,30 @@ export function createFhevmDecryptClient<
 >(parameters: {
   readonly provider: provider;
   readonly chain: chain;
-}): FhevmDecryptClient<chain, WithDecryptAndRelayer, provider> {
-  const runtime: WithDecryptAndRelayer = getEthersRuntime()
-    .extend(decryptModule)
-    .extend(relayerModule);
-
-  return createFhevmDecryptClient_(PRIVATE_ETHERS_TOKEN, {
+}): FhevmDecryptClient<chain, WithDecrypt, provider> {
+  const c = createCoreFhevm(PRIVATE_ETHERS_TOKEN, {
     chain: parameters.chain,
-    runtime,
+    runtime: getEthersRuntime(),
     client: parameters.provider,
   });
+
+  return c.extend(decryptActions);
+}
+
+export function decryptActions(
+  fhevm: FhevmBase<FhevmChain>,
+): FhevmExtension<DecryptActions, WithDecrypt> {
+  const runtime = fhevm.runtime.extend(decryptModule);
+  const f = fhevm as unknown as Fhevm<FhevmChain, WithDecrypt>;
+  return {
+    actions: decryptActions_(f),
+    runtime,
+    init: initDecrypt,
+  };
+}
+
+function initDecrypt(
+  fhevm: FhevmBase<FhevmChain | undefined, FhevmRuntime, OptionalNativeClient>,
+): Promise<void> {
+  return (fhevm.runtime as WithDecrypt).decrypt.initTkmsModule();
 }

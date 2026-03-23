@@ -60,6 +60,7 @@ export async function recoverTypedDataAddress(
 export function encodePacked(
   parameters: EncodePackedParameters,
 ): EncodePackedReturnType {
+  // Ethers impl
   return solidityPacked(parameters.types, parameters.values) as BytesHex;
 }
 

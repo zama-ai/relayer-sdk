@@ -5,13 +5,12 @@ import { fetchPublicDecrypt } from "./fetchPublicDecrypt.js";
 import { fetchGlobalFhePkeParamsBytes } from "./fetchGlobalFhePkeParamsBytes.js";
 import { fetchGlobalFhePkeParamsSource } from "./fetchGlobalFhePkeParamsSource.js";
 import { fetchUserDecrypt } from "./fetchUserDecrypt.js";
-import type { FhevmRuntime } from "../../../types/coreFhevmRuntime.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 // relayerModule
 ////////////////////////////////////////////////////////////////////////////////
 
-export const relayerModule: RelayerModuleFactory = (_runtime: FhevmRuntime) => {
+export const relayerModule: RelayerModuleFactory = () => {
   return Object.freeze({
     relayer: Object.freeze({
       fetchGlobalFhePkeParamsSource,

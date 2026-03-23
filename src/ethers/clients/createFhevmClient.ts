@@ -1,17 +1,17 @@
 import type { ethers as EthersT } from "ethers";
-import { encryptModule } from "../../core/modules/encrypt/module/index.js";
-import { relayerModule } from "../../core/modules/relayer/module/index.js";
 import type { FhevmChain } from "../../core/types/fhevmChain.js";
 import type { WithAll } from "../../core/types/coreFhevmRuntime.js";
 import {
   getEthersRuntime,
   PRIVATE_ETHERS_TOKEN,
 } from "../internal/ethers-p.js";
+import type { FhevmClient } from "../../core/clients/fhevmClient.js";
+import { createCoreFhevm } from "../../core/runtime/CoreFhevm-p.js";
+import { decryptActions } from "./createFhevmDecryptClient.js";
 import {
-  createFhevmClient as createFhevmClient_,
-  type FhevmClient,
-} from "../../core/clients/fhevmClient.js";
-import { decryptModule } from "../../core/modules/decrypt/module/index.js";
+  encryptActions,
+  globalFhePkeActions,
+} from "./createFhevmEncryptClient.js";
 
 export function createFhevmClient<
   chain extends FhevmChain,
@@ -20,14 +20,14 @@ export function createFhevmClient<
   readonly provider: provider;
   readonly chain: chain;
 }): FhevmClient<chain, WithAll, provider> {
-  const runtime: WithAll = getEthersRuntime()
-    .extend(encryptModule)
-    .extend(decryptModule)
-    .extend(relayerModule);
-
-  return createFhevmClient_(PRIVATE_ETHERS_TOKEN, {
+  const c = createCoreFhevm(PRIVATE_ETHERS_TOKEN, {
     chain: parameters.chain,
-    runtime,
+    runtime: getEthersRuntime(),
     client: parameters.provider,
   });
+
+  return c
+    .extend(decryptActions)
+    .extend(encryptActions)
+    .extend(globalFhePkeActions);
 }

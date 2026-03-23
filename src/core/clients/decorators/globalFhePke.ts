@@ -27,7 +27,7 @@ import type {
   Fhevm,
   OptionalNativeClient,
 } from "../../types/coreFhevmClient.js";
-import type { WithEncryptAndRelayer } from "../../types/coreFhevmRuntime.js";
+import type { WithEncrypt } from "../../types/coreFhevmRuntime.js";
 import type { FhevmChain } from "../../types/fhevmChain.js";
 
 export type GlobalFhePkeActions = {
@@ -49,7 +49,7 @@ export type GlobalFhePkeActions = {
 };
 
 export function globalFhePkeActions(
-  fhevm: Fhevm<FhevmChain, WithEncryptAndRelayer, OptionalNativeClient>,
+  fhevm: Fhevm<FhevmChain, WithEncrypt, OptionalNativeClient>,
 ): GlobalFhePkeActions {
   return {
     fetchGlobalFhePkeParams: (parameters) =>

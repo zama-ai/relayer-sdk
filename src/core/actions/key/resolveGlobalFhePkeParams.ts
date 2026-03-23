@@ -1,9 +1,9 @@
-import type { RelayerFetchOptions } from "../../modules/relayer/types.js";
+import type { RelayerKeyUrlOptions } from "../../types/relayer.js";
 import type {
   Fhevm,
   OptionalNativeClient,
 } from "../../types/coreFhevmClient.js";
-import type { WithEncryptAndRelayer } from "../../types/coreFhevmRuntime.js";
+import type { WithEncrypt } from "../../types/coreFhevmRuntime.js";
 import type { FhevmChain } from "../../types/fhevmChain.js";
 import type {
   GlobalFhePkeParams,
@@ -13,15 +13,15 @@ import { deserializeGlobalFhePkeParams } from "../encrypt/deserializeGlobalFhePk
 import { fetchGlobalFhePkeParams } from "./fetchGlobalFhePkeParams.js";
 
 export type ResolveGlobalFhePkeParamsParameters = {
-  readonly globalFheParamsBytes?: GlobalFhePkeParamsBytes;
-  readonly options?: RelayerFetchOptions;
-  readonly ignoreCache?: boolean;
+  readonly globalFheParamsBytes?: GlobalFhePkeParamsBytes | undefined;
+  readonly options?: RelayerKeyUrlOptions | undefined;
+  readonly ignoreCache?: boolean | undefined;
 };
 
 export type ResolveGlobalFhePkeParamsReturnType = GlobalFhePkeParams;
 
 export async function resolveGlobalFhePkeParams(
-  fhevm: Fhevm<FhevmChain, WithEncryptAndRelayer, OptionalNativeClient>,
+  fhevm: Fhevm<FhevmChain, WithEncrypt, OptionalNativeClient>,
   parameters: ResolveGlobalFhePkeParamsParameters,
 ): Promise<ResolveGlobalFhePkeParamsReturnType> {
   // Defensive test

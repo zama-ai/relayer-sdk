@@ -1,17 +1,19 @@
-import type { WithAll } from "../types/coreFhevmRuntime.js";
+import type {
+  FhevmRuntime,
+  WithAll,
+  WithDecrypt,
+  WithEncrypt,
+} from "../types/coreFhevmRuntime.js";
 import type { FhevmChain } from "../types/fhevmChain.js";
-import { encryptActions, type EncryptActions } from "./decorators/encrypt.js";
-import {
-  globalFhePkeActions,
-  type GlobalFhePkeActions,
-} from "./decorators/globalFhePke.js";
-import { decryptActions, type DecryptActions } from "./decorators/decrypt.js";
-import {
-  createCoreFhevm,
-  extendCoreFhevm,
-  type CreateCoreFhevmParameters,
-} from "../runtime/CoreFhevm-p.js";
-import type { Fhevm, NativeClient } from "../types/coreFhevmClient.js";
+import type { EncryptActions } from "./decorators/encrypt.js";
+import type { GlobalFhePkeActions } from "./decorators/globalFhePke.js";
+import type { DecryptActions } from "./decorators/decrypt.js";
+import type {
+  Fhevm,
+  NativeClient,
+  OptionalNativeClient,
+} from "../types/coreFhevmClient.js";
+import { asFhevmRuntimeWith } from "../runtime/CoreFhevmRuntime-p.js";
 
 export type FhevmClient<
   chain extends FhevmChain = FhevmChain,
@@ -22,16 +24,18 @@ export type FhevmClient<
   EncryptActions &
   GlobalFhePkeActions;
 
-export function createFhevmClient<
+/**
+ * @internal
+ */
+export function asFhevmClient<
   chain extends FhevmChain = FhevmChain,
-  runtime extends WithAll = WithAll,
-  client extends NativeClient = NativeClient,
+  runtime extends FhevmRuntime = FhevmRuntime,
+  client extends OptionalNativeClient = NativeClient,
 >(
-  ownerToken: symbol,
-  parameters: CreateCoreFhevmParameters<chain, runtime, client>,
-): FhevmClient<chain, runtime, client> {
-  const c = createCoreFhevm(ownerToken, parameters);
-  const cEnc = extendCoreFhevm(c, encryptActions);
-  const cDec = extendCoreFhevm(cEnc, decryptActions);
-  return extendCoreFhevm(cDec, globalFhePkeActions);
+  fhevm: Fhevm<chain, runtime, client>,
+): Fhevm<chain, runtime & WithAll, client> {
+  asFhevmRuntimeWith(fhevm.runtime, "encrypt");
+  asFhevmRuntimeWith(fhevm.runtime, "decrypt");
+  // Deploy WithAll to raise an error if WithAll definition is changing
+  return fhevm as Fhevm<chain, runtime & WithEncrypt & WithDecrypt, client>;
 }

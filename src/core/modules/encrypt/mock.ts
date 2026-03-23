@@ -92,9 +92,7 @@ export async function deserializeGlobalFhePublicKey(
 // mockTfheActions
 ////////////////////////////////////////////////////////////////////////////////
 
-export const encryptActions: EncryptModuleFactory = (
-  _runtime: FhevmRuntime,
-) => {
+export const encryptModule: EncryptModuleFactory = (_runtime: FhevmRuntime) => {
   return Object.freeze({
     encrypt: Object.freeze({
       initTfheModule: () => Promise.resolve(),

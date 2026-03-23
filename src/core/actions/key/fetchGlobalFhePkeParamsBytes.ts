@@ -1,16 +1,20 @@
-import type { RelayerFetchOptions } from "../../modules/relayer/types.js";
 import type {
   Fhevm,
   OptionalNativeClient,
 } from "../../types/coreFhevmClient.js";
-import type { WithEncryptAndRelayer } from "../../types/coreFhevmRuntime.js";
+import type { FhevmRuntime } from "../../types/coreFhevmRuntime.js";
 import type { FhevmChain } from "../../types/fhevmChain.js";
 import type { GlobalFhePkeParamsBytes } from "../../types/globalFhePkeParams.js";
+import { globalFhePkeParamsCache } from "./globalFhePkeParamsCache.js";
+import type { SerializeGlobalFhePkeParamsParameters } from "../encrypt/serializeGlobalFhePkeParams.js";
+import { serializeGlobalFhePkeParams } from "../encrypt/serializeGlobalFhePkeParams.js";
+import { asFhevmEncryptClient } from "../../clients/fhevmEncryptClient.js";
+import type { RelayerKeyUrlOptions } from "../../types/relayer.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 export type FetchGlobalFhePkeParamsBytesParameters = {
-  readonly options?: RelayerFetchOptions;
+  readonly options?: RelayerKeyUrlOptions | undefined;
   readonly ignoreCache?: boolean | undefined;
 };
 
@@ -18,81 +22,60 @@ export type FetchGlobalFhePkeParamsBytesReturnType = GlobalFhePkeParamsBytes;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-/**
- * Module-level cache keyed by relayer URL.
- * Stores the in-flight or resolved promise to avoid duplicate fetches
- * and race conditions when multiple concurrent calls are made.
- */
-// eslint-disable-next-line @typescript-eslint/naming-convention
-const __globalFhePkeParamsGlobalCache = new Map<
-  string,
-  Promise<GlobalFhePkeParamsBytes>
->();
-
-/**
- * Clears all entries from the GlobalFhePkeParams cache.
- */
-export function clearGlobalFhePkeParamsCache(): void {
-  __globalFhePkeParamsGlobalCache.clear();
-}
-
-/**
- * Removes a specific relayer URL entry from the GlobalFhePkeParams cache.
- */
-export function deleteGlobalFhePkeParamsCache(relayerUrl: string): boolean {
-  return __globalFhePkeParamsGlobalCache.delete(relayerUrl);
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
 export async function fetchGlobalFhePkeParamsBytes(
-  fhevm: Fhevm<FhevmChain, WithEncryptAndRelayer, OptionalNativeClient>,
+  fhevm: Fhevm<FhevmChain, FhevmRuntime, OptionalNativeClient>,
   parameters?: FetchGlobalFhePkeParamsBytesParameters | undefined,
-): Promise<FetchGlobalFhePkeParamsBytesReturnType> {
-  if (parameters?.ignoreCache !== true) {
-    // 1. Check if already stored in cache
-    const cached = __globalFhePkeParamsGlobalCache.get(
-      fhevm.chain.fhevm.relayerUrl,
-    );
-    if (cached !== undefined) {
-      return cached;
-    }
-  }
-
-  // 2. Create and cache the promise immediately to prevent race conditions.
-  // The result is always cached, even when ignoreCache is true,
-  // so that future callers benefit from the fresh fetch.
-  const promise = _fetchGlobalFhePkeParamsBytes(
-    fhevm,
-    parameters?.options,
-  ).catch((err: unknown) => {
-    // Only remove from cache if this promise is still the cached one.
-    // A concurrent deleteGlobalFhePkeParamsCache + re-fetch may have replaced it.
-    if (
-      __globalFhePkeParamsGlobalCache.get(fhevm.chain.fhevm.relayerUrl) ===
-      promise
-    ) {
-      __globalFhePkeParamsGlobalCache.delete(fhevm.chain.fhevm.relayerUrl);
-    }
-    throw err;
-  });
-
-  // save in cache even if `ignoreCache === true`
-  __globalFhePkeParamsGlobalCache.set(fhevm.chain.fhevm.relayerUrl, promise);
-
-  return promise;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-async function _fetchGlobalFhePkeParamsBytes(
-  fhevm: Fhevm<FhevmChain, WithEncryptAndRelayer, OptionalNativeClient>,
-  options?: RelayerFetchOptions,
 ): Promise<GlobalFhePkeParamsBytes> {
-  const paramsBytes = await fhevm.runtime.relayer.fetchGlobalFhePkeParamsBytes(
-    { relayerUrl: fhevm.chain.fhevm.relayerUrl },
-    { options },
+  const relayerUrl = fhevm.chain.fhevm.relayerUrl;
+
+  // Ensure a fetch is in-flight
+  globalFhePkeParamsCache.ensureBytes(
+    relayerUrl,
+    () =>
+      fhevm.runtime.relayer.fetchGlobalFhePkeParamsBytes(
+        { relayerUrl },
+        parameters ?? {},
+      ),
+    { chainId: fhevm.chain.id, relayerUrl },
   );
 
-  return paramsBytes;
+  const bytes = await globalFhePkeParamsCache.resolveBytes({
+    relayerUrl,
+    serializeFn: _getSerializeFn(fhevm),
+  });
+
+  if (bytes === undefined) {
+    throw new Error("Failed to fetch global FHE PKE params bytes");
+  }
+
+  return bytes;
+}
+
+/**
+ * Returns a serialize function that converts wasm params to bytes,
+ * or `undefined` if the encrypt module is not available on the runtime.
+ */
+function _getSerializeFn(
+  fhevm: Fhevm<FhevmChain, FhevmRuntime, OptionalNativeClient>,
+):
+  | ((
+      args: SerializeGlobalFhePkeParamsParameters,
+    ) => Promise<GlobalFhePkeParamsBytes>)
+  | undefined {
+  // Try to get a serialize fn if the encrypt module is available
+  let serializeFn:
+    | ((
+        args: SerializeGlobalFhePkeParamsParameters,
+      ) => Promise<GlobalFhePkeParamsBytes>)
+    | undefined;
+
+  try {
+    // check if the 'encrypt' module is available
+    const f = asFhevmEncryptClient(fhevm);
+    serializeFn = (args) => serializeGlobalFhePkeParams(f, args);
+  } catch {
+    // encrypt module not available
+  }
+
+  return serializeFn;
 }

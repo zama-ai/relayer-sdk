@@ -2,12 +2,12 @@ import {
   type CreateUserDecryptEIP712ReturnType,
   type CreateUserDecryptEIP712Parameters,
   createUserDecryptEIP712,
-} from "../../actions/decrypt/user/createUserDecryptEIP712.js";
+} from "../../actions/chain/createUserDecryptEIP712.js";
 import {
   type CreateDelegatedUserDecryptEIP712ReturnType,
   type CreateDelegatedUserDecryptEIP712Parameters,
   createDelegatedUserDecryptEIP712,
-} from "../../actions/decrypt/user/createDelegatedUserDecryptEIP712.js";
+} from "../../actions/chain/createDelegatedUserDecryptEIP712.js";
 import {
   publicDecrypt,
   type PublicDecryptParameters,
@@ -19,8 +19,15 @@ import {
   type UserDecryptReturnType,
 } from "../../actions/decrypt/user/userDecrypt.js";
 import type { Fhevm } from "../../types/coreFhevmClient.js";
-import type { WithDecryptAndRelayer } from "../../types/coreFhevmRuntime.js";
+import type { WithDecrypt } from "../../types/coreFhevmRuntime.js";
 import type { FhevmChain } from "../../types/fhevmChain.js";
+import {
+  loadFhevmDecryptionKey,
+  type LoadFhevmDecryptionKeyParameters,
+  type LoadFhevmDecryptionKeyReturnType,
+} from "../../actions/decrypt/user/loadFhevmDecryptionKey.js";
+import type { GenerateFhevmDecryptionKeyReturnType } from "../../actions/decrypt/user/generateFhevmDecryptionKey.js";
+import { generateFhevmDecryptionKey } from "../../user/FhevmDecryptionKey-p.js";
 
 export type DecryptActions = {
   readonly createUserDecryptEIP712: (
@@ -35,10 +42,14 @@ export type DecryptActions = {
   readonly userDecrypt: (
     parameters: UserDecryptParameters,
   ) => Promise<UserDecryptReturnType>;
+  readonly loadFhevmDecryptionKey: (
+    parameters: LoadFhevmDecryptionKeyParameters,
+  ) => Promise<LoadFhevmDecryptionKeyReturnType>;
+  readonly generateFhevmDecryptionKey: () => Promise<GenerateFhevmDecryptionKeyReturnType>;
 };
 
 export function decryptActions(
-  fhevm: Fhevm<FhevmChain, WithDecryptAndRelayer>,
+  fhevm: Fhevm<FhevmChain, WithDecrypt>,
 ): DecryptActions {
   return {
     createUserDecryptEIP712: (parameters) =>
@@ -47,5 +58,8 @@ export function decryptActions(
       createDelegatedUserDecryptEIP712(fhevm, parameters),
     publicDecrypt: (parameters) => publicDecrypt(fhevm, parameters),
     userDecrypt: (parameters) => userDecrypt(fhevm, parameters),
+    generateFhevmDecryptionKey: () => generateFhevmDecryptionKey(fhevm),
+    loadFhevmDecryptionKey: (parameters) =>
+      loadFhevmDecryptionKey(fhevm, parameters),
   };
 }

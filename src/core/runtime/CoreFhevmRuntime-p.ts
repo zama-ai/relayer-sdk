@@ -2,10 +2,7 @@ import type { ErrorMetadataParams } from "../base/errors/ErrorBase.js";
 import { InvalidTypeError } from "../base/errors/InvalidTypeError.js";
 import { uid } from "../base/uid.js";
 import type { EthereumModule } from "../modules/ethereum/types.js";
-import type {
-  RelayerModule,
-  WithRelayerModule,
-} from "../modules/relayer/types.js";
+import type { RelayerModule } from "../modules/relayer/types.js";
 import type {
   EncryptModule,
   WithEncryptModule,
@@ -57,7 +54,7 @@ function createExtendFn<T extends FhevmRuntime>(
     // Call factory to get { moduleName: moduleFunctions }
     const module = moduleFactory(selfRuntime);
 
-    // Extract the single key (e.g. "decrypt", "encrypt", "relayer")
+    // Extract the single key (e.g. "decrypt", "encrypt")
     const keys = Object.keys(module);
     if (keys.length !== 1 || keys[0] === undefined) {
       throw new Error("Factory must return exactly one key");
@@ -100,7 +97,6 @@ function createExtendFn<T extends FhevmRuntime>(
 type WithModuleMap = {
   decrypt: WithDecryptModule;
   encrypt: WithEncryptModule;
-  relayer: WithRelayerModule;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -133,11 +129,11 @@ class CoreFhevmRuntimeImpl {
 
   // Base modules
   readonly #ethereum: EthereumModule;
+  readonly #relayer: RelayerModule;
 
   // Optional modules
   readonly #encrypt: ModulePlaceholder<EncryptModule> = {};
   readonly #decrypt: ModulePlaceholder<DecryptModule> = {};
-  readonly #relayer: ModulePlaceholder<RelayerModule> = {};
 
   // Methods
   declare readonly verify: (token: symbol) => void;
@@ -154,6 +150,8 @@ class CoreFhevmRuntimeImpl {
     }
 
     this.#ethereum = parameters.ethereum;
+    this.#relayer = parameters.relayer;
+
     this.#uid = uid();
     this.#config = {
       ...parameters.config,
@@ -163,7 +161,6 @@ class CoreFhevmRuntimeImpl {
     };
     const decrypt = this.#decrypt;
     const encrypt = this.#encrypt;
-    const relayer = this.#relayer;
 
     this.verify = (token: symbol) => {
       if (token !== ownerToken) {
@@ -177,7 +174,6 @@ class CoreFhevmRuntimeImpl {
     >([
       ["decrypt", { placeholder: decrypt }],
       ["encrypt", { placeholder: encrypt }],
-      ["relayer", { placeholder: relayer }],
     ]);
 
     this.extend = createExtendFn(
@@ -204,16 +200,16 @@ class CoreFhevmRuntimeImpl {
     return this.#ethereum;
   }
 
+  public get relayer(): RelayerModule {
+    return this.#relayer;
+  }
+
   public get decrypt(): DecryptModule {
     return asModule(this.#decrypt, "decrypt");
   }
 
   public get encrypt(): EncryptModule {
     return asModule(this.#encrypt, "encrypt");
-  }
-
-  public get relayer(): RelayerModule {
-    return asModule(this.#relayer, "relayer");
   }
 }
 
@@ -228,6 +224,7 @@ Object.freeze(CoreFhevmRuntimeImpl.prototype);
 
 export type CreateFhevmRuntimeParameters = {
   readonly ethereum: EthereumModule;
+  readonly relayer: RelayerModule;
   readonly config: FhevmRuntimeConfig;
 };
 
