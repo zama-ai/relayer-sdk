@@ -13,6 +13,7 @@ import {
 import { sepolia } from "./core/chains/index.js";
 import { ethers } from "ethers";
 import { decryptActions } from "./ethers/clients/createFhevmDecryptClient.js";
+import type { VerifiedInputProof } from "./core/types/inputProof.js";
 
 // node --test --import tsx ./src/index.hello.test.ts
 
@@ -78,24 +79,39 @@ describe("hello", () => {
       const supportsThreads = await threads();
       console.log("threads supported:", supportsThreads);
 
+      // A minimum config is required prior to any SDK interactions
+      // - setup the number of threads
+      // - setup the urls to the tkms + tfhe wasms
+      //   If urls are left blank, the SDK will try to load local files or base64 embeded js
       setConfig(20);
 
+      // Create a full client (with encryption and decryption features)
       const fhevmFullClient = createFhevmClient({
         chain: sepolia,
         provider: new ethers.JsonRpcProvider(
           "https://ethereum-sepolia-rpc.publicnode.com",
         ),
       });
+
+      // Initialize the full client
+      // 1. init tkms.wasm (lightweight)
+      // 2. init tfhe.wasm (heavyweight)
+      // 3. download+init tfhe global pub key (50MB)
       await fhevmFullClient.ready;
 
+      // Let's create a partial decrypt client
+      // Only using the lightweight tkms.wasm
       const fhevmDecryptClient = createFhevmDecryptClient({
         chain: sepolia,
         provider: new ethers.JsonRpcProvider(
           "https://ethereum-sepolia-rpc.publicnode.com",
         ),
       });
+      // since the full client has already been initialized, the new partial client will be instantly initialized
+      // They are sharing the same runtime modules
       await fhevmDecryptClient.ready;
 
+      // Let's generate a simple kms private decryption key
       const privateDecryptionKey =
         await fhevmDecryptClient.generateFhevmDecryptionKey();
 
@@ -114,26 +130,34 @@ describe("hello", () => {
         ),
       });
 
+      // Let's xform the encryptClient by extending it with decryption features
       const encryptClientWithDecryptFeatures =
         fhevmEncryptClient.extend(decryptActions);
+
+      // call init() - instant (modules are already initialized)
       await encryptClientWithDecryptFeatures.init();
+      // or await on ready property - instant (modules are already initialized)
+      // it's a matter of taste
       await encryptClientWithDecryptFeatures.ready;
 
       const globalFhePkeParams =
         await fhevmEncryptClient.fetchGlobalFhePkeParams();
 
-      const res = await fhevmEncryptClient.encrypt({
-        globalFhePublicEncryptionParams: globalFhePkeParams,
-        contractAddress: "0x1E7eA8fE4877E6ea5dc8856f0dA92da8d5066241",
-        extraData: "0x00",
-        userAddress: "0x37ac010c1c566696326813b840319b58bb5840e4",
-        values: [
-          {
-            type: "uint16",
-            value: 123,
-          },
-        ],
-      });
+      const verifiedInputProof: VerifiedInputProof =
+        await fhevmEncryptClient.encrypt({
+          globalFhePublicEncryptionParams: globalFhePkeParams,
+          contractAddress: "0x1E7eA8fE4877E6ea5dc8856f0dA92da8d5066241",
+          extraData: "0x00",
+          userAddress: "0x37ac010c1c566696326813b840319b58bb5840e4",
+          values: [
+            {
+              type: "uint16",
+              value: 123,
+            },
+          ],
+        });
+
+      console.log(verifiedInputProof.bytesHex);
 
       console.log(fhevmDecryptClient.uid);
 
