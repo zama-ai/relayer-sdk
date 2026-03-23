@@ -65,7 +65,7 @@ class CacheEntryImpl implements CacheEntry {
 ////////////////////////////////////////////////////////////////////////////////
 
 /** Debug: if resolvedKind is "wasm", there must be no pending operation. */
-function assertWasmIsTerminal(entry: CacheEntry): void {
+function _assertWasmIsTerminal(entry: CacheEntry): void {
   if (entry.resolvedKind === "wasm" && entry.pendingKind !== undefined) {
     throw new Error(
       "Debug: resolvedKind is 'wasm' but pendingKind is " +
@@ -174,7 +174,7 @@ export class GlobalFhePkeParamsCache {
       return;
     }
 
-    assertWasmIsTerminal(entry);
+    _assertWasmIsTerminal(entry);
 
     if (entry._pendingChained) {
       throw new Error("Debug: _pending was already chained from");
@@ -182,7 +182,7 @@ export class GlobalFhePkeParamsCache {
     entry._pendingChained = true;
 
     const pendingValue = entry._pending.then((bytes) => {
-      assertWasmIsTerminal(entry);
+      _assertWasmIsTerminal(entry);
       return deserializeFn(bytes as GlobalFhePkeParamsBytes);
     });
 
@@ -283,7 +283,7 @@ export class GlobalFhePkeParamsCache {
         entry.value = resolved;
         entry.pendingKind = undefined;
         entry.pendingOp = undefined;
-        assertWasmIsTerminal(entry);
+        _assertWasmIsTerminal(entry);
       },
       (err: unknown) => {
         if (entry.ready !== ready) {

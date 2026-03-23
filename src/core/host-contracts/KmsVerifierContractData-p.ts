@@ -90,7 +90,7 @@ class KmsVerifierContractDataImpl implements KmsVerifierContractData {
     });
   }
 
-  public toJson(): Record<string, unknown> {
+  public toJSON(): Record<string, unknown> {
     return {
       address: this.#address,
       eip712Domain: this.#eip712Domain,

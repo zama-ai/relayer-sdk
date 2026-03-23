@@ -81,7 +81,7 @@ class KmsSignersContextImpl implements KmsSignersContext {
     });
   }
 
-  public toJson(): Record<string, unknown> {
+  public toJSON(): Record<string, unknown> {
     return {
       address: this.#address,
       signers: this.#kmsSigners,

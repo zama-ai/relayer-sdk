@@ -12,6 +12,7 @@ import type {
   Fhevm,
   FhevmBase,
   FhevmExtension,
+  FhevmOptions,
   OptionalNativeClient,
 } from "../../core/types/coreFhevmClient.js";
 import type { FhevmRuntime } from "../../core/types/coreFhevmRuntime.js";
@@ -24,12 +25,15 @@ import {
   type GlobalFhePkeActions,
 } from "../../core/clients/decorators/globalFhePke.js";
 
+////////////////////////////////////////////////////////////////////////////////
+
 export function createFhevmEncryptClient<
   chain extends FhevmChain,
   provider extends EthersT.ContractRunner,
 >(parameters: {
   readonly provider: provider;
   readonly chain: chain;
+  readonly options?: FhevmOptions | undefined;
 }): FhevmEncryptClient<chain, WithEncrypt, provider> {
   const c = createCoreFhevm(PRIVATE_ETHERS_TOKEN, {
     chain: parameters.chain,
@@ -40,6 +44,8 @@ export function createFhevmEncryptClient<
   return c.extend(encryptActions).extend(globalFhePkeActions);
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
 export function encryptActions(
   fhevm: FhevmBase<FhevmChain>,
 ): FhevmExtension<EncryptActions, WithEncrypt> {
@@ -48,9 +54,11 @@ export function encryptActions(
   return {
     actions: encryptActions_(f),
     runtime,
-    init: initEncrypt,
+    init: _initEncrypt,
   };
 }
+
+////////////////////////////////////////////////////////////////////////////////
 
 export function globalFhePkeActions(
   fhevm: FhevmBase<FhevmChain>,
@@ -60,11 +68,16 @@ export function globalFhePkeActions(
   return {
     actions: globalFhePkeActions_(f),
     runtime,
-    init: initEncrypt,
+    init: _initEncrypt,
   };
 }
 
-async function initEncrypt(
+////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * @internal
+ */
+async function _initEncrypt(
   fhevm: FhevmBase<FhevmChain | undefined, FhevmRuntime, OptionalNativeClient>,
 ): Promise<void> {
   const runtime = fhevm.runtime as WithEncrypt;

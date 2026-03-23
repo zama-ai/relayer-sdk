@@ -7,6 +7,8 @@ import type { GlobalFhePkeParams } from "../../types/globalFhePkeParams.js";
 import type { TypedValueLike } from "../../types/primitives.js";
 import type { ZkProof } from "../../types/zkProof.js";
 
+////////////////////////////////////////////////////////////////////////////////
+
 export type GenerateZkProofParameters = {
   readonly globalFhePublicEncryptionParams: GlobalFhePkeParams;
   readonly contractAddress: string;
@@ -15,6 +17,8 @@ export type GenerateZkProofParameters = {
 };
 
 export type GenerateZkProofReturnType = ZkProof;
+
+////////////////////////////////////////////////////////////////////////////////
 
 export async function generateZkProof(
   fhevm: Fhevm<FhevmChain, WithEncrypt>,

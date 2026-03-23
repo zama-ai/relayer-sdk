@@ -39,9 +39,9 @@ const VERIFY_ORIGIN_FUNC = Symbol("DecryptedFhevmHandle.verifyOrigin");
  * - `Object.freeze` on prototype (no prototype pollution)
  * - Symbol-keyed `[VERIFY_ORIGIN]` method invisible to IDE and external code
  */
-class DecryptedFhevmHandleImpl<T extends FheType>
-  implements DecryptedFhevmHandleOfTypeBase<T>
-{
+class DecryptedFhevmHandleImpl<
+  T extends FheType,
+> implements DecryptedFhevmHandleOfTypeBase<T> {
   readonly #handle: FhevmHandleOfType<T>;
   readonly #value: DecryptedFheValueMap[T];
   readonly #originToken: symbol;
@@ -94,7 +94,7 @@ class DecryptedFhevmHandleImpl<T extends FheType>
   /**
    * Safe JSON serialization that does not expose the value.
    */
-  public toJson(): { handle: string; fheType: FheType } {
+  public toJSON(): { handle: string; fheType: FheType } {
     return {
       handle: this.#handle.bytes32Hex,
       fheType: this.#handle.fheType,

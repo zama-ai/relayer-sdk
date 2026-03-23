@@ -168,7 +168,7 @@ class ZkProofImpl implements ZkProof {
    * Ciphertext is hex-encoded, chainId is converted to number if safe.
    * @returns A plain object suitable for JSON.stringify.
    */
-  public toJson(): Omit<ZkProofLike, "encryptionBits"> & {
+  public toJSON(): Omit<ZkProofLike, "encryptionBits"> & {
     fheTypeIds: readonly FheTypeId[];
     encryptionBits: readonly EncryptionBits[];
   } {

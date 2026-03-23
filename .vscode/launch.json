@@ -1,0 +1,20 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug Hello Test",
+      "type": "node",
+      "runtimeVersion": "22",
+      "request": "launch",
+      "runtimeArgs": [
+        "--test",
+        "--import",
+        "tsx",
+        "${workspaceFolder}/src/index.hello.test.ts"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    }
+  ]
+}

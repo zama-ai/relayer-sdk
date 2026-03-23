@@ -6,8 +6,14 @@ import type {
   GlobalFhePublicKey,
 } from "../types/globalFhePkeParams.js";
 
+////////////////////////////////////////////////////////////////////////////////
+
 const PRIVATE_TOKEN = Symbol("GlobalFhePkeParams.token");
 const VERIFY_FUNC = Symbol("GlobalFhePkeParams.verify");
+
+////////////////////////////////////////////////////////////////////////////////
+// GlobalFhePkeParamsImpl (private implementation)
+////////////////////////////////////////////////////////////////////////////////
 
 class GlobalFhePkeParamsImpl implements GlobalFhePkeParams {
   readonly #owner: WeakRef<FhevmRuntime>;

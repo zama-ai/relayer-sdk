@@ -12,6 +12,9 @@ import {
   encryptActions,
   globalFhePkeActions,
 } from "./createFhevmEncryptClient.js";
+import type { FhevmOptions } from "../../core/types/coreFhevmClient.js";
+
+////////////////////////////////////////////////////////////////////////////////
 
 export function createFhevmClient<
   chain extends FhevmChain,
@@ -19,6 +22,7 @@ export function createFhevmClient<
 >(parameters: {
   readonly provider: provider;
   readonly chain: chain;
+  readonly options?: FhevmOptions | undefined;
 }): FhevmClient<chain, WithAll, provider> {
   const c = createCoreFhevm(PRIVATE_ETHERS_TOKEN, {
     chain: parameters.chain,

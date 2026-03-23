@@ -59,7 +59,7 @@ class TypedValueImpl<T extends ValueTypeName> implements TypedValueOfBase<T> {
   /**
    * Safe JSON serialization that does not expose the value.
    */
-  public toJson(): { type: T } {
+  public toJSON(): { type: T } {
     return { type: this.#type };
   }
 }

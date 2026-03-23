@@ -5,6 +5,8 @@ import type { InputProof, VerifiedInputProof } from "../../types/inputProof.js";
 import type { ChecksummedAddress } from "../../types/primitives.js";
 import { verifyHandlesCoprocessorSignatures } from "./verifyHandlesCoprocessorSignatures.js";
 
+////////////////////////////////////////////////////////////////////////////////
+
 export type VerifyInputProofParameters = {
   readonly inputProof: InputProof;
   readonly coprocessorSignedParams?: {
@@ -14,6 +16,8 @@ export type VerifyInputProofParameters = {
 };
 
 export type VerifyInputProofReturnType = VerifiedInputProof;
+
+////////////////////////////////////////////////////////////////////////////////
 
 export async function verifyInputProof(
   fhevm: Fhevm<FhevmChain>,

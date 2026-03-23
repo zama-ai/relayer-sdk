@@ -71,7 +71,7 @@ class TrustedValueImpl<T> implements TrustedValue<T> {
   /**
    * Safe JSON serialization that does not expose the value.
    */
-  public toJson(): string {
+  public toJSON(): string {
     return "TrustedValue";
   }
 }

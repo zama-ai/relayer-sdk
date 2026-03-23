@@ -174,7 +174,7 @@ class FhevmHandleImpl implements FhevmHandleBase {
     return this.#handleBytes32Hex;
   }
 
-  public toJson(): string {
+  public toJSON(): string {
     return this.#handleBytes32Hex;
   }
 }

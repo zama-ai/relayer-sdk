@@ -81,7 +81,7 @@ class CoprocessorSignersContextImpl implements CoprocessorSignersContext {
     });
   }
 
-  public toJson(): CoprocessorSignersContextJson {
+  public toJSON(): CoprocessorSignersContextJson {
     return {
       address: this.#address,
       signers: this.#coprocessorSigners,

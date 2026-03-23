@@ -5,6 +5,7 @@ import { threads } from "wasm-feature-detect";
 import { terminateWorkers } from "./wasm/tfhe/tfhe.v1.5.3.js";
 // NOT OK
 import {
+  createFhevmClient,
   createFhevmDecryptClient,
   createFhevmEncryptClient,
   setFhevmRuntimeConfig,
@@ -79,12 +80,21 @@ describe("hello", () => {
 
       setConfig(20);
 
+      const fhevmFullClient = createFhevmClient({
+        chain: sepolia,
+        provider: new ethers.JsonRpcProvider(
+          "https://ethereum-sepolia-rpc.publicnode.com",
+        ),
+      });
+      await fhevmFullClient.ready;
+
       const fhevmDecryptClient = createFhevmDecryptClient({
         chain: sepolia,
         provider: new ethers.JsonRpcProvider(
           "https://ethereum-sepolia-rpc.publicnode.com",
         ),
       });
+      await fhevmDecryptClient.ready;
 
       const privateDecryptionKey =
         await fhevmDecryptClient.generateFhevmDecryptionKey();
@@ -111,6 +121,19 @@ describe("hello", () => {
 
       const globalFhePkeParams =
         await fhevmEncryptClient.fetchGlobalFhePkeParams();
+
+      const res = await fhevmEncryptClient.encrypt({
+        globalFhePublicEncryptionParams: globalFhePkeParams,
+        contractAddress: "0x1E7eA8fE4877E6ea5dc8856f0dA92da8d5066241",
+        extraData: "0x00",
+        userAddress: "0x37ac010c1c566696326813b840319b58bb5840e4",
+        values: [
+          {
+            type: "uint16",
+            value: 123,
+          },
+        ],
+      });
 
       console.log(fhevmDecryptClient.uid);
 

@@ -78,7 +78,7 @@ class FhevmExecutorContractDataImpl implements FhevmExecutorContractData {
     });
   }
 
-  public toJson(): FhevmExecutorContractDataJson {
+  public toJSON(): FhevmExecutorContractDataJson {
     return {
       address: this.#address,
       aclContractAddress: this.#aclContractAddress,
