@@ -12,6 +12,8 @@ import type { ZkProofLike, ZkProof } from "../types/zkProof.js";
 import type { FhevmHandle } from "../types/fhevmHandle.js";
 import type { ErrorMetadataParams } from "../base/errors/ErrorBase.js";
 import {
+  addressToChecksummedAddress,
+  assertIsAddress,
   assertIsChecksummedAddress,
   checksummedAddressToBytes20,
 } from "../base/address.js";
@@ -248,9 +250,19 @@ export async function toZkProof(
   assertIsUint64(zkProofLike.chainId, {});
   const chainId = BigInt(zkProofLike.chainId) as Uint64BigInt;
 
-  assertIsChecksummedAddress(zkProofLike.aclContractAddress, {});
-  assertIsChecksummedAddress(zkProofLike.contractAddress, {});
-  assertIsChecksummedAddress(zkProofLike.userAddress, {});
+  assertIsAddress(zkProofLike.aclContractAddress, {});
+  assertIsAddress(zkProofLike.contractAddress, {});
+  assertIsAddress(zkProofLike.userAddress, {});
+
+  const aclContractAddress: ChecksummedAddress = addressToChecksummedAddress(
+    zkProofLike.aclContractAddress,
+  );
+  const contractAddress: ChecksummedAddress = addressToChecksummedAddress(
+    zkProofLike.contractAddress,
+  );
+  const userAddress: ChecksummedAddress = addressToChecksummedAddress(
+    zkProofLike.userAddress,
+  );
 
   // Validate and normalize ciphertextWithZkProof
   const ciphertextWithZkProof = toBytes(zkProofLike.ciphertextWithZkProof, {
@@ -275,9 +287,9 @@ export async function toZkProof(
 
   return new ZkProofImpl(PRIVATE_TOKEN, {
     chainId,
-    aclContractAddress: zkProofLike.aclContractAddress,
-    contractAddress: zkProofLike.contractAddress,
-    userAddress: zkProofLike.userAddress,
+    aclContractAddress,
+    contractAddress,
+    userAddress,
     ciphertextWithZkProof: ciphertextWithZkProof,
     encryptionBits,
   });

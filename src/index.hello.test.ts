@@ -99,6 +99,9 @@ describe("hello", () => {
       // 3. download+init tfhe global pub key (50MB)
       await fhevmFullClient.ready;
 
+      const globalFhePkeParams =
+        await fhevmFullClient.fetchGlobalFhePkeParams();
+
       // Let's create a partial decrypt client
       // Only using the lightweight tkms.wasm
       const fhevmDecryptClient = createFhevmDecryptClient({
@@ -140,8 +143,8 @@ describe("hello", () => {
       // it's a matter of taste
       await encryptClientWithDecryptFeatures.ready;
 
-      const globalFhePkeParams =
-        await fhevmEncryptClient.fetchGlobalFhePkeParams();
+      // const globalFhePkeParams =
+      //   await fhevmEncryptClient.fetchGlobalFhePkeParams();
 
       const verifiedInputProof: VerifiedInputProof =
         await fhevmEncryptClient.encrypt({
