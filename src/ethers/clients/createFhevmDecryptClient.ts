@@ -12,14 +12,16 @@ import {
   type DecryptActions,
 } from "../../core/clients/decorators/decrypt.js";
 import type {
-  Fhevm,
   FhevmBase,
   FhevmExtension,
   FhevmOptions,
   OptionalNativeClient,
 } from "../../core/types/coreFhevmClient.js";
 import type { FhevmRuntime } from "../../core/types/coreFhevmRuntime.js";
-import { createCoreFhevm } from "../../core/runtime/CoreFhevm-p.js";
+import {
+  asFhevmClientWith,
+  createCoreFhevm,
+} from "../../core/runtime/CoreFhevm-p.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -47,7 +49,7 @@ export function decryptActions(
   fhevm: FhevmBase<FhevmChain>,
 ): FhevmExtension<DecryptActions, WithDecrypt> {
   const runtime = fhevm.runtime.extend(decryptModule);
-  const f = fhevm as unknown as Fhevm<FhevmChain, WithDecrypt>;
+  const f = asFhevmClientWith(fhevm, "decrypt");
   return {
     actions: decryptActions_(f),
     runtime,
@@ -63,5 +65,6 @@ export function decryptActions(
 function _initDecrypt(
   fhevm: FhevmBase<FhevmChain | undefined, FhevmRuntime, OptionalNativeClient>,
 ): Promise<void> {
-  return (fhevm.runtime as WithDecrypt).decrypt.initTkmsModule();
+  const f = asFhevmClientWith(fhevm, "decrypt");
+  return f.runtime.decrypt.initTkmsModule();
 }

@@ -15,8 +15,13 @@ import type {
   NativeClient,
   OptionalNativeClient,
 } from "../types/coreFhevmClient.js";
-import type { FhevmRuntime } from "../types/coreFhevmRuntime.js";
+import type {
+  FhevmRuntime,
+  WithModule,
+  WithModuleMap,
+} from "../types/coreFhevmRuntime.js";
 import { createTrustedClient } from "../modules/ethereum/createTrustedClient.js";
+import { asFhevmRuntimeWith } from "./CoreFhevmRuntime-p.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -215,11 +220,11 @@ type CoreFhevm<
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export function isCoreFhevm(value: unknown): value is CoreFhevm {
+function isCoreFhevm(value: unknown): value is CoreFhevm {
   return value instanceof CoreFhevmImpl;
 }
 
-export function isCoreClientFhevm(value: unknown): value is CoreClientFhevm {
+function isCoreClientFhevm(value: unknown): value is CoreClientFhevm {
   if (!isCoreFhevm(value)) {
     return false;
   }
@@ -240,7 +245,64 @@ export function asCoreClientFhevm(value: unknown): CoreClientFhevm {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export function assertIsCoreFhevm(
+/**
+ * Narrows a Fhevm instance by asserting at runtime that:
+ * - the fhevm instance is valid
+ * - the specified runtime module is active
+ *
+ * @throws if any of the two checks fail
+ */
+export function asFhevmWith<
+  module extends keyof WithModuleMap,
+  chain extends FhevmChain | undefined = FhevmChain | undefined,
+  runtime extends FhevmRuntime = FhevmRuntime,
+  client extends OptionalNativeClient = NativeClient,
+>(
+  fhevm: FhevmBase<chain, runtime, client>,
+  moduleName: module,
+): Fhevm<chain, runtime & WithModule<module>, client> {
+  const f = asCoreFhevm(fhevm);
+  asFhevmRuntimeWith(f.runtime, moduleName);
+  return fhevm as Fhevm<chain, runtime & WithModule<module>, client>;
+}
+
+/**
+ * Narrows a Fhevm instance by asserting at runtime that:
+ * - the fhevm instance is valid
+ * - a native client is present (not `undefined`)
+ * - a chain is configured (not `undefined`)
+ * - the specified runtime module is active
+ *
+ * @throws if any of the four checks fail
+ */
+export function asFhevmClientWith<
+  module extends keyof WithModuleMap,
+  chain extends FhevmChain | undefined = FhevmChain | undefined,
+  runtime extends FhevmRuntime = FhevmRuntime,
+  client extends OptionalNativeClient = NativeClient,
+>(
+  fhevm: FhevmBase<chain, runtime, client>,
+  moduleName: module,
+): Fhevm<
+  chain & FhevmChain,
+  runtime & WithModule<module>,
+  client & NativeClient
+> {
+  const f = asCoreClientFhevm(fhevm);
+  if (f.chain === undefined) {
+    throw new Error("Fhevm client chain is undefined");
+  }
+  asFhevmRuntimeWith(f.runtime, moduleName);
+  return fhevm as Fhevm<
+    chain & FhevmChain,
+    runtime & WithModule<module>,
+    client & NativeClient
+  >;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+function assertIsCoreFhevm(
   value: unknown,
   options: { subject?: string } & ErrorMetadataParams,
 ): asserts value is CoreFhevm {
@@ -256,7 +318,7 @@ export function assertIsCoreFhevm(
   }
 }
 
-export function assertIsCoreClientFhevm(
+function assertIsCoreClientFhevm(
   value: unknown,
   options: { subject?: string } & ErrorMetadataParams,
 ): asserts value is CoreClientFhevm {

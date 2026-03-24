@@ -19,7 +19,7 @@ export type CreateVerifiedInputProofFromComponentsParameters = {
     | readonly Bytes32[]
     | readonly Bytes32HexAble[];
   readonly extraData: BytesHex;
-  readonly coprocessorSignedParams: {
+  readonly signedHandleAccess: {
     readonly userAddress: ChecksummedAddress;
     readonly contractAddress: ChecksummedAddress;
   };

@@ -6,10 +6,12 @@ import {
   getEthersRuntime,
   PRIVATE_ETHERS_TOKEN,
 } from "../internal/ethers-p.js";
-import type { FhevmEncryptClient } from "../../core/clients/fhevmEncryptClient.js";
-import { createCoreFhevm } from "../../core/runtime/CoreFhevm-p.js";
+import { type FhevmEncryptClient } from "../../core/clients/fhevmEncryptClient.js";
+import {
+  asFhevmClientWith,
+  createCoreFhevm,
+} from "../../core/runtime/CoreFhevm-p.js";
 import type {
-  Fhevm,
   FhevmBase,
   FhevmExtension,
   FhevmOptions,
@@ -24,6 +26,7 @@ import {
   globalFhePkeActions as globalFhePkeActions_,
   type GlobalFhePkeActions,
 } from "../../core/clients/decorators/globalFhePke.js";
+import { fetchGlobalFhePkeParamsBytes } from "../../core/actions/key/fetchGlobalFhePkeParamsBytes.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -49,8 +52,9 @@ export function createFhevmEncryptClient<
 export function encryptActions(
   fhevm: FhevmBase<FhevmChain>,
 ): FhevmExtension<EncryptActions, WithEncrypt> {
+  // Extend runtime with the required encrypt module (if needed)
   const runtime = fhevm.runtime.extend(encryptModule);
-  const f = fhevm as unknown as Fhevm<FhevmChain, WithEncrypt>;
+  const f = asFhevmClientWith(fhevm, "encrypt");
   return {
     actions: encryptActions_(f),
     runtime,
@@ -63,8 +67,9 @@ export function encryptActions(
 export function globalFhePkeActions(
   fhevm: FhevmBase<FhevmChain>,
 ): FhevmExtension<GlobalFhePkeActions, WithEncrypt> {
+  // Extend runtime with the required encrypt module (if needed)
   const runtime = fhevm.runtime.extend(encryptModule);
-  const f = fhevm as unknown as Fhevm<FhevmChain, WithEncrypt>;
+  const f = asFhevmClientWith(fhevm, "encrypt");
   return {
     actions: globalFhePkeActions_(f),
     runtime,
@@ -80,13 +85,10 @@ export function globalFhePkeActions(
 async function _initEncrypt(
   fhevm: FhevmBase<FhevmChain | undefined, FhevmRuntime, OptionalNativeClient>,
 ): Promise<void> {
-  const runtime = fhevm.runtime as WithEncrypt;
+  const f = asFhevmClientWith(fhevm, "encrypt");
   await Promise.all([
-    runtime.relayer.fetchGlobalFhePkeParamsBytes(
-      { relayerUrl: fhevm.chain!.fhevm.relayerUrl },
-      {},
-    ),
     // Must check if tfhe global key is available
-    runtime.encrypt.initTfheModule(),
+    fetchGlobalFhePkeParamsBytes(f, {}),
+    f.runtime.encrypt.initTfheModule(),
   ]);
 }

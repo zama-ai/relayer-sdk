@@ -7,7 +7,7 @@ import { verifyInputProof } from "./verifyInputProof.js";
 
 export type CreateVerifiedInputProofFromRawBytesParameters = {
   readonly inputProofBytes: Bytes;
-  readonly coprocessorSignedParams: {
+  readonly signedHandleAccess: {
     readonly userAddress: ChecksummedAddress;
     readonly contractAddress: ChecksummedAddress;
   };

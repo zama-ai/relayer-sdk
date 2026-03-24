@@ -53,8 +53,11 @@ class InputProofImpl implements InputProof {
   readonly #externalHandles: NonEmptyReadonlyArray<ExternalFhevmHandle>;
   readonly #coprocessorSignatures: NonEmptyReadonlyArray<Bytes65Hex>;
   readonly #extraData: BytesHex;
-  readonly #coprocessorSignedParams?: {
+  // Optional data required to verify individual coprocessor signatures
+  readonly #signedHandleAccess?: {
+    // zkProof's userAddress
     readonly userAddress: ChecksummedAddress;
+    // zkProof's contrAddress
     readonly contractAddress: ChecksummedAddress;
   };
 
@@ -65,7 +68,7 @@ class InputProofImpl implements InputProof {
       readonly coprocessorSignatures: readonly Bytes65Hex[];
       readonly externalHandles: readonly ExternalFhevmHandle[];
       readonly extraData: BytesHex;
-      readonly coprocessorSignedParams?:
+      readonly signedHandleAccess?:
         | {
             readonly userAddress: ChecksummedAddress;
             readonly contractAddress: ChecksummedAddress;
@@ -82,7 +85,7 @@ class InputProofImpl implements InputProof {
       coprocessorSignatures,
       externalHandles,
       extraData,
-      coprocessorSignedParams,
+      signedHandleAccess,
     } = parameters;
 
     // Note: it is not possible to create a ZKProof with zero values.
@@ -96,13 +99,14 @@ class InputProofImpl implements InputProof {
     this.#externalHandles =
       externalHandles as NonEmptyReadonlyArray<ExternalFhevmHandle>;
     this.#extraData = extraData;
-    if (coprocessorSignedParams !== undefined) {
-      this.#coprocessorSignedParams = { ...coprocessorSignedParams };
+    if (signedHandleAccess !== undefined) {
+      this.#signedHandleAccess = { ...signedHandleAccess };
     }
 
     Object.freeze(this.#coprocessorSignatures);
     Object.freeze(this.#externalHandles);
-    Object.freeze(this.#coprocessorSignedParams);
+    Object.freeze(this.#signedHandleAccess);
+    Object.freeze(this);
   }
 
   public get bytesHex(): BytesHex {
@@ -122,18 +126,25 @@ class InputProofImpl implements InputProof {
   }
 
   public get verified(): boolean {
-    return this.#coprocessorSignedParams !== undefined;
+    return this.#signedHandleAccess !== undefined;
   }
 
-  public get coprocessorSignedParams():
+  public get signedHandleAccess():
     | {
         readonly contractAddress: ChecksummedAddress;
         readonly userAddress: ChecksummedAddress;
       }
     | undefined {
-    return this.#coprocessorSignedParams;
+    return this.#signedHandleAccess;
   }
 }
+
+////////////////////////////////////////////////////////////////////////////////
+// Freeze
+////////////////////////////////////////////////////////////////////////////////
+
+Object.freeze(InputProofImpl);
+Object.freeze(InputProofImpl.prototype);
 
 ////////////////////////////////////////////////////////////////////////////////
 // Public API
@@ -156,7 +167,7 @@ export function createInputProofFromComponents({
   coprocessorEIP712Signatures,
   externalHandles,
   extraData,
-  coprocessorSignedParams,
+  signedHandleAccess,
 }: {
   readonly coprocessorEIP712Signatures: readonly Bytes65Hex[];
   readonly externalHandles:
@@ -164,7 +175,7 @@ export function createInputProofFromComponents({
     | readonly Bytes32[]
     | readonly Bytes32HexAble[];
   readonly extraData: BytesHex;
-  readonly coprocessorSignedParams?:
+  readonly signedHandleAccess?:
     | {
         readonly userAddress: ChecksummedAddress;
         readonly contractAddress: ChecksummedAddress;
@@ -177,9 +188,9 @@ export function createInputProofFromComponents({
     });
   }
 
-  if (coprocessorSignedParams !== undefined) {
-    assertIsChecksummedAddress(coprocessorSignedParams.userAddress, {});
-    assertIsChecksummedAddress(coprocessorSignedParams.contractAddress, {});
+  if (signedHandleAccess !== undefined) {
+    assertIsChecksummedAddress(signedHandleAccess.userAddress, {});
+    assertIsChecksummedAddress(signedHandleAccess.contractAddress, {});
   }
 
   const externalFhevmHandles: ExternalFhevmHandle[] = externalHandles.map(
@@ -244,7 +255,7 @@ export function createInputProofFromComponents({
     coprocessorSignatures: [...coprocessorEIP712Signatures],
     externalHandles: externalFhevmHandles,
     extraData,
-    coprocessorSignedParams,
+    signedHandleAccess: signedHandleAccess,
   });
 
   return inputProof;
@@ -264,10 +275,10 @@ export function createUnverifiedInputProofFromRawBytes(
 
 export function createInputProofFromRawBytes({
   inputProofBytes,
-  coprocessorSignedParams,
+  signedHandleAccess,
 }: {
   readonly inputProofBytes: Bytes;
-  readonly coprocessorSignedParams?: {
+  readonly signedHandleAccess?: {
     readonly userAddress: ChecksummedAddress;
     readonly contractAddress: ChecksummedAddress;
   };
@@ -334,7 +345,7 @@ export function createInputProofFromRawBytes({
     coprocessorEIP712Signatures: signatures,
     externalHandles: handles,
     extraData,
-    coprocessorSignedParams,
+    signedHandleAccess: signedHandleAccess,
   });
 
   /// Debug TO BE REMOVED
@@ -396,12 +407,12 @@ export function assertIsInputProof(
 export function isVerifiedInputProof(
   value: unknown,
 ): value is VerifiedInputProof & {
-  readonly coprocessorSignedParams: {
+  readonly signedHandleAccess: {
     readonly userAddress: ChecksummedAddress;
     readonly contractAddress: ChecksummedAddress;
   };
 } {
-  return isInputProof(value) && value.coprocessorSignedParams !== undefined;
+  return isInputProof(value) && value.signedHandleAccess !== undefined;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

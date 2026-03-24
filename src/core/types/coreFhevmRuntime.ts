@@ -35,10 +35,18 @@ interface FhevmRuntime_Base {
   ): this & { readonly encrypt: EncryptModule };
 }
 
+export type WithModuleMap = {
+  readonly decrypt: WithDecryptModule;
+  readonly encrypt: WithEncryptModule;
+};
+
 export type FhevmRuntime<Extensions extends object = object> =
   FhevmRuntime_Base & Extensions;
 
 // Convenience types for CoreFhevmClient<R> generics
+export type WithModule<M extends keyof WithModuleMap> = FhevmRuntime<
+  WithModuleMap[M]
+>;
 export type WithDecrypt = FhevmRuntime<WithDecryptModule>;
 export type WithEncrypt = FhevmRuntime<WithEncryptModule>;
 

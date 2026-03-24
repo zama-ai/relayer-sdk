@@ -8,8 +8,8 @@ import type { GlobalFhePkeParamsBytes } from "../../types/globalFhePkeParams.js"
 import { globalFhePkeParamsCache } from "./globalFhePkeParamsCache.js";
 import type { SerializeGlobalFhePkeParamsParameters } from "../encrypt/serializeGlobalFhePkeParams.js";
 import { serializeGlobalFhePkeParams } from "../encrypt/serializeGlobalFhePkeParams.js";
-import { asFhevmEncryptClient } from "../../clients/fhevmEncryptClient.js";
 import type { RelayerKeyUrlOptions } from "../../types/relayer.js";
+import { asFhevmWith } from "../../runtime/CoreFhevm-p.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -71,7 +71,7 @@ function _getSerializeFn(
 
   try {
     // check if the 'encrypt' module is available
-    const f = asFhevmEncryptClient(fhevm);
+    const f = asFhevmWith(fhevm, "encrypt");
     serializeFn = (args) => serializeGlobalFhePkeParams(f, args);
   } catch {
     // encrypt module not available

@@ -58,7 +58,7 @@ export async function fetchVerifiedInputProof(
     coprocessorEIP712Signatures: coprocessorSignatures,
     externalHandles: fhevmHandles,
     extraData: extraData,
-    coprocessorSignedParams: {
+    signedHandleAccess: {
       userAddress: zkProof.userAddress,
       contractAddress: zkProof.contractAddress,
     },

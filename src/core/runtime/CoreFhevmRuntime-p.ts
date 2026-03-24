@@ -3,18 +3,13 @@ import { InvalidTypeError } from "../base/errors/InvalidTypeError.js";
 import { uid } from "../base/uid.js";
 import type { EthereumModule } from "../modules/ethereum/types.js";
 import type { RelayerModule } from "../modules/relayer/types.js";
-import type {
-  EncryptModule,
-  WithEncryptModule,
-} from "../modules/encrypt/types.js";
+import type { EncryptModule } from "../modules/encrypt/types.js";
 import type {
   FhevmRuntime,
   FhevmRuntimeConfig,
+  WithModuleMap,
 } from "../types/coreFhevmRuntime.js";
-import type {
-  DecryptModule,
-  WithDecryptModule,
-} from "../modules/decrypt/types.js";
+import type { DecryptModule } from "../modules/decrypt/types.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -91,13 +86,6 @@ function createExtendFn<T extends FhevmRuntime>(
     return selfRuntime;
   };
 }
-
-////////////////////////////////////////////////////////////////////////////////
-
-type WithModuleMap = {
-  decrypt: WithDecryptModule;
-  encrypt: WithEncryptModule;
-};
 
 ////////////////////////////////////////////////////////////////////////////////
 // FhevmRuntimeImpl

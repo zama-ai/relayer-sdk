@@ -9,7 +9,7 @@ import { verifyHandlesCoprocessorSignatures } from "./verifyHandlesCoprocessorSi
 
 export type VerifyInputProofParameters = {
   readonly inputProof: InputProof;
-  readonly coprocessorSignedParams?: {
+  readonly signedHandleAccess?: {
     readonly userAddress: ChecksummedAddress;
     readonly contractAddress: ChecksummedAddress;
   };
@@ -23,12 +23,11 @@ export async function verifyInputProof(
   fhevm: Fhevm<FhevmChain>,
   parameters: VerifyInputProofParameters,
 ): Promise<VerifyInputProofReturnType> {
-  const coprocessorSignedParams =
-    parameters.coprocessorSignedParams ??
-    parameters.inputProof.coprocessorSignedParams;
-  if (coprocessorSignedParams === undefined) {
+  const signedHandleAccess =
+    parameters.signedHandleAccess ?? parameters.inputProof.signedHandleAccess;
+  if (signedHandleAccess === undefined) {
     throw new InputProofError({
-      message: "Missing coprocessorSignedParams argument.",
+      message: "Missing signedHandleAccess argument.",
     });
   }
 
@@ -39,8 +38,8 @@ export async function verifyInputProof(
     coprocessorSignatures: parameters.inputProof.coprocessorSignatures,
     extraData: parameters.inputProof.extraData,
     handles: parameters.inputProof.externalHandles,
-    userAddress: coprocessorSignedParams.userAddress,
-    contractAddress: coprocessorSignedParams.contractAddress,
+    userAddress: signedHandleAccess.userAddress,
+    contractAddress: signedHandleAccess.contractAddress,
   });
 
   return parameters.inputProof as VerifiedInputProof;

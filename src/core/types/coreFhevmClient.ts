@@ -13,13 +13,19 @@ export type OptionalFhevmChain = FhevmChain | undefined;
 export type Actions = Record<string, (...args: never[]) => unknown>;
 
 export type FhevmExtension<
-  A extends Record<string, unknown> = Record<string, unknown>,
-  RT extends FhevmRuntime = FhevmRuntime,
+  actions extends Record<string, unknown> = Record<string, unknown>,
+  runtime extends FhevmRuntime = FhevmRuntime,
 > = {
-  readonly actions: A;
-  readonly runtime: RT;
+  readonly actions: actions;
+  readonly runtime: runtime;
   readonly init?:
-    | ((client: FhevmBase<FhevmChain | undefined, FhevmRuntime, OptionalNativeClient>) => Promise<void>)
+    | ((
+        client: FhevmBase<
+          FhevmChain | undefined,
+          FhevmRuntime,
+          OptionalNativeClient
+        >,
+      ) => Promise<void>)
     | undefined;
 };
 
@@ -41,13 +47,13 @@ export interface Fhevm<
   client extends OptionalNativeClient = NativeClient,
 > extends FhevmBase<chain, runtime, client> {
   readonly extend: <
-    const A extends Record<string, unknown>,
-    RT extends FhevmRuntime,
+    const actions extends Record<string, unknown>,
+    extendedRuntime extends FhevmRuntime,
   >(
     actionsFactory: (
       client: FhevmBase<chain, FhevmRuntime, client>,
-    ) => FhevmExtension<A, RT>,
-  ) => this & A & { readonly runtime: RT };
+    ) => FhevmExtension<actions, extendedRuntime>,
+  ) => this & actions & { readonly runtime: extendedRuntime };
   readonly init: () => Promise<void>;
   readonly ready: Promise<void>;
 }

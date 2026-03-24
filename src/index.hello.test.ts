@@ -14,6 +14,7 @@ import { sepolia } from "./core/chains/index.js";
 import { ethers } from "ethers";
 import { decryptActions } from "./ethers/clients/createFhevmDecryptClient.js";
 import type { VerifiedInputProof } from "./core/types/inputProof.js";
+import { safeJSONstringify } from "./core/base/string.js";
 
 // node --test --import tsx ./src/index.hello.test.ts
 
@@ -52,9 +53,15 @@ export function timestampNow(): number {
 //   await initTfheModule();
 // }
 
+/**
+ * Configures the FHEVM runtime with the specified number of threads and a console logger.
+ * @param numThreads - The number of threads to use. Pass `0` for single-threaded mode.
+ */
 function setConfig(numThreads: number) {
+  const singleThread = numThreads === 0;
   setFhevmRuntimeConfig({
     numberOfThreads: numThreads,
+    singleThread,
     // Uncomment to use base64
     // locateFile: (_file: string): URL => {
     //   return undefined as unknown as URL;
@@ -80,7 +87,7 @@ describe("hello", () => {
       console.log("threads supported:", supportsThreads);
 
       // A minimum config is required prior to any SDK interactions
-      // - setup the number of threads
+      // - setup the number of threads (0 === single threaded)
       // - setup the urls to the tkms + tfhe wasms
       //   If urls are left blank, the SDK will try to load local files or base64 embeded js
       setConfig(20);
@@ -118,6 +125,7 @@ describe("hello", () => {
       const privateDecryptionKey =
         await fhevmDecryptClient.generateFhevmDecryptionKey();
 
+      // Let's test the creation of a simple EIP712
       const eip712 = fhevmDecryptClient.createUserDecryptEIP712({
         contractAddresses: ["0x1E7eA8fE4877E6ea5dc8856f0dA92da8d5066241"],
         durationDays: 356,
@@ -125,7 +133,9 @@ describe("hello", () => {
         extraData: "0x00",
         publicKey: await privateDecryptionKey.getTkmsPublicKeyHex(),
       });
+      console.log(safeJSONstringify(eip712, 2));
 
+      // Let's create a new encrypt client (cost is zero, modules and keys are globaly shared)
       const fhevmEncryptClient = createFhevmEncryptClient({
         chain: sepolia,
         provider: new ethers.JsonRpcProvider(
@@ -158,6 +168,14 @@ describe("hello", () => {
               value: 123,
             },
           ],
+          options: {
+            debug: true, // enable relayer internal traces
+            onProgress: (args) => {
+              console.log(
+                `[${args.operation}] jobId=${args.jobId} retry=${args.retryCount}`,
+              );
+            },
+          },
         });
 
       console.log(verifiedInputProof.bytesHex);
