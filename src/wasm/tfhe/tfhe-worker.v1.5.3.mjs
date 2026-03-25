@@ -9,7 +9,7 @@ async function ___getTarget() {
   if (___isBrowserLike()) return self;
   const nodeModuleName = 'worker_threads';
   const nodeModuleId = `node:${nodeModuleName}`;
-  const { parentPort } = await import(nodeModuleId);
+  const { parentPort } = await import(/* @vite-ignore */ nodeModuleId);
   return parentPort;
 }
 

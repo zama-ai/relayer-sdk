@@ -2,6 +2,8 @@ src/_cjs
 src/_types
 src/_esm
 
+test-results
+
 dist.tmp
 .env.devnet*
 e2e/_test*

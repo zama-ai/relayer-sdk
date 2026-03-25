@@ -28,17 +28,17 @@ async function __newIsomorphicWorker(url) {
   // Node.js
   const nodeModuleName = "worker_threads";
   const nodeModuleId = `node:${nodeModuleName}`;
-  const { Worker } = await import(nodeModuleId);
+  const { Worker: NodeWorker } = await import(/* @vite-ignore */ nodeModuleId);
 
   // Node's Worker doesn't support data: or blob: URLs.
   // For data: URLs, extract the code and use eval mode.
   if (typeof url === "string" && url.startsWith("data:")) {
     const base64 = url.split(",")[1];
     const code = Buffer.from(base64, "base64").toString("utf-8");
-    return new Worker(code, { eval: true });
+    return new NodeWorker(code, { eval: true });
   }
 
-  return new Worker(url);
+  return new NodeWorker(url);
 }
 
 /**
@@ -73,11 +73,11 @@ async function __newWorkerFromJsCodeBase64(jsCodeBase64) {
   // Node.js
   const nodeModuleName = "worker_threads";
   const nodeModuleId = `node:${nodeModuleName}`;
-  const { Worker } = await import(nodeModuleId);
+  const { Worker: NodeWorker } = await import(/* @vite-ignore */ nodeModuleId);
 
   const code = Buffer.from(jsCodeBase64, "base64").toString("utf-8");
 
-  return { worker: new Worker(code, { eval: true }), blobUrl: undefined };
+  return { worker: new NodeWorker(code, { eval: true }), blobUrl: undefined };
 }
 
 /**

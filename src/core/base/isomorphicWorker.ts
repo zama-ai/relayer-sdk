@@ -51,7 +51,9 @@ export async function getIsomorphicTarget(): Promise<IsomorphicMessagePort> {
   if (isBrowserLike()) return self as unknown as BrowserMessagePort;
   const nodeWorkerModuleName = "worker_threads";
   const nodeWorkerModuleId = `node:${nodeWorkerModuleName}`;
-  const { parentPort: nodeParentPort } = (await import(nodeWorkerModuleId)) as {
+  const { parentPort: nodeParentPort } = (await import(
+    /* @vite-ignore */ nodeWorkerModuleId
+  )) as {
     parentPort: NodeMessagePort | null;
   };
   if (!nodeParentPort) {
@@ -84,7 +86,9 @@ export async function createIsomorphicWorkerFromCode(
   }
   const nodeWorkerModuleName = "worker_threads";
   const nodeWorkerModuleId = `node:${nodeWorkerModuleName}`;
-  const { Worker: NodeWorker } = (await import(nodeWorkerModuleId)) as {
+  const { Worker: NodeWorker } = (await import(
+    /* @vite-ignore */ nodeWorkerModuleId
+  )) as {
     Worker: NodeWorkerConstructor;
   };
   return new NodeWorker(jsCode, { eval: true });
@@ -264,7 +268,9 @@ function createBrowserLikeWorker(url: string): Worker {
 async function createNodeLikeWorker(url: string): Promise<NodeMessagePort> {
   const nodeWorkerModuleName = "worker_threads";
   const nodeWorkerModuleId = `node:${nodeWorkerModuleName}`;
-  const { Worker: NodeWorker } = (await import(nodeWorkerModuleId)) as {
+  const { Worker: NodeWorker } = (await import(
+    /* @vite-ignore */ nodeWorkerModuleId
+  )) as {
     Worker: NodeWorkerConstructor;
   };
   // Node's Worker doesn't support data: or blob: URLs.
@@ -277,7 +283,9 @@ async function createNodeLikeWorker(url: string): Promise<NodeMessagePort> {
 
     const nodeBufferModuleName = "buffer";
     const nodeBufferModuleId = `node:${nodeBufferModuleName}`;
-    const { Buffer: NodeBuffer } = (await import(nodeBufferModuleId)) as {
+    const { Buffer: NodeBuffer } = (await import(
+      /* @vite-ignore */ nodeBufferModuleId
+    )) as {
       Buffer: {
         from(str: string, encoding: string): { toString(enc: string): string };
       };
