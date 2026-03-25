@@ -18,7 +18,7 @@ import {
   serializeTkmsPrivateKey,
   verifyTkmsPrivateKey,
 } from "./api-p.js";
-import { initTkmsModule } from "./init-p.js";
+import { getTkmsModuleInfo, initTkmsModule } from "./init-p.js";
 
 //////////////////////////////////////////////////////////////////////////////
 // decryptModule
@@ -28,6 +28,7 @@ export const decryptModule: DecryptModuleFactory = (runtime: FhevmRuntime) => {
   return Object.freeze({
     decrypt: Object.freeze({
       initTkmsModule: () => initTkmsModule(runtime),
+      getTkmsModuleInfo: () => getTkmsModuleInfo(),
       decryptAndReconstruct: (args: DecryptAndReconstructParameters) =>
         decryptAndReconstruct(runtime, args),
       generateTkmsPrivateKey: () => generateTkmsPrivateKey(runtime),
@@ -45,7 +46,7 @@ export const decryptModule: DecryptModuleFactory = (runtime: FhevmRuntime) => {
 };
 
 //////////////////////////////////////////////////////////////////////////////
-// userDecryptModue
+// userDecryptModule
 //////////////////////////////////////////////////////////////////////////////
 
 export const userDecryptModule: UserDecryptModuleFactory = (
@@ -56,6 +57,7 @@ export const userDecryptModule: UserDecryptModuleFactory = (
   return Object.freeze({
     userDecrypt: Object.freeze({
       initTkmsModule: () => initTkmsModule(runtime),
+      getTkmsModuleInfo: () => getTkmsModuleInfo(),
       decryptAndReconstruct: (args: DecryptAndReconstructUserParameters) =>
         decryptAndReconstruct(runtime, {
           ...args,

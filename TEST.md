@@ -34,28 +34,40 @@ with a focus on multi-threaded WASM execution.
 ## Approach
 
 - Use Playwright as the browser testing framework
-- Serve a minimal test page that imports the SDK with correct COOP/COEP headers
+- Vite as the dev server (handles ESM resolution + COOP/COEP headers)
 - Keep Vitest for unit/Node tests; Playwright for browser integration tests
-- Separate npm script: `test:browser`
+- **1 page = 1 test**: each test scenario is a standalone HTML page with its own script
+- An index page lists all tests for manual browsing
+- Separate npm scripts: `test:browser` (automated), `test:browser:manual` (dev server)
+
+## Test Scenarios
+
+Each scenario is a self-contained page that reports pass/fail with step timings.
+
+| Page                | Description                                                                                                |
+| ------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `smoke-base64.html` | `createFhevmClient()` + `init()` — proves WASM, workers, and FHE key download work using fallback base64   |
+| `smoke-wasm.html`   | `createFhevmClient()` + `init()` — proves WASM, workers, and FHE key download work using native wasm files |
+| _(future)_          | Encrypt uint16 round-trip                                                                                  |
+| _(future)_          | Base64 WASM fallback loading                                                                               |
+| _(future)_          | Worker termination and cleanup                                                                             |
 
 ## Phases
 
-### V0: Smoke test
+### V0: Smoke test (done)
 
-Minimal browser test to prove the infrastructure works:
+Minimal browser test using the real SDK API:
 
-1. **Headers check**: `SharedArrayBuffer` is defined and `wasm-feature-detect.threads()` returns `true`
-   → Validates COOP/COEP headers are served correctly
-2. **WASM + Workers**: TFHE WASM loads and worker threads spawn successfully
-   → Validates multi-threaded WASM execution works in the browser
+1. `setFhevmRuntimeConfig()`
+2. `createFhevmClient({ chain: sepolia, provider })`
+3. `await client.init()` — loads WASM, spawns workers, downloads global FHE key
 
-No encryption, no decryption, no network calls, no keys.
-If this passes, the hard part (headers, workers, WASM compilation) is proven.
+If this passes, the SDK works in the browser.
 
 ### V1: ESM only
 
-- Test ESM imports directly in the browser
 - Test both WASM loading strategies: URL-based and base64 inline
+- Encrypt/decrypt round-trip tests
 - Validate multi-threaded TFHE execution across Chromium, Firefox, WebKit
 
 ### V2: Bundler testing
@@ -69,25 +81,28 @@ Browser tests live in a dedicated, self-contained directory, fully isolated from
 
 ```
 test/browser/
-├── playwright.config.ts     # Playwright config (COOP/COEP headers, browsers)
-├── pages/                   # Minimal HTML test pages served to the browser
-│   ├── esm-url.html         # ESM import with URL-based WASM loading
-│   ├── esm-base64.html      # ESM import with base64 inline WASM loading
-│   └── manual.html          # Manual test page with progress and timings
-├── specs/                   # Playwright test specs
-│   ├── wasm-url.spec.ts
-│   └── wasm-base64.spec.ts
-└── server/                  # Local test server with required headers
-    └── index.ts
+├── index.html              # Links to all test pages (for manual browsing)
+├── vite.config.ts          # Vite dev server config (COOP/COEP headers)
+├── playwright.config.ts    # Playwright config (browsers, timeouts)
+├── pages/                  # One HTML page per test scenario
+│   ├── smoke-base64.html
+│   └── ...
+├── scripts/                # Test logic (one script per page)
+│   ├── smoke-base64.ts
+│   └── ...
+└── specs/                  # Playwright specs (one spec per page)
+    ├── smoke-base64.spec.ts
+    └── ...
 ```
 
 ## Manual Testing
 
-For visual debugging and performance inspection, a manual test mode is available:
+For visual debugging and performance inspection:
 
-- Run `npm run test:browser:manual` to start the test server
-- Open the displayed URL in Safari or Chrome
-- The page displays a minimal, text-only view of:
+- Run `npm run test:browser:manual` to start the Vite dev server
+- Open `http://localhost:3333/test/browser/index.html` in Safari or Chrome
+- The index page lists all test scenarios as clickable links
+- Each test page displays a minimal, text-only view of:
   - Each test step as it executes (WASM loading, worker init, encrypt, decrypt)
   - Pass/fail status per step
   - Timing for each step (e.g. "TFHE init: 1243ms")

@@ -96,6 +96,9 @@ export const encryptModule: EncryptModuleFactory = (_runtime: FhevmRuntime) => {
   return Object.freeze({
     encrypt: Object.freeze({
       initTfheModule: () => Promise.resolve(),
+      getTfheModuleInfo: () => {
+        throw new Error("Not yet implemented");
+      },
       parseTFHEProvenCompactCiphertextList,
       buildWithProofPacked,
       serializeGlobalFhePkeParams,

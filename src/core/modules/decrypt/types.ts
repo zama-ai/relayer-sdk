@@ -29,7 +29,6 @@ import type { KmsSigncryptedShares } from "../../types/kms.js";
 import type { DecryptedFhevmHandle } from "../../types/decryptedFhevmHandle.js";
 import type { Bytes, BytesHex } from "../../types/primitives.js";
 import type { Prettify } from "../../types/utils.js";
-import type { Logger } from "../../types/logger.js";
 import type { FhevmRuntime } from "../../types/coreFhevmRuntime.js";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -38,11 +37,8 @@ import type { FhevmRuntime } from "../../types/coreFhevmRuntime.js";
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-////////////////////////////////////////////////////////////////////////////////
-// setTkmsModuleConfig
-////////////////////////////////////////////////////////////////////////////////
-
 /*
+
 WASM compilation (how to get WebAssembly.Module):
 
 | wasmUrl   | Result                                                         |
@@ -52,11 +48,6 @@ WASM compilation (how to get WebAssembly.Module):
 
 */
 
-export type TkmsModuleConfig = {
-  readonly locateFile?: ((file: string) => URL) | undefined;
-  readonly logger?: Logger | undefined;
-};
-
 ////////////////////////////////////////////////////////////////////////////////
 // initTkmsModule
 ////////////////////////////////////////////////////////////////////////////////
@@ -65,6 +56,30 @@ export type InitTkmsModuleFunction = {
   initTkmsModule(): Promise<void>;
 };
 
+////////////////////////////////////////////////////////////////////////////////
+// getTkmsModuleInfoFunction
+////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Information about the running TKMS module configuration.
+ */
+export type TkmsModuleInfo = {
+  /**
+   * URL used to fetch the TFHE WASM binary.
+   * `undefined` means the base64-embedded fallback is used.
+   */
+  readonly wasmUrl: URL | undefined;
+};
+
+export type GetTkmsModuleInfoReturnType = TkmsModuleInfo | undefined;
+
+export type GetTkmsModuleInfoFunction = {
+  /**
+   * Returns {@link TkmsModuleInfo} when the module is initialized,
+   * or `undefined` if the module has not completed initialization.
+   */
+  getTkmsModuleInfo(): GetTkmsModuleInfoReturnType;
+};
 ////////////////////////////////////////////////////////////////////////////////
 
 type WithTkmsPrivateKey = {
@@ -195,6 +210,7 @@ export type WithDecryptModule = {
 
 export type DecryptModule = Prettify<
   InitTkmsModuleFunction &
+    GetTkmsModuleInfoFunction &
     DecryptAndReconstructModuleFunction &
     GetTkmsPublicKeyHexModuleFunction &
     GenerateTkmsPrivateKeyModuleFunction &

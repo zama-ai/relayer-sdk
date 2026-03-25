@@ -1,8 +1,8 @@
 import {
   setFhevmRuntimeConfig,
   createFhevmClient,
-} from "../../src/ethers/index.js";
-import { sepolia } from "../../src/core/chains/index.js";
+} from "../../../src/ethers/index.js";
+import { sepolia } from "../../../src/core/chains/index.js";
 import { ethers } from "ethers";
 
 const logEl = document.getElementById("log")!;
@@ -24,7 +24,7 @@ function done(status: "pass" | "fail") {
 
 async function run() {
   try {
-    log("Setting runtime config...");
+    log("Setting runtime config (base64 WASM)...");
     setFhevmRuntimeConfig({
       logger: {
         debug: (message: string) => log(`  [debug] ${message}`),
@@ -38,6 +38,9 @@ async function run() {
     });
     log("[PASS] Runtime config set");
 
+    //
+    // 1. Call createFhevmClient
+    //
     log("Creating client...");
     const client = createFhevmClient({
       chain: sepolia,
@@ -47,9 +50,34 @@ async function run() {
     });
     log("[PASS] Client created");
 
+    //
+    // 2. Manually init client
+    //
     log("Initializing (WASM + workers + global FHE key)...");
     await client.init();
     log("[PASS] Client initialized");
+
+    //
+    // 3. Display TFHE module infos
+    //
+    const tfheInfo = client.runtime.encrypt.getTfheModuleInfo();
+    if (!tfheInfo) {
+      throw new Error("TFHE module not initialized after client.init()");
+    }
+    log(
+      `  [TFHE Module] threads: ${tfheInfo.numberOfThreads} (available: ${tfheInfo.threadsAvailable})`,
+    );
+    log(`  [TFHE Module] wasmUrl: ${tfheInfo.wasmUrl ?? "base64"}`);
+    log(`  [TFHE Module] workerUrl: ${tfheInfo.workerUrl ?? "base64"}`);
+
+    //
+    // 4. Display TKMS module infos
+    //
+    const tkmsInfo = client.runtime.decrypt.getTkmsModuleInfo();
+    if (!tkmsInfo) {
+      throw new Error("TKMS module not initialized after client.init()");
+    }
+    log(`  [TKMS Module] wasmUrl: ${tkmsInfo.wasmUrl ?? "base64"}`);
 
     const elapsed = (performance.now() - t0).toFixed(0);
     log(`\nAll checks passed in ${elapsed}ms`);
