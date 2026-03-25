@@ -104,11 +104,12 @@ interface FetchErrorInfo {
  * //   }
  * // ]
  */
+const FETCH_ERROR_SKIP_PROPS = new Set(["message", "cause", "stack", "name"]);
+
 function getFetchErrorInfo(error: unknown): FetchErrorInfo[] {
   const errors: FetchErrorInfo[] = [];
   let current: unknown = error;
 
-  const skipProps = new Set(["message", "cause", "stack", "name"]);
 
   while (current !== null && typeof current === "object") {
     const obj = current as Record<string, unknown>;
@@ -121,7 +122,7 @@ function getFetchErrorInfo(error: unknown): FetchErrorInfo[] {
     const props: Record<string, string | number> = {};
 
     for (const key of Object.keys(obj)) {
-      if (skipProps.has(key)) continue;
+      if (FETCH_ERROR_SKIP_PROPS.has(key)) continue;
 
       const value = obj[key];
       if (typeof value === "string" || typeof value === "number") {
@@ -247,7 +248,7 @@ export async function fetchWithRetry(
 
       if (attempt < retries) {
         // Abortable delay between retries
-        await abortableSleep(retryDelayMs, init?.signal ?? undefined);
+        await abortableSleep(retryDelayMs, init?.signal);
       }
     }
   }
