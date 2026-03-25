@@ -9,7 +9,6 @@ import type {
   GlobalFhePublicKeyBytes,
 } from "../../types/globalFhePkeParams.js";
 import type { Prettify } from "../../types/utils.js";
-import type { Logger } from "../../types/logger.js";
 import type { FhevmRuntime } from "../../types/coreFhevmRuntime.js";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -18,11 +17,8 @@ import type { FhevmRuntime } from "../../types/coreFhevmRuntime.js";
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-////////////////////////////////////////////////////////////////////////////////
-// setTfheModuleConfig
-////////////////////////////////////////////////////////////////////////////////
-
 /*
+
 WASM compilation (how to get WebAssembly.Module):
 
 | wasmUrl   | Result                                                         |
@@ -39,19 +35,54 @@ Worker creation (how to spawn thread pool workers):
 
 */
 
-export type TfheModuleConfig = {
-  readonly singleThread?: boolean | undefined;
-  readonly numberOfThreads?: number | undefined;
-  readonly locateFile?: ((file: string) => URL) | undefined;
-  readonly logger?: Logger | undefined;
-};
-
 ////////////////////////////////////////////////////////////////////////////////
 // initTfheModuleFunction
 ////////////////////////////////////////////////////////////////////////////////
 
 export type InitTfheModuleFunction = {
   initTfheModule(): Promise<void>;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+// getTfheModuleInfoFunction
+////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Information about the running TFHE module configuration.
+ */
+export type TfheModuleInfo = {
+  /**
+   * Number of WASM worker threads.
+   * `0` means single-threaded mode.
+   */
+  readonly numberOfThreads: number;
+  /**
+   * URL used to fetch the TFHE WASM binary.
+   * `undefined` means the base64-embedded fallback is used.
+   */
+  readonly wasmUrl: URL | undefined;
+  /**
+   * URL used to load the TFHE worker script.
+   * `undefined` means the base64-embedded fallback is used.
+   */
+  readonly workerUrl: URL | undefined;
+  /**
+   * Whether the environment supports multi-threading.
+   * - `undefined` — user explicitly requested single-threaded mode.
+   * - `true` — multi-threading is supported and active.
+   * - `false` — multi-threading was requested but unavailable; fell back to single-threaded.
+   */
+  readonly threadsAvailable: boolean | undefined;
+};
+
+export type GetTfheModuleInfoReturnType = TfheModuleInfo | undefined;
+
+export type GetTfheModuleInfoFunction = {
+  /**
+   * Returns {@link TfheModuleInfo} when the module is initialized,
+   * or `undefined` if the module has not completed initialization.
+   */
+  getTfheModuleInfo(): GetTfheModuleInfoReturnType;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -181,6 +212,7 @@ export type WithEncryptModule = {
 
 export type EncryptModule = Prettify<
   InitTfheModuleFunction &
+    GetTfheModuleInfoFunction &
     ParseTFHEProvenCompactCiphertextListModuleFunction &
     BuildWithProofPackedModuleFunction &
     SerializeGlobalFhePkeParamsModuleFunction &

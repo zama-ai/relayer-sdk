@@ -5,8 +5,11 @@ import {
   isomorphicCompileWasmFromBase64,
 } from "../../../base/wasm.js";
 import { assertIsFhevmRuntime } from "../../../runtime/CoreFhevmRuntime-p.js";
-import type { FhevmRuntime } from "../../../types/coreFhevmRuntime.js";
-import type { TkmsModuleConfig } from "../types.js";
+import type {
+  FhevmRuntime,
+  FhevmRuntimeConfig,
+} from "../../../types/coreFhevmRuntime.js";
+import type { GetTkmsModuleInfoReturnType, TkmsModuleInfo } from "../types.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -26,22 +29,20 @@ function dynamicImportWasmBase64(): Promise<{
 
 const KMS_BG_WASM_FILENAME = "kms_lib_bg.wasm";
 
+////////////////////////////////////////////////////////////////////////////////
+
 // Pure JS file (not compiled by tsc) — provides cross-platform base URL
 // for resolving WASM paths. Uses import.meta.url in ESM, __filename in CJS.
 import { wasmBaseUrl } from "../../../../wasm/wasmBaseUrl.js";
 
-// Path relative to src/wasm/ where wasmBaseUrl is anchored
+// (Node only) Path relative to src/wasm/ where wasmBaseUrl is anchored
 const nodeDefaultLocateFile = (file: string): URL => {
   return new URL(`./tkms/${file}`, wasmBaseUrl);
 };
 
-////////////////////////////////////////////////////////////////////////////////
-// TkmsModuleConfig
-////////////////////////////////////////////////////////////////////////////////
-
 type ResolvedTkmsModuleConfig = {
   readonly wasmUrl: URL | undefined;
-  readonly logger: TkmsModuleConfig["logger"];
+  readonly logger: FhevmRuntimeConfig["logger"];
 };
 
 let resolvedTkmsModuleConfig: ResolvedTkmsModuleConfig | undefined = undefined;
@@ -60,7 +61,7 @@ function _getOrResolveTkmsModuleConfig(
 }
 
 function _resolveTkmsModuleConfig(
-  parameters: TkmsModuleConfig,
+  parameters: FhevmRuntimeConfig,
 ): ResolvedTkmsModuleConfig {
   if (cachedTkmsModulePromise !== undefined) {
     throw new Error("Cannot configure module after initialization has started");
@@ -110,25 +111,6 @@ type InitTkmsModuleParameters = {
 let cachedTkmsModulePromise: Promise<void> | undefined;
 let ownerUid: string | undefined = undefined;
 
-async function _initTkmsModule(cfg: ResolvedTkmsModuleConfig): Promise<void> {
-  // Compile WASM module (see matrix in types.ts)
-  let wasmModule;
-  if (cfg.wasmUrl !== undefined) {
-    cfg.logger?.debug(`compile wasm at: ${cfg.wasmUrl}`);
-    wasmModule = await isomorphicCompileWasm(cfg.wasmUrl);
-  } else {
-    cfg.logger?.debug(`compile wasm from embedded base64`);
-    const { tkmsWasmBase64 } = await dynamicImportWasmBase64();
-    wasmModule = await isomorphicCompileWasmFromBase64(tkmsWasmBase64);
-  }
-
-  const input: InitTkmsModuleParameters = { module_or_path: wasmModule };
-
-  await init_kms_lib(input);
-
-  // Note: init_panic_hook is not exposed by kms_lib
-}
-
 export async function initTkmsModule(runtime: FhevmRuntime): Promise<void> {
   assertIsFhevmRuntime(runtime, {});
 
@@ -157,4 +139,37 @@ export async function initTkmsModule(runtime: FhevmRuntime): Promise<void> {
   });
 
   return cachedTkmsModulePromise;
+}
+
+let moduleInfo: TkmsModuleInfo | undefined = undefined;
+
+async function _initTkmsModule(cfg: ResolvedTkmsModuleConfig): Promise<void> {
+  // Compile WASM module (see matrix in types.ts)
+  let wasmModule;
+  if (cfg.wasmUrl !== undefined) {
+    cfg.logger?.debug(`compile wasm at: ${cfg.wasmUrl}`);
+    wasmModule = await isomorphicCompileWasm(cfg.wasmUrl);
+  } else {
+    cfg.logger?.debug(`compile wasm from embedded base64`);
+    const { tkmsWasmBase64 } = await dynamicImportWasmBase64();
+    wasmModule = await isomorphicCompileWasmFromBase64(tkmsWasmBase64);
+  }
+
+  const input: InitTkmsModuleParameters = { module_or_path: wasmModule };
+
+  await init_kms_lib(input);
+
+  // Note: init_panic_hook is not exposed by kms_lib
+
+  moduleInfo = Object.freeze({
+    wasmUrl: cfg.wasmUrl ? new URL(cfg.wasmUrl) : undefined,
+  });
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// getTkmsModuleInfo
+////////////////////////////////////////////////////////////////////////////////
+
+export function getTkmsModuleInfo(): GetTkmsModuleInfoReturnType {
+  return moduleInfo;
 }

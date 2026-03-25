@@ -8,13 +8,15 @@ import {
   isomorphicCompileWasm,
   isomorphicCompileWasmFromBase64,
 } from "../../../base/wasm.js";
-import type { TfheModuleConfig } from "../types.js";
 import {
   isBlobWorkerSupported,
   isBrowserLike,
 } from "../../../base/isomorphicWorker.js";
 import { threads } from "wasm-feature-detect";
-import type { FhevmRuntime } from "../../../types/coreFhevmRuntime.js";
+import type {
+  FhevmRuntime,
+  FhevmRuntimeConfig,
+} from "../../../types/coreFhevmRuntime.js";
 import { assertIsFhevmRuntime } from "../../../runtime/CoreFhevmRuntime-p.js";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -36,11 +38,14 @@ function dynamicImportWasmBase64(): Promise<{
 const TFHE_WORKER_JS_FILENAME = "tfhe-worker.v1.5.3.mjs";
 const TFHE_BG_WASM_FILENAME = "tfhe_bg.v1.5.3.wasm";
 
+////////////////////////////////////////////////////////////////////////////////
+
 // Pure JS file (not compiled by tsc) — provides cross-platform base URL
 // for resolving WASM paths. Uses import.meta.url in ESM, __filename in CJS.
 import { wasmBaseUrl } from "../../../../wasm/wasmBaseUrl.js";
+import type { GetTfheModuleInfoReturnType, TfheModuleInfo } from "../types.js";
 
-// Path relative to src/wasm/ where wasmBaseUrl is anchored
+// (Node only) Path relative to src/wasm/ where wasmBaseUrl is anchored
 const nodeDefaultLocateFile = (file: string): URL => {
   return new URL(`./tfhe/${file}`, wasmBaseUrl);
 };
@@ -62,7 +67,7 @@ type InitTfheModuleParameters = {
 };
 
 ////////////////////////////////////////////////////////////////////////////////
-// TfheModuleConfig
+// ResolvedTfheModuleConfig
 ////////////////////////////////////////////////////////////////////////////////
 
 type ResolvedTfheModuleConfig = {
@@ -71,7 +76,8 @@ type ResolvedTfheModuleConfig = {
   /* if `true`, then `numberOfThreads` is 0, if `false` then `numberOfThreads` > 0 */
   readonly singleThread: boolean;
   readonly numberOfThreads: number;
-  readonly logger: TfheModuleConfig["logger"];
+  readonly logger: FhevmRuntimeConfig["logger"];
+  readonly supportsThreads: boolean | undefined;
 };
 
 let resolvedTfheModuleConfig: ResolvedTfheModuleConfig | undefined = undefined;
@@ -91,11 +97,11 @@ async function _getOrResolveTfheModuleConfig(
 
 /**
  * @internal
- * Resolves user-provided {@link TfheModuleConfig} into a fully resolved config
+ * Resolves user-provided {@link FhevmRuntimeConfig} into a fully resolved config
  * (thread count, worker URL, WASM URL). Must be called before WASM initialization.
  */
 async function _resolveTfheModuleConfig(
-  parameters: TfheModuleConfig,
+  parameters: FhevmRuntimeConfig,
 ): Promise<ResolvedTfheModuleConfig> {
   if (cachedTfheModulePromise !== undefined) {
     throw new Error("Cannot configure module after initialization has started");
@@ -134,7 +140,8 @@ async function _resolveTfheModuleConfig(
     }
   }
 
-  let numberOfThreads: number | undefined;
+  let numberOfThreads: number | undefined = undefined;
+  let supportsThreads: boolean | undefined = undefined;
 
   if (!singleThread) {
     numberOfThreads = numberOfThreadsConfig ?? navigator.hardwareConcurrency; // Node 21+
@@ -142,7 +149,7 @@ async function _resolveTfheModuleConfig(
     if (numberOfThreads > 0) {
       // SharedArrayBuffer requires COOP/COEP headers in browsers.
       // Fall back to single-threaded mode when unavailable.
-      const supportsThreads = await threads();
+      supportsThreads = await threads();
       if (!supportsThreads) {
         console.warn(
           "This browser does not support threads. Verify that your server returns correct headers:\n",
@@ -171,6 +178,7 @@ async function _resolveTfheModuleConfig(
     wasmUrl,
     singleThread,
     logger: parameters.logger,
+    supportsThreads,
   };
 
   parameters.logger?.debug(JSON.stringify(cfg, null, 2));
@@ -218,6 +226,8 @@ export async function initTfheModule(runtime: FhevmRuntime): Promise<void> {
   return cachedTfheModulePromise;
 }
 
+let moduleInfo: TfheModuleInfo | undefined = undefined;
+
 async function _initTfheModule(cfg: ResolvedTfheModuleConfig): Promise<void> {
   // Compile WASM module (see matrix in types.ts)
   let wasmModule;
@@ -243,4 +253,19 @@ async function _initTfheModule(cfg: ResolvedTfheModuleConfig): Promise<void> {
     cfg.logger?.debug(`initThreadPool(${cfg.numberOfThreads})`);
     await initThreadPool(cfg.numberOfThreads);
   }
+
+  moduleInfo = Object.freeze({
+    wasmUrl: cfg.wasmUrl ? new URL(cfg.wasmUrl) : undefined,
+    workerUrl: cfg.workerUrl ? new URL(cfg.workerUrl) : undefined,
+    numberOfThreads: cfg.singleThread === true ? 0 : cfg.numberOfThreads,
+    threadsAvailable: cfg.supportsThreads,
+  });
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// getTfheModuleInfo
+////////////////////////////////////////////////////////////////////////////////
+
+export function getTfheModuleInfo(): GetTfheModuleInfoReturnType {
+  return moduleInfo;
 }

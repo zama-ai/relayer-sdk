@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
-test("createFhevmClient initializes in browser", async ({ page }) => {
-  await page.goto("/test/browser/index.html");
+test("createFhevmClient initializes with URL-based WASM", async ({ page }) => {
+  await page.goto("/test/browser/pages/smoke-wasm.html");
 
   const result = page.locator("#result");
   await result.waitFor({ timeout: 300_000 });
@@ -9,7 +9,7 @@ test("createFhevmClient initializes in browser", async ({ page }) => {
   const status = await result.getAttribute("data-status");
   if (status !== "pass") {
     const logs = await page.locator("#log").textContent();
-    console.error("Smoke test logs:\n", logs);
+    console.error("Smoke wasm logs:\n", logs);
   }
 
   expect(status).toBe("pass");

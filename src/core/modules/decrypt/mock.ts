@@ -90,6 +90,9 @@ export const decryptModule: DecryptModuleFactory = (runtime: FhevmRuntime) => {
   return Object.freeze({
     decrypt: Object.freeze({
       initTkmsModule: () => Promise.resolve(),
+      getTkmsModuleInfo: () => {
+        throw new Error("Not yet implemented");
+      },
       generateTkmsPrivateKey: () => generateTkmsPrivateKey(runtime),
       decryptAndReconstruct: (args: DecryptAndReconstructParameters) =>
         decryptAndReconstruct(runtime, args),
@@ -118,6 +121,9 @@ export const userDecryptModule: UserDecryptModuleFactory = (
   return Object.freeze({
     userDecrypt: Object.freeze({
       initTkmsModule: () => Promise.resolve(),
+      getTkmsModuleInfo: () => {
+        throw new Error("Not yet implemented");
+      },
       decryptAndReconstruct: (args: DecryptAndReconstructUserParameters) =>
         decryptAndReconstruct(runtime, {
           ...args,

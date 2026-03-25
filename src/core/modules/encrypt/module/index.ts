@@ -22,12 +22,13 @@ import {
   serializeGlobalFhePkeParams,
   serializeGlobalFhePublicKey,
 } from "./api-p.js";
-import { initTfheModule } from "./init-p.js";
+import { getTfheModuleInfo, initTfheModule } from "./init-p.js";
 
 export const encryptModule: EncryptModuleFactory = (runtime: FhevmRuntime) => {
   return Object.freeze({
     encrypt: Object.freeze({
       initTfheModule: () => initTfheModule(runtime),
+      getTfheModuleInfo: () => getTfheModuleInfo(),
       parseTFHEProvenCompactCiphertextList: (
         args: ParseTFHEProvenCompactCiphertextListParameters,
       ) => parseTFHEProvenCompactCiphertextList(runtime, args),
