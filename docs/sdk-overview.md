@@ -21,6 +21,8 @@ Otherwise:
 
 🟨 Go to [**Public decryption**](public-decryption.md) to learn how to decrypt outputs that are publicly accessible via HTTP.
 
+🟨 Go to [**Relayer API keys (Mainnet)**](mainnet-api-key.md) to learn how to request API keys for mainnet deployments.
+
 🟨 Go to [**Solidity ACL Guide**](https://docs.zama.ai/protocol/solidity-guides/smart-contract/acl) for more detailed instructions about access control.
 
 ## Help center
