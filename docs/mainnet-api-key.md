@@ -8,11 +8,15 @@ There are 2 options to access the FHEVM Relayer for mainnet deployment:
 
 **Self-hosted Relayer:** Deploy and operate your own Relayer instance, fund your own gateway wallet, and handle transactions independently. See the [Self-host Relayer](https://github.com/zama-ai/fhevm/blob/main/relayer/docs/SELF_HOSTING.md) documentation for set-up guides and configuration references.
 
-**Zama-hosted Relayer:** Connect to Zama's hosted Relayer using an API key for authentication. Transaction fees will be billed on a monthly basis according to the usage, with possible discounts and grants applied directly in the invoice. [Apply for an API key](https://forms.gle/jq84zEek1oiv3kBz9) to get started.
+**Zama-hosted Relayer:** Connect to Zama's hosted Relayer using an API key for authentication. Transaction fees will be billed on a monthly basis according to the usage, with possible discounts and grants applied directly in the invoice.
+
+Start by submitting the form below, the Zama team will review your request and contact you with next steps.
+
+→ [Apply for an API key](https://forms.gle/jq84zEek1oiv3kBz9)
 
 > **Note:** Before publishing the solution on mainnet, ensure that end-to-end integration has been successfully tested on testnet.
 
-## Using Your API Key
+## Using your API key
 
 Once you receive your API key, configure it in the Relayer SDK during initialization:
 
@@ -30,24 +34,24 @@ const instance = await createInstance({
 
 _source:_ [relayer-sdk documentation](https://github.com/zama-ai/relayer-sdk/blob/main/docs/initialization.md#mainnet)
 
-## Security Best Practices
+## Security best practices
 
 Your API key grants access to Zama's hosted Relayer with sponsored operations. Follow these security guidelines to protect your key:
 
-### Keep Your Key Private
+### Keep your key private
 
 - **Never expose your API key in client-side code** (frontend applications, mobile apps, etc.)
 - **Never commit your API key** to version control systems
 - **Never share your API key** with unauthorized parties
 
-### Secure Implementation
+### Secure implementation
 
 The recommended approach depends on your application architecture:
 
 - **In-browser applications**: Proxy all Relayer requests through your backend server so the API key remains server-side and never reaches the client.
 - **Server-side applications**: Store the API key in environment variables and load it securely at runtime.
 
-### Backend Proxy Pattern
+### Backend proxy pattern
 
 Create an endpoint that forwards relayer requests and injects the API key. Store your credentials in environment variables.
 The proxy must add the `x-api-key` header to every forwarded request. Your frontend never sees the key.
@@ -64,7 +68,7 @@ Configure the `relayerUrl` to point to your backend endpoint rather than directl
 
 No `auth` field is needed on the client side — the proxy handles authentication transparently. The SDK sends requests to your proxy URL, and your proxy appends the API key before forwarding to the relayer.
 
-## Compromised Keys
+## Compromised keys
 
 If you suspect your API key has been compromised:
 
