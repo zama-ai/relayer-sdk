@@ -70,10 +70,10 @@ export async function userDecryptWithKmsClosures(
     await fetchKmsSignedcryptedShares(fhevm, rest);
 
   // Using the `KmsSigncryptedShares` decrypt and reconstruct clear values
-  const orderedDecryptedHandles: readonly DecryptedFhevmHandle[] =
+  const values: readonly DecryptedFhevmHandle[] =
     await decryptAndReconstruct({
       shares: kmsSigncryptedShares,
     });
 
-  return orderedDecryptedHandles;
+  return values;
 }

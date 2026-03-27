@@ -56,7 +56,7 @@ export async function fetchVerifiedInputProof(
   // 4. Verify ZK proof and Compute the final Input proof
   return await createVerifiedInputProofFromComponents(fhevm, {
     coprocessorEIP712Signatures: coprocessorSignatures,
-    externalHandles: fhevmHandles,
+    encryptedInputs: fhevmHandles,
     extraData: extraData,
     signedHandleAccess: {
       userAddress: zkProof.userAddress,

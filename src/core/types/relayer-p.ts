@@ -190,8 +190,8 @@ export type RelayerResult200PublicDecrypt = {
 export type RelayerResult200UserDecrypt = {
   result: Array<{
     payload: BytesHexNo0x;
-    signature: Bytes65HexNo0x;
-    //extraData: BytesHex or BytesHexNo0x ?;
+    signature: BytesHexNo0x;
+    extraData?: BytesHexNo0x;
   }>;
 };
 

@@ -3,7 +3,6 @@ import type { KmsEIP712Domain } from "./kms.js";
 import type { KmsSignersContext } from "./kmsSignersContext.js";
 import type {
   Bytes65Hex,
-  Bytes65HexNo0x,
   BytesHexNo0x,
   ChecksummedAddress,
 } from "./primitives.js";
@@ -18,5 +17,6 @@ export interface KmsSigncryptedSharesMetadata {
 
 export interface KmsSigncryptedShare {
   readonly payload: BytesHexNo0x;
-  readonly signature: Bytes65HexNo0x;
+  readonly signature: BytesHexNo0x;
+  readonly extraData?: BytesHexNo0x;
 }

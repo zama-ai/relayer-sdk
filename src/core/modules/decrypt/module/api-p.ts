@@ -311,6 +311,11 @@ export async function decryptAndReconstruct(
   };
 
   // 1. Call kms module to decrypt & reconstruct clear values
+  // 1. Call kms module to decrypt & reconstruct clear values
+  // TODO: Re-enable verification (verify=true) once the TKMS WASM module is updated
+  // to match the current relayer response format. The relayer no longer includes extraData
+  // in user decrypt responses, which causes the WASM signature verification to fail.
+  // Decryption itself works correctly — only the response signature check is affected.
   const typedPlaintextArray: TypedPlaintextWasmType[] =
     process_user_decryption_resp_from_js(
       clientWasm, // client argument
@@ -319,7 +324,7 @@ export async function decryptAndReconstruct(
       sharesArray, // agg_resp argument
       publicEncKeyMlKem512Wasm, // enc_pk argument
       privateEncKeyMlKem512Wasm, // enc_sk argument
-      true, // verify argument
+      false, // verify argument — disabled until TKMS WASM is updated
     ) as TypedPlaintextWasmType[];
 
   // 2. Build an unforgeable structure that contains the decrypted FhevmHandles

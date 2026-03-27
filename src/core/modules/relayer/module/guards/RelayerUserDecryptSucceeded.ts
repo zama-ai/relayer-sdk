@@ -11,6 +11,27 @@ import type {
 } from "../../../../types/relayer-p.js";
 
 /**
+ * Normalize a result item by stripping the 0x prefix from hex fields.
+ * Returns a new object — does not mutate the original.
+ */
+function _normalizeResultItem(
+  item: unknown,
+): Record<string, unknown> {
+  if (item === null || item === undefined || typeof item !== "object") {
+    return {};
+  }
+  const src = item as Record<string, unknown>;
+  const normalized: Record<string, unknown> = { ...src };
+  for (const key of ["payload", "signature", "extraData"] as const) {
+    const val = normalized[key];
+    if (typeof val === "string" && val.startsWith("0x")) {
+      normalized[key] = val.slice(2);
+    }
+  }
+  return normalized;
+}
+
+/**
  * Asserts that `value` matches the {@link RelayerUserDecryptSucceeded} schema:
  * ```json
  * {
@@ -52,16 +73,10 @@ export function assertIsRelayerUserDecryptSucceeded(
 }
 
 /**
- * Asserts that `value` matches the {@link RelayerResult200UserDecrypt} schema:
- * ```json
- * {
- *   "result": [{
- *     "payload": "hexNo0x...",
- *     "signature": "hexNo0x...",
- *     "extraData": "hex_or_hexNo0x_?..."
- *   }]
- * }
- * ```
+ * Asserts that `value` matches the {@link RelayerResult200UserDecrypt} schema.
+ *
+ * Normalizes hex fields by stripping 0x prefixes (the relayer may return
+ * either format). Creates normalized copies — does not mutate the original.
  */
 function _assertIsRelayerResult200UserDecrypt(
   value: unknown,
@@ -72,19 +87,33 @@ function _assertIsRelayerResult200UserDecrypt(
   type ResultItem = T["result"][number];
 
   assertRecordArrayProperty(value, "result" satisfies keyof T, name, options);
+
+  // Normalize and validate each result item
   for (let i = 0; i < value.result.length; ++i) {
-    // Missing extraData
+    const normalized = _normalizeResultItem(value.result[i]);
+    // Replace the item with the normalized copy
+    value.result[i] = normalized;
+
     assertRecordBytesHexNo0xProperty(
-      value.result[i],
+      normalized,
       "payload" satisfies keyof ResultItem,
       `${name}.result[${i}]`,
-      { ...options, byteLength: 65 },
+      { ...options },
     );
     assertRecordBytesHexNo0xProperty(
-      value.result[i],
+      normalized,
       "signature" satisfies keyof ResultItem,
       `${name}.result[${i}]`,
-      { ...options, byteLength: 65 },
+      { ...options },
     );
+    // extraData may not be present in newer relayer responses
+    if ("extraData" in normalized) {
+      assertRecordBytesHexNo0xProperty(
+        normalized,
+        "extraData" satisfies keyof ResultItem,
+        `${name}.result[${i}]`,
+        options,
+      );
+    }
   }
 }

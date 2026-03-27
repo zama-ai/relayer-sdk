@@ -15,10 +15,28 @@ import type { FhevmChain } from "../types/fhevmChain.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export type FhevmDecryptionKey = GetTkmsPublicKeyHexUserModuleFunction &
+/**
+ * End-to-end transport key pair for encrypted communication between user and KMS.
+ *
+ * This key pair is used for:
+ * - Creating decrypt permits (EIP-712 messages signed by the user)
+ * - Decrypting FHE ciphertexts via the threshold KMS protocol
+ * - Establishing secure channels for decryption results
+ *
+ * The key pair contains a TKMS (Threshold Key Management System) private key
+ * that never leaves the user's control. Methods are bound via closures to prevent
+ * key extraction.
+ */
+export type E2eTransportKeyPair = GetTkmsPublicKeyHexUserModuleFunction &
   DecryptAndReconstructUserModuleFunction & {
     readonly serialize: () => Promise<BytesHex>;
   };
+
+/**
+ * @deprecated Use {@link E2eTransportKeyPair} instead.
+ * This alias is maintained for backward compatibility.
+ */
+export type FhevmDecryptionKey = E2eTransportKeyPair;
 
 ////////////////////////////////////////////////////////////////////////////////
 // FhevmDecryptionKeyImpl

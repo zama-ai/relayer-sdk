@@ -104,7 +104,7 @@ function createExtendFn<T extends FhevmRuntime>(
 // - Tree-shakable
 // - Lightweight
 // - Idempotent extend
-// - GC/memory friendly
+// - GC/memory frienfly
 // - Zero dependency
 // - Immutable
 // - Secure
@@ -277,11 +277,10 @@ export function assertOwnedBy(parameters: {
   name: string;
 }): void {
   const { actualOwner: actual, expectedOwner: expected, name } = parameters;
-  const owner = actual.deref();
-  if (owner === undefined) {
+  if (actual.deref() === undefined) {
     throw new Error(`${name} owner has been garbage collected`);
   }
-  if (owner !== expected) {
+  if (actual.deref() !== expected) {
     throw new Error(`${name} has not the expected owner`);
   }
 }

@@ -8,10 +8,14 @@ import type { BytesHex, Uint64BigInt } from "../../../types/primitives.js";
 import type { PublicDecryptionProof } from "../../../types/publicDecryptionProof.js";
 import { checkAllowedForDecryption } from "./checkAllowedForDecryption.js";
 import { createPublicDecryptionProof } from "./createPublicDecryptionProof.js";
+import { getExtraData } from "../../host/getExtraData.js";
 
+/**
+ * Parameters for publicDecrypt - simplified to take array directly.
+ * The array of encrypted values to decrypt, with optional relayer options.
+ */
 export type PublicDecryptParameters = {
-  readonly handles: readonly FhevmHandle[];
-  readonly extraData: BytesHex;
+  readonly encryptedValues: readonly FhevmHandle[];
   readonly options?: RelayerPublicDecryptOptions | undefined;
 };
 
@@ -21,11 +25,12 @@ export async function publicDecrypt(
   fhevm: Fhevm<FhevmChain>,
   parameters: PublicDecryptParameters,
 ): Promise<PublicDecryptReturnType> {
-  const fhevmHandles = parameters.handles;
+  // Map user-facing encryptedValues to internal handles
+  const fhevmHandles = parameters.encryptedValues;
 
-  // 1. Check: At least one handle is required
+  // 1. Check: At least one encrypted value is required
   if (fhevmHandles.length === 0) {
-    throw Error(`handles must not be empty, at least one handle is required`);
+    throw Error(`encryptedValues must not be empty, at least one encrypted value is required`);
   }
 
   // 2. Check: 2048 bits limit
@@ -43,14 +48,17 @@ export async function publicDecrypt(
     options: { checkArguments: true },
   });
 
-  // 5. Call relayer
+  // 5. Fetch extraData for KMS context
+  const extraData = await getExtraData(fhevm, {});
+
+  // 6. Call relayer
   const { orderedAbiEncodedClearValues, kmsPublicDecryptEIP712Signatures } =
     await fhevm.runtime.relayer.fetchPublicDecrypt(
       { relayerUrl: fhevm.chain.fhevm.relayerUrl },
       {
         payload: {
           orderedHandles: fhevmHandles,
-          extraData: parameters.extraData,
+          extraData: extraData,
         },
         options: parameters.options ?? {},
       },
@@ -63,7 +71,7 @@ export async function publicDecrypt(
   ////////////////////////////////////////////////////////////////////////////
   const signedExtraData = "0x" as BytesHex;
 
-  // 6. Verify and Compute PublicDecryptionProof
+  // 7. Verify and Compute PublicDecryptionProof
   const publicDecryptionProof: PublicDecryptionProof =
     await createPublicDecryptionProof(fhevm, {
       orderedHandles: fhevmHandles,

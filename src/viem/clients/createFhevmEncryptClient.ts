@@ -1,11 +1,11 @@
-import type { ethers as EthersT } from "ethers";
+import type { PublicClient, Chain, Transport } from "viem";
 import { encryptModule } from "../../core/modules/encrypt/module/index.js";
 import type { FhevmChain } from "../../core/types/fhevmChain.js";
 import type { WithEncrypt } from "../../core/types/coreFhevmRuntime.js";
 import {
-  getEthersRuntime,
-  PRIVATE_ETHERS_TOKEN,
-} from "../internal/ethers-p.js";
+  getViemRuntime,
+  PRIVATE_VIEM_TOKEN,
+} from "../internal/viem-p.js";
 import { type FhevmEncryptClient } from "../../core/clients/fhevmEncryptClient.js";
 import {
   asFhevmClientWith,
@@ -37,21 +37,21 @@ import { fetchGlobalFhePkeParamsBytes } from "../../core/actions/key/fetchGlobal
  * Use `client.extend(decryptActions)` to add decrypt capabilities later.
  *
  * @param parameters.chain - The fhEVM chain definition (e.g. `sepolia`).
- * @param parameters.provider - An ethers `ContractRunner` (e.g. `JsonRpcProvider`).
+ * @param parameters.provider - A viem `PublicClient`.
  * @param parameters.options - Optional client options.
  * @returns A client with encrypt and key management actions.
  */
 export function createFhevmEncryptClient<
   chain extends FhevmChain,
-  provider extends EthersT.ContractRunner,
+  provider extends PublicClient<Transport, Chain>,
 >(parameters: {
   readonly provider: provider;
   readonly chain: chain;
   readonly options?: FhevmOptions | undefined;
 }): FhevmEncryptClient<chain, WithEncrypt, provider> {
-  const c = createCoreFhevm(PRIVATE_ETHERS_TOKEN, {
+  const c = createCoreFhevm(PRIVATE_VIEM_TOKEN, {
     chain: parameters.chain,
-    runtime: getEthersRuntime(),
+    runtime: getViemRuntime(),
     client: parameters.provider,
   });
 

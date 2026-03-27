@@ -9,7 +9,7 @@ import type { BytesHex } from "./primitives.js";
 
 export interface PublicDecryptionProof {
   readonly decryptionProof: BytesHex;
-  readonly orderedDecryptedHandles: readonly DecryptedFhevmHandle[];
+  readonly values: readonly DecryptedFhevmHandle[];
   readonly orderedAbiEncodedClearValues: BytesHex;
   readonly extraData: BytesHex;
 }

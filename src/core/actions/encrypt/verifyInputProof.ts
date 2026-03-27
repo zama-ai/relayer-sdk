@@ -31,13 +31,13 @@ export async function verifyInputProof(
     });
   }
 
-  const chainId = parameters.inputProof.externalHandles[0].chainId;
+  const chainId = parameters.inputProof.encryptedInputs[0].chainId;
 
   await verifyHandlesCoprocessorSignatures(fhevm, {
     chainId,
     coprocessorSignatures: parameters.inputProof.coprocessorSignatures,
     extraData: parameters.inputProof.extraData,
-    handles: parameters.inputProof.externalHandles,
+    handles: parameters.inputProof.encryptedInputs,
     userAddress: signedHandleAccess.userAddress,
     contractAddress: signedHandleAccess.contractAddress,
   });

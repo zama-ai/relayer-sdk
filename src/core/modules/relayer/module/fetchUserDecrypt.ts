@@ -25,7 +25,7 @@ export async function fetchUserDecrypt(
   parameters: FetchUserDecryptParameters,
 ): Promise<FetchUserDecryptReturnType> {
   const { options, payload } = parameters;
-  const relayerOptions = options as RelayerUserDecryptOptions | undefined;
+  const relayerOptions: RelayerUserDecryptOptions | undefined = options;
 
   const firstHandleContractPair = payload.handleContractPairs[0];
   if (firstHandleContractPair === undefined) {
@@ -66,6 +66,28 @@ export async function fetchUserDecrypt(
   });
 
   const result = (await request.run()) as FetchUserDecryptResult;
+
+  // SECURITY: Validate that response extraData matches request extraData (Issue #423)
+  // This prevents a malicious relayer from substituting the KMS context
+  const requestExtraData = remove0x(
+    payload.kmsUserDecryptEIP712Message.extraData,
+  );
+
+  for (let i = 0; i < result.length; i++) {
+    const share = result[i];
+    if (!share) {
+      throw new Error(`Missing share at index ${i}`);
+    }
+    // Validate extraData if present in the response
+    if (share.extraData !== undefined && share.extraData !== requestExtraData) {
+      throw new Error(
+        `Security violation: Response extraData mismatch at index ${i}. ` +
+          `Expected "${requestExtraData}", got "${share.extraData}". ` +
+          `A malicious relayer may be attempting a context substitution attack. ` +
+          `See: https://github.com/zama-ai/relayer-sdk/issues/423`,
+      );
+    }
+  }
 
   return result as readonly KmsSigncryptedShare[];
 }

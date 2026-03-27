@@ -8,16 +8,16 @@ import type { TypedValueLike } from "../../types/primitives.js";
 import type { ZkProof } from "../../types/zkProof.js";
 import { fetchVerifiedInputProof } from "./fetchVerifiedInputProof.js";
 import { generateZkProof } from "./generateZkProof.js";
-import { asBytesHex } from "../../base/bytes.js";
+import { resolveGlobalFhePkeParams } from "../key/resolveGlobalFhePkeParams.js";
+import { getExtraData } from "../host/getExtraData.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 export type EncryptParameters = {
-  readonly globalFhePublicEncryptionParams: GlobalFhePkeParams;
+  readonly globalFhePublicEncryptionParams?: GlobalFhePkeParams | undefined;
   readonly contractAddress: string;
   readonly userAddress: string;
   readonly values: readonly TypedValueLike[];
-  readonly extraData: string;
   readonly options?: RelayerInputProofOptions | undefined;
 };
 
@@ -33,8 +33,11 @@ export async function encrypt(
     contractAddress,
     userAddress,
     values,
-    globalFhePublicEncryptionParams,
   } = parameters;
+
+  const globalFhePublicEncryptionParams =
+    parameters.globalFhePublicEncryptionParams ??
+    (await resolveGlobalFhePkeParams(fhevm, {}));
 
   const zkProof: ZkProof = await generateZkProof(fhevm, {
     globalFhePublicEncryptionParams,
@@ -43,9 +46,12 @@ export async function encrypt(
     values,
   });
 
+  // Fetch extraData for KMS context
+  const extraData = await getExtraData(fhevm, {});
+
   const inputProof = await fetchVerifiedInputProof(fhevm, {
     zkProof,
-    extraData: asBytesHex(parameters.extraData),
+    extraData: extraData,
     options: parameters.options,
   });
 

@@ -81,3 +81,97 @@ export type {
 
 export type { VerifyKmsUserDecryptEIP712Parameters } from "../core/actions/chain/verifyKmsUserDecryptEIP712.js";
 export { verifyKmsUserDecryptEIP712 } from "../core/actions/chain/verifyKmsUserDecryptEIP712.js";
+
+// Standalone action functions (tree-shakable)
+
+export { encrypt } from "../core/actions/encrypt/encrypt.js";
+export type {
+  EncryptParameters,
+  EncryptReturnType,
+} from "../core/actions/encrypt/encrypt.js";
+
+export { generateZkProof } from "../core/actions/encrypt/generateZkProof.js";
+export type {
+  GenerateZkProofParameters,
+  GenerateZkProofReturnType,
+} from "../core/actions/encrypt/generateZkProof.js";
+
+export { fetchVerifiedInputProof } from "../core/actions/encrypt/fetchVerifiedInputProof.js";
+export type {
+  FetchInputProofParameters,
+  FetchInputProofReturnType,
+} from "../core/actions/encrypt/fetchVerifiedInputProof.js";
+
+export { publicDecrypt } from "../core/actions/decrypt/public/publicDecrypt.js";
+export type {
+  PublicDecryptParameters,
+  PublicDecryptReturnType,
+} from "../core/actions/decrypt/public/publicDecrypt.js";
+
+export { userDecrypt } from "../core/actions/decrypt/user/userDecrypt.js";
+export type {
+  UserDecryptParameters,
+  UserDecryptReturnType,
+} from "../core/actions/decrypt/user/userDecrypt.js";
+
+export { createUserDecryptEIP712 } from "../core/actions/chain/createUserDecryptEIP712.js";
+export type {
+  CreateUserDecryptEIP712Parameters,
+  CreateUserDecryptEIP712ReturnType,
+} from "../core/actions/chain/createUserDecryptEIP712.js";
+
+export { createSignedPermit } from "../core/actions/chain/createSignedPermit.js";
+export type {
+  CreateSignedPermitReturnType,
+  SignedPermit,
+} from "../core/actions/chain/createSignedPermit.js";
+
+export { fetchGlobalFhePkeParamsBytes } from "../core/actions/key/fetchGlobalFhePkeParamsBytes.js";
+export type {
+  FetchGlobalFhePkeParamsBytesParameters,
+  FetchGlobalFhePkeParamsBytesReturnType,
+} from "../core/actions/key/fetchGlobalFhePkeParamsBytes.js";
+
+export { loadFhevmDecryptionKey } from "../core/actions/decrypt/user/loadFhevmDecryptionKey.js";
+export type {
+  LoadFhevmDecryptionKeyParameters,
+  LoadFhevmDecryptionKeyReturnType,
+} from "../core/actions/decrypt/user/loadFhevmDecryptionKey.js";
+
+// Client types
+
+export type { FhevmClient } from "../core/clients/fhevmClient.js";
+export type { FhevmEncryptClient } from "../core/clients/fhevmEncryptClient.js";
+export type { FhevmDecryptClient } from "../core/clients/fhevmDecryptClient.js";
+export type { Fhevm, FhevmOptions } from "../core/types/coreFhevmClient.js";
+export type { WithAll } from "../core/types/coreFhevmRuntime.js";
+
+// Domain types
+
+export type { FhevmChain } from "../core/types/fhevmChain.js";
+export type {
+  FhevmHandle,
+  ExternalFhevmHandle,
+} from "../core/types/fhevmHandle.js";
+export { toFhevmHandle } from "../core/handle/FhevmHandle.js";
+export type { DecryptedFhevmHandle } from "../core/types/decryptedFhevmHandle.js";
+export type { FheType, FheTypeId } from "../core/types/fheType.js";
+export type { VerifiedInputProof } from "../core/types/inputProof.js";
+export type { ZkProof } from "../core/types/zkProof.js";
+export type { PublicDecryptionProof } from "../core/types/publicDecryptionProof.js";
+export type {
+  KmsUserDecryptEIP712,
+  KmsUserDecryptEIP712Message,
+} from "../core/types/kms.js";
+export type {
+  E2eTransportKeyPair,
+  FhevmDecryptionKey,
+} from "../core/user/FhevmDecryptionKey-p.js";
+export type {
+  TypedValue,
+  TypedValueLike,
+  BytesHex,
+  Bytes32Hex,
+  Bytes65Hex,
+  Address,
+} from "../core/types/primitives.js";

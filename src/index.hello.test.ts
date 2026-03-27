@@ -178,7 +178,7 @@ describe("hello", () => {
           },
         });
 
-      console.log(verifiedInputProof.bytesHex);
+      console.log(verifiedInputProof.inputProof);
 
       console.log(fhevmDecryptClient.uid);
 
@@ -213,7 +213,7 @@ describe("hello", () => {
         extraData: asBytesHex("0x00"),
       });
 
-      console.log(result.orderedDecryptedHandles[0]?.value);
+      console.log(result.values[0]?.value);
       */
 
       // Testnet public handles:

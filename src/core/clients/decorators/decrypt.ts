@@ -4,11 +4,6 @@ import {
   createUserDecryptEIP712,
 } from "../../actions/chain/createUserDecryptEIP712.js";
 import {
-  type CreateDelegatedUserDecryptEIP712ReturnType,
-  type CreateDelegatedUserDecryptEIP712Parameters,
-  createDelegatedUserDecryptEIP712,
-} from "../../actions/chain/createDelegatedUserDecryptEIP712.js";
-import {
   publicDecrypt,
   type PublicDecryptParameters,
   type PublicDecryptReturnType,
@@ -28,38 +23,49 @@ import {
 } from "../../actions/decrypt/user/loadFhevmDecryptionKey.js";
 import type { GenerateFhevmDecryptionKeyReturnType } from "../../actions/decrypt/user/generateFhevmDecryptionKey.js";
 import { generateFhevmDecryptionKey } from "../../user/FhevmDecryptionKey-p.js";
+import {
+  getExtraData,
+  type GetExtraDataParameters,
+  type GetExtraDataReturnType,
+} from "../../actions/host/getExtraData.js";
 
 export type DecryptActions = {
-  readonly createUserDecryptEIP712: (
+  /** Creates an EIP-712 decrypt permit for the user to sign. Fetches extraData automatically if not provided. */
+  readonly createDecryptPermit: (
     parameters: CreateUserDecryptEIP712Parameters,
   ) => CreateUserDecryptEIP712ReturnType;
-  readonly createDelegatedUserDecryptEIP712: (
-    parameters: CreateDelegatedUserDecryptEIP712Parameters,
-  ) => CreateDelegatedUserDecryptEIP712ReturnType;
-  readonly publicDecrypt: (
-    parameters: PublicDecryptParameters,
+  /** Reads publicly decryptable values — no keys or signatures needed. */
+  readonly readPublicValue: (
+    encryptedValues: PublicDecryptParameters["encryptedValues"],
   ) => Promise<PublicDecryptReturnType>;
-  readonly userDecrypt: (
+  /** Decrypts private values using a transport key pair and signed permit. */
+  readonly decrypt: (
     parameters: UserDecryptParameters,
   ) => Promise<UserDecryptReturnType>;
-  readonly loadFhevmDecryptionKey: (
+  /** Loads a transport key pair from serialized bytes. */
+  readonly loadE2eTransportKeyPair: (
     parameters: LoadFhevmDecryptionKeyParameters,
   ) => Promise<LoadFhevmDecryptionKeyReturnType>;
-  readonly generateFhevmDecryptionKey: () => Promise<GenerateFhevmDecryptionKeyReturnType>;
+  /** Generates a new end-to-end transport key pair for decryption. */
+  readonly generateE2eTransportKeyPair: () => Promise<GenerateFhevmDecryptionKeyReturnType>;
+  /** Gets the extraData bytes for KMS context (used in permits and encryption). */
+  readonly getExtraData: (
+    parameters: GetExtraDataParameters,
+  ) => GetExtraDataReturnType;
 };
 
 export function decryptActions(
   fhevm: Fhevm<FhevmChain, WithDecrypt>,
 ): DecryptActions {
   return {
-    createUserDecryptEIP712: (parameters) =>
+    createDecryptPermit: (parameters) =>
       createUserDecryptEIP712(fhevm, parameters),
-    createDelegatedUserDecryptEIP712: (parameters) =>
-      createDelegatedUserDecryptEIP712(fhevm, parameters),
-    publicDecrypt: (parameters) => publicDecrypt(fhevm, parameters),
-    userDecrypt: (parameters) => userDecrypt(fhevm, parameters),
-    generateFhevmDecryptionKey: () => generateFhevmDecryptionKey(fhevm),
-    loadFhevmDecryptionKey: (parameters) =>
+    readPublicValue: (encryptedValues) =>
+      publicDecrypt(fhevm, { encryptedValues }),
+    decrypt: (parameters) => userDecrypt(fhevm, parameters),
+    generateE2eTransportKeyPair: () => generateFhevmDecryptionKey(fhevm),
+    loadE2eTransportKeyPair: (parameters) =>
       loadFhevmDecryptionKey(fhevm, parameters),
+    getExtraData: (parameters) => getExtraData(fhevm, parameters),
   };
 }

@@ -12,19 +12,19 @@ import type { DecryptedFhevmHandle } from "../types/decryptedFhevmHandle.js";
 export class PublicDecryptionProofImpl implements PublicDecryptionProof {
   // numSigners + KMS signatures + extraData
   readonly #decryptionProof: BytesHex;
-  readonly #orderedDecryptedHandles: readonly DecryptedFhevmHandle[];
+  readonly #values: readonly DecryptedFhevmHandle[];
   readonly #orderedAbiEncodedClearValues: BytesHex;
   readonly #extraData: BytesHex;
 
   constructor(params: {
     readonly decryptionProof: BytesHex;
-    readonly orderedDecryptedHandles: readonly DecryptedFhevmHandle[];
+    readonly values: readonly DecryptedFhevmHandle[];
     readonly orderedAbiEncodedClearValues: BytesHex;
     readonly extraData: BytesHex;
   }) {
     this.#decryptionProof = params.decryptionProof;
-    this.#orderedDecryptedHandles = Object.freeze([
-      ...params.orderedDecryptedHandles,
+    this.#values = Object.freeze([
+      ...params.values,
     ]);
     this.#extraData = params.extraData;
     this.#orderedAbiEncodedClearValues = params.orderedAbiEncodedClearValues;
@@ -38,8 +38,8 @@ export class PublicDecryptionProofImpl implements PublicDecryptionProof {
     return this.#decryptionProof;
   }
 
-  public get orderedDecryptedHandles(): readonly DecryptedFhevmHandle[] {
-    return this.#orderedDecryptedHandles;
+  public get values(): readonly DecryptedFhevmHandle[] {
+    return this.#values;
   }
 
   public get orderedAbiEncodedClearValues(): BytesHex {

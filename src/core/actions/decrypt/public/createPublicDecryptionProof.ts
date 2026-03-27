@@ -99,7 +99,7 @@ export async function createPublicDecryptionProof(
 
   return new PublicDecryptionProofImpl({
     decryptionProof: decryptionProof,
-    orderedDecryptedHandles: orderedDecryptedFhevmHandles,
+    values: orderedDecryptedFhevmHandles,
     orderedAbiEncodedClearValues:
       orderedAbiEncodedDecryptedFhevmHandles.abiEncodedClearValues,
     extraData,

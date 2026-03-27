@@ -14,7 +14,7 @@ import { verifyInputProof } from "./verifyInputProof.js";
 
 export type CreateVerifiedInputProofFromComponentsParameters = {
   readonly coprocessorEIP712Signatures: readonly Bytes65Hex[];
-  readonly externalHandles:
+  readonly encryptedInputs:
     | readonly Bytes32Hex[]
     | readonly Bytes32[]
     | readonly Bytes32HexAble[];

@@ -15,12 +15,12 @@ export type InputProofBytes = Readonly<{
  * An input proof containing encrypted handles and coprocessor signatures.
  *
  * Used in Solidity function calls where:
- * - `inputProof` (bytes calldata) corresponds to {@link InputProof.bytesHex}
- * - Each `externalE*` parameter corresponds to an entry in {@link InputProof.externalHandles}
+ * - `inputProof` (bytes calldata) corresponds to {@link InputProof.inputProof}
+ * - Each `externalE*` parameter corresponds to an entry in {@link InputProof.encryptedInputs}
  *
  * @example
  * ```solidity
- * //                   externalHandles[0]              bytesHex
+ * //                   encryptedInputs[0]              inputProof
  * //                   vvvvvvvvvvvvvvvvvvvvvvvvvvvvvv  vvvvvvvvvvvvvvvvvvvvvvvvv
  * function addEuint128(externalEuint128 inputEuint128, bytes calldata inputProof) external {
  *     euint128 encValue = FHE.fromExternal(inputEuint128, inputProof);
@@ -34,11 +34,11 @@ export type InputProof = {
    * Passed as the `inputProof` argument to a Solidity function call
    * alongside the external handles.
    */
-  readonly bytesHex: BytesHex;
+  readonly inputProof: BytesHex;
   /** Coprocessor signatures (encoded in the proof). */
   readonly coprocessorSignatures: NonEmptyReadonlyArray<Bytes65Hex>;
   /** Handles signed by coprocessors, e.g. externalEbool, externalEuint8 (encoded in the proof). */
-  readonly externalHandles: NonEmptyReadonlyArray<ExternalFhevmHandle>;
+  readonly encryptedInputs: NonEmptyReadonlyArray<ExternalFhevmHandle>;
   /** Extra data (encoded in the proof). */
   readonly extraData: BytesHex;
   /** Whether the proof has been verified by the SDK. */
