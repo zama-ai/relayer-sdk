@@ -8,11 +8,11 @@ There are 2 options to access the FHEVM Relayer for mainnet deployment:
 
 **Self-hosted Relayer:** Deploy and operate your own Relayer instance, fund your own gateway wallet, and handle transactions independently. See the [Self-host Relayer](https://github.com/zama-ai/fhevm/blob/main/relayer/docs/SELF_HOSTING.md) documentation for set-up guides and configuration references.
 
-**Zama-hosted Relayer:** Connect to Zama's hosted Relayer using an API key for authentication. Transaction fees will be billed on a monthly basis according to the usage, with possible discounts and grants applied directly in the invoice. 
+**Zama-hosted Relayer:** Connect to Zama's hosted Relayer using an API key for authentication. Transaction fees will be billed on a monthly basis according to the usage, with possible discounts and grants applied directly in the invoice.
 
 Start by submitting the form below, the Zama team will review your request and contact you with next steps.
 
- → [Apply for an API key](https://forms.gle/jq84zEek1oiv3kBz9)
+→ [Apply for an API key](https://forms.gle/jq84zEek1oiv3kBz9)
 
 > **Note:** Before publishing the solution on mainnet, ensure that end-to-end integration has been successfully tested on testnet.
 
