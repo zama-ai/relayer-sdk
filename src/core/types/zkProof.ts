@@ -1,5 +1,5 @@
+import type { ExternalEncryptedValue } from "./encryptedTypes.js";
 import type { EncryptionBits } from "./fheType.js";
-import type { FhevmHandle } from "./fhevmHandle.js";
 import type { Bytes, ChecksummedAddress, Uint64BigInt } from "./primitives.js";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -25,5 +25,5 @@ export interface ZkProof {
   readonly ciphertextWithZkProof: Bytes;
   readonly encryptionBits: readonly EncryptionBits[];
 
-  getFhevmHandles(): readonly FhevmHandle[];
+  getExternalEncryptedValues(): readonly ExternalEncryptedValue[];
 }

@@ -140,8 +140,8 @@ async function _resolveTfheModuleConfig(
     }
   }
 
-  let numberOfThreads: number | undefined = undefined;
-  let supportsThreads: boolean | undefined = undefined;
+  let numberOfThreads: number | undefined;
+  let supportsThreads: boolean | undefined;
 
   if (!singleThread) {
     numberOfThreads = numberOfThreadsConfig ?? navigator.hardwareConcurrency; // Node 21+
@@ -257,7 +257,7 @@ async function _initTfheModule(cfg: ResolvedTfheModuleConfig): Promise<void> {
   moduleInfo = Object.freeze({
     wasmUrl: cfg.wasmUrl ? new URL(cfg.wasmUrl) : undefined,
     workerUrl: cfg.workerUrl ? new URL(cfg.workerUrl) : undefined,
-    numberOfThreads: cfg.singleThread === true ? 0 : cfg.numberOfThreads,
+    numberOfThreads: cfg.singleThread ? 0 : cfg.numberOfThreads,
     threadsAvailable: cfg.supportsThreads,
   });
 }

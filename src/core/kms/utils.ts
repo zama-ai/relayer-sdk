@@ -1,4 +1,4 @@
-import type { FhevmHandle } from "../types/fhevmHandle.js";
+import type { Handle } from "../types/encryptedTypes.js";
 import type { UintNumber } from "../types/primitives.js";
 
 const MAX_KMS_DECRYPT_DECRYPTION_BIT_LIMIT = 2048 as UintNumber;
@@ -7,17 +7,17 @@ const MAX_KMS_DECRYPT_DECRYPTION_BIT_LIMIT = 2048 as UintNumber;
  * Asserts that the total encrypted bits across the given handles does not
  * exceed the maximum number of bits the KMS is able to decrypt in a single call.
  *
- * @param fhevmHandles - Handles to sum encrypted bits for
+ * @param handles - Handles to sum encrypted bits for
  * @returns The total encrypted bits across all handles
  * @throws {Error} If the total exceeds the limit
  */
 export function assertKmsDecryptionBitLimit(
-  fhevmHandles: readonly FhevmHandle[],
+  handles: readonly Handle[],
 ): UintNumber {
   let total: number = 0;
 
-  for (const fhevmHandle of fhevmHandles) {
-    total += fhevmHandle.encryptionBits;
+  for (const handle of handles) {
+    total += handle.encryptionBits;
 
     if (total > MAX_KMS_DECRYPT_DECRYPTION_BIT_LIMIT) {
       throw new Error(
@@ -40,7 +40,7 @@ export function assertKmsEIP712DeadlineValidity(
   maxDurationDays: UintNumber,
 ): void {
   if (durationDays === 0) {
-    throw Error("durationDays is null");
+    throw Error("durationDays is zero");
   }
 
   const durationDaysBigInt = BigInt(durationDays);

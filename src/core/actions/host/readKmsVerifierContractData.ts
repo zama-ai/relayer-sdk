@@ -40,7 +40,7 @@ export async function readKmsVerifierContractData(
 
   const res = await executeWithBatching<unknown>(
     rpcCalls,
-    fhevm.options?.batchRpcCalls,
+    fhevm.options.batchRpcCalls,
   );
 
   const eip712DomainRes = res[0] as Eip712DomainReturnType;

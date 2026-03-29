@@ -40,9 +40,11 @@ export type ValueTypeNameToFheTypeMap = {
   [K in keyof ValueTypeMap]: `e${K}`;
 };
 
-export type FheTypeToValueTypeMap = {
+export type ClearValueTypeMap = {
   [K in keyof ValueTypeMap as `e${K}`]: ValueTypeMap[K];
 };
+
+export type ClearValueType<T extends FheType = FheType> = ClearValueTypeMap[T]; // the union
 
 export type FheTypeToValueTypeNameMap = {
   [K in keyof ValueTypeMap as `e${K}`]: K;

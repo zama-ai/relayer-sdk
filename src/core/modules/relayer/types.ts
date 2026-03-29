@@ -5,11 +5,10 @@ import type {
   RelayerPublicDecryptOptions,
   RelayerUserDecryptOptions,
 } from "../../types/relayer.js";
-import type { FhevmHandle } from "../../types/fhevmHandle.js";
 import type {
-  GlobalFhePkeParamsBytes,
-  GlobalFhePkeParamsSource,
-} from "../../types/globalFhePkeParams.js";
+  FheEncryptionKeyBytes,
+  FheEncryptionKeySource,
+} from "../../types/fheEncryptionKey.js";
 import type { KmsSigncryptedShare } from "../../types/kms-p.js";
 import type {
   KmsDelegatedUserDecryptEIP712Message,
@@ -22,6 +21,7 @@ import type {
 } from "../../types/primitives.js";
 import type { Prettify } from "../../types/utils.js";
 import type { ZkProof } from "../../types/zkProof.js";
+import type { Handle, InputHandle } from "../../types/encryptedTypes.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -29,40 +29,43 @@ import type { ZkProof } from "../../types/zkProof.js";
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-export type RelayerClient = { readonly relayerUrl: string };
+export type RelayerClient = {
+  readonly relayerUrl: string;
+  readonly chainId: number;
+};
 
 ////////////////////////////////////////////////////////////////////////////////
-// 1.1 fetchGlobalFhePkeParamsSource
+// 1.1 fetchFheEncryptionKeySource
 ////////////////////////////////////////////////////////////////////////////////
 
-export type FetchGlobalFhePkeParamsSourceParameters = {
+export type FetchFheEncryptionKeySourceParameters = {
   readonly options?: RelayerKeyUrlOptions | undefined;
 };
 
-export type FetchGlobalFhePkeParamsSourceReturnType = GlobalFhePkeParamsSource;
+export type FetchFheEncryptionKeySourceReturnType = FheEncryptionKeySource;
 
-export type FetchGlobalFhePkeParamsSourceModuleFunction = {
-  fetchGlobalFhePkeParamsSource(
+export type FetchFheEncryptionKeySourceModuleFunction = {
+  fetchFheEncryptionKeySource(
     relayerClient: RelayerClient,
-    parameters: FetchGlobalFhePkeParamsSourceParameters,
-  ): Promise<FetchGlobalFhePkeParamsSourceReturnType>;
+    parameters: FetchFheEncryptionKeySourceParameters,
+  ): Promise<FetchFheEncryptionKeySourceReturnType>;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
-// 1.2 fetchGlobalFhePkeParams
+// 1.2 fetchFheEncryptionKeyBytes
 ////////////////////////////////////////////////////////////////////////////////
 
-export type FetchGlobalFhePkeParamsBytesParameters = {
+export type FetchFheEncryptionKeyBytesParameters = {
   readonly options?: RelayerKeyUrlOptions | undefined;
 };
 
-export type FetchGlobalFhePkeParamsBytesReturnType = GlobalFhePkeParamsBytes;
+export type FetchFheEncryptionKeyBytesReturnType = FheEncryptionKeyBytes;
 
-export type FetchGlobalFhePkeParamsBytesModuleFunction = {
-  fetchGlobalFhePkeParamsBytes(
+export type FetchFheEncryptionKeyBytesModuleFunction = {
+  fetchFheEncryptionKeyBytes(
     relayerClient: RelayerClient,
-    parameters: FetchGlobalFhePkeParamsBytesParameters,
-  ): Promise<FetchGlobalFhePkeParamsBytesReturnType>;
+    parameters: FetchFheEncryptionKeyBytesParameters,
+  ): Promise<FetchFheEncryptionKeyBytesReturnType>;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -78,7 +81,7 @@ export type FetchCoprocessorSignaturesParameters = {
 };
 
 export type FetchCoprocessorSignaturesReturnType = {
-  readonly handles: readonly FhevmHandle[];
+  readonly handles: readonly InputHandle[];
   readonly coprocessorEIP712Signatures: readonly Bytes65Hex[];
   readonly extraData: BytesHex;
 };
@@ -96,7 +99,7 @@ export type FetchCoprocessorSignaturesModuleFunction = {
 
 export type FetchPublicDecryptParameters = {
   readonly payload: {
-    readonly orderedHandles: readonly FhevmHandle[];
+    readonly orderedHandles: readonly Handle[];
     readonly extraData: BytesHex;
   };
   readonly options?: RelayerPublicDecryptOptions | undefined;
@@ -121,12 +124,12 @@ export type FetchPublicDecryptModuleFunction = {
 export type FetchUserDecryptParameters = {
   readonly payload: {
     readonly handleContractPairs: ReadonlyArray<{
-      readonly handle: FhevmHandle;
+      readonly handle: Handle;
       readonly contractAddress: ChecksummedAddress;
     }>;
-    readonly kmsUserDecryptEIP712Signer: ChecksummedAddress;
-    readonly kmsUserDecryptEIP712Message: KmsUserDecryptEIP712Message;
-    readonly kmsUserDecryptEIP712Signature: Bytes65Hex;
+    readonly kmsDecryptEip712Signer: ChecksummedAddress;
+    readonly kmsDecryptEip712Message: KmsUserDecryptEIP712Message;
+    readonly kmsDecryptEip712Signature: Bytes65Hex;
   };
   readonly options?: RelayerUserDecryptOptions | undefined;
 };
@@ -147,12 +150,12 @@ export type FetchUserDecryptModuleFunction = {
 export type FetchDelegatedUserDecryptParameters = {
   readonly payload: {
     readonly handleContractPairs: ReadonlyArray<{
-      readonly handle: FhevmHandle;
+      readonly handle: Handle;
       readonly contractAddress: ChecksummedAddress;
     }>;
-    readonly kmsDelegatedUserDecryptEIP712Signer: ChecksummedAddress;
-    readonly kmsDelegatedUserDecryptEIP712Message: KmsDelegatedUserDecryptEIP712Message;
-    readonly kmsDelegatedUserDecryptEIP712Signature: Bytes65Hex;
+    readonly kmsDecryptEip712Signer: ChecksummedAddress;
+    readonly kmsDecryptEip712Message: KmsDelegatedUserDecryptEIP712Message;
+    readonly kmsDecryptEip712Signature: Bytes65Hex;
   };
   readonly options?: RelayerDelegatedUserDecryptOptions | undefined;
 };
@@ -172,8 +175,8 @@ export type FetchDelegatedUserDecryptModuleFunction = {
 ////////////////////////////////////////////////////////////////////////////////
 
 export type RelayerModule = Prettify<
-  FetchGlobalFhePkeParamsSourceModuleFunction &
-    FetchGlobalFhePkeParamsBytesModuleFunction &
+  FetchFheEncryptionKeySourceModuleFunction &
+    FetchFheEncryptionKeyBytesModuleFunction &
     FetchCoprocessorSignaturesModuleFunction &
     FetchUserDecryptModuleFunction &
     FetchPublicDecryptModuleFunction &

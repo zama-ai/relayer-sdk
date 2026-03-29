@@ -5,10 +5,7 @@ import type {
   BytesHexNo0x,
 } from "../../../types/primitives.js";
 import type { FetchUserDecryptPayload } from "../../../types/relayer-p.js";
-import type {
-  FetchUserDecryptResult,
-  RelayerUserDecryptOptions,
-} from "../../../types/relayer.js";
+import type { FetchUserDecryptResult } from "../../../types/relayer.js";
 import type {
   FetchUserDecryptParameters,
   FetchUserDecryptReturnType,
@@ -25,7 +22,6 @@ export async function fetchUserDecrypt(
   parameters: FetchUserDecryptParameters,
 ): Promise<FetchUserDecryptReturnType> {
   const { options, payload } = parameters;
-  const relayerOptions = options as RelayerUserDecryptOptions | undefined;
 
   const firstHandleContractPair = payload.handleContractPairs[0];
   if (firstHandleContractPair === undefined) {
@@ -35,7 +31,7 @@ export async function fetchUserDecrypt(
   // retreive chainId using handles
   const contractsChainId = firstHandleContractPair.handle.chainId.toString();
 
-  const userDecryptPayload: FetchUserDecryptPayload = {
+  const relayerPayload: FetchUserDecryptPayload = {
     handleContractPairs: payload.handleContractPairs.map((pair) => {
       return {
         handle: pair.handle.bytes32Hex,
@@ -43,26 +39,24 @@ export async function fetchUserDecrypt(
       };
     }),
     requestValidity: {
-      startTimestamp: payload.kmsUserDecryptEIP712Message.startTimestamp,
-      durationDays: payload.kmsUserDecryptEIP712Message.durationDays,
+      startTimestamp: payload.kmsDecryptEip712Message.startTimestamp,
+      durationDays: payload.kmsDecryptEip712Message.durationDays,
     },
     contractsChainId,
-    contractAddresses: payload.kmsUserDecryptEIP712Message.contractAddresses,
-    userAddress: payload.kmsUserDecryptEIP712Signer,
-    signature: remove0x(
-      payload.kmsUserDecryptEIP712Signature,
-    ) as Bytes65HexNo0x,
-    extraData: payload.kmsUserDecryptEIP712Message.extraData,
+    contractAddresses: payload.kmsDecryptEip712Message.contractAddresses,
+    userAddress: payload.kmsDecryptEip712Signer,
+    signature: remove0x(payload.kmsDecryptEip712Signature) as Bytes65HexNo0x,
+    extraData: payload.kmsDecryptEip712Message.extraData,
     publicKey: remove0x(
-      payload.kmsUserDecryptEIP712Message.publicKey,
+      payload.kmsDecryptEip712Message.publicKey,
     ) as BytesHexNo0x,
   };
 
   const request = new RelayerAsyncRequest({
     relayerOperation: "USER_DECRYPT",
     url: `${removeSuffix(relayerClient.relayerUrl, "/")}/v2/user-decrypt`,
-    payload: userDecryptPayload,
-    options: relayerOptions,
+    payload: relayerPayload,
+    options,
   });
 
   const result = (await request.run()) as FetchUserDecryptResult;

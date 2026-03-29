@@ -1,8 +1,6 @@
 import type {
   Bytes,
-  Bytes32,
   Bytes32Hex,
-  Bytes32HexAble,
   Bytes65Hex,
   BytesHex,
   ChecksummedAddress,
@@ -25,11 +23,10 @@ import {
   InputProofError,
   TooManyHandlesError,
 } from "../errors/InputProofError.js";
-import { toExternalFhevmHandle } from "../handle/FhevmHandle.js";
+import { toInputHandle } from "../handle/FhevmHandle.js";
 import type { ErrorMetadataParams } from "../base/errors/ErrorBase.js";
 import { assertIsChecksummedAddress } from "../base/address.js";
 import { InvalidTypeError } from "../base/errors/InvalidTypeError.js";
-import type { ExternalFhevmHandle } from "../types/fhevmHandle.js";
 import type {
   InputProof,
   InputProofBytes,
@@ -37,6 +34,7 @@ import type {
   VerifiedInputProof,
 } from "../types/inputProof.js";
 import type { NonEmptyReadonlyArray } from "../types/utils.js";
+import type { InputHandle, InputHandleLike } from "../types/encryptedTypes.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -50,7 +48,7 @@ class InputProofImpl implements InputProof {
   readonly #inputProofBytesHex: BytesHex;
 
   // Components of the proof
-  readonly #externalHandles: NonEmptyReadonlyArray<ExternalFhevmHandle>;
+  readonly #inputHandles: NonEmptyReadonlyArray<InputHandle>;
   readonly #coprocessorSignatures: NonEmptyReadonlyArray<Bytes65Hex>;
   readonly #extraData: BytesHex;
   // Optional data required to verify individual coprocessor signatures
@@ -66,7 +64,7 @@ class InputProofImpl implements InputProof {
     parameters: {
       readonly inputProofBytesHex: BytesHex;
       readonly coprocessorSignatures: readonly Bytes65Hex[];
-      readonly externalHandles: readonly ExternalFhevmHandle[];
+      readonly inputHandles: readonly InputHandle[];
       readonly extraData: BytesHex;
       readonly signedHandleAccess?:
         | {
@@ -83,28 +81,27 @@ class InputProofImpl implements InputProof {
     const {
       inputProofBytesHex,
       coprocessorSignatures,
-      externalHandles,
+      inputHandles,
       extraData,
       signedHandleAccess,
     } = parameters;
 
     // Note: it is not possible to create a ZKProof with zero values.
     // consequently, the handles array cannot be empty
-    assert(externalHandles.length > 0);
+    assert(inputHandles.length > 0);
     assert(coprocessorSignatures.length > 0);
 
     this.#inputProofBytesHex = inputProofBytesHex;
     this.#coprocessorSignatures =
       coprocessorSignatures as NonEmptyReadonlyArray<Bytes65Hex>;
-    this.#externalHandles =
-      externalHandles as NonEmptyReadonlyArray<ExternalFhevmHandle>;
+    this.#inputHandles = inputHandles as NonEmptyReadonlyArray<InputHandle>;
     this.#extraData = extraData;
     if (signedHandleAccess !== undefined) {
       this.#signedHandleAccess = { ...signedHandleAccess };
     }
 
     Object.freeze(this.#coprocessorSignatures);
-    Object.freeze(this.#externalHandles);
+    Object.freeze(this.#inputHandles);
     Object.freeze(this.#signedHandleAccess);
     Object.freeze(this);
   }
@@ -117,8 +114,8 @@ class InputProofImpl implements InputProof {
     return this.#coprocessorSignatures;
   }
 
-  public get externalHandles(): NonEmptyReadonlyArray<ExternalFhevmHandle> {
-    return this.#externalHandles;
+  public get inputHandles(): NonEmptyReadonlyArray<InputHandle> {
+    return this.#inputHandles;
   }
 
   public get extraData(): BytesHex {
@@ -152,10 +149,7 @@ Object.freeze(InputProofImpl.prototype);
 
 export function createUnverifiedInputProofFromComponents(args: {
   readonly coprocessorEIP712Signatures: readonly Bytes65Hex[];
-  readonly externalHandles:
-    | readonly Bytes32Hex[]
-    | readonly Bytes32[]
-    | readonly Bytes32HexAble[];
+  readonly inputHandles: readonly InputHandleLike[];
   readonly extraData: BytesHex;
 }): UnverifiedInputProof {
   return createInputProofFromComponents(args) as UnverifiedInputProof;
@@ -165,15 +159,12 @@ export function createUnverifiedInputProofFromComponents(args: {
 
 export function createInputProofFromComponents({
   coprocessorEIP712Signatures,
-  externalHandles,
+  inputHandles,
   extraData,
   signedHandleAccess,
 }: {
   readonly coprocessorEIP712Signatures: readonly Bytes65Hex[];
-  readonly externalHandles:
-    | readonly Bytes32Hex[]
-    | readonly Bytes32[]
-    | readonly Bytes32HexAble[];
+  readonly inputHandles: readonly InputHandleLike[];
   readonly extraData: BytesHex;
   readonly signedHandleAccess?:
     | {
@@ -182,7 +173,7 @@ export function createInputProofFromComponents({
       }
     | undefined;
 }): InputProof {
-  if (externalHandles.length === 0) {
+  if (inputHandles.length === 0) {
     throw new InputProofError({
       message: `Input proof must contain at least one external handle`,
     });
@@ -193,14 +184,12 @@ export function createInputProofFromComponents({
     assertIsChecksummedAddress(signedHandleAccess.contractAddress, {});
   }
 
-  const externalFhevmHandles: ExternalFhevmHandle[] = externalHandles.map(
-    toExternalFhevmHandle,
-  );
+  const externalFhevmHandles: InputHandle[] = inputHandles.map(toInputHandle);
 
   assertIsBytes65HexArray(coprocessorEIP712Signatures, {});
   assertIsBytesHex(extraData, {});
 
-  const numberOfHandles = externalHandles.length;
+  const numberOfHandles = inputHandles.length;
   const numberOfSignatures = coprocessorEIP712Signatures.length;
 
   if (numberOfHandles > MAX_UINT8) {
@@ -227,7 +216,7 @@ export function createInputProofFromComponents({
   let proof: string = "";
 
   // Add number of handles (uint8 | Byte1)
-  proof += uintToBytesHexNo0x(externalHandles.length as Uint);
+  proof += uintToBytesHexNo0x(inputHandles.length as Uint);
 
   // Add number of signatures (uint8 | Byte1)
   proof += uintToBytesHexNo0x(coprocessorEIP712Signatures.length as Uint);
@@ -253,7 +242,7 @@ export function createInputProofFromComponents({
   const inputProof = new InputProofImpl(PRIVATE_TOKEN, {
     inputProofBytesHex: `0x${proof}` as BytesHex,
     coprocessorSignatures: [...coprocessorEIP712Signatures],
-    externalHandles: externalFhevmHandles,
+    inputHandles: externalFhevmHandles,
     extraData,
     signedHandleAccess: signedHandleAccess,
   });
@@ -343,7 +332,7 @@ export function createInputProofFromRawBytes({
 
   const inputProof = createInputProofFromComponents({
     coprocessorEIP712Signatures: signatures,
-    externalHandles: handles,
+    inputHandles: handles,
     extraData,
     signedHandleAccess: signedHandleAccess,
   });
@@ -440,7 +429,7 @@ export function toInputProofBytes(inputProof: InputProof): InputProofBytes {
     throw new InputProofError({ message: "Invalid inputProof object" });
   }
   return {
-    handles: inputProof.externalHandles.map(
+    handles: inputProof.inputHandles.map(
       (h) => h.bytes32 as Uint8Array,
     ) as unknown as NonEmptyReadonlyArray<Uint8Array>,
     inputProof: hexToBytes(inputProof.bytesHex),

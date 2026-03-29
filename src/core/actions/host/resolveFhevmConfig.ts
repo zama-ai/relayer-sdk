@@ -97,7 +97,7 @@ export async function resolveFhevmConfig(
 
   const res = await executeWithBatching<unknown>(
     rpcCalls,
-    fhevm.options?.batchRpcCalls,
+    fhevm.options.batchRpcCalls,
   );
 
   const inputVerifierData = res[0] as InputVerifierContractData;

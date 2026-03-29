@@ -11,12 +11,16 @@ import type {
   WithDecryptModule,
 } from "../modules/decrypt/types.js";
 import type { Logger } from "./logger.js";
+import type { Auth } from "./auth.js";
+
+////////////////////////////////////////////////////////////////////////////////
 
 export type FhevmRuntimeConfig = {
   readonly locateFile?: ((file: string) => URL) | undefined;
   readonly logger?: Logger | undefined;
   readonly singleThread?: boolean | undefined;
   readonly numberOfThreads?: number | undefined;
+  readonly auth?: Auth | undefined;
 };
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -35,6 +39,8 @@ interface FhevmRuntime_Base {
   ): this & { readonly encrypt: EncryptModule };
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
 export type WithModuleMap = {
   readonly decrypt: WithDecryptModule;
   readonly encrypt: WithEncryptModule;
@@ -43,7 +49,7 @@ export type WithModuleMap = {
 export type FhevmRuntime<Extensions extends object = object> =
   FhevmRuntime_Base & Extensions;
 
-// Convenience types for CoreFhevmClient<R> generics
+// Convenience types for generics
 export type WithModule<M extends keyof WithModuleMap> = FhevmRuntime<
   WithModuleMap[M]
 >;

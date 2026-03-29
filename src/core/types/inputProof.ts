@@ -2,7 +2,7 @@
 // InputProof Types
 ////////////////////////////////////////////////////////////////////////////////
 
-import type { ExternalFhevmHandle } from "./fhevmHandle.js";
+import type { InputHandle } from "./encryptedTypes.js";
 import type { Bytes65Hex, BytesHex, ChecksummedAddress } from "./primitives.js";
 import type { NonEmptyReadonlyArray, Prettify } from "./utils.js";
 
@@ -16,9 +16,9 @@ export type InputProofBytes = Readonly<{
  *
  * Used in Solidity function calls where:
  * - `inputProof` (bytes calldata) corresponds to {@link InputProof.bytesHex}
- * - Each `externalE*` parameter corresponds to an entry in {@link InputProof.externalHandles}
+ * - Each `externalE*` parameter corresponds to an entry in {@link InputProof.inputHandles}
  *
- * @example
+ * @example Solidity contract receiving an encrypted input
  * ```solidity
  * //                   externalHandles[0]              bytesHex
  * //                   vvvvvvvvvvvvvvvvvvvvvvvvvvvvvv  vvvvvvvvvvvvvvvvvvvvvvvvv
@@ -38,7 +38,7 @@ export type InputProof = {
   /** Coprocessor signatures (encoded in the proof). */
   readonly coprocessorSignatures: NonEmptyReadonlyArray<Bytes65Hex>;
   /** Handles signed by coprocessors, e.g. externalEbool, externalEuint8 (encoded in the proof). */
-  readonly externalHandles: NonEmptyReadonlyArray<ExternalFhevmHandle>;
+  readonly inputHandles: NonEmptyReadonlyArray<InputHandle>;
   /** Extra data (encoded in the proof). */
   readonly extraData: BytesHex;
   /** Whether the proof has been verified by the SDK. */

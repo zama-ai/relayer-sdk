@@ -418,6 +418,33 @@ export function assertIsBytesHex(
   }
 }
 
+/**
+ * Asserts that a value is either a `Bytes` (Uint8Array) or a `BytesHex` (hex string).
+ *
+ * @throws {InvalidTypeError} When the value is neither `Bytes` nor `BytesHex`.
+ */
+export function assertIsBytesOrBytesHex(
+  value: unknown,
+  options: { subject?: string } & ErrorMetadataParams,
+): asserts value is Bytes | BytesHex {
+  // faster
+  if (isBytes(value)) {
+    return;
+  }
+  // slower
+  if (isBytesHex(value)) {
+    return;
+  }
+  throw new InvalidTypeError(
+    {
+      subject: options.subject,
+      type: typeof value,
+      expectedType: "Bytes | BytesHex",
+    },
+    options,
+  );
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 export function assertIsBytes1Hex(

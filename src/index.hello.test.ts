@@ -12,9 +12,13 @@ import {
 } from "./ethers/index.js";
 import { sepolia } from "./core/chains/index.js";
 import { ethers } from "ethers";
-import { decryptActions } from "./ethers/clients/createFhevmDecryptClient.js";
-import type { VerifiedInputProof } from "./core/types/inputProof.js";
-import { safeJSONstringify } from "./core/base/string.js";
+//import { safeJSONstringify } from "./core/base/string.js";
+import { decryptActions } from "./ethers/decorators/decrypt.js";
+// import type {
+//   SignedDelegatedDecryptionPermit,
+//   SignedSelfDecryptionPermit,
+// } from "./core/types/signedDecryptionPermit.js";
+import { createFhevmBaseClient } from "./ethers/clients/createFhevmBaseClient.js";
 
 // node --test --import tsx ./src/index.hello.test.ts
 
@@ -106,8 +110,36 @@ describe("hello", () => {
       // 3. download+init tfhe global pub key (50MB)
       await fhevmFullClient.ready;
 
-      const globalFhePkeParams =
-        await fhevmFullClient.fetchGlobalFhePkeParams();
+      const fhevmBaseClient = createFhevmBaseClient({
+        chain: sepolia,
+        provider: new ethers.JsonRpcProvider(
+          "https://ethereum-sepolia-rpc.publicnode.com",
+        ),
+      });
+      await fhevmBaseClient.ready;
+      // Naming: GlobalEncryptionKey, FheEncryptionKey, PublicEncryptionKey, EncryptionKey
+      // it is a public key
+      // everybody can access it
+      // with this key anyone can encrypt a value in its FHE encrypted form
+      // it is 50MB
+      // you need the relayer to get url of this key
+      // internally: it is a 2 components structure: crs (big) + publicKey (small)
+
+      // Get the FheEncru
+      // fhevmBaseClient.fetchFheEncryptionKey;
+
+      const fheEncryptionKeyBytes =
+        await fhevmFullClient.fetchFheEncryptionKeyBytes();
+
+      const fhevmBaseClient2 = createFhevmBaseClient({
+        chain: fhevmBaseClient.chain,
+        provider: fhevmBaseClient.client,
+        options: {
+          fheEncryptionKey: fheEncryptionKeyBytes,
+        },
+      });
+
+      await fhevmBaseClient2.fetchFheEncryptionKeyBytes();
 
       // Let's create a partial decrypt client
       // Only using the lightweight tkms.wasm
@@ -117,23 +149,62 @@ describe("hello", () => {
           "https://ethereum-sepolia-rpc.publicnode.com",
         ),
       });
+
       // since the full client has already been initialized, the new partial client will be instantly initialized
       // They are sharing the same runtime modules
       await fhevmDecryptClient.ready;
 
       // Let's generate a simple kms private decryption key
-      const privateDecryptionKey =
-        await fhevmDecryptClient.generateFhevmDecryptionKey();
+      // const e2eTransportKeypair =
+      //   await fhevmDecryptClient.generateE2eTransportKeypair();
 
-      // Let's test the creation of a simple EIP712
-      const eip712 = fhevmDecryptClient.createUserDecryptEIP712({
-        contractAddresses: ["0x1E7eA8fE4877E6ea5dc8856f0dA92da8d5066241"],
-        durationDays: 356,
-        startTimestamp: timestampNow(),
-        extraData: "0x00",
-        publicKey: await privateDecryptionKey.getTkmsPublicKeyHex(),
-      });
-      console.log(safeJSONstringify(eip712, 2));
+      // const dummySigner: ethers.Signer =
+      //   e2eTransportKeypair as unknown as ethers.Signer;
+
+      // SignedSelfDecryptionPermit
+      // const signedPermit: SignedSelfDecryptionPermit =
+      //   await fhevmDecryptClient.signDecryptionPermit({
+      //     e2eTransportKeypair,
+      //     contractAddresses: ["0x1E7eA8fE4877E6ea5dc8856f0dA92da8d5066241"],
+      //     durationDays: 356,
+      //     startTimestamp: timestampNow(),
+      //     signerAddress: "0x37ac010c1c566696326813b840319b58bb5840e4",
+      //     signer: dummySigner,
+      //   });
+
+      // // SignedDelegatedDecryptionPermit
+      // const signedDelegatePermit: SignedDelegatedDecryptionPermit =
+      //   await fhevmDecryptClient.signDecryptionPermit({
+      //     e2eTransportKeypair,
+      //     contractAddresses: ["0x1E7eA8fE4877E6ea5dc8856f0dA92da8d5066241"],
+      //     durationDays: 356,
+      //     startTimestamp: timestampNow(),
+      //     onBehalfOf: "0x37ac010c1c566696326813b840319b58bb5840e4",
+      //     signerAddress: "0x37ac010c1c566696326813b840319b58bb5840e4",
+      //     signer: dummySigner,
+      //   });
+
+      // const clearText = await fhevmDecryptClient.decrypt({
+      //   encryptedValues: [],
+      //   e2eTransportKeypair,
+      //   signedPermit,
+      // });
+
+      // const clearText2 = await fhevmDecryptClient.decrypt({
+      //   encryptedValues: [],
+      //   e2eTransportKeypair,
+      //   signedPermit: signedDelegatePermit,
+      // });
+
+      // // Let's test the creation of a simple EIP712
+      // const eip712 = fhevmDecryptClient.createUserDecryptEIP712({
+      //   contractAddresses: ["0x1E7eA8fE4877E6ea5dc8856f0dA92da8d5066241"],
+      //   durationDays: 356,
+      //   startTimestamp: timestampNow(),
+      //   extraData: "0x00",
+      //   publicKey: await privateDecryptionKey.getTkmsPublicKeyHex(),
+      // });
+      // console.log(safeJSONstringify(eip712, 2));
 
       // Let's create a new encrypt client (cost is zero, modules and keys are globaly shared)
       const fhevmEncryptClient = createFhevmEncryptClient({
@@ -153,32 +224,26 @@ describe("hello", () => {
       // it's a matter of taste
       await encryptClientWithDecryptFeatures.ready;
 
-      // const globalFhePkeParams =
-      //   await fhevmEncryptClient.fetchGlobalFhePkeParams();
+      // const verifiedInputProof = await fhevmEncryptClient.encrypt({
+      //   contractAddress: "0x1E7eA8fE4877E6ea5dc8856f0dA92da8d5066241",
+      //   extraData: "0x00",
+      //   userAddress: "0x37ac010c1c566696326813b840319b58bb5840e4",
+      //   values: {
+      //     type: "uint16",
+      //     value: 123,
+      //   },
+      //   options: {
+      //     debug: true, // enable relayer internal traces
+      //     onProgress: (args) => {
+      //       console.log(
+      //         `[${args.operation}] jobId=${args.jobId} retry=${args.retryCount}`,
+      //       );
+      //     },
+      //   },
+      // });
 
-      const verifiedInputProof: VerifiedInputProof =
-        await fhevmEncryptClient.encrypt({
-          globalFhePublicEncryptionParams: globalFhePkeParams,
-          contractAddress: "0x1E7eA8fE4877E6ea5dc8856f0dA92da8d5066241",
-          extraData: "0x00",
-          userAddress: "0x37ac010c1c566696326813b840319b58bb5840e4",
-          values: [
-            {
-              type: "uint16",
-              value: 123,
-            },
-          ],
-          options: {
-            debug: true, // enable relayer internal traces
-            onProgress: (args) => {
-              console.log(
-                `[${args.operation}] jobId=${args.jobId} retry=${args.retryCount}`,
-              );
-            },
-          },
-        });
-
-      console.log(verifiedInputProof.bytesHex);
+      // console.log(verifiedInputProof.inputProof);
+      // console.log(verifiedInputProof.externalEncryptedValue);
 
       console.log(fhevmDecryptClient.uid);
 

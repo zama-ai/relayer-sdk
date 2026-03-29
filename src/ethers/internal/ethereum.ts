@@ -11,6 +11,9 @@ import type {
   ReadContractParameters,
   RecoverTypedDataAddressParameters,
   RecoverTypedDataAddressReturnType,
+  SignTypedDataParameters,
+  SignTypedDataReturnType,
+  NativeSigner,
 } from "../../core/modules/ethereum/types.js";
 import type { ethers as EthersT } from "ethers";
 import type { TypedDataField } from "ethers";
@@ -114,6 +117,39 @@ export async function getChainId<T extends EthersT.ContractRunner>(
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// signTypedData
+////////////////////////////////////////////////////////////////////////////////
+
+export async function signTypedData(
+  signer: NativeSigner,
+  parameters: SignTypedDataParameters,
+): Promise<SignTypedDataReturnType> {
+  const { primaryType, types, domain, message } = parameters;
+
+  const ethersSigner = signer as EthersT.Signer;
+  if (typeof ethersSigner.signTypedData !== "function") {
+    throw new Error("signer does not support signTypedData");
+  }
+
+  // ethers takes 3 separate args and filters types by primaryType
+  const primaryTypeFields = types[primaryType];
+  if (primaryTypeFields === undefined) {
+    throw new Error(`Primary type "${primaryType}" not found in types`);
+  }
+  const typesToSign: Record<string, TypedDataField[]> = {
+    [primaryType]: [...primaryTypeFields],
+  };
+
+  const signature = await ethersSigner.signTypedData(
+    domain,
+    typesToSign,
+    message,
+  );
+
+  return signature as SignTypedDataReturnType;
+}
+
+////////////////////////////////////////////////////////////////////////////////
 // ethereumModule
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -124,6 +160,7 @@ export const ethereumModule: EthereumModuleFactory = () => {
       encode,
       encodePacked,
       recoverTypedDataAddress,
+      signTypedData,
       getChainId,
       readContract,
     }),

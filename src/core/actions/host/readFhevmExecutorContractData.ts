@@ -21,7 +21,7 @@ export type ReadFhevmExecutorContractDataReturnType = FhevmExecutorContractData;
 export async function readFhevmExecutorContractData(
   fhevm: Fhevm,
   parameters: ReadFhevmExecutorContractDataParameters,
-): Promise<FhevmExecutorContractData> {
+): Promise<ReadFhevmExecutorContractDataReturnType> {
   const fhevmExecutorContractAddress = parameters.address;
 
   ////////////////////////////////////////////////////////////////////////////
@@ -44,7 +44,7 @@ export async function readFhevmExecutorContractData(
 
   const res = await executeWithBatching<unknown>(
     rpcCalls,
-    fhevm.options?.batchRpcCalls,
+    fhevm.options.batchRpcCalls,
   );
 
   const aclContractAddress = res[0];

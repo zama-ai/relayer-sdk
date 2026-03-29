@@ -3,26 +3,26 @@ import type {
   BuildWithProofPackedReturnType,
   ParseTFHEProvenCompactCiphertextListParameters,
   ParseTFHEProvenCompactCiphertextListReturnType,
-  SerializeGlobalFheCrsParameters,
-  SerializeGlobalFheCrsReturnType,
-  SerializeGlobalFhePkeParamsParameters,
-  SerializeGlobalFhePkeParamsReturnType,
-  SerializeGlobalFhePublicKeyParameters,
-  SerializeGlobalFhePublicKeyReturnType,
-  DeserializeGlobalFheCrsParameters,
-  DeserializeGlobalFheCrsReturnType,
-  DeserializeGlobalFhePublicKeyParameters,
-  DeserializeGlobalFhePublicKeyReturnType,
+  SerializeFheEncryptionCrsParameters as SerializeFheEncryptionCrsParameters,
+  SerializeFheEncryptionCrsReturnType as SerializeFheEncryptionCrsReturnType,
+  SerializeFheEncryptionKeyParameters as SerializeFheEncryptionKeyParameters,
+  SerializeFheEncryptionKeyReturnType as SerializeFheEncryptionKeyReturnType,
+  SerializeFheEncryptionPublicKeyParameters as SerializeFheEncryptionPublicKeyParameters,
+  SerializeFheEncryptionPublicKeyReturnType as SerializeFheEncryptionPublicKeyReturnType,
+  DeserializeFheEncryptionCrsParameters as DeserializeFheEncryptionCrsParameters,
+  DeserializeFheEncryptionCrsReturnType as DeserializeFheEncryptionCrsReturnType,
+  DeserializeFheEncryptionPublicKeyParameters,
+  DeserializeFheEncryptionPublicKeyReturnType,
 } from "../types.js";
 import type {
-  GlobalFheCrs,
-  GlobalFheCrsBrand,
-  GlobalFheCrsBytes,
-  GlobalFhePkeParamsBytes,
-  GlobalFhePublicKey,
-  GlobalFhePublicKeyBrand,
-  GlobalFhePublicKeyBytes,
-} from "../../../types/globalFhePkeParams.js";
+  FheEncryptionCrs,
+  FheEncryptionCrsBrand,
+  FheEncryptionCrsBytes,
+  FheEncryptionKeyBytes,
+  FheEncryptionPublicKey,
+  FheEncryptionPublicKeyBrand,
+  FheEncryptionPublicKeyBytes,
+} from "../../../types/fheEncryptionKey.js";
 import type { CompactCiphertextListBuilder } from "../../../../wasm/tfhe/tfhe.v1.5.3.js";
 import {
   TfheCompactPublicKey,
@@ -63,8 +63,8 @@ export const SERIALIZED_SIZE_LIMIT_CRS = BigInt(1024 * 1024 * 512);
 // TfheCompactPublicKeyImpl
 ////////////////////////////////////////////////////////////////////////////////
 
-class TfheCompactPublicKeyImpl implements GlobalFhePublicKey {
-  declare readonly [GlobalFhePublicKeyBrand]: never;
+class TfheCompactPublicKeyImpl implements FheEncryptionPublicKey {
+  declare readonly [FheEncryptionPublicKeyBrand]: never;
 
   readonly #id: string;
   readonly #tfheCompactPublicKeyWasmType: TfheCompactPublicKey;
@@ -103,8 +103,8 @@ class TfheCompactPublicKeyImpl implements GlobalFhePublicKey {
 // TfheCompactPkeCrsImpl
 ////////////////////////////////////////////////////////////////////////////////
 
-class TfheCompactPkeCrsImpl implements GlobalFheCrs {
-  declare readonly [GlobalFheCrsBrand]: never;
+class TfheCompactPkeCrsImpl implements FheEncryptionCrs {
+  declare readonly [FheEncryptionCrsBrand]: never;
 
   readonly #id: string;
   readonly #capacity: UintNumber;
@@ -219,7 +219,11 @@ export async function buildWithProofPacked(
 ): Promise<BuildWithProofPackedReturnType> {
   await initTfheModule(runtime);
 
-  const { publicEncryptionParams, metaData, typedValues } = parameters;
+  const {
+    fheEncryptionKey: publicEncryptionParams,
+    metaData,
+    typedValues,
+  } = parameters;
 
   const tfheCompactPublicKeyImpl = publicEncryptionParams.publicKey;
   const tfheCompactPkeCrsImpl = publicEncryptionParams.crs;
@@ -315,16 +319,16 @@ export async function buildWithProofPacked(
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// serializeGlobalFhePkeParams
+// serializeFheEncryptionKey
 ////////////////////////////////////////////////////////////////////////////////
 
-export async function serializeGlobalFhePkeParams(
+export async function serializeFheEncryptionKey(
   runtime: FhevmRuntime,
-  parameters: SerializeGlobalFhePkeParamsParameters,
-): Promise<SerializeGlobalFhePkeParamsReturnType> {
+  parameters: SerializeFheEncryptionKeyParameters,
+): Promise<SerializeFheEncryptionKeyReturnType> {
   await initTfheModule(runtime);
 
-  const { globalFhePkeParams: publicEncryptionParams } = parameters;
+  const { fheEncryptionKey: publicEncryptionParams } = parameters;
 
   const tfheCompactPublicKeyImpl = publicEncryptionParams.publicKey;
   const tfheCompactPkeCrsImpl = publicEncryptionParams.crs;
@@ -355,20 +359,20 @@ export async function serializeGlobalFhePkeParams(
       capacity: publicEncryptionParams.crs.capacity,
       bytes: tfheCrsBytes,
     }),
-  }) as GlobalFhePkeParamsBytes;
+  }) as FheEncryptionKeyBytes;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // serializeTfhePublicKey
 ////////////////////////////////////////////////////////////////////////////////
 
-export async function serializeGlobalFhePublicKey(
+export async function serializeFheEncryptionPublicKey(
   runtime: FhevmRuntime,
-  parameters: SerializeGlobalFhePublicKeyParameters,
-): Promise<SerializeGlobalFhePublicKeyReturnType> {
+  parameters: SerializeFheEncryptionPublicKeyParameters,
+): Promise<SerializeFheEncryptionPublicKeyReturnType> {
   await initTfheModule(runtime);
 
-  const { globalFhePublicKey: tfhePublicKey } = parameters;
+  const { publicKey: tfhePublicKey } = parameters;
 
   const tfheCompactPublicKeyImpl = tfhePublicKey;
 
@@ -384,20 +388,20 @@ export async function serializeGlobalFhePublicKey(
   return Object.freeze({
     id: tfhePublicKey.id,
     bytes: tfhePublicKeyBytes,
-  }) as GlobalFhePublicKeyBytes;
+  }) as FheEncryptionPublicKeyBytes;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // serializeGlobalFheCrs
 ////////////////////////////////////////////////////////////////////////////////
 
-export async function serializeGlobalFheCrs(
+export async function serializeFheEncryptionCrs(
   runtime: FhevmRuntime,
-  parameters: SerializeGlobalFheCrsParameters,
-): Promise<SerializeGlobalFheCrsReturnType> {
+  parameters: SerializeFheEncryptionCrsParameters,
+): Promise<SerializeFheEncryptionCrsReturnType> {
   await initTfheModule(runtime);
 
-  const { globalFheCrs: tfheCrs } = parameters;
+  const { crs: tfheCrs } = parameters;
 
   const tfheCompactPkeCrsImpl = tfheCrs;
 
@@ -414,20 +418,20 @@ export async function serializeGlobalFheCrs(
     id: tfheCrs.id,
     capacity: tfheCrs.capacity,
     bytes: tfheCrsBytes,
-  }) as GlobalFheCrsBytes;
+  }) as FheEncryptionCrsBytes;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// deserializeGlobalFhePkeParams
+// deserializeFheEncryptionCrs
 ////////////////////////////////////////////////////////////////////////////////
 
-export async function deserializeGlobalFheCrs(
+export async function deserializeFheEncryptionCrs(
   runtime: FhevmRuntime,
-  parameters: DeserializeGlobalFheCrsParameters,
-): Promise<DeserializeGlobalFheCrsReturnType> {
+  parameters: DeserializeFheEncryptionCrsParameters,
+): Promise<DeserializeFheEncryptionCrsReturnType> {
   await initTfheModule(runtime);
 
-  const { globalFheCrsBytes } = parameters;
+  const { crsBytes: globalFheCrsBytes } = parameters;
 
   const compactPkeCrsWasm: CompactPkeCrs = CompactPkeCrs.safe_deserialize(
     globalFheCrsBytes.bytes,
@@ -443,16 +447,16 @@ export async function deserializeGlobalFheCrs(
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// deserializeGlobalFhePkeParams
+// deserializeFheEncryptionPublicKey
 ////////////////////////////////////////////////////////////////////////////////
 
-export async function deserializeGlobalFhePublicKey(
+export async function deserializeFheEncryptionPublicKey(
   runtime: FhevmRuntime,
-  parameters: DeserializeGlobalFhePublicKeyParameters,
-): Promise<DeserializeGlobalFhePublicKeyReturnType> {
+  parameters: DeserializeFheEncryptionPublicKeyParameters,
+): Promise<DeserializeFheEncryptionPublicKeyReturnType> {
   await initTfheModule(runtime);
 
-  const { globalFhePublicKeyBytes } = parameters;
+  const { publicKeyBytes: globalFhePublicKeyBytes } = parameters;
 
   const tfheCompactPublicKeyWasm: TfheCompactPublicKey =
     TfheCompactPublicKey.safe_deserialize(

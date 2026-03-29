@@ -5,22 +5,22 @@
 import type { FhevmRuntime } from "../../../types/coreFhevmRuntime.js";
 import type {
   BuildWithProofPackedReturnTypeParameters,
-  DeserializeGlobalFheCrsParameters,
-  DeserializeGlobalFhePublicKeyParameters,
+  DeserializeFheEncryptionCrsParameters,
+  DeserializeFheEncryptionPublicKeyParameters,
   EncryptModuleFactory,
   ParseTFHEProvenCompactCiphertextListParameters,
-  SerializeGlobalFheCrsParameters,
-  SerializeGlobalFhePkeParamsParameters,
-  SerializeGlobalFhePublicKeyParameters,
+  SerializeFheEncryptionCrsParameters,
+  SerializeFheEncryptionKeyParameters,
+  SerializeFheEncryptionPublicKeyParameters,
 } from "../types.js";
 import {
   buildWithProofPacked,
-  deserializeGlobalFheCrs,
-  deserializeGlobalFhePublicKey,
+  deserializeFheEncryptionCrs,
+  deserializeFheEncryptionPublicKey,
   parseTFHEProvenCompactCiphertextList,
-  serializeGlobalFheCrs,
-  serializeGlobalFhePkeParams,
-  serializeGlobalFhePublicKey,
+  serializeFheEncryptionCrs,
+  serializeFheEncryptionKey,
+  serializeFheEncryptionPublicKey,
 } from "./api-p.js";
 import { getTfheModuleInfo, initTfheModule } from "./init-p.js";
 
@@ -34,19 +34,19 @@ export const encryptModule: EncryptModuleFactory = (runtime: FhevmRuntime) => {
       ) => parseTFHEProvenCompactCiphertextList(runtime, args),
       buildWithProofPacked: (args: BuildWithProofPackedReturnTypeParameters) =>
         buildWithProofPacked(runtime, args),
-      serializeGlobalFhePkeParams: (
-        args: SerializeGlobalFhePkeParamsParameters,
-      ) => serializeGlobalFhePkeParams(runtime, args),
-      serializeGlobalFhePublicKey: (
-        args: SerializeGlobalFhePublicKeyParameters,
-      ) => serializeGlobalFhePublicKey(runtime, args),
-      serializeGlobalFheCrs: (args: SerializeGlobalFheCrsParameters) =>
-        serializeGlobalFheCrs(runtime, args),
-      deserializeGlobalFhePublicKey: (
-        args: DeserializeGlobalFhePublicKeyParameters,
-      ) => deserializeGlobalFhePublicKey(runtime, args),
-      deserializeGlobalFheCrs: (args: DeserializeGlobalFheCrsParameters) =>
-        deserializeGlobalFheCrs(runtime, args),
+      serializeFheEncryptionKey: (args: SerializeFheEncryptionKeyParameters) =>
+        serializeFheEncryptionKey(runtime, args),
+      serializeFheEncryptionPublicKey: (
+        args: SerializeFheEncryptionPublicKeyParameters,
+      ) => serializeFheEncryptionPublicKey(runtime, args),
+      serializeFheEncryptionCrs: (args: SerializeFheEncryptionCrsParameters) =>
+        serializeFheEncryptionCrs(runtime, args),
+      deserializeFheEncryptionPublicKey: (
+        args: DeserializeFheEncryptionPublicKeyParameters,
+      ) => deserializeFheEncryptionPublicKey(runtime, args),
+      deserializeFheEncryptionCrs: (
+        args: DeserializeFheEncryptionCrsParameters,
+      ) => deserializeFheEncryptionCrs(runtime, args),
     }),
   });
 };

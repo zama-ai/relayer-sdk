@@ -1,4 +1,4 @@
-import type { FhevmHandle } from "./fhevmHandle.js";
+import type { Handle } from "./encryptedTypes.js";
 import type { KmsEIP712Domain } from "./kms.js";
 import type { KmsSignersContext } from "./kmsSignersContext.js";
 import type {
@@ -13,7 +13,7 @@ export interface KmsSigncryptedSharesMetadata {
   readonly eip712Domain: KmsEIP712Domain;
   readonly eip712Signature: Bytes65Hex;
   readonly eip712SignerAddress: ChecksummedAddress;
-  readonly fhevmHandles: readonly FhevmHandle[];
+  readonly handles: readonly Handle[];
 }
 
 export interface KmsSigncryptedShare {

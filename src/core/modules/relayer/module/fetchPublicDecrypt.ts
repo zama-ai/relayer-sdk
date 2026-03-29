@@ -1,10 +1,7 @@
 import { ensure0x, removeSuffix } from "../../../base/string.js";
 import type { Bytes65Hex, BytesHex } from "../../../types/primitives.js";
 import type { RelayerFetchPublicDecryptPayload } from "../../../types/relayer-p.js";
-import type {
-  FetchPublicDecryptResult,
-  RelayerPublicDecryptOptions,
-} from "../../../types/relayer.js";
+import type { FetchPublicDecryptResult } from "../../../types/relayer.js";
 import type {
   FetchPublicDecryptParameters,
   FetchPublicDecryptReturnType,
@@ -21,7 +18,6 @@ export async function fetchPublicDecrypt(
   parameters: FetchPublicDecryptParameters,
 ): Promise<FetchPublicDecryptReturnType> {
   const { options, payload } = parameters;
-  const relayerOptions = options as RelayerPublicDecryptOptions | undefined;
 
   // Convert payload argument to relayer payload
   const p: RelayerFetchPublicDecryptPayload = {
@@ -35,7 +31,7 @@ export async function fetchPublicDecrypt(
     relayerOperation: "PUBLIC_DECRYPT",
     url: `${removeSuffix(relayerClient.relayerUrl, "/")}/v2/public-decrypt`,
     payload: p,
-    options: relayerOptions,
+    options,
   });
 
   const result = (await request.run()) as FetchPublicDecryptResult;

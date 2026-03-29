@@ -1,15 +1,15 @@
 import type { Bytes65Hex, BytesHex, BytesHexNo0x } from "./primitives.js";
 import type { Prettify } from "./utils.js";
-import type { FhevmHandle } from "./fhevmHandle.js";
 import type { KmsSigncryptedShare } from "./kms-p.js";
 import type { Auth } from "./auth.js";
+import type { InputHandle } from "./encryptedTypes.js";
 
 export type RelayerSuccessStatus = 200 | 202;
 export type RelayerFailureStatus = 400 | 401 | 404 | 429 | 500 | 503;
 
 export type FetchInputProofResult = {
   // Ordered List of hex encoded handles with 0x prefix.
-  readonly handles: readonly FhevmHandle[];
+  readonly handles: readonly InputHandle[];
   // Attestation signatures for Input verification for the ordered list of handles with 0x prefix.
   readonly signatures: readonly Bytes65Hex[];
   readonly extraData: BytesHex;

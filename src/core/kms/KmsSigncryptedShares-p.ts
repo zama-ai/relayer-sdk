@@ -36,10 +36,10 @@ class KmsSigncryptedSharesImpl implements KmsSigncryptedShares {
       eip712Domain: metadata.eip712Domain,
       eip712Signature: metadata.eip712Signature,
       eip712SignerAddress: metadata.eip712SignerAddress,
-      fhevmHandles: [...metadata.fhevmHandles],
+      handles: [...metadata.handles],
     };
     Object.freeze(this.#metadata);
-    Object.freeze(this.#metadata.fhevmHandles);
+    Object.freeze(this.#metadata.handles);
 
     this.#shares = [...shares];
     Object.freeze(this.#shares);

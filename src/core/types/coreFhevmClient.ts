@@ -1,16 +1,23 @@
-//import type { TrustedClient } from "../modules/ethereum/types.js";
 import type { FhevmChain } from "./fhevmChain.js";
 import type { FhevmRuntime } from "./coreFhevmRuntime.js";
+import type { FheEncryptionKeyBytes } from "./fheEncryptionKey.js";
+
+////////////////////////////////////////////////////////////////////////////////
 
 export type FhevmOptions = {
-  readonly batchRpcCalls?: boolean;
+  readonly batchRpcCalls?: boolean | undefined;
+  readonly fheEncryptionKey?: FheEncryptionKeyBytes | undefined;
 };
+
+export type ResolvedFhevmOptions = {
+  readonly batchRpcCalls: boolean;
+};
+
+////////////////////////////////////////////////////////////////////////////////
 
 export type NativeClient = NonNullable<object>;
 export type OptionalNativeClient = NativeClient | undefined;
 export type OptionalFhevmChain = FhevmChain | undefined;
-
-export type Actions = Record<string, (...args: never[]) => unknown>;
 
 export type FhevmExtension<
   actions extends Record<string, unknown> = Record<string, unknown>,
@@ -38,7 +45,7 @@ export interface FhevmBase<
   readonly chain: chain; // undefined when no chain
   readonly runtime: runtime;
   readonly client: client; // undefined when no host
-  readonly options?: FhevmOptions;
+  readonly options: ResolvedFhevmOptions;
 }
 
 export interface Fhevm<

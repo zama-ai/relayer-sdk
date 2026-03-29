@@ -2,6 +2,10 @@ src/_cjs
 src/_types
 src/_esm
 
+*.local.test.ts
+
+.env
+
 test-results
 
 dist.tmp

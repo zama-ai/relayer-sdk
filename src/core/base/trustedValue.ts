@@ -93,6 +93,7 @@ export function createTrustedValue<T>(
   value: T,
   token: symbol,
 ): TrustedValue<T> {
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments
   return new TrustedValueImpl<T>(value, token);
 }
 

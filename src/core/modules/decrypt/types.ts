@@ -26,10 +26,10 @@
 
 import type { TkmsPrivateKey } from "../../types/tkms-p.js";
 import type { KmsSigncryptedShares } from "../../types/kms.js";
-import type { DecryptedFhevmHandle } from "../../types/decryptedFhevmHandle.js";
 import type { Bytes, BytesHex } from "../../types/primitives.js";
 import type { Prettify } from "../../types/utils.js";
 import type { FhevmRuntime } from "../../types/coreFhevmRuntime.js";
+import type { ClearValue } from "../../types/encryptedTypes.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -96,7 +96,7 @@ type DecryptAndReconstructBaseParameters = {
 
 export type DecryptAndReconstructParameters = WithTkmsPrivateKey &
   DecryptAndReconstructBaseParameters;
-export type DecryptAndReconstructReturnType = readonly DecryptedFhevmHandle[];
+export type DecryptAndReconstructReturnType = readonly ClearValue[];
 
 export type DecryptAndReconstructModuleFunction = {
   decryptAndReconstruct(

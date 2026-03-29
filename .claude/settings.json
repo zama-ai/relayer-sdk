@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls /Users/alex/PUBLI/js-sdk-final*)",
+      "Bash(ls -* /Users/alex/PUBLI/js-sdk-final*)",
+      "Bash(pwd)",
+      "Bash(git status*)",
+      "Bash(git log *)",
+      "Bash(git diff *)",
+      "Bash(git branch *)",
+      "Bash(git show *)",
+      "Bash(grep * /Users/alex/PUBLI/js-sdk-final*)",
+      "Bash(npx tsc --project /Users/alex/PUBLI/js-sdk-final*)",
+      "Bash(npx vitest run --config /Users/alex/PUBLI/js-sdk-final*)"
+    ]
+  }
+}

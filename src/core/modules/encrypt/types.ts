@@ -1,13 +1,13 @@
 import type { TypedValue } from "../../types/primitives.js";
 import type { EncryptionBits, FheTypeId } from "../../types/fheType.js";
 import type {
-  GlobalFheCrs,
-  GlobalFheCrsBytes,
-  GlobalFhePkeParams,
-  GlobalFhePkeParamsBytes,
-  GlobalFhePublicKey,
-  GlobalFhePublicKeyBytes,
-} from "../../types/globalFhePkeParams.js";
+  FheEncryptionCrs,
+  FheEncryptionCrsBytes,
+  FheEncryptionKeyWasm,
+  FheEncryptionKeyBytes,
+  FheEncryptionPublicKey,
+  FheEncryptionPublicKeyBytes,
+} from "../../types/fheEncryptionKey.js";
 import type { Prettify } from "../../types/utils.js";
 import type { FhevmRuntime } from "../../types/coreFhevmRuntime.js";
 
@@ -109,7 +109,7 @@ export type ParseTFHEProvenCompactCiphertextListModuleFunction = {
 ////////////////////////////////////////////////////////////////////////////////
 
 export type BuildWithProofPackedReturnTypeParameters = {
-  readonly publicEncryptionParams: GlobalFhePkeParams;
+  readonly fheEncryptionKey: FheEncryptionKeyWasm;
   readonly typedValues: TypedValue[];
   readonly metaData: Uint8Array;
 };
@@ -123,83 +123,85 @@ export type BuildWithProofPackedModuleFunction = {
 };
 
 ////////////////////////////////////////////////////////////////////////////////
-// 3. serializeGlobalFhePkeParams
+// 3. serializeFheEncryptionKey
 ////////////////////////////////////////////////////////////////////////////////
 
-export type SerializeGlobalFhePkeParamsParameters = {
-  readonly globalFhePkeParams: GlobalFhePkeParams;
+export type SerializeFheEncryptionKeyParameters = {
+  readonly fheEncryptionKey: FheEncryptionKeyWasm;
 };
 
-export type SerializeGlobalFhePkeParamsReturnType = GlobalFhePkeParamsBytes;
+export type SerializeFheEncryptionKeyReturnType = FheEncryptionKeyBytes;
 
-export type SerializeGlobalFhePkeParamsModuleFunction = {
-  serializeGlobalFhePkeParams(
-    parameters: SerializeGlobalFhePkeParamsParameters,
-  ): Promise<SerializeGlobalFhePkeParamsReturnType>;
-};
-
-////////////////////////////////////////////////////////////////////////////////
-// 4. serializeGlobalFhePublicKey
-////////////////////////////////////////////////////////////////////////////////
-
-export type SerializeGlobalFhePublicKeyParameters = {
-  readonly globalFhePublicKey: GlobalFhePublicKey;
-};
-
-export type SerializeGlobalFhePublicKeyReturnType = GlobalFhePublicKeyBytes;
-
-export type SerializeGlobalFhePublicKeyModuleFunction = {
-  serializeGlobalFhePublicKey(
-    parameters: SerializeGlobalFhePublicKeyParameters,
-  ): Promise<SerializeGlobalFhePublicKeyReturnType>;
+export type SerializeFheEncryptionKeyModuleFunction = {
+  serializeFheEncryptionKey(
+    parameters: SerializeFheEncryptionKeyParameters,
+  ): Promise<SerializeFheEncryptionKeyReturnType>;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
-// 5. serializeGlobalFheCrs
+// 4. serializeFheEncryptionPublicKey
 ////////////////////////////////////////////////////////////////////////////////
 
-export type SerializeGlobalFheCrsParameters = {
-  readonly globalFheCrs: GlobalFheCrs;
+export type SerializeFheEncryptionPublicKeyParameters = {
+  readonly publicKey: FheEncryptionPublicKey;
 };
 
-export type SerializeGlobalFheCrsReturnType = GlobalFheCrsBytes;
+export type SerializeFheEncryptionPublicKeyReturnType =
+  FheEncryptionPublicKeyBytes;
 
-export type SerializeGlobalFheCrsModuleFunction = {
-  serializeGlobalFheCrs(
-    parameters: SerializeGlobalFheCrsParameters,
-  ): Promise<SerializeGlobalFheCrsReturnType>;
-};
-
-////////////////////////////////////////////////////////////////////////////////
-// 6. deserializeGlobalFhePublicKey
-////////////////////////////////////////////////////////////////////////////////
-
-export type DeserializeGlobalFhePublicKeyParameters = {
-  readonly globalFhePublicKeyBytes: GlobalFhePublicKeyBytes;
-};
-
-export type DeserializeGlobalFhePublicKeyReturnType = GlobalFhePublicKey;
-
-export type DeserializeGlobalFhePublicKeyModuleFunction = {
-  deserializeGlobalFhePublicKey(
-    parameters: DeserializeGlobalFhePublicKeyParameters,
-  ): Promise<DeserializeGlobalFhePublicKeyReturnType>;
+export type SerializeFheEncryptionPublicKeyModuleFunction = {
+  serializeFheEncryptionPublicKey(
+    parameters: SerializeFheEncryptionPublicKeyParameters,
+  ): Promise<SerializeFheEncryptionPublicKeyReturnType>;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
-// 6. deserializeGlobalFheCrs
+// 5. serializeFheEncryptionCrs
 ////////////////////////////////////////////////////////////////////////////////
 
-export type DeserializeGlobalFheCrsParameters = {
-  readonly globalFheCrsBytes: GlobalFheCrsBytes;
+export type SerializeFheEncryptionCrsParameters = {
+  readonly crs: FheEncryptionCrs;
 };
 
-export type DeserializeGlobalFheCrsReturnType = GlobalFheCrs;
+export type SerializeFheEncryptionCrsReturnType = FheEncryptionCrsBytes;
 
-export type DeserializeGlobalFheCrsModuleFunction = {
-  deserializeGlobalFheCrs(
-    parameters: DeserializeGlobalFheCrsParameters,
-  ): Promise<DeserializeGlobalFheCrsReturnType>;
+export type SerializeFheEncryptionCrsModuleFunction = {
+  serializeFheEncryptionCrs(
+    parameters: SerializeFheEncryptionCrsParameters,
+  ): Promise<SerializeFheEncryptionCrsReturnType>;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+// 6. deserializeFheEncryptionPublicKey
+////////////////////////////////////////////////////////////////////////////////
+
+export type DeserializeFheEncryptionPublicKeyParameters = {
+  readonly publicKeyBytes: FheEncryptionPublicKeyBytes;
+};
+
+export type DeserializeFheEncryptionPublicKeyReturnType =
+  FheEncryptionPublicKey;
+
+export type DeserializeFheEncryptionPublicKeyModuleFunction = {
+  deserializeFheEncryptionPublicKey(
+    parameters: DeserializeFheEncryptionPublicKeyParameters,
+  ): Promise<DeserializeFheEncryptionPublicKeyReturnType>;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+// 6. deserializeFheEncryptionCrs
+////////////////////////////////////////////////////////////////////////////////
+
+export type DeserializeFheEncryptionCrsParameters = {
+  readonly crsBytes: FheEncryptionCrsBytes;
+};
+
+export type DeserializeFheEncryptionCrsReturnType = FheEncryptionCrs;
+
+export type DeserializeFheEncryptionCrsModuleFunction = {
+  deserializeFheEncryptionCrs(
+    parameters: DeserializeFheEncryptionCrsParameters,
+  ): Promise<DeserializeFheEncryptionCrsReturnType>;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -215,11 +217,11 @@ export type EncryptModule = Prettify<
     GetTfheModuleInfoFunction &
     ParseTFHEProvenCompactCiphertextListModuleFunction &
     BuildWithProofPackedModuleFunction &
-    SerializeGlobalFhePkeParamsModuleFunction &
-    SerializeGlobalFhePublicKeyModuleFunction &
-    SerializeGlobalFheCrsModuleFunction &
-    DeserializeGlobalFhePublicKeyModuleFunction &
-    DeserializeGlobalFheCrsModuleFunction
+    SerializeFheEncryptionKeyModuleFunction &
+    SerializeFheEncryptionPublicKeyModuleFunction &
+    SerializeFheEncryptionCrsModuleFunction &
+    DeserializeFheEncryptionPublicKeyModuleFunction &
+    DeserializeFheEncryptionCrsModuleFunction
 >;
 
 export type EncryptModuleFactory = (runtime: FhevmRuntime) => {
