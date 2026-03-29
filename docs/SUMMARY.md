@@ -6,6 +6,7 @@
 - [Input](input.md)
 - Decryption
   - [User decryption](user-decryption.md)
+  - [Decrypt on behalf of another user](delegate-decrypt.md)
   - [Public decryption](public-decryption.md)
 - [Relayer API Keys (mainnet)](mainnet-api-key.md)
 
