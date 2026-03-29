@@ -27,7 +27,7 @@ The key difference: the Zama Protocol checks ACL permissions against the **deleg
 The delegator's address must have ACL permission for the encrypted values. In your Solidity contract, use `FHE.allow()` to grant access to the delegator, and `FHE.allowThis()` to grant access to the contract itself (required for any decryption):
 
 ```solidity
-import "@fhevm/solidity/lib/FHE.sol";
+import {FHE, euint64} from "@fhevm/solidity/lib/FHE.sol";
 
 contract ConfidentialERC20 {
   mapping(address => euint64) internal balances;
