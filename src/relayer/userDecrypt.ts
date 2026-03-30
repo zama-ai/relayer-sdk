@@ -33,6 +33,26 @@ interface DelegatedUserDecryptRequest {
   defaultOptions?: FhevmInstanceOptions;
 }
 
+/**
+ * Validates that every response item's extraData matches the request's extraData.
+ * Returns the sanitized (no 0x prefix) request extraData for use in signature verification.
+ */
+function validateAndSanitizeRequestExtraData(
+  requestExtraData: BytesHex,
+  relayerUserDecryptResults: RelayerUserDecryptResult,
+): string {
+  const sanitized = requestExtraData.replace(/^0x/, '');
+  for (const result of relayerUserDecryptResults) {
+    const responseExtraData = result.extraData.replace(/^0x/, '');
+    if (responseExtraData.toLowerCase() !== sanitized.toLowerCase()) {
+      throw new Error(
+        `Response extraData does not match request extraData: expected ${requestExtraData}, got ${result.extraData}`,
+      );
+    }
+  }
+  return sanitized;
+}
+
 // Add type checking
 const getAddress = (value: string): `0x${string}` =>
   ethersGetAddress(value) as `0x${string}`;
@@ -285,6 +305,12 @@ export const userDecryptRequest =
         ...options,
       });
 
+    // Validate that response extraData matches request to prevent server tampering
+    const requestExtraDataSanitized = validateAndSanitizeRequestExtraData(
+      extraData,
+      relayerUserDecryptResults,
+    );
+
     // Response side: resolve context-aware signers
     const effectiveSigners = await resolveEffectiveSigners(
       relayerUserDecryptResults,
@@ -323,14 +349,16 @@ export const userDecryptRequest =
           h.handle.replace(/^0x/, ''),
         ),
         eip712_verifying_contract: verifyingContractAddressDecryption,
+        extra_data: requestExtraDataSanitized,
       };
 
       // Transform response to match node-tkms expected format
+      // Use request extraData (not response) to bind signature verification to the original request
       const tkmsUserDecryptResults = relayerUserDecryptResults.map(
         (result) => ({
           payload: result.payload,
           signature: result.signature,
-          extra_data: result.extraData.replace(/^0x/, ''),
+          extra_data: requestExtraDataSanitized,
         }),
       );
 
@@ -426,6 +454,12 @@ export const delegatedUserDecryptRequest =
         },
       );
 
+    // Validate that response extraData matches request to prevent server tampering
+    const requestExtraDataSanitized = validateAndSanitizeRequestExtraData(
+      extraData,
+      relayerUserDecryptResults,
+    );
+
     // Response side: resolve context-aware signers
     const effectiveSigners = await resolveEffectiveSigners(
       relayerUserDecryptResults,
@@ -464,14 +498,16 @@ export const delegatedUserDecryptRequest =
           h.handle.replace(/^0x/, ''),
         ),
         eip712_verifying_contract: verifyingContractAddressDecryption,
+        extra_data: requestExtraDataSanitized,
       };
 
       // Transform response to match node-tkms expected format
+      // Use request extraData (not response) to bind signature verification to the original request
       const tkmsUserDecryptResults = relayerUserDecryptResults.map(
         (result) => ({
           payload: result.payload,
           signature: result.signature,
-          extra_data: result.extraData.replace(/^0x/, ''),
+          extra_data: requestExtraDataSanitized,
         }),
       );
 
