@@ -78,7 +78,7 @@ function _assertIsRelayerResult200UserDecrypt(
       value.result[i],
       "payload" satisfies keyof ResultItem,
       `${name}.result[${i}]`,
-      { ...options, byteLength: 65 },
+      options,
     );
     assertRecordBytesHexNo0xProperty(
       value.result[i],

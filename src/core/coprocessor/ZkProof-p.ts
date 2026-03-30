@@ -9,7 +9,6 @@ import type {
   Uint8Number,
 } from "../types/primitives.js";
 import type { ZkProofLike, ZkProof } from "../types/zkProof.js";
-import type { FhevmHandle } from "../types/fhevmHandle.js";
 import type { ErrorMetadataParams } from "../base/errors/ErrorBase.js";
 import {
   addressToChecksummedAddress,
@@ -35,11 +34,12 @@ import {
   assertIsEncryptionBitsArray,
   fheTypeIdFromEncryptionBits,
 } from "../handle/FheType.js";
-import { buildFhevmHandle } from "../handle/FhevmHandle.js";
+import { buildHandle } from "../handle/FhevmHandle.js";
 import { keccak_256 } from "@noble/hashes/sha3.js";
 import { InvalidTypeError } from "../base/errors/InvalidTypeError.js";
 import type { EncryptionBits, FheTypeId } from "../types/fheType.js";
 import type { ParseTFHEProvenCompactCiphertextListModuleFunction } from "../modules/encrypt/types.js";
+import type { ExternalEncryptedValue } from "../types/encryptedTypes.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -61,7 +61,7 @@ class ZkProofImpl implements ZkProof {
   readonly #ciphertextWithZkProof: Bytes; // Never empty
   readonly #encryptionBits: readonly EncryptionBits[]; // Can be empty
   readonly #fheTypeIds: readonly FheTypeId[]; // Can be empty
-  #fhevmHandles: FhevmHandle[] | undefined;
+  #externalEncryptedValues: ExternalEncryptedValue[] | undefined;
 
   constructor(
     privateToken: symbol,
@@ -148,17 +148,17 @@ class ZkProofImpl implements ZkProof {
     return `ZkProof(chainId=${String(this.#chainId)}, contract=${this.#contractAddress}, user=${this.#userAddress}, types=${this.#fheTypeIds.length}, bytes=${String(this.#ciphertextWithZkProof.length)})`;
   }
 
-  public getFhevmHandles(): readonly FhevmHandle[] {
-    if (this.#fhevmHandles === undefined) {
-      this.#fhevmHandles = _zkProofToFhevmHandles({
+  public getExternalEncryptedValues(): readonly ExternalEncryptedValue[] {
+    if (this.#externalEncryptedValues === undefined) {
+      this.#externalEncryptedValues = _zkProofToExternalEncryptedValues({
         ciphertextWithZkProof: this.#ciphertextWithZkProof,
         aclContractAddress: this.#aclContractAddress,
         fheTypeIds: this.#fheTypeIds,
         chainId: this.#chainId,
       });
-      Object.freeze(this.#fhevmHandles);
+      Object.freeze(this.#externalEncryptedValues);
     }
-    return this.#fhevmHandles;
+    return this.#externalEncryptedValues;
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -299,15 +299,15 @@ export async function toZkProof(
 // Public API: zkProofToFhevmHandles
 ////////////////////////////////////////////////////////////////////////////////
 
-export async function zkProofToFhevmHandles(
+export async function zkProofToExternalEncryptedValues(
   zkProofLike: ZkProofLike,
   options?: {
     readonly version?: number;
     readonly zkProofParser?: ParseTFHEProvenCompactCiphertextListModuleFunction;
   },
-): Promise<readonly FhevmHandle[]> {
+): Promise<readonly ExternalEncryptedValue[]> {
   if (zkProofLike instanceof ZkProofImpl) {
-    return zkProofLike.getFhevmHandles();
+    return zkProofLike.getExternalEncryptedValues();
   }
 
   assertIsChecksummedAddress(zkProofLike.aclContractAddress, {
@@ -328,7 +328,7 @@ export async function zkProofToFhevmHandles(
 
   assertIsUint8(fheTypeIds.length, {});
 
-  return _zkProofToFhevmHandles({
+  return _zkProofToExternalEncryptedValues({
     ciphertextWithZkProof: ciphertextWithZkProof,
     aclContractAddress: zkProofLike.aclContractAddress,
     fheTypeIds,
@@ -367,7 +367,7 @@ function _assertEncryptionBitsMatch(
 
 ////////////////////////////////////////////////////////////////////////////////
 
-function _zkProofToFhevmHandles(
+function _zkProofToExternalEncryptedValues(
   args: {
     readonly ciphertextWithZkProof: Bytes;
     readonly aclContractAddress: ChecksummedAddress;
@@ -377,7 +377,7 @@ function _zkProofToFhevmHandles(
   options?: {
     readonly version?: number;
   },
-): FhevmHandle[] {
+): ExternalEncryptedValue[] {
   const encoder = new TextEncoder();
   const domainSepBytes = encoder.encode(
     FHEVM_HANDLE_RAW_CT_HASH_DOMAIN_SEPARATOR,
@@ -387,7 +387,7 @@ function _zkProofToFhevmHandles(
     keccak_256(concatBytes(domainSepBytes, args.ciphertextWithZkProof)),
   );
 
-  const handles: FhevmHandle[] = [];
+  const handles: ExternalEncryptedValue[] = [];
   for (const [i, fheTypeId] of args.fheTypeIds.entries()) {
     const hash21 = _computeInputHash21(
       hexToBytes32(blobHashBytes32Hex),
@@ -397,7 +397,7 @@ function _zkProofToFhevmHandles(
     );
 
     handles.push(
-      buildFhevmHandle({
+      buildHandle({
         hash21,
         chainId: args.chainId,
         fheTypeId,

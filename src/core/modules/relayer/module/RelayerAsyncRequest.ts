@@ -52,7 +52,7 @@ import { RelayerResponseInvalidBodyError } from "../../../errors/RelayerResponse
 import { RelayerResponseStatusError } from "../../../errors/RelayerResponseStatusError.js";
 import { RelayerStateError } from "../../../errors/RelayerStateError.js";
 import { RelayerTimeoutError } from "../../../errors/RelayerTimeoutError.js";
-import { bytes32HexToFhevmHandle } from "../../../handle/FhevmHandle.js";
+import { bytes32HexToInputHandle } from "../../../handle/FhevmHandle.js";
 import type { Auth } from "../../../types/auth.js";
 import type {
   RelayerApiError,
@@ -799,14 +799,14 @@ export class RelayerAsyncRequest {
               const inputProofAccepted: RelayerResult200InputProofAccepted =
                 inputProofBodyResult;
 
-              const fhevmHandles = inputProofAccepted.handles.map(
-                bytes32HexToFhevmHandle,
+              const inputHandles = inputProofAccepted.handles.map(
+                bytes32HexToInputHandle,
               );
 
               const returnValue: FetchInputProofResult = {
                 extraData: inputProofAccepted.extraData,
                 signatures: inputProofAccepted.signatures,
-                handles: Object.freeze(fhevmHandles),
+                handles: Object.freeze(inputHandles),
               };
 
               // Async onProgress callback

@@ -5,17 +5,17 @@ import type {
   BuildWithProofPackedReturnType,
   ParseTFHEProvenCompactCiphertextListParameters,
   ParseTFHEProvenCompactCiphertextListReturnType,
-  SerializeGlobalFheCrsParameters,
-  SerializeGlobalFheCrsReturnType,
-  SerializeGlobalFhePkeParamsParameters,
-  SerializeGlobalFhePkeParamsReturnType,
-  SerializeGlobalFhePublicKeyParameters,
-  SerializeGlobalFhePublicKeyReturnType,
+  SerializeFheEncryptionCrsParameters,
+  SerializeFheEncryptionCrsReturnType,
+  SerializeFheEncryptionKeyParameters,
+  SerializeFheEncryptionKeyReturnType,
+  SerializeFheEncryptionPublicKeyParameters,
+  SerializeFheEncryptionPublicKeyReturnType,
   EncryptModuleFactory,
-  DeserializeGlobalFhePublicKeyParameters,
-  DeserializeGlobalFhePublicKeyReturnType,
-  DeserializeGlobalFheCrsParameters,
-  DeserializeGlobalFheCrsReturnType,
+  DeserializeFheEncryptionPublicKeyParameters as DeserializeFheEncryptionPublicKeyParameters,
+  DeserializeFheEncryptionPublicKeyReturnType as DeserializeFheEncryptionPublicKeyReturnType,
+  DeserializeFheEncryptionCrsParameters,
+  DeserializeFheEncryptionCrsReturnType,
 } from "./types.js";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -39,52 +39,52 @@ export async function buildWithProofPacked(
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// serializeGlobalFhePkeParams
+// serializeFheEncryptionKey
 ////////////////////////////////////////////////////////////////////////////////
 
-export async function serializeGlobalFhePkeParams(
-  _parameters: SerializeGlobalFhePkeParamsParameters,
-): Promise<SerializeGlobalFhePkeParamsReturnType> {
+export async function serializeFheEncryptionKey(
+  _parameters: SerializeFheEncryptionKeyParameters,
+): Promise<SerializeFheEncryptionKeyReturnType> {
   throw new Error("Not yet implemented");
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// serializeTfhePublicKey
+// serializeFheEncryptionPublicKey
 ////////////////////////////////////////////////////////////////////////////////
 
-export async function serializeGlobalFhePublicKey(
-  _parameters: SerializeGlobalFhePublicKeyParameters,
-): Promise<SerializeGlobalFhePublicKeyReturnType> {
+export async function serializeFheEncryptionPublicKey(
+  _parameters: SerializeFheEncryptionPublicKeyParameters,
+): Promise<SerializeFheEncryptionPublicKeyReturnType> {
   throw new Error("Not yet implemented");
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// serializeTfheCrs
+// serializeFheEncryptionCrs
 ////////////////////////////////////////////////////////////////////////////////
 
-export async function serializeGlobalFheCrs(
-  _parameters: SerializeGlobalFheCrsParameters,
-): Promise<SerializeGlobalFheCrsReturnType> {
+export async function serializeFheEncryptionCrs(
+  _parameters: SerializeFheEncryptionCrsParameters,
+): Promise<SerializeFheEncryptionCrsReturnType> {
   throw new Error("Not yet implemented");
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// deserializeGlobalFhePublicKey
+// deserializeFheEncryptionCrs
 ////////////////////////////////////////////////////////////////////////////////
 
-export async function deserializeGlobalFheCrs(
-  _parameters: DeserializeGlobalFheCrsParameters,
-): Promise<DeserializeGlobalFheCrsReturnType> {
+export async function deserializeFheEncryptionCrs(
+  _parameters: DeserializeFheEncryptionCrsParameters,
+): Promise<DeserializeFheEncryptionCrsReturnType> {
   throw new Error("Not yet implemented");
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// deserializeGlobalFhePkeParams
+// deserializeFheEncryptionPublicKey
 ////////////////////////////////////////////////////////////////////////////////
 
-export async function deserializeGlobalFhePublicKey(
-  _parameters: DeserializeGlobalFhePublicKeyParameters,
-): Promise<DeserializeGlobalFhePublicKeyReturnType> {
+export async function deserializeFheEncryptionPublicKey(
+  _parameters: DeserializeFheEncryptionPublicKeyParameters,
+): Promise<DeserializeFheEncryptionPublicKeyReturnType> {
   throw new Error("Not yet implemented");
 }
 
@@ -101,11 +101,11 @@ export const encryptModule: EncryptModuleFactory = (_runtime: FhevmRuntime) => {
       },
       parseTFHEProvenCompactCiphertextList,
       buildWithProofPacked,
-      serializeGlobalFhePkeParams,
-      serializeGlobalFhePublicKey,
-      serializeGlobalFheCrs,
-      deserializeGlobalFhePublicKey,
-      deserializeGlobalFheCrs,
+      serializeFheEncryptionKey,
+      serializeFheEncryptionPublicKey,
+      serializeFheEncryptionCrs,
+      deserializeFheEncryptionPublicKey,
+      deserializeFheEncryptionCrs,
     }),
   });
 };

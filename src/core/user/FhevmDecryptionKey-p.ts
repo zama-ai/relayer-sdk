@@ -81,14 +81,14 @@ export function assertIsFhevmDecryptionKey(
 ////////////////////////////////////////////////////////////////////////////////
 
 /** Creates a {@link FhevmDecryptionKey} by binding a private key (raw bytes or deserialized) into closures. */
-export async function createFhevmDecryptionKey(
+export function createFhevmDecryptionKey(
   fhevmRuntime: FhevmRuntime<WithDecryptModule>,
   parameters: {
     tkmsPrivateKey: TkmsPrivateKey;
   },
-): Promise<FhevmDecryptionKey> {
+): FhevmDecryptionKey {
   // TkmsPrivateKey
-  const tkmsPrivateKey = parameters.tkmsPrivateKey;
+  const { tkmsPrivateKey } = parameters;
   // sync fn
   fhevmRuntime.decrypt.verifyTkmsPrivateKey({ tkmsPrivateKey });
 

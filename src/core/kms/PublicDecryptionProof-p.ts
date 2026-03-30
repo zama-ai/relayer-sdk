@@ -1,6 +1,6 @@
+import type { ClearValue } from "../types/encryptedTypes.js";
 import type { BytesHex } from "../types/primitives.js";
 import type { PublicDecryptionProof } from "../types/publicDecryptionProof.js";
-import type { DecryptedFhevmHandle } from "../types/decryptedFhevmHandle.js";
 
 //////////////////////////////////////////////////////////////////////////////
 // PublicDecryptionProof class
@@ -12,20 +12,18 @@ import type { DecryptedFhevmHandle } from "../types/decryptedFhevmHandle.js";
 export class PublicDecryptionProofImpl implements PublicDecryptionProof {
   // numSigners + KMS signatures + extraData
   readonly #decryptionProof: BytesHex;
-  readonly #orderedDecryptedHandles: readonly DecryptedFhevmHandle[];
+  readonly #orderedClearValues: readonly ClearValue[];
   readonly #orderedAbiEncodedClearValues: BytesHex;
   readonly #extraData: BytesHex;
 
   constructor(params: {
     readonly decryptionProof: BytesHex;
-    readonly orderedDecryptedHandles: readonly DecryptedFhevmHandle[];
+    readonly orderedClearValues: readonly ClearValue[];
     readonly orderedAbiEncodedClearValues: BytesHex;
     readonly extraData: BytesHex;
   }) {
     this.#decryptionProof = params.decryptionProof;
-    this.#orderedDecryptedHandles = Object.freeze([
-      ...params.orderedDecryptedHandles,
-    ]);
+    this.#orderedClearValues = Object.freeze([...params.orderedClearValues]);
     this.#extraData = params.extraData;
     this.#orderedAbiEncodedClearValues = params.orderedAbiEncodedClearValues;
   }
@@ -38,8 +36,8 @@ export class PublicDecryptionProofImpl implements PublicDecryptionProof {
     return this.#decryptionProof;
   }
 
-  public get orderedDecryptedHandles(): readonly DecryptedFhevmHandle[] {
-    return this.#orderedDecryptedHandles;
+  public get orderedClearValues(): readonly ClearValue[] {
+    return this.#orderedClearValues;
   }
 
   public get orderedAbiEncodedClearValues(): BytesHex {

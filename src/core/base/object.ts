@@ -1,3 +1,11 @@
+/** Wraps a single value in an array, or returns the array as-is. */
+export function toArray<T>(value: T | readonly T[]): readonly T[] {
+  if (Array.isArray(value)) {
+    return value as readonly T[];
+  }
+  return [value as T];
+}
+
 export function simpleDeepFreeze<T extends object>(obj: T): Readonly<T> {
   Object.freeze(obj);
   for (const value of Object.values(obj)) {

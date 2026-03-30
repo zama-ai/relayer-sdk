@@ -1,4 +1,5 @@
 import type {
+  ClearValueType,
   EncryptionBits,
   EncryptionBitsToFheTypeIdMap,
   EuintToUintNormalizedMap,
@@ -39,7 +40,6 @@ import { asAddress, assertIsAddress } from "../base/address.js";
 import { assertNever } from "../base/errors/utils.js";
 import { asBoolean } from "../base/boolean.js";
 import type { ValueTypeName } from "../types/primitives.js";
-import type { DecryptedFheValueMap } from "../types/decryptedFheValue.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -416,21 +416,21 @@ function _assertMinimumEncryptionBitWidth(bw: number): void {
   );
 }
 
-export function bytesToFheDecryptedValue<T extends FheType>(
+export function bytesToClearValueType<T extends FheType>(
   fheType: T,
   bytes: Bytes,
-): DecryptedFheValueMap[T] {
+): ClearValueType<T> {
   const bn = bytesToBigInt(bytes);
   // needed to type narrowing
   const ft: FheType = fheType;
 
   switch (ft) {
     case "ebool":
-      return (bn !== 0n) as DecryptedFheValueMap[T];
+      return (bn !== 0n) as ClearValueType<T>;
     case "eaddress":
       return asAddress(
         bigIntToBytesHex(bn, { byteLength: 20 }),
-      ) as DecryptedFheValueMap[T];
+      ) as ClearValueType<T>;
     case "euint8":
     case "euint16":
     case "euint32": {
@@ -438,7 +438,7 @@ export function bytesToFheDecryptedValue<T extends FheType>(
         max: BigInt(FheTypeToMaxValue[ft]),
         subject: "value",
       });
-      return Number(bn) as DecryptedFheValueMap[T];
+      return Number(bn) as ClearValueType<T>;
     }
     case "euint64":
     case "euint128":
@@ -447,23 +447,34 @@ export function bytesToFheDecryptedValue<T extends FheType>(
         max: BigInt(FheTypeToMaxValue[ft]),
         subject: "value",
       });
-      return bn as DecryptedFheValueMap[T];
+      return bn as ClearValueType<T>;
     }
     default:
       return assertNever(ft, `Unknown fheTypeName: ${ft}`);
   }
 }
 
-export function asFheDecryptedValue<T extends FheType>(
+/**
+ * Asserts that `value` is already the correct JS type for the given `fheTypeName`
+ * and returns it narrowed. No conversion is performed.
+ *
+ * - `ebool` → `boolean`
+ * - `eaddress` → `string` (checksummed address)
+ * - `euint8/16/32` → `number`
+ * - `euint64/128/256` → `bigint`
+ *
+ * @throws If `value` is not the expected JS type or exceeds the type's range.
+ */
+export function asClearValueType<T extends FheType>(
   fheTypeName: T,
   value: unknown,
   options?: { subject?: string } & ErrorMetadataParams,
-): DecryptedFheValueMap[T] {
+): ClearValueType<T> {
   switch (fheTypeName) {
     case "ebool":
-      return asBoolean(value, options) as DecryptedFheValueMap[T];
+      return asBoolean(value, options) as ClearValueType<T>;
     case "eaddress":
-      return asAddress(value, options) as DecryptedFheValueMap[T];
+      return asAddress(value, options) as ClearValueType<T>;
     case "euint8":
     case "euint16":
     case "euint32": {
@@ -471,7 +482,7 @@ export function asFheDecryptedValue<T extends FheType>(
         ...options,
         max: MAX_UINT_FOR_TYPE[fheTypeName],
       });
-      return value as DecryptedFheValueMap[T];
+      return value as ClearValueType<T>;
     }
     case "euint64":
     case "euint128":
@@ -480,24 +491,35 @@ export function asFheDecryptedValue<T extends FheType>(
         ...options,
         max: MAX_UINT_FOR_TYPE[fheTypeName],
       });
-      return value as DecryptedFheValueMap[T];
+      return value as ClearValueType<T>;
     }
     default:
       return assertNever(fheTypeName, `Unknown fheTypeName: ${fheTypeName}`);
   }
 }
 
-export function toDecryptedFheValue<T extends FheType>(
+/**
+ * Converts `value` to the correct JS type for the given `fheTypeName`.
+ * Accepts any uint-like input (number, bigint, string) and coerces it.
+ *
+ * - `ebool` → `boolean`
+ * - `eaddress` → `string` (validated address)
+ * - `euint8/16/32` → coerced to `number` via `Number()`
+ * - `euint64/128/256` → coerced to `bigint` via `BigInt()`
+ *
+ * @throws If `value` cannot be converted or exceeds the type's range.
+ */
+export function toClearValueType<T extends FheType>(
   fheTypeName: T,
   value: unknown,
   options?: { subject?: string } & ErrorMetadataParams,
-): DecryptedFheValueMap[T] {
+): ClearValueType<T> {
   switch (fheTypeName) {
     case "ebool":
-      return asBoolean(value, options) as DecryptedFheValueMap[T];
+      return asBoolean(value, options) as ClearValueType<T>;
     case "eaddress":
       assertIsAddress(value, options ?? {});
-      return value as DecryptedFheValueMap[T];
+      return value as ClearValueType<T>;
     case "euint8":
     case "euint16":
     case "euint32": {
@@ -505,7 +527,7 @@ export function toDecryptedFheValue<T extends FheType>(
         ...options,
         max: MAX_UINT_FOR_TYPE[fheTypeName],
       });
-      return Number(value) as DecryptedFheValueMap[T];
+      return Number(value) as ClearValueType<T>;
     }
     case "euint64":
     case "euint128":
@@ -514,7 +536,7 @@ export function toDecryptedFheValue<T extends FheType>(
         ...options,
         max: MAX_UINT_FOR_TYPE[fheTypeName],
       });
-      return BigInt(value) as DecryptedFheValueMap[T];
+      return BigInt(value) as ClearValueType<T>;
     }
     default:
       return assertNever(fheTypeName, `Unknown fheTypeName: ${fheTypeName}`);

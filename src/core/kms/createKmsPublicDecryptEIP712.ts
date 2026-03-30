@@ -2,12 +2,12 @@
 // createKmsPublicDecryptEIP712
 //////////////////////////////////////////////////////////////////////////////
 
+import type { HandleLike } from "../types/encryptedTypes.js";
 import { assertIsBytesHex } from "../base/bytes.js";
 import {
-  assertIsFhevmHandleLikeArray,
-  fhevmHandleLikeToFhevmHandle,
+  assertIsHandleLikeArray,
+  handleLikeToHandle,
 } from "../handle/FhevmHandle.js";
-import type { FhevmHandleLike } from "../types/fhevmHandle.js";
 import type { KmsPublicDecryptEIP712 } from "../types/kms.js";
 import { createKmsEIP712Domain } from "./createKmsEIP712Domain.js";
 import { kmsPublicDecryptEIP712Types } from "./kmsPublicDecryptEIP712Types.js";
@@ -17,7 +17,7 @@ import { kmsPublicDecryptEIP712Types } from "./kmsPublicDecryptEIP712Types.js";
 export type CreateKmsPublicDecryptEIP712Parameters = {
   readonly verifyingContractAddressDecryption: string;
   readonly chainId: number | bigint;
-  readonly handles: readonly FhevmHandleLike[];
+  readonly handles: readonly HandleLike[];
   readonly decryptedResult: string;
   readonly extraData: string;
 };
@@ -33,7 +33,7 @@ export function createKmsPublicDecryptEIP712({
   decryptedResult,
   extraData,
 }: CreateKmsPublicDecryptEIP712Parameters): KmsPublicDecryptEIP712 {
-  assertIsFhevmHandleLikeArray(handles, {});
+  assertIsHandleLikeArray(handles, {});
   assertIsBytesHex(decryptedResult, {});
   assertIsBytesHex(extraData, {});
 
@@ -51,7 +51,7 @@ export function createKmsPublicDecryptEIP712({
     domain,
     message: {
       ctHandles: handles.map((h) => {
-        return fhevmHandleLikeToFhevmHandle(h).bytes32Hex;
+        return handleLikeToHandle(h).bytes32Hex;
       }),
       decryptedResult,
       extraData,

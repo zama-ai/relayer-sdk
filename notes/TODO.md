@@ -1,0 +1,15 @@
+- JSDoc on all public fn in API: decrypt/encrypt/base modules
+- Cleanup public API modules
+- in test : call a non-public API fn -> something more advanced
+- implement readCoprocessorSignersContext cache
+- missing multiple overloads for decrypt following the encrypt pattern
+- cause error if call with an empty array : decrypt(encrvalyues:[])
+- OK: remove FheEncryptionKey from action parameters
+- OK: decrypt return type should have ClearValues
+- OK: encrypt return type should have ExternalHandles
+- OK: FheEncryptionKeyBytes as arg of createFhevmClient
+- OK: throw new Error("assertIsInputHandleLike Not yet implemented");
+- Export TypedValue (needed in encrypt)
+- Export PublicDecryptionProof (needed in publicDecrypt)
+- decrypt should accept string addresses not Checksummed addresses
+- Add a skill that controls the input values of each api functions. They must be loose.

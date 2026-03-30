@@ -39,6 +39,31 @@
       "import": "./_esm/viem/index.js",
       "default": "./_cjs/viem/index.js"
     },
+    "./actions/base": {
+      "types": "./_types/core/actions/base/index.d.ts",
+      "import": "./_esm/core/actions/base/index.js",
+      "default": "./_cjs/core/actions/base/index.js"
+    },
+    "./actions/chain": {
+      "types": "./_types/core/actions/chain/index.d.ts",
+      "import": "./_esm/core/actions/chain/index.js",
+      "default": "./_cjs/core/actions/chain/index.js"
+    },
+    "./actions/decrypt": {
+      "types": "./_types/core/actions/decrypt/index.d.ts",
+      "import": "./_esm/core/actions/decrypt/index.js",
+      "default": "./_cjs/core/actions/decrypt/index.js"
+    },
+    "./actions/encrypt": {
+      "types": "./_types/core/actions/encrypt/index.d.ts",
+      "import": "./_esm/core/actions/encrypt/index.js",
+      "default": "./_cjs/core/actions/encrypt/index.js"
+    },
+    "./actions/host": {
+      "types": "./_types/core/actions/host/index.d.ts",
+      "import": "./_esm/core/actions/host/index.js",
+      "default": "./_cjs/core/actions/host/index.js"
+    },
     "./package.json": "./package.json"
   },
   "peerDependencies": {

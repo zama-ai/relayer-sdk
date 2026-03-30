@@ -247,6 +247,7 @@ export async function runCodeInIsomorphicWorker<T>(
  */
 let _blobWorkerSupportedPromise: Promise<boolean> | undefined;
 export function isBlobWorkerSupported(): Promise<boolean> {
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments
   _blobWorkerSupportedPromise ??= runCodeInIsomorphicWorker<string>(
     `return data + " world!";`,
     "hello",

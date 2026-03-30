@@ -45,6 +45,34 @@ export type RecoverTypedDataAddressModuleFunction = {
 };
 
 ////////////////////////////////////////////////////////////////////////////////
+// signTypedData
+////////////////////////////////////////////////////////////////////////////////
+
+export type SignTypedDataParameters = {
+  readonly domain: {
+    readonly chainId: Uint256;
+    readonly name: string;
+    readonly verifyingContract: ChecksummedAddress;
+    readonly version: string;
+  };
+  readonly types: Readonly<
+    Record<string, ReadonlyArray<{ name: string; type: string }>>
+  >;
+  readonly primaryType: string;
+  readonly message: Readonly<Record<string, unknown>>;
+};
+
+export type SignTypedDataReturnType = Bytes65Hex;
+export type NativeSigner = unknown;
+
+export type SignTypedDataModuleFunction = {
+  signTypedData(
+    signer: NativeSigner,
+    parameters: SignTypedDataParameters,
+  ): Promise<SignTypedDataReturnType>;
+};
+
+////////////////////////////////////////////////////////////////////////////////
 // encodePacked
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -125,6 +153,7 @@ export type ReadContractModuleFunction = {
 
 export type EthereumModule = Prettify<
   RecoverTypedDataAddressModuleFunction &
+    SignTypedDataModuleFunction &
     ReadContractModuleFunction &
     EncodeModuleFunction &
     EncodePackedModuleFunction &

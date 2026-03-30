@@ -91,7 +91,7 @@ export async function createFhevmUser(
       tkmsPrivateKeyBytes: parameters.privateKey,
     });
   } else {
-    decryptionKey = await createFhevmDecryptionKey(fhevm.runtime, {
+    decryptionKey = createFhevmDecryptionKey(fhevm.runtime, {
       tkmsPrivateKey: parameters.privateKey,
     });
   }

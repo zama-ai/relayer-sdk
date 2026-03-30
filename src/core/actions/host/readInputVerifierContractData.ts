@@ -18,7 +18,7 @@ export type ReadInputVerifierContractDataReturnType = InputVerifierContractData;
 export async function readInputVerifierContractData(
   fhevm: Fhevm,
   parameters: ReadInputVerifierContractDataParameters,
-): Promise<InputVerifierContractData> {
+): Promise<ReadInputVerifierContractDataReturnType> {
   const inputVerifierContractAddress = parameters.address;
 
   ////////////////////////////////////////////////////////////////////////////
@@ -40,7 +40,7 @@ export async function readInputVerifierContractData(
 
   const res = await executeWithBatching<unknown>(
     rpcCalls,
-    fhevm.options?.batchRpcCalls,
+    fhevm.options.batchRpcCalls,
   );
 
   const eip712DomainRes = res[0] as Eip712DomainReturnType;

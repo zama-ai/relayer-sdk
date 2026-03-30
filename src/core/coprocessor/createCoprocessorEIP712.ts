@@ -1,8 +1,8 @@
 import type { Uint64BigInt } from "../types/primitives.js";
 import type { CoprocessorEIP712 } from "../types/coprocessor.js";
 import {
-  assertIsFhevmHandleLikeArray,
-  fhevmHandleLikeToFhevmHandle,
+  assertIsInputHandleLikeArray,
+  handleLikeToHandle,
 } from "../handle/FhevmHandle.js";
 import {
   addressToChecksummedAddress,
@@ -10,16 +10,16 @@ import {
 } from "../base/address.js";
 import { assertIsUint64 } from "../base/uint.js";
 import { assertIsBytesHex } from "../base/bytes.js";
-import type { FhevmHandleLike } from "../types/fhevmHandle.js";
 import { coprocessorEIP712Types } from "./coprocessorEIP712Types.js";
 import { createCoprocessorEIP712Domain } from "./createCoprocessorEIP712Domain.js";
+import type { InputHandleLike } from "../types/encryptedTypes.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 export type CreateCoprocessorEIP712Parameters = {
   readonly gatewayChainId: number | bigint;
   readonly verifyingContractAddressInputVerification: string;
-  readonly handles: readonly FhevmHandleLike[];
+  readonly handles: readonly InputHandleLike[];
   readonly contractChainId: number | bigint;
   readonly contractAddress: string;
   readonly userAddress: string;
@@ -39,7 +39,7 @@ export function createCoprocessorEIP712({
   userAddress,
   extraData,
 }: CreateCoprocessorEIP712Parameters): CoprocessorEIP712 {
-  assertIsFhevmHandleLikeArray(handles, {});
+  assertIsInputHandleLikeArray(handles, {});
   assertIsAddress(userAddress, {});
   assertIsAddress(contractAddress, {});
   assertIsUint64(contractChainId, {});
@@ -55,7 +55,7 @@ export function createCoprocessorEIP712({
     types: coprocessorEIP712Types,
     message: {
       ctHandles: handles.map((h) => {
-        return fhevmHandleLikeToFhevmHandle(h).bytes32Hex;
+        return handleLikeToHandle(h).bytes32Hex;
       }),
       userAddress: addressToChecksummedAddress(userAddress),
       contractAddress: addressToChecksummedAddress(contractAddress),

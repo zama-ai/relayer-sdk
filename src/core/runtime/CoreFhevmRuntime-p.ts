@@ -88,7 +88,7 @@ function createExtendFn<T extends FhevmRuntime>(
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// FhevmRuntimeImpl
+// CoreFhevmRuntimeImpl
 //
 // Class: enables instanceof checks (verifiability via assertIsFhevmRuntime)
 // Frozen: Object.freeze(this) — instance is immutable after construction
@@ -146,6 +146,7 @@ class CoreFhevmRuntimeImpl {
       logger: parameters.config.logger
         ? { ...parameters.config.logger }
         : undefined,
+      auth: parameters.config.auth ? { ...parameters.config.auth } : undefined,
     };
     const decrypt = this.#decrypt;
     const encrypt = this.#encrypt;
@@ -263,10 +264,20 @@ export function asFhevmRuntimeWith<K extends keyof WithModuleMap>(
   fhevmRuntime: FhevmRuntime,
   moduleName: K,
 ): FhevmRuntime & WithModuleMap[K] {
-  assertIsFhevmRuntime(fhevmRuntime, {});
-  // Access the getter — throws if the module is not extended
+  assertIsFhevmRuntimeWith(fhevmRuntime, moduleName, {});
+  return fhevmRuntime;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+export function assertIsFhevmRuntimeWith<K extends keyof WithModuleMap>(
+  fhevmRuntime: FhevmRuntime,
+  moduleName: K,
+  options: { subject?: string } & ErrorMetadataParams,
+): asserts fhevmRuntime is FhevmRuntime & WithModuleMap[K] {
+  assertIsFhevmRuntime(fhevmRuntime, options);
+  // Getter throws via asModule() if the module is not extended
   void (fhevmRuntime as unknown as Record<string, unknown>)[moduleName];
-  return fhevmRuntime as FhevmRuntime & WithModuleMap[K];
 }
 
 ////////////////////////////////////////////////////////////////////////////////

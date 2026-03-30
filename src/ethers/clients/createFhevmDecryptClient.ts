@@ -1,27 +1,10 @@
 import type { ethers as EthersT } from "ethers";
-import { decryptModule } from "../../core/modules/decrypt/module/index.js";
 import type { FhevmChain } from "../../core/types/fhevmChain.js";
 import type { WithDecrypt } from "../../core/types/coreFhevmRuntime.js";
-import type { FhevmDecryptClient } from "../../core/clients/fhevmDecryptClient.js";
-import {
-  getEthersRuntime,
-  PRIVATE_ETHERS_TOKEN,
-} from "../internal/ethers-p.js";
-import {
-  decryptActions as decryptActions_,
-  type DecryptActions,
-} from "../../core/clients/decorators/decrypt.js";
-import type {
-  FhevmBase,
-  FhevmExtension,
-  FhevmOptions,
-  OptionalNativeClient,
-} from "../../core/types/coreFhevmClient.js";
-import type { FhevmRuntime } from "../../core/types/coreFhevmRuntime.js";
-import {
-  asFhevmClientWith,
-  createCoreFhevm,
-} from "../../core/runtime/CoreFhevm-p.js";
+import type { FhevmOptions } from "../../core/types/coreFhevmClient.js";
+import type { FhevmDecryptClient } from "../../core/types/fhevmClient.js";
+import { createFhevmBaseClient } from "./createFhevmBaseClient.js";
+import { decryptActions } from "../decorators/decrypt.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -33,38 +16,6 @@ export function createFhevmDecryptClient<
   readonly chain: chain;
   readonly options?: FhevmOptions | undefined;
 }): FhevmDecryptClient<chain, WithDecrypt, provider> {
-  const c = createCoreFhevm(PRIVATE_ETHERS_TOKEN, {
-    chain: parameters.chain,
-    runtime: getEthersRuntime(),
-    client: parameters.provider,
-    options: parameters.options,
-  });
-
+  const c = createFhevmBaseClient(parameters);
   return c.extend(decryptActions);
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-export function decryptActions(
-  fhevm: FhevmBase<FhevmChain>,
-): FhevmExtension<DecryptActions, WithDecrypt> {
-  const runtime = fhevm.runtime.extend(decryptModule);
-  const f = asFhevmClientWith(fhevm, "decrypt");
-  return {
-    actions: decryptActions_(f),
-    runtime,
-    init: _initDecrypt,
-  };
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-/**
- * @internal
- */
-function _initDecrypt(
-  fhevm: FhevmBase<FhevmChain | undefined, FhevmRuntime, OptionalNativeClient>,
-): Promise<void> {
-  const f = asFhevmClientWith(fhevm, "decrypt");
-  return f.runtime.decrypt.initTkmsModule();
 }

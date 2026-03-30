@@ -50,7 +50,11 @@ export async function isomorphicCompileWasm(
     const { readFile } = await import("node:fs/promises");
     const { fileURLToPath } = await import("node:url");
 
-    bytes = await readFile(fileURLToPath(wasmUrl));
+    // Node's Buffer extends Uint8Array but TS 5.7+ considers its .buffer as
+    // ArrayBufferLike (includes SharedArrayBuffer), making it incompatible with
+    // BufferSource. At runtime Buffer is always backed by ArrayBuffer, so the
+    // cast at WebAssembly.compile is safe and avoids copying.
+    bytes = (await readFile(fileURLToPath(wasmUrl))) as BufferSource;
   } else {
     // fetch wasm
     const res = await fetch(wasmUrl);
@@ -79,6 +83,7 @@ export async function isomorphicCompileWasm(
     bytes = await res.arrayBuffer();
   }
 
+  // Safe cast: Node's Buffer is always backed by ArrayBuffer at runtime.
   return WebAssembly.compile(bytes);
 }
 

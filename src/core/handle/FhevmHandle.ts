@@ -6,18 +6,11 @@ import type {
   Uint64BigInt,
   Uint8Number,
 } from "../types/primitives.js";
-import type {
-  ExternalFhevmHandle,
-  FhevmHandleBase,
-  FhevmHandleBytes32,
-  FhevmHandleBytes32Hex,
-  FhevmHandleBytes32HexNo0x,
-  FhevmHandleLike,
-  FhevmHandle,
-} from "../types/fhevmHandle.js";
 import { FhevmHandleError } from "../errors/FhevmHandleError.js";
 import {
   asBytes21,
+  asBytes32,
+  asBytes32Hex,
   assertIsBytes32,
   assertIsBytes32Hex,
   bytes32ToHex,
@@ -45,6 +38,20 @@ import type {
   FheTypeId,
   SolidityPrimitiveTypeName,
 } from "../types/fheType.js";
+import type {
+  Handle,
+  HandleLike,
+  InputHandle,
+  InputHandleLike,
+} from "../types/encryptedTypes.js";
+import type {
+  EncryptedValueBase,
+  HandleBytes32,
+  HandleBytes32Hex,
+  HandleBytes32HexNo0x,
+  InputHandleBytes32,
+  InputHandleBytes32Hex,
+} from "../types/encryptedTypes-p.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -63,22 +70,22 @@ const FHEVM_HANDLE_FHETYPEID_BYTE_OFFSET = 30 as Uint8Number;
 const FHEVM_HANDLE_VERSION_BYTE_OFFSET = 31 as Uint8Number;
 
 ////////////////////////////////////////////////////////////////////////////////
-// FhevmHandle
+// Handle (EncryptedValue) implementation
 ////////////////////////////////////////////////////////////////////////////////
 
-class FhevmHandleImpl implements FhevmHandleBase {
+class FhevmHandleImpl implements EncryptedValueBase {
   //////////////////////////////////////////////////////////////////////////////
   // Instance Properties
   //////////////////////////////////////////////////////////////////////////////
 
-  readonly #handleBytes32Hex: FhevmHandleBytes32Hex;
-  #handleBytes32: Bytes32 | undefined;
+  readonly #handleBytes32Hex: HandleBytes32Hex;
+  #handleBytes32: HandleBytes32 | undefined;
 
   constructor(
     privateToken: symbol,
     parameters: {
-      handleBytes32Hex: FhevmHandleBytes32Hex;
-      handleBytes32?: FhevmHandleBytes32;
+      handleBytes32Hex: HandleBytes32Hex;
+      handleBytes32?: HandleBytes32;
     },
   ) {
     if (privateToken !== PRIVATE_TOKEN) {
@@ -93,19 +100,21 @@ class FhevmHandleImpl implements FhevmHandleBase {
   // Instance Getters
   //////////////////////////////////////////////////////////////////////////////
 
-  public get bytes32Hex(): FhevmHandleBytes32Hex {
+  public get bytes32Hex(): HandleBytes32Hex {
     return this.#handleBytes32Hex;
   }
 
-  public get bytes32HexNo0x(): FhevmHandleBytes32HexNo0x {
-    return remove0x(this.#handleBytes32Hex) as FhevmHandleBytes32HexNo0x;
+  public get bytes32HexNo0x(): HandleBytes32HexNo0x {
+    return remove0x(this.#handleBytes32Hex) as HandleBytes32HexNo0x;
   }
 
-  public get bytes32(): FhevmHandleBytes32 {
+  public get bytes32(): HandleBytes32 {
     if (this.#handleBytes32 === undefined) {
-      this.#handleBytes32 = hexToBytes32(this.#handleBytes32Hex);
+      this.#handleBytes32 = hexToBytes32(
+        this.#handleBytes32Hex,
+      ) as HandleBytes32;
     }
-    return new Uint8Array(this.#handleBytes32) as FhevmHandleBytes32;
+    return new Uint8Array(this.#handleBytes32) as HandleBytes32;
   }
 
   public get hash21(): Bytes21Hex {
@@ -146,16 +155,16 @@ class FhevmHandleImpl implements FhevmHandleBase {
   }
 
   public get isComputed(): boolean {
-    return this.index === undefined;
+    return this.index === 255;
   }
 
-  public get index(): Uint8Number | undefined {
+  public get index(): Uint8Number {
     // Extract index (byte 21) - 255 means computed
     const indexUint8: Uint8Number = bytesHexUint8At(
       this.#handleBytes32Hex,
       FHEVM_HANDLE_INDEX_BYTE_OFFSET,
     );
-    return indexUint8 === 255 /* computed */ ? undefined : indexUint8;
+    return indexUint8;
   }
 
   public get isExternal(): boolean {
@@ -179,25 +188,36 @@ class FhevmHandleImpl implements FhevmHandleBase {
   }
 }
 
+Object.freeze(FhevmHandleImpl);
+Object.freeze(FhevmHandleImpl.prototype);
+
 ////////////////////////////////////////////////////////////////////////////////
 
-export function assertIsFhevmHandleBytes32Hex(
+export function assertIsHandleBytes32Hex(
   value: unknown,
   options?: { subject?: string } & ErrorMetadataParams,
-): asserts value is FhevmHandleBytes32Hex {
+): asserts value is HandleBytes32Hex {
   if (!isBytes32Hex(value)) {
     throw new FhevmHandleError({
       ...options,
       message: `FHEVM Handle is not a valid bytes32 hex.`,
     });
   }
-  _assertIsFhevmHandleBytes32Hex(value, options);
+  _assertIsHandleBytes32Hex(value, options);
 }
 
-export function assertIsFhevmHandleBytes32(
+export function assertIsInputHandleBytes32Hex(
   value: unknown,
   options?: { subject?: string } & ErrorMetadataParams,
-): asserts value is FhevmHandleBytes32 {
+): asserts value is InputHandleBytes32Hex {
+  assertIsHandleBytes32Hex(value, options);
+  _assertIsInputHandleBytes32Hex(value, options);
+}
+
+export function assertIsHandleBytes32(
+  value: unknown,
+  options?: { subject?: string } & ErrorMetadataParams,
+): asserts value is HandleBytes32 {
   if (!isBytes32(value)) {
     throw new FhevmHandleError({
       ...options,
@@ -205,81 +225,118 @@ export function assertIsFhevmHandleBytes32(
     });
   }
 
-  _assertIsFhevmHandleBytes32(value, options);
+  _assertIsHandleBytes32(value, options);
 }
 
-export function assertIsFhevmHandle(
+export function assertIsInputHandleBytes32(
   value: unknown,
   options?: { subject?: string } & ErrorMetadataParams,
-): asserts value is FhevmHandle {
-  if (!isFhevmHandle(value)) {
+): asserts value is InputHandleBytes32 {
+  assertIsHandleBytes32(value, options);
+  _assertIsInputHandleBytes32(value, options);
+}
+
+export function assertIsHandle(
+  value: unknown,
+  options?: { subject?: string } & ErrorMetadataParams,
+): asserts value is Handle {
+  if (!isHandle(value)) {
     throw new FhevmHandleError({
       ...options,
-      message: `Value is not a valid FhevmHandle.`,
+      message: `Value is not a valid Handle.`,
     });
   }
 }
 
-export function assertIsExternalFhevmHandle(
+export function assertIsInputHandle(
   value: unknown,
   options?: { subject?: string } & ErrorMetadataParams,
-): asserts value is ExternalFhevmHandle {
-  if (!isExternalFhevmHandle(value)) {
+): asserts value is InputHandle {
+  if (!isInputHandle(value)) {
     throw new FhevmHandleError({
       ...options,
-      message: `Value is not a valid ExternalFhevmHandle.`,
+      message: `Value is not a valid InputHandle.`,
     });
   }
 }
 
-export function assertIsFhevmHandleLike(
+export function assertIsHandleLike(
   value: unknown,
   options?: { subject?: string } & ErrorMetadataParams,
-): asserts value is FhevmHandleLike {
+): asserts value is HandleLike {
   if (value instanceof FhevmHandleImpl) {
     return;
   }
 
   if (value !== null && typeof value === "object" && "bytes32Hex" in value) {
-    assertIsFhevmHandleBytes32Hex(value.bytes32Hex, options);
+    assertIsHandleBytes32Hex(value.bytes32Hex, options);
     return;
   }
 
   if (typeof value === "string") {
-    assertIsFhevmHandleBytes32Hex(value, options);
+    assertIsHandleBytes32Hex(value, options);
     return;
   }
 
-  assertIsFhevmHandleBytes32(value, options);
+  assertIsHandleBytes32(value, options);
+}
+
+export function assertIsInputHandleLike(
+  value: unknown,
+  options?: { subject?: string } & ErrorMetadataParams,
+): asserts value is InputHandleLike {
+  if (value instanceof FhevmHandleImpl) {
+    if (!value.isExternal) {
+      throw new FhevmHandleError({ message: "Expected an input handle" });
+    }
+    return;
+  }
+
+  if (value !== null && typeof value === "object" && "bytes32Hex" in value) {
+    assertIsInputHandleBytes32Hex(value.bytes32Hex, options);
+    return;
+  }
+
+  if (typeof value === "string") {
+    assertIsInputHandleBytes32Hex(value, options);
+    return;
+  }
+
+  assertIsInputHandleBytes32(value, options);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export function isFhevmHandleBytes32(
-  value: unknown,
-): value is FhevmHandleBytes32 {
+export function isHandleBytes32(value: unknown): value is HandleBytes32 {
   try {
-    assertIsFhevmHandleBytes32(value);
+    assertIsHandleBytes32(value);
     return true;
   } catch {
     return false;
   }
 }
 
-export function isFhevmHandleBytes32Hex(
-  value: unknown,
-): value is FhevmHandleBytes32Hex {
+export function isHandleBytes32Hex(value: unknown): value is HandleBytes32Hex {
   try {
-    assertIsFhevmHandleBytes32Hex(value);
+    assertIsHandleBytes32Hex(value);
     return true;
   } catch {
     return false;
   }
 }
 
-export function isFhevmHandleLike(value: unknown): value is FhevmHandleLike {
+export function isHandleLike(value: unknown): value is HandleLike {
   try {
-    assertIsFhevmHandleLike(value);
+    assertIsHandleLike(value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function isInputHandleLike(value: unknown): value is InputHandleLike {
+  try {
+    assertIsInputHandleLike(value);
     return true;
   } catch {
     return false;
@@ -287,7 +344,7 @@ export function isFhevmHandleLike(value: unknown): value is FhevmHandleLike {
 }
 
 /**
- * Checks if a value is a `FhevmHandle` instance.
+ * Checks if a value is a `Handle` (EncryptedValue) instance.
  *
  * **Same-realm only**: Uses `instanceof` which only works when the value
  * was created in the same JavaScript realm (same module instance).
@@ -297,133 +354,136 @@ export function isFhevmHandleLike(value: unknown): value is FhevmHandleLike {
  * - Cross-realm contexts (iframes, workers)
  *
  * @param value - The value to check
- * @returns `true` if value is a `FhevmHandle` instance from the same realm
+ * @returns `true` if value is a `Handle` instance from the same realm
  */
-export function isFhevmHandle(value: unknown): value is FhevmHandle {
+export function isHandle(value: unknown): value is Handle {
   return value instanceof FhevmHandleImpl;
 }
 
-export function isExternalFhevmHandle(
-  value: unknown,
-): value is ExternalFhevmHandle {
+export function isInputHandle(value: unknown): value is InputHandle {
   return (
-    isFhevmHandle(value) &&
+    isHandle(value) &&
     value.isExternal &&
-    value.index !== undefined &&
+    value.index !== 255 &&
     !value.isComputed
   );
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export function asFhevmHandle(value: unknown): FhevmHandle {
-  assertIsFhevmHandle(value);
+export function asHandle(value: unknown): Handle {
+  assertIsHandle(value);
   return value;
 }
 
-export function asFhevmHandleLike(value: unknown): FhevmHandleLike {
-  assertIsFhevmHandleLike(value);
+export function asHandleLike(value: unknown): HandleLike {
+  assertIsHandleLike(value);
   return value;
 }
 
-export function asFhevmHandleBytes32(value: unknown): FhevmHandleBytes32 {
-  assertIsFhevmHandleBytes32(value);
+export function asHandleBytes32(value: unknown): HandleBytes32 {
+  assertIsHandleBytes32(value);
   return value;
 }
 
-export function asFhevmHandleBytes32Hex(value: unknown): FhevmHandleBytes32Hex {
-  assertIsFhevmHandleBytes32Hex(value);
+export function asHandleBytes32Hex(value: unknown): HandleBytes32Hex {
+  assertIsHandleBytes32Hex(value);
   return value;
 }
 
 /**
- * [Trusted] Converts a `FhevmHandleBytes32Hex` to a `FhevmHandle`.
+ * [Trusted] Converts a `HandleBytes32Hex` to a `Handle`.
  *
- * Trusts the type system for FhevmHandle hex format validation.
+ * Trusts the type system for hex format validation.
  *
- * @param handleBytes32Hex - A valid 32-byte hex string (typed as `FhevmHandleBytes32Hex`)
- * @returns A `FhevmHandle` instance
+ * @param handleBytes32Hex - A valid 32-byte hex string (typed as `HandleBytes32Hex`)
+ * @returns A `Handle` instance
  */
-export function fhevmHandleBytes32HexToFhevmHandle(
-  handleBytes32Hex: FhevmHandleBytes32Hex,
-): FhevmHandle {
+export function handleBytes32HexToHandle(
+  handleBytes32Hex: HandleBytes32Hex,
+): Handle {
   return new FhevmHandleImpl(PRIVATE_TOKEN, {
     handleBytes32Hex,
-  }) as FhevmHandle;
+  }) as Handle;
 }
 
 /**
- * [Trusted] Converts a `Bytes32Hex` to a `FhevmHandle`.
+ * [Trusted] Converts a `Bytes32Hex` to a `Handle`.
  *
  * Trusts the type system for hex format validation.
  * Still validates FHEVM-specific fields (fheTypeId, version).
  *
  * @param handleBytes32Hex - A valid 32-byte hex string (typed as `Bytes32Hex`)
- * @returns A `FhevmHandle` instance
+ * @returns A `Handle` instance
  * @throws A {@link FhevmHandleError} If fheTypeId or version is invalid
  */
-export function bytes32HexToFhevmHandle(
-  handleBytes32Hex: Bytes32Hex,
-): FhevmHandle {
-  _assertIsFhevmHandleBytes32Hex(handleBytes32Hex);
+export function bytes32HexToHandle(handleBytes32Hex: Bytes32Hex): Handle {
+  _assertIsHandleBytes32Hex(handleBytes32Hex);
 
   return new FhevmHandleImpl(PRIVATE_TOKEN, {
     handleBytes32Hex,
-  }) as FhevmHandle;
+  }) as Handle;
+}
+
+export function bytes32HexToInputHandle(
+  handleBytes32Hex: Bytes32Hex,
+): InputHandle {
+  _assertIsInputHandleBytes32Hex(handleBytes32Hex);
+
+  return new FhevmHandleImpl(PRIVATE_TOKEN, {
+    handleBytes32Hex,
+  }) as unknown as InputHandle;
 }
 
 /**
- * [Trusted] Converts a `Bytes32` to a `FhevmHandle`.
+ * [Trusted] Converts a `Bytes32` to a `Handle`.
  *
  * Trusts the type system for bytes format validation.
  * Still validates FHEVM-specific fields (fheTypeId, version).
  *
  * @param bytes - A valid 32-byte array (typed as `Bytes32`)
- * @returns A `FhevmHandle` instance
+ * @returns A `Handle` instance
  * @throws A {@link FhevmHandleError} If fheTypeId or version is invalid
  */
-export function bytes32ToFhevmHandle(bytes: Bytes32): FhevmHandle {
+export function bytes32ToHandle(bytes: Bytes32): Handle {
   // bytes is validated as a Bytes32
   const hex = bytes32ToHex(bytes);
 
-  _assertIsFhevmHandleBytes32(bytes);
-
+  _assertIsHandleBytes32(bytes);
   return new FhevmHandleImpl(PRIVATE_TOKEN, {
-    handleBytes32Hex: hex as FhevmHandleBytes32Hex,
-    handleBytes32: new Uint8Array(bytes as Bytes32) as FhevmHandleBytes32,
-  }) as FhevmHandle;
+    handleBytes32Hex: hex as HandleBytes32Hex,
+    handleBytes32: new Uint8Array(bytes as Bytes32) as HandleBytes32,
+  }) as Handle;
 }
 
 /**
- * [Trusted] Converts a `FhevmHandleLike` to a `FhevmHandle`.
+ * [Trusted] Converts a `HandleLike` to a `Handle`.
  *
  * Trusts the type system for input validation.
  * Still validates FHEVM-specific fields (fheTypeId, version).
  *
- * @param fhevmHandleLike - A `FhevmHandleLike` (Bytes32, Bytes32Hex, Bytes32HexAble, or FhevmHandle)
- * @returns A `FhevmHandle` instance
+ * @param handleLike - A `HandleLike` (Bytes32, Bytes32Hex, Bytes32HexAble, or Handle)
+ * @returns A `Handle` instance
  * @throws A {@link FhevmHandleError} If fheTypeId or version is invalid
  */
-export function fhevmHandleLikeToFhevmHandle(
-  fhevmHandleLike: FhevmHandleLike,
-): FhevmHandle {
-  // Already a FhevmHandle
-  if (fhevmHandleLike instanceof FhevmHandleImpl) {
-    return fhevmHandleLike as FhevmHandle;
+export function handleLikeToHandle(handleLike: HandleLike): Handle {
+  // Already a Handle
+  if (handleLike instanceof FhevmHandleImpl) {
+    return handleLike as Handle;
   }
 
   // Bytes32Hex (string)
-  if (typeof fhevmHandleLike === "string") {
-    return bytes32HexToFhevmHandle(fhevmHandleLike);
+  if (typeof handleLike === "string") {
+    return bytes32HexToHandle(asBytes32Hex(handleLike));
   }
 
   // Bytes32HexAble (object with bytes32Hex property)
-  if ("bytes32Hex" in fhevmHandleLike) {
-    return bytes32HexToFhevmHandle(fhevmHandleLike.bytes32Hex);
+  if ("bytes32Hex" in handleLike) {
+    return bytes32HexToHandle(asBytes32Hex(handleLike.bytes32Hex));
   }
 
   // Bytes32 (Uint8Array)
-  return bytes32ToFhevmHandle(fhevmHandleLike);
+  return bytes32ToHandle(asBytes32(handleLike));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -431,58 +491,59 @@ export function fhevmHandleLikeToFhevmHandle(
 ////////////////////////////////////////////////////////////////////////////////
 
 /**
- * [Validated] Converts an unknown value to a `FhevmHandle`.
+ * [Validated] Converts an unknown value to a `Handle`.
  *
  * Performs full runtime validation of input format and FHEVM-specific fields.
  *
  * @param value - An unknown value (string, Uint8Array, or object with bytes32Hex)
- * @returns A `FhevmHandle` instance
- * @throws A `InvalidTypeError` If value is not a valid bytes32 hex or bytes32
- * @throws A {@link FhevmHandleError} If fheTypeId or version is invalid
+ * @returns A `Handle` instance
+ * @throws {InvalidTypeError} If value is not a valid bytes32 hex or bytes32
+ * @throws {FhevmHandleError} If fheTypeId or version is invalid
  */
-export function toFhevmHandle(value: unknown): FhevmHandle {
+export function toHandle(value: unknown): Handle {
   if (value instanceof FhevmHandleImpl) {
-    return value as FhevmHandle;
+    return value as Handle;
   }
 
   // Object with bytes32Hex property (FhevmHandle-like)
   if (value !== null && typeof value === "object" && "bytes32Hex" in value) {
     assertIsBytes32Hex(value.bytes32Hex, {});
-    return bytes32HexToFhevmHandle(value.bytes32Hex);
+    return bytes32HexToHandle(value.bytes32Hex);
   }
 
   if (typeof value === "string") {
     assertIsBytes32Hex(value, {});
-    return bytes32HexToFhevmHandle(value);
+    return bytes32HexToHandle(value);
   }
 
   assertIsBytes32(value, {});
-  return bytes32ToFhevmHandle(value);
+  return bytes32ToHandle(value);
 }
 
-export function toExternalFhevmHandle(value: unknown): ExternalFhevmHandle {
-  if (!isExternalFhevmHandle(value)) {
+export function toInputHandle(value: unknown): InputHandle {
+  const h = toHandle(value);
+  if (!isInputHandle(h)) {
     throw new FhevmHandleError({
       message: "Invalid external handle",
     });
   }
-  return value;
+  return h;
 }
 
 /**
- * [Trusted] Compares two `FhevmHandle` instances for equality.
+ * [Trusted] Compares two `Handle` instances for equality.
  *
  * @param a - First handle
  * @param b - Second handle
  * @returns `true` if both handles have the same `bytes32Hex` value
  */
-export function fhevmHandleEquals(a: FhevmHandle, b: FhevmHandle): boolean {
+export function handleEquals(a: Handle, b: Handle): boolean {
   return a.bytes32Hex === b.bytes32Hex;
 }
 
-export function assertFhevmHandleArrayEquals(
-  actual: readonly FhevmHandle[],
-  expected: readonly FhevmHandleLike[],
+export function assertHandleArrayEquals(
+  actual: readonly Handle[],
+  expected: readonly HandleLike[],
   options?: {
     actualName?: string | undefined;
     expectedName?: string | undefined;
@@ -499,7 +560,7 @@ export function assertFhevmHandleArrayEquals(
     });
   }
 
-  const expectedHandles = expected.map((h) => toFhevmHandle(h));
+  const expectedHandles = expected.map((h) => toHandle(h));
 
   for (let i = 0; i < actual.length; ++i) {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -514,7 +575,21 @@ export function assertFhevmHandleArrayEquals(
   }
 }
 
-export function buildFhevmHandle({
+export function buildHandle(parameters: {
+  index: number;
+  chainId: number | bigint;
+  hash21: string;
+  fheTypeId: number;
+  version?: number;
+}): InputHandle;
+export function buildHandle(parameters: {
+  index?: undefined;
+  chainId: number | bigint;
+  hash21: string;
+  fheTypeId: number;
+  version?: number;
+}): Handle;
+export function buildHandle({
   index,
   chainId,
   hash21,
@@ -526,7 +601,7 @@ export function buildFhevmHandle({
   hash21: string;
   fheTypeId: number;
   version?: number;
-}): FhevmHandle {
+}): Handle | InputHandle {
   const theVersion = asUint8Number(
     version ?? FHEVM_HANDLE_CURRENT_CIPHERTEXT_VERSION,
   );
@@ -535,38 +610,38 @@ export function buildFhevmHandle({
 
   const handleHash21 = asBytes21(hexToBytes(hash21));
 
-  const handleBytes32AsBytes = new Uint8Array(32);
+  const handleBytes32AsBytes = new Uint8Array(32) as Bytes32;
   handleBytes32AsBytes.set(handleHash21, 0);
   handleBytes32AsBytes[21] = asUint8Number(index ?? 255);
   handleBytes32AsBytes.set(chainId8Bytes, 22);
   handleBytes32AsBytes[30] = fheTypeId;
   handleBytes32AsBytes[31] = theVersion;
 
-  return bytes32ToFhevmHandle(handleBytes32AsBytes as FhevmHandleBytes32);
+  return bytes32ToHandle(handleBytes32AsBytes);
 }
 
-export function assertIsFhevmHandleLikeArray(
+export function assertIsHandleLikeArray(
   value: unknown,
   options?: { subject?: string } & ErrorMetadataParams,
-): asserts value is FhevmHandleLike[] {
+): asserts value is HandleLike[] {
   if (!Array.isArray(value)) {
     throw new InvalidTypeError(
       {
         subject: options?.subject,
         type: typeof value,
-        expectedType: "FhevmHandleLike[]",
+        expectedType: "HandleLike[]",
       },
       options ?? {},
     );
   }
   for (let i = 0; i < value.length; ++i) {
-    if (!isFhevmHandleLike(value[i])) {
+    if (!isHandleLike(value[i])) {
       throw new InvalidTypeError(
         {
           subject: options?.subject,
           index: i,
           type: typeof value[i],
-          expectedType: "FhevmHandleLike",
+          expectedType: "HandleLike",
         },
         options ?? {},
       );
@@ -574,8 +649,37 @@ export function assertIsFhevmHandleLikeArray(
   }
 }
 
-export function assertFhevmHandlesBelongToSameChainId(
-  fhevmHandles: readonly FhevmHandle[],
+export function assertIsInputHandleLikeArray(
+  value: unknown,
+  options?: { subject?: string } & ErrorMetadataParams,
+): asserts value is InputHandleLike[] {
+  if (!Array.isArray(value)) {
+    throw new InvalidTypeError(
+      {
+        subject: options?.subject,
+        type: typeof value,
+        expectedType: "InputHandleLike[]",
+      },
+      options ?? {},
+    );
+  }
+  for (let i = 0; i < value.length; ++i) {
+    if (!isInputHandleLike(value[i])) {
+      throw new InvalidTypeError(
+        {
+          subject: options?.subject,
+          index: i,
+          type: typeof value[i],
+          expectedType: "InputHandleLike",
+        },
+        options ?? {},
+      );
+    }
+  }
+}
+
+export function assertHandlesBelongToSameChainId(
+  fhevmHandles: readonly Handle[],
   chainId?: Uint64BigInt,
 ): void {
   if (fhevmHandles.length === 0) {
@@ -614,10 +718,10 @@ function _assertIsValidFhevmHandleFields(
   }
 }
 
-function _assertIsFhevmHandleBytes32Hex(
+function _assertIsHandleBytes32Hex(
   value: Bytes32Hex,
   options?: { subject?: string } & ErrorMetadataParams,
-): asserts value is FhevmHandleBytes32Hex {
+): asserts value is HandleBytes32Hex {
   _assertIsValidFhevmHandleFields(
     bytesHexUint8At(value, FHEVM_HANDLE_FHETYPEID_BYTE_OFFSET),
     bytesHexUint8At(value, FHEVM_HANDLE_VERSION_BYTE_OFFSET),
@@ -625,13 +729,44 @@ function _assertIsFhevmHandleBytes32Hex(
   );
 }
 
-function _assertIsFhevmHandleBytes32(
+function _assertIsInputHandleBytes32Hex(
+  value: Bytes32Hex,
+  options?: { subject?: string } & ErrorMetadataParams,
+): asserts value is InputHandleBytes32Hex {
+  _assertIsHandleBytes32Hex(value, options);
+  // InputHandle (external) must have index < 255.
+  // index === 255 means computed (not external).
+  const index = bytesHexUint8At(value, FHEVM_HANDLE_INDEX_BYTE_OFFSET);
+  if (index === 255) {
+    throw new FhevmHandleError({
+      message: `Expected an input handle (index < 255) but got a computed handle (index = 255)`,
+      handle: value,
+    });
+  }
+}
+
+function _assertIsHandleBytes32(
   value: Bytes32,
   options?: { subject?: string } & ErrorMetadataParams,
-): asserts value is FhevmHandleBytes32 {
+): asserts value is HandleBytes32 {
   _assertIsValidFhevmHandleFields(
     bytesUint8At(value, FHEVM_HANDLE_FHETYPEID_BYTE_OFFSET),
     bytesUint8At(value, FHEVM_HANDLE_VERSION_BYTE_OFFSET),
     options,
   );
+}
+
+function _assertIsInputHandleBytes32(
+  value: Bytes32,
+  options?: { subject?: string } & ErrorMetadataParams,
+): asserts value is InputHandleBytes32 {
+  _assertIsHandleBytes32(value, options);
+  // InputHandle (external) must have index < 255.
+  // index === 255 means computed (not external).
+  const index = bytesUint8At(value, FHEVM_HANDLE_INDEX_BYTE_OFFSET);
+  if (index === 255) {
+    throw new FhevmHandleError({
+      message: `Expected an input handle (index < 255) but got a computed handle (index = 255)`,
+    });
+  }
 }

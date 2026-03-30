@@ -1,7 +1,9 @@
+import type { ErrorMetadataParams } from "../base/errors/ErrorBase.js";
 import {
   addressToChecksummedAddress,
   assertIsAddress,
   assertIsAddressArray,
+  assertRecordChecksummedAddressProperty,
 } from "../base/address.js";
 import {
   asBytesHex,
@@ -13,6 +15,7 @@ import { assertIsUintNumber } from "../base/uint.js";
 import type { KmsDelegatedUserDecryptEIP712 } from "../types/kms.js";
 import type { BytesHex } from "../types/primitives.js";
 import { createKmsEIP712Domain } from "./createKmsEIP712Domain.js";
+import { _assertIsKmsUserDecryptEIP712Base } from "./createKmsUserDecryptEIP712.js";
 import { kmsDelegatedUserDecryptEIP712Types } from "./kmsDelegatedUserDecryptEIP712Types.js";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -88,6 +91,26 @@ export function createKmsDelegatedUserDecryptEIP712({
   Object.freeze(eip712.message.contractAddresses);
 
   return eip712;
+}
+
+export function assertIsKmsDelegatedUserDecryptEIP712(
+  value: unknown,
+  name: string,
+  options: ErrorMetadataParams,
+): asserts value is KmsDelegatedUserDecryptEIP712 {
+  const msg = _assertIsKmsUserDecryptEIP712Base(
+    value,
+    name,
+    "DelegatedUserDecryptRequestVerification" satisfies KmsDelegatedUserDecryptEIP712["primaryType"],
+    options,
+  );
+
+  assertRecordChecksummedAddressProperty(
+    msg,
+    "delegatedAccount" satisfies keyof KmsDelegatedUserDecryptEIP712["message"],
+    `${name}.message`,
+    options,
+  );
 }
 
 function _verifyPublicKeyArg(value: unknown): BytesHex {

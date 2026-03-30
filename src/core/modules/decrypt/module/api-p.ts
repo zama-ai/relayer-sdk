@@ -24,9 +24,8 @@ import { getMetadata, getShares } from "../../../kms/KmsSigncryptedShares-p.js";
 import type { KmsEIP712Domain } from "../../../types/kms.js";
 import type { ChecksummedAddress } from "../../../types/primitives.js";
 import { uint32ToBytes32 } from "../../../base/uint.js";
-import { createDecryptedFhevmHandle } from "../../../handle/DecryptedFhevmHandle.js";
-import { bytesToFheDecryptedValue } from "../../../handle/FheType.js";
-import type { DecryptedFhevmHandle } from "../../../types/decryptedFhevmHandle.js";
+import { createClearValue } from "../../../handle/ClearValue.js";
+import { bytesToClearValueType } from "../../../handle/FheType.js";
 import { remove0x } from "../../../base/string.js";
 import type {
   PublicEncKeyMlKem512,
@@ -47,6 +46,7 @@ import {
 } from "../../../../wasm/tkms/kms_lib.js";
 import type { FhevmRuntime } from "../../../types/coreFhevmRuntime.js";
 import { initTkmsModule } from "./init-p.js";
+import type { ClearValue } from "../../../types/encryptedTypes.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -278,7 +278,7 @@ export async function decryptAndReconstruct(
   const kmsEIP712DomainWasmArg: KmsEIP712DomainWasmType = {
     name: kmsEIP712Domain.name,
     version: kmsEIP712Domain.version,
-    chain_id: uint32ToBytes32(kmsEIP712Domain.chainId),
+    chain_id: uint32ToBytes32(kmsEIP712Domain.chainId), // gateway chainId
     verifying_contract: kmsEIP712Domain.verifyingContract,
     salt: null,
   };
@@ -306,7 +306,7 @@ export async function decryptAndReconstruct(
     signature: remove0x(metadata.eip712Signature),
     client_address: clientAddress,
     enc_key: remove0x(publicEncKeyMlKem512WasmBytesHex),
-    ciphertext_handles: metadata.fhevmHandles.map((h) => h.bytes32HexNo0x),
+    ciphertext_handles: metadata.handles.map((h) => h.bytes32HexNo0x),
     eip712_verifying_contract: metadata.eip712Domain.verifyingContract,
   };
 
@@ -323,26 +323,25 @@ export async function decryptAndReconstruct(
     ) as TypedPlaintextWasmType[];
 
   // 2. Build an unforgeable structure that contains the decrypted FhevmHandles
-  const orderedDecryptedFhevmHandles: readonly DecryptedFhevmHandle[] =
-    typedPlaintextArray.map(
-      (typedPlaintext: TypedPlaintextWasmType, idx: number) => {
-        const fhevmHandle = metadata.fhevmHandles[idx];
-        if (fhevmHandle === undefined) {
-          throw new Error("Internal error");
-        }
-        if (typedPlaintext.fhe_type !== fhevmHandle.fheTypeId) {
-          throw new Error("Internal error");
-        }
-        return createDecryptedFhevmHandle(
-          fhevmHandle,
-          bytesToFheDecryptedValue(fhevmHandle.fheType, typedPlaintext.bytes),
-          PRIVATE_TKMS_LIB_TOKEN, // origin token for authenticity assertion
-        );
-      },
-    );
-  Object.freeze(orderedDecryptedFhevmHandles);
+  const orderedClearValues: readonly ClearValue[] = typedPlaintextArray.map(
+    (typedPlaintext: TypedPlaintextWasmType, idx: number) => {
+      const fhevmHandle = metadata.handles[idx];
+      if (fhevmHandle === undefined) {
+        throw new Error("Internal error");
+      }
+      if (typedPlaintext.fhe_type !== fhevmHandle.fheTypeId) {
+        throw new Error("Internal error");
+      }
+      return createClearValue({
+        value: bytesToClearValueType(fhevmHandle.fheType, typedPlaintext.bytes),
+        encryptedValue: fhevmHandle,
+        originToken: PRIVATE_TKMS_LIB_TOKEN, // origin token for authenticity assertion
+      });
+    },
+  );
+  Object.freeze(orderedClearValues);
 
-  return orderedDecryptedFhevmHandles;
+  return orderedClearValues;
 }
 
 //////////////////////////////////////////////////////////////////////////////

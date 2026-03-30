@@ -11,7 +11,6 @@ import type {
   Uint64ValueLike,
   Uint8ValueLike,
 } from "./primitives.js";
-import type { GlobalFhePkeParams } from "./globalFhePkeParams.js";
 import type { ZkProof } from "./zkProof.js";
 import type { WithEncrypt } from "./coreFhevmRuntime.js";
 import type { FhevmChain } from "./fhevmChain.js";
@@ -32,7 +31,6 @@ export interface ZkProofBuilder {
     parameters: {
       readonly contractAddress: string;
       readonly userAddress: string;
-      readonly globalFhePublicEncryptionParams: GlobalFhePkeParams;
     },
   ): Promise<ZkProof>;
 }

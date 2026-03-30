@@ -92,25 +92,11 @@ export type KmsUserDecryptEIP712Message = Readonly<{
   extraData: BytesHex;
 }>;
 
-export type KmsUserDecryptEIP712 = Prettify<{
-  readonly domain: KmsEIP712Domain;
-  readonly types: KmsUserDecryptEIP712Types;
-  readonly message: KmsUserDecryptEIP712Message;
-  readonly primaryType: "UserDecryptRequestVerification";
-}>;
-
 export type KmsDelegatedUserDecryptEIP712Message = Prettify<
   KmsUserDecryptEIP712Message & {
     readonly delegatedAccount: ChecksummedAddress;
   }
 >;
-
-export type KmsDelegatedUserDecryptEIP712 = Readonly<{
-  types: KmsDelegateUserDecryptEIP712Types;
-  primaryType: "DelegatedUserDecryptRequestVerification";
-  domain: KmsEIP712Domain;
-  message: KmsDelegatedUserDecryptEIP712Message;
-}>;
 
 export type KmsPublicDecryptEIP712Message = Readonly<{
   ctHandles: readonly Bytes32Hex[];
@@ -118,14 +104,26 @@ export type KmsPublicDecryptEIP712Message = Readonly<{
   extraData: BytesHex;
 }>;
 
-export type KmsPublicDecryptEIP712 = Readonly<
-  Prettify<{
-    types: KmsPublicDecryptEIP712Types;
-    primaryType: "PublicDecryptVerification";
-    domain: KmsEIP712Domain;
-    message: KmsPublicDecryptEIP712Message;
-  }>
->;
+export type KmsUserDecryptEIP712 = Prettify<{
+  readonly domain: KmsEIP712Domain;
+  readonly types: KmsUserDecryptEIP712Types;
+  readonly primaryType: "UserDecryptRequestVerification";
+  readonly message: KmsUserDecryptEIP712Message;
+}>;
+
+export type KmsDelegatedUserDecryptEIP712 = Prettify<{
+  readonly domain: KmsEIP712Domain;
+  readonly types: KmsDelegateUserDecryptEIP712Types;
+  readonly primaryType: "DelegatedUserDecryptRequestVerification";
+  readonly message: KmsDelegatedUserDecryptEIP712Message;
+}>;
+
+export type KmsPublicDecryptEIP712 = Prettify<{
+  readonly domain: KmsEIP712Domain;
+  readonly types: KmsPublicDecryptEIP712Types;
+  readonly primaryType: "PublicDecryptVerification";
+  readonly message: KmsPublicDecryptEIP712Message;
+}>;
 
 ////////////////////////////////////////////////////////////////////////////////
 //

@@ -12,7 +12,7 @@ import type {
   FetchPublicDecryptResult,
   FetchUserDecryptResult,
 } from "./relayer.js";
-import type { FhevmHandleBytes32Hex } from "./fhevmHandle.js";
+import type { HandleBytes32Hex } from "./encryptedTypes-p.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 // RelayerOperation
@@ -57,7 +57,7 @@ export type RelayerFetchPublicDecryptPayload = {
 // https://github.com/zama-ai/fhevm-relayer/blob/96151ef300f787658c5fbaf1b4471263160032d5/src/http/userdecrypt_http_listener.rs#L33
 export type HandleContractPair = {
   // Hex encoded bytes32 with 0x prefix.
-  readonly handle: FhevmHandleBytes32Hex;
+  readonly handle: HandleBytes32Hex;
   // Hex encoded address with 0x prefix.
   readonly contractAddress: ChecksummedAddress;
 };

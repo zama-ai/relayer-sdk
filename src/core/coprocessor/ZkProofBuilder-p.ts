@@ -5,7 +5,7 @@ import { isUint64, uint256ToBytes32 } from "../base/uint.js";
 import { isAddress } from "../base/address.js";
 import { hexToBytes20 } from "../base/bytes.js";
 import { ZkProofError } from "../errors/ZkProofError.js";
-import { TypedValueArrayBuilder } from "../base/typedvalue.js";
+import { TypedValueArrayBuilder } from "../base/typedValue.js";
 import type {
   TypedValue,
   Uint32ValueLike,
@@ -26,8 +26,8 @@ import type { EncryptionBits, FheType } from "../types/fheType.js";
 import type { Fhevm } from "../types/coreFhevmClient.js";
 import type { ZkProofBuilder } from "../types/zkProofBuilder.js";
 import type { WithEncrypt } from "../types/coreFhevmRuntime.js";
-import type { GlobalFhePkeParams } from "../types/globalFhePkeParams.js";
 import type { FhevmChain } from "../types/fhevmChain.js";
+import { fetchFheEncryptionKeyWasm } from "../key/fetchFheEncryptionKey.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -139,13 +139,14 @@ class ZkProofBuilderImpl implements ZkProofBuilder {
     {
       contractAddress,
       userAddress,
-      globalFhePublicEncryptionParams,
     }: {
       readonly contractAddress: string;
       readonly userAddress: string;
-      readonly globalFhePublicEncryptionParams: GlobalFhePkeParams;
     },
   ): Promise<ZkProof> {
+    // Fetch the FheEncryptionKey (in wasm format) from the global cache.
+    const fheEncryptionKeyWasm = await fetchFheEncryptionKeyWasm(fhevm);
+
     if (this.#totalBits === 0) {
       throw new ZkProofError({
         message: `Encrypted input must contain at least one value`,
@@ -210,7 +211,7 @@ class ZkProofBuilderImpl implements ZkProofBuilder {
     const ciphertextWithZKProofBytes: Uint8Array =
       await fhevm.runtime.encrypt.buildWithProofPacked({
         typedValues: [...this.#builder.build()],
-        publicEncryptionParams: globalFhePublicEncryptionParams,
+        fheEncryptionKey: fheEncryptionKeyWasm,
         metaData,
       });
 

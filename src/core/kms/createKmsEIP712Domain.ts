@@ -12,12 +12,18 @@ import {
 import type { KmsEIP712Domain } from "../types/kms.js";
 import type { Uint64BigInt } from "../types/primitives.js";
 
+/**
+ * IMPORTANT — KmsEIP712Domain.chainId depends on the primaryType:
+ * - `UserDecryptRequestVerification`: chainId is the **host chain**
+ * - `DelegatedUserDecryptRequestVerification`: chainId is the **host chain**
+ * - `PublicDecryptVerification`: chainId is the **gateway chain**
+ */
 export function createKmsEIP712Domain({
   chainId, // any chainId could be host or gateway
   verifyingContractAddressDecryption,
 }: {
-  chainId: number | bigint;
-  verifyingContractAddressDecryption: string;
+  readonly chainId: number | bigint;
+  readonly verifyingContractAddressDecryption: string;
 }): KmsEIP712Domain {
   assertIsUint64(chainId, {});
   assertIsAddress(verifyingContractAddressDecryption, {});
