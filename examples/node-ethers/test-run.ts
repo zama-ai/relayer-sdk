@@ -6,7 +6,7 @@
  *   2. Create a full FHEVM client (encrypt + decrypt)
  *   3. Encrypt values for a target contract
  *   4. Read publicly readable encrypted values from testnet
- *   5. Generate an E2E transport key pair, sign an EIP-712 permit, decrypt
+ *   5. Generate an E2E transport key pair, sign a decrypt permit, decrypt
  *
  * With .env.local: reads the FHECounter contract on Sepolia and decrypts the count.
  * Without .env.local: uses a random wallet (decrypt will fail on ACL check).
@@ -43,12 +43,10 @@ const env = loadEnv();
 import {
   setFhevmRuntimeConfig,
   createFhevmClient,
-  createSignedPermit,
-  toFhevmHandle,
 } from "../../src/ethers/index.js";
 import { sepolia } from "../../src/core/chains/index.js";
 import { asChecksummedAddress } from "../../src/core/base/address.js";
-import type { Bytes65Hex } from "../../src/core/types/primitives.js";
+import { toHandle } from "../../src/core/handle/FhevmHandle.js";
 
 const RPC_URL = "https://ethereum-sepolia-rpc.publicnode.com";
 
@@ -104,7 +102,7 @@ async function main(): Promise<void> {
 
   step("Encrypt uint32(42) + bool(true)");
   try {
-    const proof = await client.encrypt({
+    const encrypted = await client.encrypt({
       contractAddress: FHE_COUNTER_ADDRESS,
       userAddress: userAddress,
       values: [
@@ -112,11 +110,11 @@ async function main(): Promise<void> {
         { type: "bool", value: true },
       ],
     });
-    console.log("  Handles:", proof.encryptedInputs.length);
-    for (const h of proof.encryptedInputs) {
+    console.log("  Handles:", encrypted.externalEncryptedValues.length);
+    for (const h of encrypted.externalEncryptedValues) {
       console.log(`    [${h.index}] ${h.fheType} → ${h.bytes32Hex}`);
     }
-    console.log("  Proof bytes length:", proof.inputProof.length);
+    console.log("  Proof bytes length:", encrypted.inputProof.length);
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     console.log("  Encryption failed (relayer issue):", msg.split("\n")[0]);
@@ -129,12 +127,12 @@ async function main(): Promise<void> {
 
   step(`Read ${PUBLIC_ENCRYPTED_VALUES.length} public values from testnet`);
   try {
-    const handles = PUBLIC_ENCRYPTED_VALUES.map((h) => toFhevmHandle(h.hex));
-    const result = await client.readPublicValue(handles);
+    const encryptedValues = PUBLIC_ENCRYPTED_VALUES.map((h) => toHandle(h.hex));
+    const result = await client.publicDecrypt({ encryptedValues });
 
     console.log("  Read public values succeeded!");
-    for (let i = 0; i < result.values.length; i++) {
-      const d = result.values[i];
+    for (let i = 0; i < result.orderedClearValues.length; i++) {
+      const d = result.orderedClearValues[i];
       if (d === undefined) continue;
       const expected = PUBLIC_ENCRYPTED_VALUES[i]?.expected;
       const match = d.value === expected ? "OK" : "MISMATCH";
@@ -160,49 +158,31 @@ async function main(): Promise<void> {
   if (rawCount === 0n) {
     console.log("  Count is zero — no encrypted value stored yet. Skipping decrypt.");
   } else {
-    const countHandle = toFhevmHandle(countHex);
+    const countHandle = toHandle(countHex);
     console.log("  Parsed handle — chainId:", countHandle.chainId.toString(), "fheType:", countHandle.fheType);
 
     step("Generate E2E transport key pair");
-    const e2eTransportKeyPair = await client.generateE2eTransportKeyPair();
-    const pubKeyHex = await e2eTransportKeyPair.getTkmsPublicKeyHex();
-    console.log("  Public key:", pubKeyHex.slice(0, 40) + "...");
+    const e2eTransportKeypair = await client.generateE2eTransportKeypair();
+    console.log("  Public key:", e2eTransportKeypair.publicKey.slice(0, 40) + "...");
 
-    step("Create and sign EIP-712 decrypt permit");
+    step("Create and sign decrypt permit");
     const now = Math.floor(Date.now() / 1000);
-    const permit = await client.createDecryptPermit({
-      e2eTransportPublicKey: pubKeyHex,
+    const signedPermit = await client.signDecryptionPermit({
       contractAddresses: [FHE_COUNTER_ADDRESS],
       startTimestamp: now,
       durationDays: 1,
+      signerAddress: userAddress,
+      signer: wallet,
+      e2eTransportKeypair,
     });
-    console.log("  Domain:", permit.domain.name, "v" + permit.domain.version);
-
-    const signature = await wallet.signTypedData(
-      {
-        name: permit.domain.name,
-        version: permit.domain.version,
-        chainId: permit.domain.chainId,
-        verifyingContract: permit.domain.verifyingContract,
-      },
-      {
-        UserDecryptRequestVerification:
-          permit.types.UserDecryptRequestVerification as ethers.TypedDataField[],
-      },
-      permit.message,
-    );
-    console.log("  Signature:", signature.slice(0, 20) + "...");
-
-    step("Bundle into signed permit");
-    const signedPermit = createSignedPermit(permit, signature as Bytes65Hex, userAddress);
     console.log("  Signed permit created");
 
     step("Decrypt the FHECounter count");
     try {
       const results = await client.decrypt({
-        e2eTransportKeyPair,
+        e2eTransportKeypair,
         encryptedValues: [{
-          encrypted: countHandle,
+          encryptedValue: countHandle,
           contractAddress: asChecksummedAddress(FHE_COUNTER_ADDRESS),
         }],
         signedPermit,

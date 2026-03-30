@@ -152,6 +152,12 @@ Full documentation is available in the [`docs/`](docs/) directory:
 - [Migration](docs/migration.md) — Migrating from `@zama-fhe/relayer-sdk`
 - [Architecture](docs/architecture.md) — Internal design for contributors
 
+## Glossary
+
+See [GLOSSARY.md](GLOSSARY.md) for canonical naming conventions across the SDK, docs, and Zama Protocol — including encrypted values, clear values, key pairs, permits, and FHE types.
+
 ## License
 
-See [LICENSE](LICENSE) for details.
+This project is licensed under the [BSD 3-Clause Clear License](LICENSE).
+
+Copyright © 2025 ZAMA. All rights reserved.
