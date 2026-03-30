@@ -38,7 +38,7 @@ class ErrorBase extends Error {
 | `ACLError` | ACL permission denied (encrypted value not allowed for user/contract) |
 | `EncryptionError` | Encryption operation failed |
 | `FhevmConfigError` | Invalid chain or runtime configuration |
-| `FhevmHandleError` | Malformed or invalid FhevmHandle |
+| `FhevmHandleError` | Malformed or invalid encrypted value handle |
 | `InputProofError` | Input proof validation failed |
 | `TFHEError` | TFHE WASM module error |
 | `ZkProofError` | ZK proof generation failed |
@@ -82,7 +82,7 @@ The `extraData` field is auto-fetched in most operations. If you're using standa
 
 ```ts
 try {
-  const result = await client.readPublicValue(handles);
+  const result = await client.publicDecrypt({ encryptedValues: handles });
 } catch (error) {
   if (error instanceof ACLError) {
     // Handle permission issues

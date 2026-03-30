@@ -10,11 +10,11 @@ This guide helps you migrate from the old SDK (`@zama-fhe/relayer-sdk` v0.4.x) t
 | Entry points | `/web`, `/node`, `/bundle` | `/ethers`, `/viem`, `/chains` |
 | Initialization | `initSDK()` + `createInstance(config)` | `setFhevmRuntimeConfig()` + `createFhevmClient({ chain, provider })` |
 | Configuration | Flat config object (`SepoliaConfig`) | Chain definitions (`sepolia` from `@fhevm/sdk/chains`) |
-| Encryption | Builder pattern: `.add32(42).encrypt()` | Declarative: `encrypt({ values: [{ type: "uint32", value: 42 }] })` — extraData auto-fetched |
-| Key generation | `generateKeypair()` → raw `{ publicKey, privateKey }` | `generateE2eTransportKeyPair()` → opaque `E2eTransportKeyPair` |
-| EIP-712 creation | Positional args: `createEIP712(key, addrs, start, days)` | Object: `createDecryptPermit({ e2eTransportPublicKey, contractAddresses, ... })` — extraData auto-fetched |
-| Decrypt | 9 positional args | Object: `decrypt({ e2eTransportKeyPair, encryptedValues, signedPermit })` |
-| Read public values | `publicDecrypt(handles)` → `{ clearValues }` | `readPublicValue([values])` → `PublicDecryptionProof` with `.values` |
+| Encryption | Builder pattern: `.add32(42).encrypt()` | Declarative: `encrypt({ values: [{ type: "uint32", value: 42 }] })` |
+| Key generation | `generateKeypair()` → raw `{ publicKey, privateKey }` | `generateE2eTransportKeypair()` → opaque `E2eTransportKeypair` |
+| Permit creation + signing | Separate: `createEIP712()` + wallet sign + manual bundling | Combined: `signDecryptionPermit({ signer, e2eTransportKeypair, ... })` |
+| Decrypt | 9 positional args | Object: `decrypt({ e2eTransportKeypair, encryptedValues, signedPermit })` |
+| Read public values | `publicDecrypt(handles)` → `{ clearValues }` | `publicDecrypt({ encryptedValues })` → `PublicDecryptionProof` with `.orderedClearValues` |
 | Provider | Passed in config as `network` | Passed directly as `provider` |
 | Framework support | Framework-agnostic (single entry) | Explicit adapters (`/ethers`, `/viem`) |
 
@@ -87,7 +87,7 @@ const { handles, inputProof } = await input.encrypt();
 **After:**
 
 ```ts
-const proof = await client.encrypt({
+const encrypted = await client.encrypt({
   contractAddress,
   userAddress,
   values: [
@@ -97,15 +97,15 @@ const proof = await client.encrypt({
   ],
 });
 
-const handles = proof.encryptedInputs;
-const inputProof = proof.inputProof;
+const handles = encrypted.externalEncryptedValues;
+const inputProof = encrypted.inputProof;
 ```
 
 Key differences:
 - The public encryption key is fetched and cached automatically on first `encrypt()` call. If you want to control when the ~50MB download happens (for example, behind a loading spinner), call `await client.init()` at app startup.
 - Values are declared as an array of `{ type, value }` objects instead of chained `.add*()` calls.
 - Type names use Solidity conventions: `"uint32"`, `"bool"`, `"address"` (not `add32`, `addBool`, `addAddress`).
-- The result is a `VerifiedInputProof` with structured handles (`proof.encryptedInputs`) instead of raw `Uint8Array[]`.
+- The result has `externalEncryptedValues` (array of `ExternalEncryptedValue`) and `inputProof` (hex string).
 
 ---
 
@@ -121,44 +121,54 @@ const { publicKey, privateKey } = instance.generateKeypair();
 **After:**
 
 ```ts
-const e2eTransportKeyPair = await client.generateE2eTransportKeyPair();
-const publicKey = await e2eTransportKeyPair.getTkmsPublicKeyHex();
+const e2eTransportKeypair = await client.generateE2eTransportKeypair();
 // privateKey is hidden inside the key pair — never exposed
 ```
 
-The new SDK wraps the private key in an opaque `E2eTransportKeyPair` object. You can't access the raw private key directly — this prevents accidental exposure. The key pair is what you pass to `decrypt()`.
+The new SDK wraps the private key in an opaque `E2eTransportKeypair` object. You can't access the raw private key directly — this prevents accidental exposure. The key pair is what you pass to `signDecryptionPermit()` and `decrypt()`.
 
 ---
 
-## Step 5: Migrate EIP-712 permit creation
+## Step 5: Migrate permit creation and signing
+
+The biggest workflow change: permit creation and signing are now a **single step**.
 
 **Before:**
 
 ```ts
+// 1. Create EIP-712 data
 const eip712 = instance.createEIP712(
   publicKey,           // string
   contractAddresses,   // string[]
   startTimestamp,      // number
   durationDays,        // number
 );
+
+// 2. Sign with wallet
+const signature = await signer.signTypedData(eip712.domain, eip712.types, eip712.message);
+
+// 3. Bundle manually
+const signedPermit = createSignedPermit(eip712, signature, userAddress);
 ```
 
 **After:**
 
 ```ts
-const permit = await client.createDecryptPermit({
-  e2eTransportPublicKey: await e2eTransportKeyPair.getTkmsPublicKeyHex(),
+// All in one step — SDK creates EIP-712, signs it, and bundles the result
+const signedPermit = await client.signDecryptionPermit({
   contractAddresses: ["0xContractA..."],
   startTimestamp: Math.floor(Date.now() / 1000),
   durationDays: 7,
+  signerAddress: await signer.getAddress(),
+  signer,
+  e2eTransportKeypair,
 });
 ```
 
 Key differences:
-- Named parameters instead of positional (no more guessing argument order).
-- `extraData` is auto-fetched — you don't need to provide it.
-- The function name changed from `createEIP712` to `createDecryptPermit`.
-- The signing step is unchanged — you still call `signer.signTypedData()` with the domain, types, and message.
+- No more separate create + sign + bundle steps. `signDecryptionPermit()` handles everything.
+- The signer is passed directly — the SDK calls `signTypedData` internally.
+- The key pair is passed as an object, not as separate public/private key strings.
 
 ---
 
@@ -183,25 +193,21 @@ const results = await instance.userDecrypt(
 **After:**
 
 ```ts
-import { createSignedPermit } from "@fhevm/sdk";
-
-const signedPermit = createSignedPermit(permit, signature, userAddress);
-
 const results = await client.decrypt({
-  e2eTransportKeyPair,
+  e2eTransportKeypair,
   encryptedValues: [
-    { encrypted: "0x...", contractAddress: "0xContractA..." },
+    { encryptedValue: "0x...", contractAddress: "0xContractA..." },
   ],
   signedPermit,
 });
-// results is DecryptedFhevmHandle[] with typed values
+// results is ClearValue[] with typed values
 ```
 
 Key differences:
 - Named parameters instead of 9 positional arguments.
-- Pass the `e2eTransportKeyPair` object instead of separate `privateKey` + `publicKey` strings.
-- Bundle the permit and signature into a reusable `SignedPermit` via `createSignedPermit()`.
-- The result is a typed array (`DecryptedFhevmHandle[]`) instead of a plain `Record`. Each entry has `.value` (typed correctly as `number`, `bigint`, `boolean`, or `string`) and `.fheType`.
+- Pass the `e2eTransportKeypair` object instead of separate `privateKey` + `publicKey` strings.
+- Pass a `signedPermit` from `signDecryptionPermit()` instead of raw signature + permit params.
+- The result is a typed array (`ClearValue[]`) instead of a plain `Record`. Each entry has `.value` (typed correctly as `number`, `bigint`, `boolean`, or `string`), `.fheType`, and `.encryptedValue`.
 
 ---
 
@@ -217,17 +223,18 @@ const { clearValues, decryptionProof } = await instance.publicDecrypt(handles);
 **After:**
 
 ```ts
-const result = await client.readPublicValue([handle1, handle2]);
+const result = await client.publicDecrypt({
+  encryptedValues: [handle1, handle2],
+});
 
-const values = result.values;
+const values = result.orderedClearValues;
 // values[0].value — typed correctly
 // values[0].fheType — "euint32", "ebool", etc.
 ```
 
 Key differences:
-- Pass handles as an array directly — no object wrapper needed.
-- `extraData` is auto-fetched — you don't need to provide it.
-- Results are ordered `DecryptedFhevmHandle[]` via `result.values` instead of a handle-keyed record.
+- Pass encrypted values via `{ encryptedValues: [...] }` parameter object.
+- Results are ordered `ClearValue[]` via `result.orderedClearValues` instead of a handle-keyed record.
 
 ---
 
@@ -250,16 +257,18 @@ const results = await instance.delegatedUserDecrypt(
 **After:**
 
 ```ts
-const permit = await client.createDecryptPermit({
-  e2eTransportPublicKey: await e2eTransportKeyPair.getTkmsPublicKeyHex(),
+const signedPermit = await client.signDecryptionPermit({
   contractAddresses: ["0xContract..."],
   startTimestamp: Math.floor(Date.now() / 1000),
   durationDays: 1,
+  signerAddress: await signer.getAddress(),
+  signer,
+  e2eTransportKeypair,
   onBehalfOf: "0xDataOwnerAddress...",
 });
 ```
 
-Same flow as regular decryption — `onBehalfOf` replaces the separate function. ExtraData is auto-fetched.
+Same flow as regular decryption — `onBehalfOf` replaces the separate function.
 
 ---
 
@@ -269,11 +278,12 @@ These old SDK APIs have no direct equivalent in the new SDK:
 
 | Old API | What to do instead |
 | --- | --- |
-| `instance.getPublicKey()` | Use `client.fetchGlobalFhePkeParams()` |
-| `instance.getPublicParams(bits)` | Use `client.fetchGlobalFhePkeParamsBytes()` |
+| `instance.getPublicKey()` | Use `client.fetchFheEncryptionKeyBytes()` |
+| `instance.getPublicParams(bits)` | Use `client.fetchFheEncryptionKeyBytes()` |
 | `instance.config` | Access `client.chain` for chain info |
 | `instance.requestZKProofVerification()` | Built into `client.encrypt()` automatically |
 | `initSDK({ tfheParams, kmsParams })` | Use `setFhevmRuntimeConfig({ locateFile })` for custom WASM paths |
+| `createSignedPermit()` | Built into `client.signDecryptionPermit()` |
 
 ---
 
@@ -307,14 +317,14 @@ const results = await instance.userDecrypt(
 **After (new SDK):**
 
 ```ts
-import { setFhevmRuntimeConfig, createFhevmClient, createSignedPermit } from "@fhevm/sdk/ethers";
+import { setFhevmRuntimeConfig, createFhevmClient } from "@fhevm/sdk/ethers";
 import { sepolia } from "@fhevm/sdk/chains";
 
 setFhevmRuntimeConfig({});
 const client = createFhevmClient({ chain: sepolia, provider });
 
 // Encrypt
-const proof = await client.encrypt({
+const encrypted = await client.encrypt({
   contractAddress: contractAddr,
   userAddress: userAddr,
   values: [
@@ -324,18 +334,18 @@ const proof = await client.encrypt({
 });
 
 // Decrypt
-const e2eTransportKeyPair = await client.generateE2eTransportKeyPair();
-const permit = await client.createDecryptPermit({
-  e2eTransportPublicKey: await e2eTransportKeyPair.getTkmsPublicKeyHex(),
+const e2eTransportKeypair = await client.generateE2eTransportKeypair();
+const signedPermit = await client.signDecryptionPermit({
   contractAddresses: [contractAddr],
   startTimestamp: startTs,
   durationDays: 7,
+  signerAddress: userAddr,
+  signer,
+  e2eTransportKeypair,
 });
-const sig = await signer.signTypedData(permit.domain, permit.types, permit.message);
-const signedPermit = createSignedPermit(permit, sig, userAddr);
 const results = await client.decrypt({
-  e2eTransportKeyPair,
-  encryptedValues: [{ encrypted: handle, contractAddress: contractAddr }],
+  e2eTransportKeypair,
+  encryptedValues: [{ encryptedValue: handle, contractAddress: contractAddr }],
   signedPermit,
 });
 ```

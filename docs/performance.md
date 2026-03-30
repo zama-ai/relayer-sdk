@@ -8,15 +8,15 @@ Encryption with FHE is heavier than a typical Ethereum transaction. The SDK is d
 | --- | --- | --- | --- |
 | `setFhevmRuntimeConfig()` | Instant | None | None |
 | `createFhevmClient()` | Instant | None | None |
-| `fetchGlobalFhePkeParams()` (first call) | 2–10s | ~50MB download | TFHE (~5MB) |
-| `fetchGlobalFhePkeParams()` (cached) | Instant | None | None |
-| `encrypt()` (first call) | 3–15s | Relayer call | TFHE init |
-| `encrypt()` (subsequent) | 1–5s | Relayer call | Already loaded |
-| `readPublicValue()` | 1–3s | Relayer call + RPC | None |
-| `decrypt()` (first call) | 2–5s | Relayer call + RPC | TKMS (~600KB) |
-| `decrypt()` (subsequent) | 1–3s | Relayer call + RPC | Already loaded |
-| `createDecryptPermit()` | <100ms | None (extraData auto-fetched) | None |
-| `generateE2eTransportKeyPair()` | <100ms | None | TKMS |
+| `fetchFheEncryptionKeyBytes()` (first call) | 2-10s | ~50MB download | TFHE (~5MB) |
+| `fetchFheEncryptionKeyBytes()` (cached) | Instant | None | None |
+| `encrypt()` (first call) | 3-15s | Relayer call | TFHE init |
+| `encrypt()` (subsequent) | 1-5s | Relayer call | Already loaded |
+| `publicDecrypt()` | 1-3s | Relayer call + RPC | None |
+| `decrypt()` (first call) | 2-5s | Relayer call + RPC | TKMS (~600KB) |
+| `decrypt()` (subsequent) | 1-3s | Relayer call + RPC | Already loaded |
+| `signDecryptionPermit()` | <100ms | None | None |
+| `generateE2eTransportKeypair()` | <100ms | None | TKMS |
 
 Times are approximate and depend on network speed, device, and thread count.
 
@@ -30,14 +30,14 @@ Just call `encrypt()`. The SDK fetches the key from the Relayer on first use and
 
 ```ts
 // The public key is fetched automatically on the first call
-const proof = await client.encrypt({
+const result = await client.encrypt({
   contractAddress: "0x...",
   userAddress: "0x...",
   values: [{ type: "uint32", value: 42 }],
 });
 ```
 
-The downside is that the first `encrypt()` call is slow (~2–10s for the key download, plus WASM initialization). The user sees a delay on their first transaction.
+The downside is that the first `encrypt()` call is slow (~2-10s for the key download, plus WASM initialization). The user sees a delay on their first transaction.
 
 ### Option 2: Eager preload
 
@@ -53,30 +53,17 @@ await client.init();
 
 `client.init()` and `client.ready` are equivalent — both return a promise that resolves when all modules are initialized. Calling either multiple times is safe (idempotent).
 
-### Option 3: Serialize and cache across page reloads
+### Option 3: Manual preload
 
-The in-memory cache doesn't survive page reloads. For a better experience in browsers, serialize the key to persistent storage so returning users skip the download entirely.
+If you want explicit control over when the public key is fetched (for example, to show a progress indicator), use `fetchFheEncryptionKeyBytes()`:
 
 ```ts
-// On first load — fetch and persist
-const params = await client.fetchGlobalFhePkeParams();
-const hex = await client.serializeGlobalFhePkeParamsToHex({
-  globalFhePkeParams: params,
-});
-localStorage.setItem("fhevm-pke-params", hex);
+// Preload the public encryption key
+await client.fetchFheEncryptionKeyBytes();
 
-// On subsequent loads — restore from cache and pass to encrypt()
-const cached = localStorage.getItem("fhevm-pke-params");
-if (cached) {
-  const params = await client.deserializeGlobalFhePkeParamsFromHex({
-    globalFhePkeParamsBytesHex: cached,
-  });
-  // Pass explicitly to skip the network fetch
-  await client.encrypt({ globalFhePublicEncryptionParams: params, ... });
-}
+// Now encrypt() won't need to download it
+const result = await client.encrypt({ ... });
 ```
-
-**Note:** The serialized hex string is large (~100MB as hex). Consider using IndexedDB instead of `localStorage` for better storage limits.
 
 ## Choosing the right client type
 
@@ -106,15 +93,15 @@ TKMS (decryption) does **not** use multi-threading — it's a much lighter opera
 
 ## Batch operations
 
-Both `encrypt()` and `readPublicValue()` accept multiple values in a single call. Batching is more efficient than multiple individual calls because:
+Both `encrypt()` and `publicDecrypt()` accept multiple values in a single call. Batching is more efficient than multiple individual calls because:
 
 - One ZK proof covers all values (for encryption)
-- One Relayer round-trip handles all handles (for decryption)
+- One Relayer round-trip handles all values (for decryption)
 - ACL checks are batched
 
 ```ts
 // Good: batch values in a single encrypt() call
-const proof = await client.encrypt({
+const result = await client.encrypt({
   values: [
     { type: "uint32", value: 42 },
     { type: "uint8", value: 100 },
@@ -124,8 +111,8 @@ const proof = await client.encrypt({
 });
 
 // Less efficient: separate calls
-const proof1 = await client.encrypt({ values: [{ type: "uint32", value: 42 }], ... });
-const proof2 = await client.encrypt({ values: [{ type: "uint8", value: 100 }], ... });
+const result1 = await client.encrypt({ values: [{ type: "uint32", value: 42 }], ... });
+const result2 = await client.encrypt({ values: [{ type: "uint8", value: 100 }], ... });
 ```
 
 Remember the **2048-bit limit** per call. If you need more, split into multiple calls.

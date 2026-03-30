@@ -14,7 +14,7 @@ This page explains how the SDK is built internally. **You don't need to read thi
 │  - Exposes public factory functions         │
 ├─────────────────────────────────────────────┤
 │  Core Layer (core/)                         │
-│  - Actions: encrypt, decrypt, key, host     │
+│  - Actions: encrypt, decrypt, base, chain   │
 │  - Clients: decorators + type composition   │
 │  - Modules: encrypt, decrypt, relayer       │
 │  - Types, chains, KMS, handle parsing       │
@@ -35,18 +35,15 @@ This page explains how the SDK is built internally. **You don't need to read thi
 src/
 ├── core/                    # Protocol-agnostic business logic
 │   ├── actions/             # Standalone action functions
-│   │   ├── chain/           # EIP-712 creation, verification
-│   │   ├── decrypt/
-│   │   │   ├── public/      # publicDecrypt (client: readPublicValue)
-│   │   │   └── user/        # userDecrypt (client: decrypt), generateE2eTransportKeyPair, loadE2eTransportKeyPair
-│   │   ├── encrypt/         # encrypt, serialize/deserialize PKE params, ZK proof
-│   │   ├── host/            # Contract reads (ACL, KMSVerifier, InputVerifier, FhevmExecutor)
-│   │   ├── key/             # fetchGlobalFhePkeParams
-│   │   └── runtime/         # recoverSigners
+│   │   ├── base/            # publicDecrypt, fetchVerifiedInputProof, ACL checks, signers
+│   │   ├── chain/           # EIP-712 creation, verification, signDecryptionPermit, keypair ops
+│   │   ├── decrypt/         # decrypt, generateE2eTransportKeypair, decryptKmsSignedcryptedShares
+│   │   ├── encrypt/         # encrypt, generateZkProof
+│   │   └── host/            # Contract reads (ACL, KMSVerifier, InputVerifier, FhevmExecutor)
 │   ├── base/                # Primitives (address, bytes, errors, trustedValue)
-│   ├── chains/              # Chain definitions (mainnet, sepolia) + defineFhevmChain
+│   ├── chains/              # Chain definitions (mainnet, sepolia)
 │   ├── clients/
-│   │   └── decorators/      # encryptActions, decryptActions, globalFhePkeActions
+│   │   └── decorators/      # baseActions, encryptActions, decryptActions
 │   ├── modules/
 │   │   ├── encrypt/         # EncryptModule (TFHE WASM)
 │   │   ├── decrypt/         # DecryptModule (TKMS WASM)
@@ -54,11 +51,11 @@ src/
 │   │   └── relayer/         # RelayerModule (HTTP client)
 │   ├── runtime/             # CoreFhevm-p.ts (client), CoreFhevmRuntime-p.ts (runtime)
 │   ├── types/               # All shared type definitions
-│   └── user/                # FhevmDecryptionKey
-├── ethers/                  # Ethers.js v6 adapter (~200 LOC)
+│   └── kms/                 # E2eTransportKeypair, SignedDecryptionPermit
+├── ethers/                  # Ethers.js v6 adapter
 │   ├── clients/             # createFhevmClient, createFhevmEncryptClient, createFhevmDecryptClient
 │   └── internal/            # Runtime config, TrustedClient sealing, EthereumModule impl
-├── viem/                    # Viem adapter (~200 LOC, same pattern)
+├── viem/                    # Viem adapter (same pattern)
 │   ├── clients/
 │   └── internal/
 └── wasm/                    # WASM bindings
@@ -75,18 +72,19 @@ Clients are built by composing a base `CoreFhevm` with decorator actions via `.e
 ```
 createCoreFhevm() → base client (chain, runtime, trustedClient)
   ↓ .extend() chains decorators:
-  ├─ decryptActions    → readPublicValue, decrypt, createDecryptPermit, generateE2eTransportKeyPair, ...
-  ├─ encryptActions    → encrypt, fetchGlobalFhePkeParams, ...
-  └─ globalFhePkeActions → deserialize/serialize/resolve PKE params
+  ├─ baseActions       → publicDecrypt, signDecryptionPermit, parseE2eTransportKeypair, ...
+  ├─ decryptActions    → decrypt, generateE2eTransportKeypair, createUserDecryptEIP712, ...
+  └─ encryptActions    → encrypt
 ```
 
-Three factory functions pre-compose the right set:
+Four factory functions pre-compose the right set:
 
 | Factory | Decorators | WASM |
 | --- | --- | --- |
-| `createFhevmClient` | decrypt + encrypt + globalFhePke | TFHE + TKMS |
-| `createFhevmEncryptClient` | encrypt + globalFhePke | TFHE only |
-| `createFhevmDecryptClient` | decrypt | TKMS only |
+| `createFhevmClient` | base + decrypt + encrypt | TFHE + TKMS |
+| `createFhevmEncryptClient` | base + encrypt | TFHE only |
+| `createFhevmDecryptClient` | base + decrypt | TKMS only |
+| `createFhevmBaseClient` | base | None |
 
 ---
 
@@ -111,15 +109,15 @@ async function encrypt(fhevm: Fhevm<FhevmChain, WithEncrypt>, ...): Promise<...>
 
 ## Action function pattern
 
-Every action is a standalone function with client as first argument. Decorators curry this into a client method:
+Every action is a standalone function with the client as first argument. Decorators curry this into a client method:
 
 ```ts
 // Standalone (tree-shakable)
-import { encrypt } from "@fhevm/sdk";
-const proof = await encrypt(fhevmClient, { ... });
+import { encrypt } from "@fhevm/sdk/actions/encrypt";
+const result = await encrypt(fhevmClient, { ... });
 
 // Client method (via decorator)
-const proof = await fhevmClient.encrypt({ ... });
+const result = await fhevmClient.encrypt({ ... });
 ```
 
 Each action file exports three things:
@@ -161,7 +159,7 @@ class FhevmAccountImpl {
 
 ### Frozen objects
 
-All chain definitions, runtime instances, and EIP-712 messages are deep-frozen with `Object.freeze()`. Chain definitions use `defineFhevmChain()` → `simpleDeepFreeze()`.
+All chain definitions, runtime instances, and EIP-712 messages are deep-frozen with `Object.freeze()`.
 
 ---
 
@@ -174,7 +172,8 @@ Files suffixed with `-p.ts` contain internal implementation. The public file (wi
 | `CoreFhevm-p.ts` | Core client class with private fields |
 | `CoreFhevmRuntime-p.ts` | Runtime factory with module composition |
 | `ethers-p.ts` / `viem-p.ts` | Adapter internals (runtime cache, token) |
-| `FhevmDecryptionKey-p.ts` | Decryption key implementation |
+| `E2eTransportKeypair-p.ts` | E2E transport key pair implementation |
+| `SignedDecryptionPermit-p.ts` | Signed permit implementation |
 
 ---
 
@@ -197,14 +196,14 @@ WASM base URL resolved via `package.json` `"imports"` field:
 ### Encryption
 
 ```
-fetchGlobalFhePkeParams()
-  └─ relayer.fetchGlobalFhePkeParamsBytes()  → HTTP to relayer
-  └─ encrypt.deserializeGlobalFhePublicKey() → TFHE WASM
-  └─ encrypt.deserializeGlobalFheCrs()       → TFHE WASM
+fetchFheEncryptionKeyBytes()
+  └─ relayer HTTP call                         → fetch ~50MB public key
+  └─ encrypt.deserializeGlobalFhePublicKey()   → TFHE WASM
+  └─ encrypt.deserializeGlobalFheCrs()         → TFHE WASM
 
 encrypt()
   ├─ generateZkProof()
-  │    └─ encrypt.buildWithProofPacked()     → TFHE WASM (CPU intensive)
+  │    └─ encrypt.buildWithProofPacked()       → TFHE WASM (CPU intensive)
   └─ fetchVerifiedInputProof()
        └─ relayer.fetchCoprocessorSignatures() → HTTP to relayer
        └─ coprocessor signature verification   → on-chain via RPC
@@ -213,20 +212,20 @@ encrypt()
 ### Private decryption
 
 ```
-createDecryptPermit()        → Constructs EIP-712 message (async, auto-fetches extraData)
-  └─ User signs with wallet  → External (MetaMask, etc.)
-  └─ createSignedPermit()    → Bundles permit + signature + signer
+signDecryptionPermit()       → Constructs EIP-712 + signs with wallet → SignedDecryptionPermit
 
 decrypt()
-  ├─ checkUserAllowedForDecryption() → ACL check via RPC
-  ├─ relayer.fetchUserDecrypt()      → HTTP to Zama Protocol → encrypted shares
-  └─ decrypt.decryptAndReconstruct() → TKMS WASM (reconstruct cleartext)
+  ├─ fetchKmsSignedcryptedShares()
+  │    ├─ checkUserAllowedForDecryption() → ACL check via RPC
+  │    └─ relayer.fetchUserDecrypt()      → HTTP to Zama Protocol → encrypted shares
+  └─ decryptKmsSignedcryptedShares()
+       └─ decrypt.decryptAndReconstruct() → TKMS WASM (reconstruct cleartext)
 ```
 
 ### Reading public values
 
 ```
-readPublicValue()
+publicDecrypt()
   ├─ Validation (non-empty, bit limit, chain ID)
   ├─ checkAllowedForDecryption()     → ACL check via RPC
   ├─ relayer.fetchPublicDecrypt()    → HTTP to Zama Protocol
