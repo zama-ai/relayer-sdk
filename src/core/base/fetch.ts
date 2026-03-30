@@ -110,7 +110,6 @@ function getFetchErrorInfo(error: unknown): FetchErrorInfo[] {
   const errors: FetchErrorInfo[] = [];
   let current: unknown = error;
 
-
   while (current !== null && typeof current === "object") {
     const obj = current as Record<string, unknown>;
 
@@ -248,7 +247,7 @@ export async function fetchWithRetry(
 
       if (attempt < retries) {
         // Abortable delay between retries
-        await abortableSleep(retryDelayMs, init?.signal);
+        await abortableSleep(retryDelayMs, init?.signal ?? undefined);
       }
     }
   }
