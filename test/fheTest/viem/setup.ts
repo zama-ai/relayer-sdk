@@ -20,6 +20,12 @@ export type FheTestViemConfig = {
   readonly chain: FheTestChain;
   readonly publicClient: PublicClient<Transport, Chain>;
   readonly account: ReturnType<typeof mnemonicToAccount>;
+  readonly alice: {
+    readonly account: ReturnType<typeof mnemonicToAccount>;
+  };
+  readonly bob: {
+    readonly account: ReturnType<typeof mnemonicToAccount>;
+  };
   readonly zamaApiKey: string;
   readonly fheTestAddress: string;
 };
@@ -34,6 +40,9 @@ function buildConfig(): FheTestViemConfig {
   const viemChain = env.chain === "sepolia" ? viemSepolia : viemMainnet;
 
   const account = mnemonicToAccount(env.mnemonic);
+  const bobAccount = mnemonicToAccount(env.mnemonic, {
+    path: "m/44'/60'/0'/0/1",
+  });
 
   const publicClient = createPublicClient({
     chain: viemChain,
@@ -44,6 +53,12 @@ function buildConfig(): FheTestViemConfig {
     chain: env.chain,
     publicClient,
     account,
+    alice: {
+      account,
+    },
+    bob: {
+      account: bobAccount,
+    },
     zamaApiKey: env.zamaApiKey,
     fheTestAddress: env.fheTestAddress,
   };

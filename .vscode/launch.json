@@ -26,7 +26,7 @@
         "run",
         "--config",
         "test/fheTest/vitest.config.ts",
-        "ethers/clientDecrypt.debugPayload"
+        "ethers/clientDecrypt.decrypt"
       ],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
