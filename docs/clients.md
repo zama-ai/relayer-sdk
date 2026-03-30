@@ -1,6 +1,6 @@
 # Clients
 
-A **client** is your main interface to the SDK. You create one, and it gives you methods like `encrypt()`, `readPublicValue()`, and `decrypt()`. Each client is bound to a specific chain and provider.
+A **client** is your main interface to the SDK. You create one, and it gives you methods like `encrypt()`, `publicDecrypt()`, and `decrypt()`. Each client is bound to a specific chain and provider.
 
 The SDK offers three client types so you only load the WASM modules you actually need.
 
@@ -67,8 +67,8 @@ import { createFhevmEncryptClient } from "@fhevm/sdk/viem"; // or "@fhevm/sdk/et
 
 const client = createFhevmEncryptClient({ chain: sepolia, provider });
 
-await client.encrypt({ ... });           // ✓ works
-await client.decrypt({ ... });           // ✗ compile-time error
+await client.encrypt({ ... });           // works
+await client.decrypt({ ... });           // compile-time error
 ```
 
 ### Decrypt-only client
@@ -80,9 +80,9 @@ import { createFhevmDecryptClient } from "@fhevm/sdk/viem"; // or "@fhevm/sdk/et
 
 const client = createFhevmDecryptClient({ chain: sepolia, provider });
 
-await client.readPublicValue([...]);      // ✓ works
-await client.decrypt({ ... });           // ✓ works
-await client.encrypt({ ... });           // ✗ compile-time error
+await client.publicDecrypt({ ... });     // works
+await client.decrypt({ ... });           // works
+await client.encrypt({ ... });           // compile-time error
 ```
 
 ## When does WASM load?
@@ -104,28 +104,35 @@ await client.ready;
 
 ### `FhevmClient` (full client)
 
+Has all base, encrypt, and decrypt methods.
+
+### Base methods (all client types)
+
 | Method | Sync/Async | What it does |
 | --- | --- | --- |
-| `encrypt(params)` | async | Encrypt values and get a verified input proof |
-| `fetchGlobalFhePkeParams(params?)` | async | Fetch the network's public encryption parameters |
-| `fetchGlobalFhePkeParamsBytes(params?)` | async | Same as above, but returns raw bytes |
-| `readPublicValue(encryptedValues)` | async | Read publicly readable encrypted values |
+| `publicDecrypt(params)` | async | Decrypt publicly readable encrypted values |
+| `signDecryptionPermit(params)` | async | Create and sign a decrypt permit in one step |
+| `parseE2eTransportKeypair(params)` | async | Restore a key pair from serialized bytes |
+| `serializeE2eTransportKeypair(params)` | sync | Serialize a key pair for storage |
+| `fetchFheEncryptionKeyBytes(params?)` | async | Fetch the network's public encryption key |
+| `init()` | async | Eagerly load WASM modules |
+| `ready` | Promise | Resolves when WASM modules are loaded |
+
+### Encrypt methods (`FhevmClient`, `FhevmEncryptClient`)
+
+| Method | Sync/Async | What it does |
+| --- | --- | --- |
+| `encrypt(params)` | async | Encrypt values and get encrypted handles + input proof |
+
+### Decrypt methods (`FhevmClient`, `FhevmDecryptClient`)
+
+| Method | Sync/Async | What it does |
+| --- | --- | --- |
 | `decrypt(params)` | async | Decrypt private encrypted values with a signed permit |
-| `createDecryptPermit(params)` | async | Build the EIP-712 message for a decrypt permit (auto-fetches extraData). Pass `onBehalfOf` to decrypt on behalf of another user. |
-| `generateE2eTransportKeyPair()` | async | Generate a new E2E transport key pair for decryption |
-| `loadE2eTransportKeyPair(params)` | async | Restore a key pair from serialized bytes |
-| `getExtraData(params)` | async | Get protocol context data (extraData) |
-| `deserializeGlobalFhePkeParamsFromHex(params)` | async | Restore cached public key parameters from hex |
-| `serializeGlobalFhePkeParamsToHex(params)` | async | Serialize public key parameters for caching |
-| `resolveGlobalFhePkeParams(params)` | async | Fetch or use cached public key parameters |
-
-### `FhevmEncryptClient`
-
-Has all the encrypt and public-key-parameter methods from the table above. Does **not** have decrypt methods.
-
-### `FhevmDecryptClient`
-
-Has all the decrypt methods from the table above. Does **not** have encrypt methods.
+| `createUserDecryptEIP712(params)` | async | Build EIP-712 typed data for a decrypt permit (lower-level) |
+| `createDelegatedUserDecryptEIP712(params)` | async | Build EIP-712 typed data for a delegated decrypt permit (lower-level) |
+| `publicDecrypt(params)` | async | Decrypt publicly readable encrypted values |
+| `generateE2eTransportKeypair()` | async | Generate a new E2E transport key pair for decryption |
 
 ## Client properties
 
@@ -142,15 +149,16 @@ Every client exposes these read-only properties:
 Every action is available in two forms:
 
 ```ts
-import { encrypt, publicDecrypt } from "@fhevm/sdk";
+import { encrypt } from "@fhevm/sdk/actions/encrypt";
+import { publicDecrypt } from "@fhevm/sdk/actions/base";
 
 // As a standalone function — pass the client as the first argument
-const proof = await encrypt(client, { ... });
-const result = await publicDecrypt(client, { encryptedValues: [...] });
+const result = await encrypt(client, { ... });
+const proof = await publicDecrypt(client, { encryptedValues: [...] });
 
 // As a client method — the client is implicit
-const proof = await client.encrypt({ ... });
-const result = await client.readPublicValue([...]);
+const result = await client.encrypt({ ... });
+const proof = await client.publicDecrypt({ encryptedValues: [...] });
 ```
 
 Both are equivalent. Standalone functions are **tree-shakable** — bundlers can eliminate unused functions from your bundle. Client methods are more convenient for everyday use.

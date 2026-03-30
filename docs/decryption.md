@@ -13,28 +13,30 @@ Both modes enforce the same limits: **2048-bit total** per request and **ACL per
 
 ## Reading public values
 
-`readPublicValue()` reveals encrypted values that your smart contract has marked as publicly readable via the Access Control List (ACL) contract. Anyone can call this — no keys, no signatures, no WASM.
+`publicDecrypt()` reveals encrypted values that your smart contract has marked as publicly readable via the Access Control List (ACL) contract. Anyone can call this — no keys, no signatures, no WASM.
 
 ```ts
-const result = await client.readPublicValue([encryptedValue1, encryptedValue2]);
+const result = await client.publicDecrypt({
+  encryptedValues: [encryptedValue1, encryptedValue2],
+});
 ```
 
 ### What you get back
 
-The result contains the decrypted values and cryptographic proof that the decryption was performed correctly by the Zama Protocol:
+The result is a `PublicDecryptionProof` containing the decrypted values and cryptographic proof that the decryption was performed correctly by the Zama Protocol:
 
 ```ts
-result.values                          // The decrypted values (same order as input)
-result.orderedHandles                  // The original encrypted value references
+result.orderedClearValues              // The decrypted values (same order as input)
 result.orderedAbiEncodedClearValues    // ABI-encoded values (for on-chain use)
+result.decryptionProof                 // Cryptographic proof of correct decryption
 ```
 
 ### Reading decrypted values
 
-Each decrypted value in `result.values` has a `fheType` field that tells you the type, and a `value` field with the plaintext:
+Each decrypted value in `result.orderedClearValues` has a `fheType` field that tells you the type, and a `value` field with the plaintext:
 
 ```ts
-const d = result.values[0];
+const d = result.orderedClearValues[0];
 
 if (d.fheType === "ebool") {
   d.value; // boolean
@@ -78,41 +80,43 @@ If any check fails, the SDK throws a descriptive error (see [Errors](errors.md))
 
 `decrypt()` is for **private data** — the plaintext is never exposed on-chain or to anyone else. The Zama Protocol sends encrypted shares to your browser, and the SDK reconstructs the plaintext locally using an end-to-end transport key pair that never leaves the browser.
 
-The flow has four steps:
+The flow has two steps:
 
 ### Step 1: Generate an E2E transport key pair
 
 The E2E transport key pair encrypts the communication channel between your app and the Zama Protocol. The private key stays in your browser; the public key is included in the permit so the protocol knows how to encrypt its response for you.
 
 ```ts
-const e2eTransportKeyPair = await client.generateE2eTransportKeyPair();
+const e2eTransportKeypair = await client.generateE2eTransportKeypair();
 ```
 
-The returned `E2eTransportKeyPair` is an opaque object — you can't access the raw private key. This is intentional: the SDK protects it to prevent accidental exposure.
+The returned `E2eTransportKeypair` is an opaque object — you can't access the raw private key. This is intentional: the SDK protects it to prevent accidental exposure.
 
 **Saving and restoring keys:** If you want to persist a key across sessions (e.g., in localStorage), you can serialize and restore it:
 
 ```ts
 // Save
-const serialized = await e2eTransportKeyPair.serialize();
-localStorage.setItem("fhevm-key", serialized);
+const serialized = client.serializeE2eTransportKeypair({ e2eTransportKeypair });
+localStorage.setItem("fhevm-key", JSON.stringify(serialized));
 
 // Restore
-const restored = await client.loadE2eTransportKeyPair({
-  tkmsPrivateKeyBytes: localStorage.getItem("fhevm-key"),
+const restored = await client.parseE2eTransportKeypair({
+  serialized: localStorage.getItem("fhevm-key"),
 });
 ```
 
-### Step 2: Create an EIP-712 decrypt permit
+### Step 2: Create a signed permit and decrypt
 
-The permit is a signed message that authorizes decryption of data from specific contracts, for a specific time window, using your public key.
+The `signDecryptionPermit()` method constructs an EIP-712 permit and signs it with your wallet in a single step. The permit authorizes decryption of data from specific contracts, for a specific time window.
 
 ```ts
-const permit = await client.createDecryptPermit({
-  e2eTransportPublicKey: await e2eTransportKeyPair.getTkmsPublicKeyHex(),
+const signedPermit = await client.signDecryptionPermit({
   contractAddresses: ["0xContractA...", "0xContractB..."],
   startTimestamp: Math.floor(Date.now() / 1000),
   durationDays: 7,
+  signerAddress: await signer.getAddress(), // or walletClient.account.address for viem
+  signer,                                    // ethers Signer or viem WalletClient
+  e2eTransportKeypair,
 });
 ```
 
@@ -120,58 +124,15 @@ const permit = await client.createDecryptPermit({
 - Up to **10 contract addresses** per permit
 - Up to **365 days** duration
 - `startTimestamp` is a Unix timestamp in **seconds**
-- Protocol context data (`extraData`) is fetched automatically — you don't need to provide it
-
-### Step 3: Sign the permit
-
-The user signs the permit with their Ethereum wallet. This happens outside the SDK — your app presents the signature request, and the wallet (MetaMask, WalletConnect, etc.) handles it.
-
-**With ethers.js:**
-
-```ts
-const signature = await signer.signTypedData(
-  permit.domain,
-  permit.types,
-  permit.message,
-);
-```
-
-**With viem:**
-
-```ts
-const signature = await walletClient.signTypedData({
-  account,
-  domain: permit.domain,
-  types: permit.types,
-  primaryType: permit.primaryType,
-  message: permit.message,
-});
-```
-
-**Why a separate signing step?** Because the SDK never has access to the user's wallet private key. The EIP-712 standard lets any wallet sign structured data, so this works with MetaMask, hardware wallets, smart contract wallets — anything that supports `signTypedData`.
-
-### Step 4: Bundle the signed permit and decrypt
-
-Bundle the permit and signature into a reusable `SignedPermit` object:
-
-```ts
-import { createSignedPermit } from "@fhevm/sdk";
-
-const signedPermit = createSignedPermit(
-  permit,
-  signature,
-  await signer.getAddress()  // or walletClient.account.address for viem
-);
-```
 
 Now you have everything needed to request decryption:
 
 ```ts
 const results = await client.decrypt({
-  e2eTransportKeyPair,
+  e2eTransportKeypair,
   encryptedValues: [
-    { encrypted: encryptedValue1, contractAddress: "0xContractA..." },
-    { encrypted: encryptedValue2, contractAddress: "0xContractA..." },
+    { encryptedValue: encryptedValue1, contractAddress: "0xContractA..." },
+    { encryptedValue: encryptedValue2, contractAddress: "0xContractA..." },
   ],
   signedPermit,
 });
@@ -184,7 +145,7 @@ results[0].fheType; // "euint32", "ebool", etc.
 1. The SDK checks ACL permissions for each encrypted value
 2. The permit and encrypted values are sent to the Zama Protocol
 3. The protocol returns encrypted shares
-4. The SDK decrypts the shares locally using your `e2eTransportKeyPair` (TKMS WASM)
+4. The SDK decrypts the shares locally using your `e2eTransportKeypair` (TKMS WASM)
 5. The plaintext is reconstructed and returned
 
 The plaintext never touches the blockchain or any server — it's reconstructed entirely in your browser.
@@ -196,11 +157,13 @@ The plaintext never touches the blockchain or any server — it's reconstructed 
 Sometimes you want another account (like a backend service) to decrypt on a user's behalf. The flow is the same, but the permit includes an `onBehalfOf` field:
 
 ```ts
-const permit = await client.createDecryptPermit({
-  e2eTransportPublicKey: await e2eTransportKeyPair.getTkmsPublicKeyHex(),
+const signedPermit = await client.signDecryptionPermit({
   contractAddresses: ["0xContract..."],
   startTimestamp: Math.floor(Date.now() / 1000),
   durationDays: 1,
+  signerAddress: await signer.getAddress(),
+  signer,
+  e2eTransportKeypair,
   onBehalfOf: "0xDataOwnerAddress...",
 });
 ```
@@ -211,18 +174,22 @@ The delegate signs this permit with their own wallet, and can then decrypt on be
 
 ## Reusing permits
 
-You don't need to create a new permit for every decryption. A single `SignedPermit` is valid for any number of decryptions within its time window and contract scope:
+You don't need to create a new permit for every decryption. A single signed permit is valid for any number of decryptions within its time window and contract scope:
 
 ```ts
 // Sign once
-const signedPermit = createSignedPermit(permit, signature, signerAddress);
-
-// Save for later (optional)
-localStorage.setItem("signed-permit", JSON.stringify(signedPermit));
+const signedPermit = await client.signDecryptionPermit({
+  contractAddresses: ["0xContract..."],
+  startTimestamp: Math.floor(Date.now() / 1000),
+  durationDays: 7,
+  signerAddress: await signer.getAddress(),
+  signer,
+  e2eTransportKeypair,
+});
 
 // Decrypt multiple batches with the same permit
-await client.decrypt({ e2eTransportKeyPair, encryptedValues: batch1, signedPermit });
-await client.decrypt({ e2eTransportKeyPair, encryptedValues: batch2, signedPermit });
+await client.decrypt({ e2eTransportKeypair, encryptedValues: batch1, signedPermit });
+await client.decrypt({ e2eTransportKeypair, encryptedValues: batch2, signedPermit });
 ```
 
 Permits are valid from `startTimestamp` until `startTimestamp + durationDays`. This design minimizes the number of wallet signature requests your users see — you can ask once and use the permit for all subsequent decryptions during that session.

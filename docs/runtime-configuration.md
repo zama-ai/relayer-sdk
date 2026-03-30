@@ -310,9 +310,9 @@ WASM modules load **lazily** — not when you call `setFhevmRuntimeConfig()` or 
 | --- | --- | --- |
 | `encrypt()` | TFHE WASM + network public key | ~5MB WASM + ~50MB key download |
 | `decrypt()` | TKMS WASM | ~600KB |
-| `readPublicValue()` | Nothing (HTTP only) | — |
-| `createDecryptPermit()` | Nothing | — |
-| `generateE2eTransportKeyPair()` | TKMS WASM | ~600KB |
+| `publicDecrypt()` | Nothing (HTTP only) | — |
+| `signDecryptionPermit()` | Nothing | — |
+| `generateE2eTransportKeypair()` | TKMS WASM | ~600KB |
 
 If you want to preload WASM at app startup (for example, behind a loading spinner), call:
 
