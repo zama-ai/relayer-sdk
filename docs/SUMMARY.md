@@ -7,6 +7,7 @@
 - Decryption
   - [User decryption](user-decryption.md)
   - [Public decryption](public-decryption.md)
+- [Relayer API Keys (mainnet)](mainnet-api-key.md)
 
 ## Development Guide
 
