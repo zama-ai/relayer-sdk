@@ -1,5 +1,5 @@
 import type { ErrorMetadataParams } from "../base/errors/ErrorBase.js";
-import type { BytesHex } from "../types/primitives.js";
+import type { BytesHex, ValueType } from "../types/primitives.js";
 import type { FheTypeId, FheType, ClearValueType } from "../types/fheType.js";
 import { InvalidTypeError } from "../base/errors/InvalidTypeError.js";
 import { asClearValueType } from "./FheType.js";
@@ -7,7 +7,7 @@ import { assertNever } from "../base/errors/utils.js";
 import type { Fhevm } from "../types/coreFhevmClient.js";
 import type {
   ClearValue,
-  ClearValueOfType,
+  ClearValueOfFheType,
   ClearValueTypeName,
   EncryptedValue,
 } from "../types/encryptedTypes.js";
@@ -35,16 +35,18 @@ const VERIFY_ORIGIN_FUNC = Symbol("ClearValue.verifyOrigin");
  * - `Object.freeze` on prototype (no prototype pollution)
  * - Symbol-keyed `[VERIFY_ORIGIN]` method invisible to IDE and external code
  */
-class ClearValueImpl<T extends FheType> implements ClearValueOfType<T> {
-  readonly #value: ClearValueType<T>;
-  readonly #encryptedValue: EncryptedValue<T>;
+class ClearValueImpl<
+  etype extends FheType,
+> implements ClearValueOfFheType<etype> {
+  readonly #value: ClearValueType<etype>;
+  readonly #encryptedValue: EncryptedValue<etype>;
   readonly #originToken: symbol;
 
   constructor(
     privateToken: symbol,
     parameters: {
-      readonly value: ClearValueType<T>;
-      readonly encryptedValue: EncryptedValue<T>;
+      readonly value: ClearValueType<etype>;
+      readonly encryptedValue: EncryptedValue<etype>;
       readonly originToken: symbol;
     },
   ) {
@@ -57,21 +59,19 @@ class ClearValueImpl<T extends FheType> implements ClearValueOfType<T> {
     this.#originToken = parameters.originToken;
   }
 
-  public get fheType(): T {
-    return this.#encryptedValue.fheType;
-  }
-
-  public get valueType(): ClearValueTypeName<T> {
-    // FheType is always "e" + ValueTypeName (e.g. "euint8" → "uint8")
-    return this.#encryptedValue.fheType.substring(1) as ClearValueTypeName<T>;
-  }
-
-  public get encryptedValue(): EncryptedValue<T> {
-    return this.#encryptedValue;
-  }
-
-  public get value(): ClearValueType<T> {
+  public get value(): ValueType<ClearValueTypeName<etype>> {
     return this.#value;
+  }
+
+  public get type(): ClearValueTypeName<etype> {
+    // FheType is always "e" + ValueTypeName (e.g. "euint8" → "uint8")
+    return this.#encryptedValue.fheType.substring(
+      1,
+    ) as ClearValueTypeName<etype>;
+  }
+
+  public get encryptedValue(): EncryptedValue<etype> {
+    return this.#encryptedValue;
   }
 
   /**
@@ -214,12 +214,12 @@ export function assertIsClearValueArray(
  * @returns A frozen `ClearValue` instance
  * @throws {InvalidTypeError} If the value doesn't match the handle's FHE type
  */
-export function createClearValue<T extends FheType>(parameters: {
-  readonly value: ClearValueType<T>;
-  readonly encryptedValue: EncryptedValue<T>;
+export function createClearValue<etype extends FheType>(parameters: {
+  readonly value: ClearValueType<etype>;
+  readonly encryptedValue: EncryptedValue<etype>;
   readonly originToken: symbol;
-}): ClearValue<T> {
-  const v = new ClearValueImpl<T>(PRIVATE_TOKEN, {
+}): ClearValue<etype> {
+  const v = new ClearValueImpl<etype>(PRIVATE_TOKEN, {
     encryptedValue: parameters.encryptedValue,
     value: asClearValueType(
       parameters.encryptedValue.fheType,

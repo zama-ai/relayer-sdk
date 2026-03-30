@@ -13,3 +13,7 @@
 - Export PublicDecryptionProof (needed in publicDecrypt)
 - decrypt should accept string addresses not Checksummed addresses
 - Add a skill that controls the input values of each api functions. They must be loose.
+- security: verify that the relayer is never trusted. Meaning the sdk should never use the relayer responses but always verify the relayer responses first before using them (check signatures for example)
+- Must call close threads for tests: example node-ethers example
+- missing toEncryptedValues toExternalEncryptedValue ?
+- Critical: verify domain hash on-chain to make sure EIP712 are correct

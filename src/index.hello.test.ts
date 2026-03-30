@@ -179,7 +179,7 @@ describe("hello", () => {
       //     contractAddresses: ["0x1E7eA8fE4877E6ea5dc8856f0dA92da8d5066241"],
       //     durationDays: 356,
       //     startTimestamp: timestampNow(),
-      //     onBehalfOf: "0x37ac010c1c566696326813b840319b58bb5840e4",
+      //     delegatorAddress: "0x37ac010c1c566696326813b840319b58bb5840e4",
       //     signerAddress: "0x37ac010c1c566696326813b840319b58bb5840e4",
       //     signer: dummySigner,
       //   });

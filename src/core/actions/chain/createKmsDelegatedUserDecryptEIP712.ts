@@ -16,7 +16,7 @@ export type CreateKmsDelegatedUserDecryptEIP712Parameters = {
   readonly startTimestamp: number;
   readonly durationDays: number;
   readonly extraData: string;
-  readonly delegatedAccount: string;
+  readonly delegatorAddress: string;
 };
 
 export type CreateKmsDelegatedUserDecryptEIP712ReturnType =
@@ -35,7 +35,7 @@ export function createKmsDelegatedUserDecryptEIP712(
     startTimestamp: parameters.startTimestamp,
     extraData: parameters.extraData,
     publicKey: parameters.publicKey,
-    delegatedAccount: parameters.delegatedAccount,
+    delegatorAddress: parameters.delegatorAddress,
   });
 }
 

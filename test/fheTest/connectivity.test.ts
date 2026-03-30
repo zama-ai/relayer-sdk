@@ -1,13 +1,16 @@
 // npx vitest run --config test/fheTest/vitest.config.ts connectivity
 
 import { describe, it, expect, beforeAll } from "vitest";
-import { getTestConfig, type FheTestConfig } from "./setup.js";
+import {
+  getEthersTestConfig,
+  type FheTestEthersConfig,
+} from "./ethers/setup.js";
 
 describe("Phase 0 — Connectivity", () => {
-  let config: FheTestConfig;
+  let config: FheTestEthersConfig;
 
   beforeAll(() => {
-    config = getTestConfig();
+    config = getEthersTestConfig();
   });
 
   it("should connect to the RPC endpoint", async () => {
@@ -26,9 +29,8 @@ describe("Phase 0 — Connectivity", () => {
   });
 
   it("should read CONTRACT_NAME from FHETest.sol", async () => {
-    const name: string = await config.fheTestContract.getFunction(
-      "CONTRACT_NAME",
-    )();
+    const name: string =
+      await config.fheTestContract.getFunction("CONTRACT_NAME")();
     console.log(`  CONTRACT_NAME: ${name}`);
     expect(typeof name).toBe("string");
     expect(name.length).toBeGreaterThan(0);

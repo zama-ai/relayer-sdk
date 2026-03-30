@@ -1,7 +1,6 @@
 import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
-import { ethers } from "ethers";
-import { FHETestAddresses, FHETestABI } from "./abi.js";
+import { FHETestAddresses } from "./abi.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -9,15 +8,12 @@ import { FHETestAddresses, FHETestABI } from "./abi.js";
 
 export type FheTestChain = "sepolia" | "mainnet";
 
-export type FheTestConfig = {
+export type FheTestBaseEnv = {
   readonly chain: FheTestChain;
-  readonly wallet: ethers.HDNodeWallet;
-  readonly signer: ethers.Signer;
-  readonly provider: ethers.JsonRpcProvider;
+  readonly rpcUrl: string;
+  readonly mnemonic: string;
   readonly zamaApiKey: string;
   readonly fheTestAddress: string;
-  readonly fheTestContract: ethers.Contract;
-  readonly fheTestAbi: typeof FHETestABI;
 };
 
 // ---------------------------------------------------------------------------
@@ -68,10 +64,16 @@ function resolveChain(): FheTestChain {
 }
 
 // ---------------------------------------------------------------------------
-// Build config
+// Build base env
 // ---------------------------------------------------------------------------
 
-function buildConfig(): FheTestConfig {
+let _baseEnv: FheTestBaseEnv | undefined;
+
+export function getBaseEnv(): FheTestBaseEnv {
+  if (_baseEnv !== undefined) {
+    return _baseEnv;
+  }
+
   const testDir = resolve(__dirname, "..");
   const chain = resolveChain();
 
@@ -105,38 +107,13 @@ function buildConfig(): FheTestConfig {
   const addressKey = chain === "sepolia" ? "testnet" : "mainnet";
   const fheTestAddress = FHETestAddresses[addressKey];
 
-  const provider = new ethers.JsonRpcProvider(rpcUrl);
-  const wallet = ethers.HDNodeWallet.fromMnemonic(
-    ethers.Mnemonic.fromPhrase(mnemonic),
-  );
-  const signer = wallet.connect(provider);
-  const fheTestContract = new ethers.Contract(
-    fheTestAddress,
-    FHETestABI,
-    signer,
-  );
-
-  return {
+  _baseEnv = {
     chain,
-    wallet,
-    signer,
-    provider,
+    rpcUrl,
+    mnemonic,
     zamaApiKey,
     fheTestAddress,
-    fheTestContract,
-    fheTestAbi: FHETestABI,
   };
-}
 
-// ---------------------------------------------------------------------------
-// Singleton — built once, shared across all test files
-// ---------------------------------------------------------------------------
-
-let _config: FheTestConfig | undefined;
-
-export function getTestConfig(): FheTestConfig {
-  if (!_config) {
-    _config = buildConfig();
-  }
-  return _config;
+  return _baseEnv;
 }

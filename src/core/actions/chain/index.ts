@@ -55,3 +55,15 @@ export {
   type CreateKmsUserDecryptEIP712ReturnType,
   createKmsUserDecryptEIP712,
 } from "./createKmsUserDecryptEIP712.js";
+
+export {
+  type SerializeSignedDecryptionPermitParameters,
+  type SerializeSignedDecryptionPermitReturnType,
+  serializeSignedDecryptionPermit,
+} from "./serializeSignedDecryptionPermit.js";
+
+export {
+  type ParseSignedDecryptionPermitParameters,
+  type ParseSignedDecryptionPermitReturnType,
+  parseSignedDecryptionPermit,
+} from "./parseSignedDecryptionPermit.js";

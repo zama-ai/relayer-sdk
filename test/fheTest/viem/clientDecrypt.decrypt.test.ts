@@ -1,23 +1,23 @@
-// npx vitest run --config test/fheTest/vitest.config.ts clientDecrypt.decrypt
+// npx vitest run --config test/fheTest/vitest.config.ts viem/clientDecrypt.decrypt
 
 import { describe, it, expect, beforeAll } from "vitest";
 import {
-  createFhevmDecryptClient,
   setFhevmRuntimeConfig,
-} from "@fhevm/sdk/ethers";
+  createFhevmDecryptClient,
+} from "@fhevm/sdk/viem";
 import { sepolia } from "@fhevm/sdk/chains";
-import { getTestConfig, type FheTestConfig } from "./setup.js";
-import handlesData from "./handles.json" with { type: "json" };
-import { FHETestAddresses } from "./abi.js";
-import type { ChecksummedAddress } from "../../src/core/types/primitives.js";
+import handlesData from "../handles.json" with { type: "json" };
+import { FHETestAddresses } from "../abi.js";
+import type { ChecksummedAddress } from "../../../src/core/types/primitives.js";
+import { getViemTestConfig, type FheTestViemConfig } from "./setup.js";
 
 const publicHandles = handlesData.handles.filter((h) => h.public);
 
 describe("Decrypt client — user decrypt", () => {
-  let config: FheTestConfig;
+  let config: FheTestViemConfig;
 
   beforeAll(() => {
-    config = getTestConfig();
+    config = getViemTestConfig();
     setFhevmRuntimeConfig({
       auth: {
         type: "ApiKeyHeader",
@@ -29,7 +29,7 @@ describe("Decrypt client — user decrypt", () => {
   it("should create a decrypt client", () => {
     const client = createFhevmDecryptClient({
       chain: sepolia,
-      provider: config.provider,
+      publicClient: config.publicClient,
     });
     expect(client).toBeDefined();
     expect(typeof client.decrypt).toBe("function");
@@ -40,7 +40,7 @@ describe("Decrypt client — user decrypt", () => {
   it("should generate an e2e transport keypair", async () => {
     const client = createFhevmDecryptClient({
       chain: sepolia,
-      provider: config.provider,
+      publicClient: config.publicClient,
     });
     await client.ready;
 
@@ -51,7 +51,7 @@ describe("Decrypt client — user decrypt", () => {
   it("should sign a self decryption permit", async () => {
     const client = createFhevmDecryptClient({
       chain: sepolia,
-      provider: config.provider,
+      publicClient: config.publicClient,
     });
     await client.ready;
 
@@ -61,8 +61,8 @@ describe("Decrypt client — user decrypt", () => {
       contractAddresses: [FHETestAddresses.testnet],
       durationDays: 1,
       startTimestamp: Math.floor(Date.now() / 1000),
-      signerAddress: config.wallet.address,
-      signer: config.signer,
+      signerAddress: config.account.address,
+      signer: config.account,
     });
 
     expect(signedPermit).toBeDefined();
@@ -74,7 +74,7 @@ describe("Decrypt client — user decrypt", () => {
 
     const client = createFhevmDecryptClient({
       chain: sepolia,
-      provider: config.provider,
+      publicClient: config.publicClient,
     });
     await client.ready;
 
@@ -84,13 +84,13 @@ describe("Decrypt client — user decrypt", () => {
       contractAddresses: [FHETestAddresses.testnet],
       durationDays: 1,
       startTimestamp: Math.floor(Date.now() / 1000),
-      signerAddress: config.wallet.address,
-      signer: config.signer,
+      signerAddress: config.account.address,
+      signer: config.account,
     });
 
     const clearValues = await client.decrypt({
       encryptedValues: {
-        encryptedValue: handle.bytes32,
+        encryptedValue: handle.bytes32Hex,
         contractAddress: FHETestAddresses.testnet as ChecksummedAddress,
       },
       signedPermit,
@@ -114,7 +114,7 @@ describe("Decrypt client — user decrypt", () => {
   it("should decrypt all public handles in a single call", async () => {
     const client = createFhevmDecryptClient({
       chain: sepolia,
-      provider: config.provider,
+      publicClient: config.publicClient,
     });
     await client.ready;
 
@@ -124,12 +124,12 @@ describe("Decrypt client — user decrypt", () => {
       contractAddresses: [FHETestAddresses.testnet],
       durationDays: 1,
       startTimestamp: Math.floor(Date.now() / 1000),
-      signerAddress: config.wallet.address,
-      signer: config.signer,
+      signerAddress: config.account.address,
+      signer: config.account,
     });
 
     const allEncryptedValues = publicHandles.map((h) => ({
-      encryptedValue: h.bytes32,
+      encryptedValue: h.bytes32Hex,
       contractAddress: FHETestAddresses.testnet as ChecksummedAddress,
     }));
 

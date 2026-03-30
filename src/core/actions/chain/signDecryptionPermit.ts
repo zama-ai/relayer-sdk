@@ -36,9 +36,9 @@ export async function signDecryptionPermit(
   parameters: SignDecryptionPermitParameters,
 ): Promise<SignedDecryptionPermit> {
   // The public overloads guarantee the correct pairing.
-  // The if/else narrows parameters via onBehalfOf, so TS can match each branch
+  // The if/else narrows parameters via delegatorAddress, so TS can match each branch
   // to the correct overload of signDecryptionPermit_ without any casts.
-  if (parameters.onBehalfOf !== undefined) {
+  if (parameters.delegatorAddress !== undefined) {
     return signDecryptionPermit_(fhevm, parameters);
   }
   return signDecryptionPermit_(fhevm, parameters);

@@ -43,28 +43,40 @@ const env = loadEnv();
 import {
   setFhevmRuntimeConfig,
   createFhevmClient,
-  createSignedPermit,
-  toFhevmHandle,
 } from "../../src/ethers/index.js";
 import { sepolia } from "../../src/core/chains/index.js";
 import { asChecksummedAddress } from "../../src/core/base/address.js";
-import type { Bytes65Hex } from "../../src/core/types/primitives.js";
+import { toHandle } from "../../src/core/handle/FhevmHandle.js";
 
 const RPC_URL = "https://ethereum-sepolia-rpc.publicnode.com";
 
 // Known publicly readable encrypted values on Sepolia testnet
 const PUBLIC_ENCRYPTED_VALUES = [
-  { hex: "0xf1673094de7c833604f1b62183cbcdf2cdc968db90ff0000000000aa36a70400", type: "euint32", expected: 1083783185 },
-  { hex: "0x9797f8eb707b0a32c47a80ea86c0648df36bfe7cd0ff0000000000aa36a70300", type: "euint16", expected: 15764 },
-  { hex: "0x6f17228bda73a5e57b94511c5bab2665e6a2870399ff0000000000aa36a70200", type: "euint8", expected: 171 },
-  { hex: "0xf6751d547a5c06123575aad93f22f76b7d841c4cacff0000000000aa36a70000", type: "ebool", expected: false },
+  {
+    hex: "0xf1673094de7c833604f1b62183cbcdf2cdc968db90ff0000000000aa36a70400",
+    type: "euint32",
+    expected: 1083783185,
+  },
+  {
+    hex: "0x9797f8eb707b0a32c47a80ea86c0648df36bfe7cd0ff0000000000aa36a70300",
+    type: "euint16",
+    expected: 15764,
+  },
+  {
+    hex: "0x6f17228bda73a5e57b94511c5bab2665e6a2870399ff0000000000aa36a70200",
+    type: "euint8",
+    expected: 171,
+  },
+  {
+    hex: "0xf6751d547a5c06123575aad93f22f76b7d841c4cacff0000000000aa36a70000",
+    type: "ebool",
+    expected: false,
+  },
 ];
 
 // FHECounter contract on Sepolia (deployed by the Next.js example)
 const FHE_COUNTER_ADDRESS = "0xef6c6230bF565015f8B37f2966d200C8804b409a";
-const FHE_COUNTER_ABI = [
-  "function getCount() view returns (uint256)",
-] as const;
+const FHE_COUNTER_ABI = ["function getCount() view returns (uint256)"] as const;
 
 async function main(): Promise<void> {
   const t0 = Date.now();
@@ -112,15 +124,17 @@ async function main(): Promise<void> {
         { type: "bool", value: true },
       ],
     });
-    console.log("  Handles:", proof.encryptedInputs.length);
-    for (const h of proof.encryptedInputs) {
+    console.log("  Handles:", proof.externalEncryptedValues.length);
+    for (const h of proof.externalEncryptedValues) {
       console.log(`    [${h.index}] ${h.fheType} → ${h.bytes32Hex}`);
     }
     console.log("  Proof bytes length:", proof.inputProof.length);
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     console.log("  Encryption failed (relayer issue):", msg.split("\n")[0]);
-    console.log("  (ZK proof generation succeeded — relayer coprocessor signing unavailable)");
+    console.log(
+      "  (ZK proof generation succeeded — relayer coprocessor signing unavailable)",
+    );
   }
 
   // ════════════════════════════════════════════════════════════════════════
@@ -129,16 +143,18 @@ async function main(): Promise<void> {
 
   step(`Read ${PUBLIC_ENCRYPTED_VALUES.length} public values from testnet`);
   try {
-    const handles = PUBLIC_ENCRYPTED_VALUES.map((h) => toFhevmHandle(h.hex));
-    const result = await client.readPublicValue(handles);
+    const handles = PUBLIC_ENCRYPTED_VALUES.map((h) => toHandle(h.hex));
+    const result = await client.publicDecrypt({ encryptedValues: handles });
 
     console.log("  Read public values succeeded!");
-    for (let i = 0; i < result.values.length; i++) {
-      const d = result.values[i];
+    for (let i = 0; i < result.orderedClearValues.length; i++) {
+      const d = result.orderedClearValues[i];
       if (d === undefined) continue;
       const expected = PUBLIC_ENCRYPTED_VALUES[i]?.expected;
       const match = d.value === expected ? "OK" : "MISMATCH";
-      console.log(`  [${match}] ${d.fheType}: ${d.value} (expected: ${expected})`);
+      console.log(
+        `  [${match}] ${d.encryptedValue.fheType}: ${d.value} (expected: ${expected})`,
+      );
     }
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -151,65 +167,68 @@ async function main(): Promise<void> {
 
   // Read the FHECounter's encrypted count from the contract
   step("Read encrypted count from FHECounter contract");
-  const counter = new ethers.Contract(FHE_COUNTER_ADDRESS, FHE_COUNTER_ABI, provider);
+  const counter = new ethers.Contract(
+    FHE_COUNTER_ADDRESS,
+    FHE_COUNTER_ABI,
+    provider,
+  );
   const rawCount = await counter.getCount();
   const countHex = "0x" + BigInt(rawCount).toString(16).padStart(64, "0");
   console.log("  Raw count (bigint):", rawCount.toString());
   console.log("  Count handle (hex):", countHex);
 
   if (rawCount === 0n) {
-    console.log("  Count is zero — no encrypted value stored yet. Skipping decrypt.");
+    console.log(
+      "  Count is zero — no encrypted value stored yet. Skipping decrypt.",
+    );
   } else {
-    const countHandle = toFhevmHandle(countHex);
-    console.log("  Parsed handle — chainId:", countHandle.chainId.toString(), "fheType:", countHandle.fheType);
+    const countHandle = toHandle(countHex);
+    console.log(
+      "  Parsed handle — chainId:",
+      countHandle.chainId.toString(),
+      "fheType:",
+      countHandle.fheType,
+    );
 
     step("Generate E2E transport key pair");
-    const e2eTransportKeyPair = await client.generateE2eTransportKeyPair();
-    const pubKeyHex = await e2eTransportKeyPair.getTkmsPublicKeyHex();
+    const e2eTransportKeypair = await client.generateE2eTransportKeypair();
+    const pubKeyHex = e2eTransportKeypair.publicKey;
     console.log("  Public key:", pubKeyHex.slice(0, 40) + "...");
 
     step("Create and sign EIP-712 decrypt permit");
     const now = Math.floor(Date.now() / 1000);
-    const permit = await client.createDecryptPermit({
-      e2eTransportPublicKey: pubKeyHex,
+    const signedPermit = await client.signDecryptionPermit({
+      e2eTransportKeypair,
       contractAddresses: [FHE_COUNTER_ADDRESS],
       startTimestamp: now,
       durationDays: 1,
+      signerAddress: wallet.address,
+      signer: wallet,
     });
-    console.log("  Domain:", permit.domain.name, "v" + permit.domain.version);
-
-    const signature = await wallet.signTypedData(
-      {
-        name: permit.domain.name,
-        version: permit.domain.version,
-        chainId: permit.domain.chainId,
-        verifyingContract: permit.domain.verifyingContract,
-      },
-      {
-        UserDecryptRequestVerification:
-          permit.types.UserDecryptRequestVerification as ethers.TypedDataField[],
-      },
-      permit.message,
+    console.log(
+      "  Domain:",
+      signedPermit.eip712.domain.name,
+      "v" + signedPermit.eip712.domain.version,
     );
-    console.log("  Signature:", signature.slice(0, 20) + "...");
-
-    step("Bundle into signed permit");
-    const signedPermit = createSignedPermit(permit, signature as Bytes65Hex, userAddress);
-    console.log("  Signed permit created");
+    console.log("  Signature:", signedPermit.signature.slice(0, 20) + "...");
 
     step("Decrypt the FHECounter count");
     try {
       const results = await client.decrypt({
-        e2eTransportKeyPair,
-        encryptedValues: [{
-          encrypted: countHandle,
-          contractAddress: asChecksummedAddress(FHE_COUNTER_ADDRESS),
-        }],
+        e2eTransportKeypair,
+        encryptedValues: [
+          {
+            encryptedValue: countHandle,
+            contractAddress: asChecksummedAddress(FHE_COUNTER_ADDRESS),
+          },
+        ],
         signedPermit,
       });
       const decrypted = results[0];
       console.log("  Decryption succeeded!");
-      console.log(`  Value: ${decrypted?.value} (${decrypted?.fheType})`);
+      console.log(
+        `  Value: ${decrypted?.value} (${decrypted?.encryptedValue.fheType})`,
+      );
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       console.log("  Decryption failed:", msg.slice(0, 200));

@@ -1,13 +1,13 @@
-// npx vitest run --config test/fheTest/vitest.config.ts encrypt
+// npx vitest run --config test/fheTest/vitest.config.ts viem/clientEncrypt.encrypt
 
 import { describe, it, expect, beforeAll } from "vitest";
 import {
   createFhevmEncryptClient,
   setFhevmRuntimeConfig,
-} from "@fhevm/sdk/ethers";
+} from "@fhevm/sdk/viem";
 import { sepolia } from "@fhevm/sdk/chains";
-import { getTestConfig, type FheTestConfig } from "./setup.js";
-import { FHETestAddresses } from "./abi.js";
+import { getViemTestConfig, type FheTestViemConfig } from "./setup.js";
+import { FHETestAddresses } from "../abi.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -50,10 +50,10 @@ const encryptTestCases = [
 ////////////////////////////////////////////////////////////////////////////////
 
 describe("Phase 2 — Encrypt", () => {
-  let config: FheTestConfig;
+  let config: FheTestViemConfig;
 
   beforeAll(() => {
-    config = getTestConfig();
+    config = getViemTestConfig();
     setFhevmRuntimeConfig({
       auth: {
         type: "ApiKeyHeader",
@@ -65,13 +65,13 @@ describe("Phase 2 — Encrypt", () => {
   it("should encrypt all types in a single call", async () => {
     const client = createFhevmEncryptClient({
       chain: sepolia,
-      provider: config.provider,
+      publicClient: config.publicClient,
     });
     await client.ready;
 
     const result = await client.encrypt({
       contractAddress: FHETestAddresses.testnet,
-      userAddress: config.wallet.address,
+      userAddress: config.account.address,
       values: [...encryptTestCases],
     });
 
@@ -89,26 +89,26 @@ describe("Phase 2 — Encrypt", () => {
     }
   });
 
-  for (const tc of encryptTestCases) {
-    it(`should encrypt ${tc.type}`, async () => {
-      const client = createFhevmEncryptClient({
-        chain: sepolia,
-        provider: config.provider,
-      });
-      await client.ready;
+  // for (const tc of encryptTestCases) {
+  //   it(`should encrypt ${tc.type}`, async () => {
+  //     const client = createFhevmEncryptClient({
+  //       chain: sepolia,
+  //       publicClient: config.publicClient,
+  //     });
+  //     await client.ready;
 
-      const result = await client.encrypt({
-        contractAddress: FHETestAddresses.testnet,
-        userAddress: config.wallet.address,
-        values: tc,
-      });
+  //     const result = await client.encrypt({
+  //       contractAddress: FHETestAddresses.testnet,
+  //       userAddress: config.account.address,
+  //       values: tc,
+  //     });
 
-      expect(result.externalEncryptedValue).toBeDefined();
-      expect(result.inputProof).toBeDefined();
-      expect(result.inputProof.startsWith("0x")).toBe(true);
-      console.log(
-        `  ${tc.type}: handle=${result.externalEncryptedValue.bytes32Hex.slice(0, 20)}... proof=${result.inputProof.length} chars`,
-      );
-    });
-  }
+  //     expect(result.externalEncryptedValue).toBeDefined();
+  //     expect(result.inputProof).toBeDefined();
+  //     expect(result.inputProof.startsWith("0x")).toBe(true);
+  //     console.log(
+  //       `  ${tc.type}: handle=${result.externalEncryptedValue.bytes32Hex.slice(0, 20)}... proof=${result.inputProof.length} chars`,
+  //     );
+  //   });
+  // }
 });

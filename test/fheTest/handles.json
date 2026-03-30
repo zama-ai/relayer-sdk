@@ -1,7 +1,7 @@
 {
   "description": "Known FHETest.sol handles on sepolia (chainId 11155111). Use for handle parsing and validation tests.",
   "handleFieldsDoc": {
-    "bytes32": "The 32-byte hex handle value as stored on-chain (0x-prefixed)",
+    "bytes32Hex": "The 32-byte hex handle value as stored on-chain (0x-prefixed)",
     "fheType": "The FHE type name (ebool, euint8, euint16, euint32, euint64, euint128, euint256, eaddress)",
     "fheTypeId": "Numeric FHE type identifier (byte 30 of the handle). 0=ebool, 2=euint8, 3=euint16, 4=euint32, 5=euint64, 6=euint128, 7=eaddress, 8=euint256",
     "index": "Byte 21 of the handle. 255 means computed on-chain, <255 means external (user-encrypted input)",
@@ -22,7 +22,7 @@
   "contractAddress": "0x1E7eA8fE4877E6ea5dc8856f0dA92da8d5066241",
   "handles": [
     {
-      "bytes32": "0xf6751d547a5c06123575aad93f22f76b7d841c4cacff0000000000aa36a70000",
+      "bytes32Hex": "0xf6751d547a5c06123575aad93f22f76b7d841c4cacff0000000000aa36a70000",
       "fheType": "ebool",
       "fheTypeId": 0,
       "index": 255,
@@ -32,7 +32,7 @@
       "public": true
     },
     {
-      "bytes32": "0x6f17228bda73a5e57b94511c5bab2665e6a2870399ff0000000000aa36a70200",
+      "bytes32Hex": "0x6f17228bda73a5e57b94511c5bab2665e6a2870399ff0000000000aa36a70200",
       "fheType": "euint8",
       "fheTypeId": 2,
       "index": 255,
@@ -42,7 +42,7 @@
       "public": true
     },
     {
-      "bytes32": "0x9797f8eb707b0a32c47a80ea86c0648df36bfe7cd0ff0000000000aa36a70300",
+      "bytes32Hex": "0x9797f8eb707b0a32c47a80ea86c0648df36bfe7cd0ff0000000000aa36a70300",
       "fheType": "euint16",
       "fheTypeId": 3,
       "index": 255,
@@ -52,7 +52,7 @@
       "public": true
     },
     {
-      "bytes32": "0xf1673094de7c833604f1b62183cbcdf2cdc968db90ff0000000000aa36a70400",
+      "bytes32Hex": "0xf1673094de7c833604f1b62183cbcdf2cdc968db90ff0000000000aa36a70400",
       "fheType": "euint32",
       "fheTypeId": 4,
       "index": 255,
@@ -62,7 +62,7 @@
       "public": true
     },
     {
-      "bytes32": "0x821c6ef4218b335278214b00b1ad41757c7bc644ffff0000000000aa36a70500",
+      "bytes32Hex": "0x821c6ef4218b335278214b00b1ad41757c7bc644ffff0000000000aa36a70500",
       "fheType": "euint64",
       "fheTypeId": 5,
       "index": 255,
@@ -72,7 +72,7 @@
       "public": true
     },
     {
-      "bytes32": "0x9d430a3e950560ba22013ce885d6d90f0da36efdf1ff0000000000aa36a70600",
+      "bytes32Hex": "0x9d430a3e950560ba22013ce885d6d90f0da36efdf1ff0000000000aa36a70600",
       "fheType": "euint128",
       "fheTypeId": 6,
       "index": 255,
@@ -82,7 +82,7 @@
       "public": true
     },
     {
-      "bytes32": "0xef47ac02174f2dd9047e3e941c5e7414f36a2dfa45ff0000000000aa36a70800",
+      "bytes32Hex": "0xef47ac02174f2dd9047e3e941c5e7414f36a2dfa45ff0000000000aa36a70800",
       "fheType": "euint256",
       "fheTypeId": 8,
       "index": 255,

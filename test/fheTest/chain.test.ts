@@ -2,13 +2,16 @@
 
 import { describe, it, expect, beforeAll } from "vitest";
 import { sepolia } from "@fhevm/sdk/chains";
-import { getTestConfig, type FheTestConfig } from "./setup.js";
+import {
+  getEthersTestConfig,
+  type FheTestEthersConfig,
+} from "./ethers/setup.js";
 
 describe("Chain — SDK chain config vs on-chain", () => {
-  let config: FheTestConfig;
+  let config: FheTestEthersConfig;
 
   beforeAll(() => {
-    config = getTestConfig();
+    config = getEthersTestConfig();
   });
 
   it("should import sepolia chain definition from @fhevm/sdk/chains", () => {

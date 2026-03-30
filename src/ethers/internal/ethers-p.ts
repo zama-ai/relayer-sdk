@@ -20,8 +20,8 @@ export const PRIVATE_ETHERS_TOKEN = Symbol("ethers.token");
 
 ////////////////////////////////////////////////////////////////////////////////
 
-let cachedEthersRuntime: FhevmRuntime | undefined;
-let globalFhevmRuntimeConfig: FhevmRuntimeConfig | undefined;
+let ethersFhevmRuntime: FhevmRuntime | undefined;
+let ethersFhevmRuntimeConfig: FhevmRuntimeConfig | undefined;
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -36,15 +36,15 @@ let globalFhevmRuntimeConfig: FhevmRuntimeConfig | undefined;
  * @throws If a different config has already been set.
  */
 export function setFhevmRuntimeConfig(config: FhevmRuntimeConfig): void {
-  if (globalFhevmRuntimeConfig === undefined) {
-    globalFhevmRuntimeConfig = { ...config };
+  if (ethersFhevmRuntimeConfig === undefined) {
+    ethersFhevmRuntimeConfig = { ...config };
     return;
   }
   if (
-    globalFhevmRuntimeConfig.logger !== config.logger ||
-    globalFhevmRuntimeConfig.locateFile !== config.locateFile ||
-    globalFhevmRuntimeConfig.singleThread !== config.singleThread ||
-    globalFhevmRuntimeConfig.numberOfThreads !== config.numberOfThreads
+    ethersFhevmRuntimeConfig.logger !== config.logger ||
+    ethersFhevmRuntimeConfig.locateFile !== config.locateFile ||
+    ethersFhevmRuntimeConfig.singleThread !== config.singleThread ||
+    ethersFhevmRuntimeConfig.numberOfThreads !== config.numberOfThreads
   ) {
     throw new Error(
       "FhevmRuntime config has already been set and cannot be changed. " +
@@ -56,19 +56,19 @@ export function setFhevmRuntimeConfig(config: FhevmRuntimeConfig): void {
 ////////////////////////////////////////////////////////////////////////////////
 
 export function getEthersRuntime(): FhevmRuntime {
-  if (globalFhevmRuntimeConfig === undefined) {
+  if (ethersFhevmRuntimeConfig === undefined) {
     throw new Error("Call setFhevmRuntimeConfig first.");
   }
 
   const em = ethereumModule();
   const rm = relayerModule();
 
-  cachedEthersRuntime ??= createFhevmRuntime({
+  ethersFhevmRuntime ??= createFhevmRuntime({
     ethereum: em.ethereum,
     relayer: rm.relayer,
-    config: globalFhevmRuntimeConfig,
+    config: ethersFhevmRuntimeConfig,
   });
-  return cachedEthersRuntime;
+  return ethersFhevmRuntime;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

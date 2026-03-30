@@ -11,6 +11,9 @@ export const kmsUserDecryptEIP712Types: KmsUserDecryptEIP712Types = {
     { name: "chainId", type: "uint256" },
     { name: "verifyingContract", type: "address" },
   ] as const,
+  // CRITICAL: Field order is authoritative — it determines the EIP-712 type hash.
+  // Changing the order will produce a different signature and break on-chain verification.
+  // Must match the Solidity struct definition exactly.
   UserDecryptRequestVerification: [
     { name: "publicKey", type: "bytes" },
     { name: "contractAddresses", type: "address[]" },

@@ -78,6 +78,34 @@ Object.freeze(MAX_UINT_FOR_TYPE);
 
 ////////////////////////////////////////////////////////////////////////////////
 
+const MAX_SAFE_INTEGER_BIGINT = BigInt(Number.MAX_SAFE_INTEGER);
+
+/**
+ * Converts a `bigint` to a `number`, throwing if the value exceeds
+ * `Number.MAX_SAFE_INTEGER` (2^53 - 1).
+ *
+ * @param value - The bigint to convert
+ * @param options - Optional subject name for the error message
+ * @returns The value as a `number`
+ * @throws If the value exceeds the safe integer range
+ */
+export function bigIntToNumber(
+  value: number | bigint,
+  options?: { readonly subject?: string },
+): number {
+  if (typeof value === "number") {
+    return value;
+  }
+  if (value > MAX_SAFE_INTEGER_BIGINT) {
+    const subject =
+      options?.subject !== undefined ? ` (${options.subject})` : "";
+    throw new Error(`Value${subject} ${value} exceeds Number.MAX_SAFE_INTEGER`);
+  }
+  return Number(value);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 const MAX_UINT_FOR_BYTE_LENGTH: Readonly<
   Record<1 | 2 | 4 | 8 | 16 | 20 | 32, Uint>
 > = {

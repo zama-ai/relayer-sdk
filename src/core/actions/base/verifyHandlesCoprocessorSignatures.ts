@@ -13,7 +13,6 @@ import type { CoprocessorSignersContext } from "../../types/coprocessorSignersCo
 import type { Fhevm } from "../../types/coreFhevmClient.js";
 import type { FhevmChain } from "../../types/fhevmChain.js";
 import type {
-  Bytes32,
   Bytes65Hex,
   BytesHex,
   ChecksummedAddress,
@@ -41,10 +40,10 @@ export async function verifyHandlesCoprocessorSignatures(
   fhevm: Fhevm<FhevmChain>,
   parameters: VerifyHandlesCoprocessorSignaturesParameters,
 ): Promise<void> {
-  const handlesBytes32: Bytes32[] = parameters.handles.map((h) => h.bytes32);
-
+  // Use hex strings (not Uint8Array) for EIP-712 message fields.
+  // viem's hashTypedData expects hex strings for bytes32 fields.
   const message: CoprocessorEIP712Message = {
-    ctHandles: handlesBytes32,
+    ctHandles: parameters.handles.map((h) => h.bytes32Hex),
     userAddress: parameters.userAddress,
     contractAddress: parameters.contractAddress,
     contractChainId: parameters.chainId,

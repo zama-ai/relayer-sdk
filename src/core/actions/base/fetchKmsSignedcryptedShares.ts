@@ -134,7 +134,7 @@ export async function fetchKmsSignedcryptedShares(
   // 6. Check: Expiration date
   signedPermit.assertNotExpired();
 
-  // 7. Check: ACL permissions (user is signer or delegatedAccount)
+  // 7. Check: ACL permissions (user is signer or delegatorAddress)
   await checkUserAllowedForDecryption(fhevm, {
     userAddress,
     handleContractPairs,

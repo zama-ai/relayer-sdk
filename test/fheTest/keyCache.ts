@@ -1,7 +1,13 @@
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { resolve } from "node:path";
 import type { FetchFheEncryptionKeyBytesReturnType as FheEncryptionKeyBytes } from "@fhevm/sdk/actions/chain";
-import type { FheTestChain } from "./setup.js";
+import type { FheTestChain } from "./ethers/setup.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 

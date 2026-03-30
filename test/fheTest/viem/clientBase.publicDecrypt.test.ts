@@ -1,21 +1,18 @@
-// npx vitest run --config test/fheTest/vitest.config.ts clientBase.publicDecrypt
+// npx vitest run --config test/fheTest/vitest.config.ts viem/clientBase.publicDecrypt
 
 import { describe, it, expect, beforeAll } from "vitest";
-import {
-  createFhevmBaseClient,
-  setFhevmRuntimeConfig,
-} from "@fhevm/sdk/ethers";
+import { createFhevmBaseClient, setFhevmRuntimeConfig } from "@fhevm/sdk/viem";
 import { sepolia } from "@fhevm/sdk/chains";
-import { getTestConfig, type FheTestConfig } from "./setup.js";
-import handlesData from "./handles.json" with { type: "json" };
+import { getViemTestConfig, type FheTestViemConfig } from "./setup.js";
+import handlesData from "../handles.json" with { type: "json" };
 
 const publicHandles = handlesData.handles.filter((h) => h.public);
 
 describe("Base client — public decrypt", () => {
-  let config: FheTestConfig;
+  let config: FheTestViemConfig;
 
   beforeAll(() => {
-    config = getTestConfig();
+    config = getViemTestConfig();
     setFhevmRuntimeConfig({
       auth: {
         type: "ApiKeyHeader",
@@ -27,10 +24,10 @@ describe("Base client — public decrypt", () => {
   it("should public decrypt all handles in a single call", async () => {
     const client = createFhevmBaseClient({
       chain: sepolia,
-      provider: config.provider,
+      publicClient: config.publicClient,
     });
 
-    const allBytes32 = publicHandles.map((h) => h.bytes32);
+    const allBytes32 = publicHandles.map((h) => h.bytes32Hex);
     const proof = await client.publicDecrypt({
       encryptedValues: allBytes32,
     });
@@ -55,14 +52,14 @@ describe("Base client — public decrypt", () => {
   });
 
   for (const handle of publicHandles) {
-    it(`should public decrypt ${handle.fheType} (${handle.bytes32.slice(0, 10)}...)`, async () => {
+    it(`should public decrypt ${handle.fheType} (${handle.bytes32Hex.slice(0, 10)}...)`, async () => {
       const client = createFhevmBaseClient({
         chain: sepolia,
-        provider: config.provider,
+        publicClient: config.publicClient,
       });
 
-      const publicDecryptionProof = await client.publicDecrypt({
-        encryptedValues: [handle.bytes32],
+      const publicDecryptionProof = await client.readPublicValue({
+        encryptedValues: [handle.bytes32Hex],
       });
 
       expect(publicDecryptionProof).toBeDefined();

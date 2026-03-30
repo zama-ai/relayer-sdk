@@ -28,7 +28,7 @@ export type CreateKmsDelegatedUserDecryptEIP712Parameters = {
   readonly startTimestamp: number;
   readonly durationDays: number;
   readonly extraData: string;
-  readonly delegatedAccount: string;
+  readonly delegatorAddress: string;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -43,7 +43,7 @@ export function createKmsDelegatedUserDecryptEIP712({
   startTimestamp,
   durationDays,
   extraData,
-  delegatedAccount,
+  delegatorAddress,
 }: CreateKmsDelegatedUserDecryptEIP712Parameters): KmsDelegatedUserDecryptEIP712 {
   const publicKeyBytesHex = _verifyPublicKeyArg(publicKey);
 
@@ -51,14 +51,14 @@ export function createKmsDelegatedUserDecryptEIP712({
   assertIsUintNumber(startTimestamp, {});
   assertIsUintNumber(durationDays, {});
   assertIsBytesHex(extraData, {});
-  assertIsAddress(delegatedAccount, {});
+  assertIsAddress(delegatorAddress, {});
 
   const checksummedContractAddresses = contractAddresses.map(
     addressToChecksummedAddress,
   );
 
-  const checksummedDelegatedAccount =
-    addressToChecksummedAddress(delegatedAccount);
+  const checksummedDelegatorAddress =
+    addressToChecksummedAddress(delegatorAddress);
 
   const primaryType: KmsDelegatedUserDecryptEIP712["primaryType"] =
     "DelegatedUserDecryptRequestVerification";
@@ -75,10 +75,10 @@ export function createKmsDelegatedUserDecryptEIP712({
     message: {
       publicKey: publicKeyBytesHex,
       contractAddresses: checksummedContractAddresses,
+      delegatorAddress: checksummedDelegatorAddress,
       startTimestamp: startTimestamp.toString(),
       durationDays: durationDays.toString(),
       extraData,
-      delegatedAccount: checksummedDelegatedAccount,
     },
   };
 
@@ -107,7 +107,7 @@ export function assertIsKmsDelegatedUserDecryptEIP712(
 
   assertRecordChecksummedAddressProperty(
     msg,
-    "delegatedAccount" satisfies keyof KmsDelegatedUserDecryptEIP712["message"],
+    "delegatorAddress" satisfies keyof KmsDelegatedUserDecryptEIP712["message"],
     `${name}.message`,
     options,
   );
