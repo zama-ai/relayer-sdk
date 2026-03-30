@@ -12,13 +12,13 @@ Use delegate decryption when you need a different address to decrypt data that b
 
 ## How it differs from user decryption
 
-| Aspect | User decryption | Delegate decryption |
-| --- | --- | --- |
-| Who has ACL permission | The decrypting user | The delegator (data owner) |
-| Who signs the EIP-712 message | The user | The delegate |
-| Who receives the decrypted value | The user | The delegate |
-| EIP-712 primary type | `UserDecryptRequestVerification` | `DelegatedUserDecryptRequestVerification` |
-| Relayer endpoint | `/user-decrypt` | `/delegated-user-decrypt` |
+| Aspect                           | User decryption                  | Delegate decryption                       |
+| -------------------------------- | -------------------------------- | ----------------------------------------- |
+| Who has ACL permission           | The decrypting user              | The delegator (data owner)                |
+| Who signs the EIP-712 message    | The user                         | The delegate                              |
+| Who receives the decrypted value | The user                         | The delegate                              |
+| EIP-712 primary type             | `UserDecryptRequestVerification` | `DelegatedUserDecryptRequestVerification` |
+| Relayer endpoint                 | `/user-decrypt`                  | `/delegated-user-decrypt`                 |
 
 The key difference: the Zama Protocol checks ACL permissions against the **delegator** address, not the delegate. The delegate only needs to prove their identity by signing the request.
 
@@ -50,12 +50,12 @@ For more details, refer to [the ACL documentation](https://docs.zama.ai/protocol
 The delegator must authorize the delegate by calling `delegateForUserDecryption` on the `ACL` contract. This registers the delegation on-chain with an expiration date:
 
 ```ts
-import { ethers } from "ethers";
+import { ethers } from 'ethers';
 
 // The ACL contract address (check your chain's ZamaConfig for the correct address)
-const ACL_ADDRESS = "0x..."; // chain-specific ACL address
+const ACL_ADDRESS = '0x...'; // chain-specific ACL address
 const ACL_ABI = [
-  "function delegateForUserDecryption(address delegate, address contractAddress, uint64 expirationDate) external",
+  'function delegateForUserDecryption(address delegate, address contractAddress, uint64 expirationDate) external',
 ];
 
 // delegatorSigner: the delegator's (data owner's) ethers Signer
@@ -82,7 +82,7 @@ The delegation is scoped to a specific `(delegator, delegate, contractAddress)` 
 Generate a keypair and build the EIP-712 typed data structure for delegate decryption. The `delegatorAddress` is included in the message to bind the delegation:
 
 ```ts
-import { createInstance } from "@zama-fhe/relayer-sdk/node";
+import { createInstance } from '@zama-fhe/relayer-sdk/node';
 
 // instance: FhevmInstance (see initialization guide)
 // delegatorAddress: the data owner's address
@@ -147,7 +147,7 @@ const result = await instance.delegatedUserDecrypt(
   handleContractPairs,
   keypair.privateKey,
   keypair.publicKey,
-  signature.replace("0x", ""),
+  signature.replace('0x', ''),
   contractAddresses,
   delegatorAddress,
   delegateAddress,
@@ -174,14 +174,14 @@ The total bit length of all ciphertexts being decrypted in a single request must
 
 Creates the EIP-712 typed data structure for delegate decryption.
 
-| Parameter | Type | Description |
-| --- | --- | --- |
-| `publicKey` | `string` | The delegate's NaCl public key from `generateKeypair()` |
+| Parameter           | Type       | Description                                              |
+| ------------------- | ---------- | -------------------------------------------------------- |
+| `publicKey`         | `string`   | The delegate's NaCl public key from `generateKeypair()`  |
 | `contractAddresses` | `string[]` | Contract addresses holding the encrypted values (max 10) |
-| `delegatorAddress` | `string` | The data owner's address (must have ACL permission) |
-| `startTimestamp` | `number` | Unix timestamp for when the permit becomes valid |
-| `durationDays` | `number` | How many days the permit remains valid (1–365) |
-| `extraData` | `BytesHex` | KMS context from `getExtraData()` |
+| `delegatorAddress`  | `string`   | The data owner's address (must have ACL permission)      |
+| `startTimestamp`    | `number`   | Unix timestamp for when the permit becomes valid         |
+| `durationDays`      | `number`   | How many days the permit remains valid (1–365)           |
+| `extraData`         | `BytesHex` | KMS context from `getExtraData()`                        |
 
 **Returns:** `KmsDelegatedUserDecryptEIP712Type` — the complete EIP-712 object with `domain`, `types`, and `message` fields.
 
@@ -189,19 +189,19 @@ Creates the EIP-712 typed data structure for delegate decryption.
 
 Performs the delegate decryption request through the Relayer.
 
-| Parameter | Type | Description |
-| --- | --- | --- |
-| `handleContractPairs` | `HandleContractPair[]` | Array of `{ handle, contractAddress }` pairs to decrypt |
-| `privateKey` | `string` | The delegate's NaCl private key from `generateKeypair()` |
-| `publicKey` | `string` | The delegate's NaCl public key from `generateKeypair()` |
-| `signature` | `string` | EIP-712 signature from the delegate (without `0x` prefix) |
-| `contractAddresses` | `string[]` | Same contract addresses used in the EIP-712 message |
-| `delegatorAddress` | `string` | The data owner's address |
-| `delegateAddress` | `string` | The delegate's address (the signer) |
-| `startTimestamp` | `number` | Same timestamp used in the EIP-712 message |
-| `durationDays` | `number` | Same duration used in the EIP-712 message |
-| `extraData` | `BytesHex` | Same `extraData` used in the EIP-712 message |
-| `options` | `RelayerUserDecryptOptionsType` | _(Optional)_ Request options (e.g., timeout) |
+| Parameter             | Type                            | Description                                               |
+| --------------------- | ------------------------------- | --------------------------------------------------------- |
+| `handleContractPairs` | `HandleContractPair[]`          | Array of `{ handle, contractAddress }` pairs to decrypt   |
+| `privateKey`          | `string`                        | The delegate's NaCl private key from `generateKeypair()`  |
+| `publicKey`           | `string`                        | The delegate's NaCl public key from `generateKeypair()`   |
+| `signature`           | `string`                        | EIP-712 signature from the delegate (without `0x` prefix) |
+| `contractAddresses`   | `string[]`                      | Same contract addresses used in the EIP-712 message       |
+| `delegatorAddress`    | `string`                        | The data owner's address                                  |
+| `delegateAddress`     | `string`                        | The delegate's address (the signer)                       |
+| `startTimestamp`      | `number`                        | Same timestamp used in the EIP-712 message                |
+| `durationDays`        | `number`                        | Same duration used in the EIP-712 message                 |
+| `extraData`           | `BytesHex`                      | Same `extraData` used in the EIP-712 message              |
+| `options`             | `RelayerUserDecryptOptionsType` | _(Optional)_ Request options (e.g., timeout)              |
 
 **Returns:** `Promise<UserDecryptResults>` — a record mapping each handle (`0x${string}`) to its decrypted value (`bigint`, `boolean`, or `0x${string}`).
 
@@ -220,12 +220,14 @@ Performs the delegate decryption request through the Relayer.
 Here's a complete end-to-end example that has been tested on both localhost and Sepolia testnet:
 
 ```ts
-import { ethers } from "ethers";
-import { createInstance, SepoliaConfig } from "@zama-fhe/relayer-sdk/node";
+import { ethers } from 'ethers';
+import { createInstance, SepoliaConfig } from '@zama-fhe/relayer-sdk/node';
 
 async function delegateDecryptExample() {
   // Setup provider and signers
-  const provider = new ethers.JsonRpcProvider("https://ethereum-sepolia-rpc.publicnode.com");
+  const provider = new ethers.JsonRpcProvider(
+    'https://ethereum-sepolia-rpc.publicnode.com',
+  );
   const aliceSigner = new ethers.Wallet(ALICE_PRIVATE_KEY, provider);
   const bobSigner = new ethers.Wallet(BOB_PRIVATE_KEY, provider);
 
@@ -239,12 +241,14 @@ async function delegateDecryptExample() {
   });
 
   // Contract setup
-  const contractAddress = "0x..."; // Your deployed contract address
+  const contractAddress = '0x...'; // Your deployed contract address
   const contract = new ethers.Contract(
     contractAddress,
-    ["function initialize(uint32 value) external",
-     "function encryptedValue() public view returns (uint256)"],
-    aliceSigner
+    [
+      'function initialize(uint32 value) external',
+      'function encryptedValue() public view returns (uint256)',
+    ],
+    aliceSigner,
   );
 
   // Step 1: Alice initializes encrypted value
@@ -255,12 +259,18 @@ async function delegateDecryptExample() {
   const aclAddress = SepoliaConfig.aclContractAddress;
   const acl = new ethers.Contract(
     aclAddress,
-    ["function delegateForUserDecryption(address delegate, address contractAddress, uint64 expirationDate) external"],
-    aliceSigner
+    [
+      'function delegateForUserDecryption(address delegate, address contractAddress, uint64 expirationDate) external',
+    ],
+    aliceSigner,
   );
 
   const expirationDate = Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60; // 1 year
-  const tx2 = await acl.delegateForUserDecryption(bobAddr, contractAddress, expirationDate);
+  const tx2 = await acl.delegateForUserDecryption(
+    bobAddr,
+    contractAddress,
+    expirationDate,
+  );
   await tx2.wait();
 
   // Step 3: Get encrypted handle and convert to hex
@@ -281,14 +291,17 @@ async function delegateDecryptExample() {
     aliceAddr,
     startTimestamp,
     durationDays,
-    extraData
+    extraData,
   );
 
   // Step 6: Bob signs the message
   const signature = await bobSigner.signTypedData(
     eip712.domain,
-    { DelegatedUserDecryptRequestVerification: eip712.types.DelegatedUserDecryptRequestVerification },
-    eip712.message
+    {
+      DelegatedUserDecryptRequestVerification:
+        eip712.types.DelegatedUserDecryptRequestVerification,
+    },
+    eip712.message,
   );
 
   // Step 7: Bob performs delegated decryption
@@ -296,20 +309,21 @@ async function delegateDecryptExample() {
     [{ handle: handleHex, contractAddress }],
     bobKeypair.privateKey,
     bobKeypair.publicKey,
-    signature.replace("0x", ""),
+    signature.replace('0x', ''),
     [contractAddress],
     aliceAddr,
     bobAddr,
     startTimestamp,
     durationDays,
-    extraData
+    extraData,
   );
 
   const decryptedValue = results[handleHex];
-  console.log("Decrypted value:", decryptedValue); // Output: 123457 (contract adds 1)
+  console.log('Decrypted value:', decryptedValue); // Output: 123457 (contract adds 1)
 }
 ```
 
 This example has been verified to work on:
+
 - **Localhost**: Using hardhat mock relayer
 - **Sepolia Testnet**: Using Zama's testnet relayer at `https://relayer.testnet.zama.org`
