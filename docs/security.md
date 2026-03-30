@@ -61,14 +61,14 @@ The SDK is designed to prevent accidental exposure of sensitive material:
 
 ### Transport keys are opaque
 
-When you call `generateE2eTransportKeyPair()`, the returned object wraps the private key in a way that prevents accidental logging or serialization:
+When you call `generateE2eTransportKeypair()`, the returned object wraps the private key in a way that prevents accidental logging or serialization:
 
 ```ts
-const keyPair = await client.generateE2eTransportKeyPair();
-console.log(keyPair); // Does NOT print the private key
+const keypair = await client.generateE2eTransportKeypair();
+console.log(keypair); // Does NOT print the private key
 ```
 
-The raw private key is stored in a private field (`#field`) and can only be accessed through the SDK's internal symbol-based access control. You can get the **public** key via `keyPair.getTkmsPublicKeyHex()`, but the private key is never exposed to your application code.
+The raw private key is stored in a private field (`#field`) and can only be accessed through the SDK's internal symbol-based access control. You can get the **public** key via `keypair.publicKey`, but the private key is never exposed to your application code.
 
 ### The provider is sealed
 
@@ -92,7 +92,7 @@ After calling `decrypt()`, the plaintext values are in your application's memory
 
 ### Store transport keys securely
 
-If you persist key pairs across sessions (via `loadE2eTransportKeyPair`), store the serialized bytes securely:
+If you persist key pairs across sessions (via `parseE2eTransportKeypair`), store the serialized bytes securely:
 
 ```ts
 // Acceptable: encrypted localStorage, secure enclave, browser credential store

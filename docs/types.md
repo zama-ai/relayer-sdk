@@ -1,6 +1,6 @@
 # Types
 
-This page documents the TypeScript types used throughout the SDK. You'll encounter these types in function parameters, return values, and when working with encrypted handles.
+This page documents the TypeScript types used throughout the SDK. You'll encounter these types in function parameters, return values, and when working with encrypted values.
 
 ## FHE types
 
@@ -33,73 +33,82 @@ Numeric identifiers used on-chain. You rarely need these directly — the SDK ha
 
 ## Encrypted value references
 
-### `FhevmHandle`
+### `EncryptedValue`
 
-A 32-byte opaque reference to an encrypted value on-chain. When you read an encrypted value from a contract, you get a `FhevmHandle`. It encodes metadata in its bytes — you can inspect the type, chain ID, and other properties without making an RPC call:
+A 32-byte opaque reference to an encrypted value on-chain (called a "handle" in FHE.sol / FHEVM whitepaper terminology). When you read an encrypted value from a contract, you get an `EncryptedValue`. It encodes metadata in its bytes — you can inspect the type, chain ID, and other properties without making an RPC call.
+
+There are two subtypes:
+- `ComputedEncryptedValue` — verified on-chain, the result of an FHE operation
+- `ExternalEncryptedValue` — unverified encrypted input, returned from `encrypt()`
+
+Both share a common set of properties:
 
 ```ts
-interface FhevmHandleBase {
-  readonly bytes32Hex: FhevmHandleBytes32Hex;    // "0x..." (66 chars)
-  readonly bytes32: FhevmHandleBytes32;           // Uint8Array (32 bytes)
-  readonly bytes32HexNo0x: FhevmHandleBytes32HexNo0x;
-
-  // Parsed components
-  readonly hash21: Bytes21Hex;         // First 21 bytes (content hash)
-  readonly chainId: Uint64BigInt;      // Chain the handle belongs to
-  readonly fheTypeId: FheTypeId;       // Numeric type ID
-  readonly fheType: FheType;           // Type name ("euint32", etc.)
-  readonly version: Uint8Number;       // Handle version
-  readonly index: Uint8Number | undefined;  // Index within proof (external handles)
-  readonly encryptionBits: EncryptionBits;  // Number of encrypted bits
-  readonly solidityPrimitiveTypeName: SolidityPrimitiveTypeName;  // "bool" | "uint256" | "address"
-  readonly isComputed: boolean;        // On-chain computed vs. external
-  readonly isExternal: boolean;        // From input proof
-}
+// Common properties on all EncryptedValue variants
+readonly bytes32Hex: Bytes32Hex;        // "0x..." (66 chars)
+readonly bytes32: Bytes32;              // Uint8Array (32 bytes)
+readonly chainId: Uint64BigInt;         // Chain the value belongs to
+readonly fheTypeId: FheTypeId;          // Numeric type ID
+readonly fheType: FheType;              // Type name ("euint32", etc.)
+readonly version: Uint8Number;          // Handle version
+readonly index: Uint8Number | undefined; // Index within proof (external values)
+readonly encryptionBits: EncryptionBits; // Number of encrypted bits
+readonly isComputed: boolean;           // On-chain computed vs. external
+readonly isExternal: boolean;           // From input proof
 ```
 
-### Typed handles
+A `Handle<T>` alias is available for developers familiar with FHE.sol terminology.
 
-Type-specific handle aliases for compile-time safety. Use these when you know the FHE type of a handle at compile time:
+### Typed encrypted values
+
+Type-specific aliases for compile-time safety. Use these when you know the FHE type at compile time:
 
 ```ts
-type Ebool     = FhevmHandleOfType<"ebool">;
-type Euint8    = FhevmHandleOfType<"euint8">;
-type Euint16   = FhevmHandleOfType<"euint16">;
-type Euint32   = FhevmHandleOfType<"euint32">;
-type Euint64   = FhevmHandleOfType<"euint64">;
-type Euint128  = FhevmHandleOfType<"euint128">;
-type Euint256  = FhevmHandleOfType<"euint256">;
-type Eaddress  = FhevmHandleOfType<"eaddress">;
+type Ebool     = EncryptedValue<"ebool">;
+type Euint8    = EncryptedValue<"euint8">;
+type Euint16   = EncryptedValue<"euint16">;
+type Euint32   = EncryptedValue<"euint32">;
+type Euint64   = EncryptedValue<"euint64">;
+type Euint128  = EncryptedValue<"euint128">;
+type Euint256  = EncryptedValue<"euint256">;
+type Eaddress  = EncryptedValue<"eaddress">;
 ```
 
-### `ExternalFhevmHandle`
+### `ExternalEncryptedValue`
 
-A handle returned from encryption — always has an `index` and `isExternal: true`:
+An encrypted value returned from `encrypt()` — always has an `index` and `isExternal: true`:
 
 ```ts
-type ExternalFhevmHandle = FhevmExternalHandleOfType;  // index is Uint8Number (not undefined)
+type ExternalEncryptedValue<T extends FheType = FheType>;
 ```
 
-### `FhevmHandleLike`
+Typed variants: `ExternalEbool`, `ExternalEuint8`, `ExternalEuint16`, `ExternalEuint32`, `ExternalEuint64`, `ExternalEuint128`, `ExternalEuint256`, `ExternalEaddress`.
 
-Accepted input formats for handle parameters:
+### `EncryptedValueLike`
+
+Accepted input formats for encrypted value parameters:
 
 ```ts
-type FhevmHandleLike = Bytes32 | Bytes32Hex | Bytes32HexAble | FhevmHandle;
+type EncryptedValueLike =
+  | Uint8Array
+  | string
+  | { readonly bytes32Hex: string }
+  | EncryptedValue;
 ```
 
-## Decrypted values
+## Clear values (decrypted)
 
-### `DecryptedFhevmHandle`
+### `ClearValue`
 
-Pairs an encrypted handle with its plaintext value. Uses a discriminated union on `fheType`:
+Pairs an encrypted value with its decrypted plaintext. Uses a discriminated union on `fheType`:
 
 ```ts
-interface DecryptedFhevmHandleOfTypeBase<T extends FheType> {
+type ClearValueOfType<T extends FheType> = {
+  readonly value: ClearValueType<T>;
+  readonly encryptedValue: EncryptedValue<T>;
   readonly fheType: T;
-  readonly handle: FhevmHandleOfType<T>;
-  readonly value: DecryptedFheValueMap[T];
-}
+  readonly valueType: ClearValueTypeName<T>;
+};
 ```
 
 **Value type mapping:**
@@ -107,9 +116,9 @@ interface DecryptedFhevmHandleOfTypeBase<T extends FheType> {
 | FheType | Decrypted Value Type | JS Representation |
 |---------|---------------------|-------------------|
 | `ebool` | `boolean` | `true` / `false` |
-| `euint8` | `Uint8Number` | `number` (0–255) |
-| `euint16` | `Uint16Number` | `number` (0–65535) |
-| `euint32` | `Uint32Number` | `number` (0–4294967295) |
+| `euint8` | `Uint8Number` | `number` (0-255) |
+| `euint16` | `Uint16Number` | `number` (0-65535) |
+| `euint32` | `Uint32Number` | `number` (0-4294967295) |
 | `euint64` | `Uint64BigInt` | `bigint` |
 | `euint128` | `Uint128BigInt` | `bigint` |
 | `euint256` | `Uint256BigInt` | `bigint` |
@@ -118,10 +127,14 @@ interface DecryptedFhevmHandleOfTypeBase<T extends FheType> {
 Type-specific aliases:
 
 ```ts
-type DecryptedEbool    = DecryptedFhevmHandleOfType<"ebool">;
-type DecryptedEuint8   = DecryptedFhevmHandleOfType<"euint8">;
-type DecryptedEuint32  = DecryptedFhevmHandleOfType<"euint32">;
-// ... etc.
+type ClearBool    = ClearValue<"ebool">;
+type ClearUint8   = ClearValue<"euint8">;
+type ClearUint16  = ClearValue<"euint16">;
+type ClearUint32  = ClearValue<"euint32">;
+type ClearUint64  = ClearValue<"euint64">;
+type ClearUint128 = ClearValue<"euint128">;
+type ClearUint256 = ClearValue<"euint256">;
+type ClearAddress = ClearValue<"eaddress">;
 ```
 
 ## Typed values (encryption input)
@@ -231,14 +244,14 @@ type ZkProof; // Opaque — passed to fetchVerifiedInputProof
 
 ```ts
 type VerifiedInputProof = {
-  readonly inputProof: BytesHex;
+  readonly bytesHex: BytesHex;
   readonly coprocessorSignatures: readonly Bytes65Hex[];
-  readonly encryptedInputs: readonly ExternalFhevmHandle[];
+  readonly inputHandles: readonly InputHandle[];
   readonly extraData: BytesHex;
   readonly verified: true;
   readonly signedHandleAccess: {
-    contractAddress: ChecksummedAddress;
-    userAddress: ChecksummedAddress;
+    readonly contractAddress: ChecksummedAddress;
+    readonly userAddress: ChecksummedAddress;
   };
 };
 ```
@@ -247,7 +260,7 @@ type VerifiedInputProof = {
 
 ```ts
 type PublicDecryptionProof = {
-  readonly values: readonly DecryptedFhevmHandle[];
+  readonly orderedClearValues: readonly ClearValue[];
   readonly decryptionProof: BytesHex;
   readonly orderedAbiEncodedClearValues: BytesHex;
   readonly extraData: BytesHex;
@@ -256,9 +269,17 @@ type PublicDecryptionProof = {
 
 ## Permit types
 
+### `SignedSelfDecryptionPermit` / `SignedDelegatedDecryptionPermit`
+
+Signed permits returned by `signDecryptionPermit()`. These bundle the EIP-712 typed data, the signature, and the signer address into a reusable object.
+
+- `SignedSelfDecryptionPermit` — for decrypting your own values
+- `SignedDelegatedDecryptionPermit` — for decrypting on behalf of another user (has `onBehalfOf` field)
+- `SignedDecryptionPermit` — union of both
+
 ### `KmsUserDecryptEIP712`
 
-The EIP-712 typed data structure for decrypt permits:
+The EIP-712 typed data structure for decrypt permits (lower-level, used by `createKmsUserDecryptEIP712`):
 
 ```ts
 type KmsUserDecryptEIP712 = {
@@ -266,14 +287,6 @@ type KmsUserDecryptEIP712 = {
   readonly types: KmsUserDecryptEIP712Types;
   readonly message: KmsUserDecryptEIP712Message;
   readonly primaryType: "UserDecryptRequestVerification";
-};
-
-type KmsUserDecryptEIP712Message = {
-  readonly publicKey: BytesHex;
-  readonly contractAddresses: readonly ChecksummedAddress[];
-  readonly startTimestamp: string;
-  readonly durationDays: string;
-  readonly extraData: BytesHex;
 };
 
 type KmsEIP712Domain = {
@@ -286,29 +299,18 @@ type KmsEIP712Domain = {
 
 ### `KmsDelegatedUserDecryptEIP712`
 
-Extends the decrypt permit EIP-712 with a `delegatedAccount` field for decrypting on behalf of another user:
+Extends the decrypt permit EIP-712 with a `delegatedAccount` field for decrypting on behalf of another user.
+
+## E2E transport key pair
+
+### `E2eTransportKeypair`
+
+An opaque key pair object for end-to-end encrypted communication with the Zama Protocol. The private key is never directly accessible — this prevents accidental exposure.
 
 ```ts
-type KmsDelegatedUserDecryptEIP712Message = KmsUserDecryptEIP712Message & {
-  readonly delegatedAccount: ChecksummedAddress;
+type E2eTransportKeypair = {
+  readonly publicKey: BytesHex;
 };
 ```
 
-## Global FHE public key parameters
-
-```ts
-type GlobalFhePkeParams = {
-  readonly publicKey: GlobalFhePublicKey;  // TFHE public key object
-  readonly crs: GlobalFheCrs;              // Common Reference String object
-};
-
-type GlobalFhePkeParamsBytes = {
-  readonly publicKey: Bytes;    // Raw bytes
-  readonly crs: Bytes;
-};
-
-type GlobalFhePkeParamsBytesHex = {
-  readonly publicKey: BytesHex; // Hex-encoded bytes
-  readonly crs: BytesHex;
-};
-```
+Create with `generateE2eTransportKeypair()`, serialize with `serializeE2eTransportKeypair()`, restore with `parseE2eTransportKeypair()`.
