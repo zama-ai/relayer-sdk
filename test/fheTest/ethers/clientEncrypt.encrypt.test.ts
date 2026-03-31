@@ -1,0 +1,114 @@
+// npx vitest run --config test/fheTest/vitest.config.ts ethers/clientEncrypt.encrypt
+
+import { describe, it, expect, beforeAll } from "vitest";
+import {
+  createFhevmEncryptClient,
+  setFhevmRuntimeConfig,
+} from "@fhevm/sdk/ethers";
+import { sepolia } from "@fhevm/sdk/chains";
+import { getEthersTestConfig, type FheTestEthersConfig } from "./setup.js";
+import { FHETestAddresses } from "../abi.js";
+
+////////////////////////////////////////////////////////////////////////////////
+
+// Map FHE type to: contract function name, value type name, test value
+const encryptTestCases = [
+  {
+    value: true,
+    type: "bool" as const,
+  },
+  {
+    type: "uint8" as const,
+    value: 42,
+  },
+  {
+    type: "uint16" as const,
+    value: 1234,
+  },
+  {
+    type: "uint32" as const,
+    value: 123456,
+  },
+  {
+    type: "uint64" as const,
+    value: 123456789n,
+  },
+  {
+    type: "uint128" as const,
+    value: 123456789012345n,
+  },
+  {
+    type: "uint256" as const,
+    value: 123456789012345678901234567890n,
+  },
+  {
+    type: "address" as const,
+    value: "0x37ac010c1c566696326813b840319b58bb5840e4",
+  },
+] as const;
+
+////////////////////////////////////////////////////////////////////////////////
+
+describe("Phase 2 — Encrypt", () => {
+  let config: FheTestEthersConfig;
+
+  beforeAll(() => {
+    config = getEthersTestConfig();
+    setFhevmRuntimeConfig({
+      auth: {
+        type: "ApiKeyHeader",
+        value: config.zamaApiKey,
+      },
+    });
+  });
+
+  it("should encrypt all types in a single call", async () => {
+    const client = createFhevmEncryptClient({
+      chain: sepolia,
+      provider: config.provider,
+    });
+    await client.ready;
+
+    const result = await client.encrypt({
+      contractAddress: FHETestAddresses.testnet,
+      userAddress: config.wallet.address,
+      values: [...encryptTestCases],
+    });
+
+    expect(result.externalEncryptedValues).toHaveLength(
+      encryptTestCases.length,
+    );
+    expect(result.inputProof).toBeDefined();
+    expect(result.inputProof.startsWith("0x")).toBe(true);
+
+    for (let i = 0; i < encryptTestCases.length; i++) {
+      const tc = encryptTestCases[i]!;
+      const ev = result.externalEncryptedValues[i]!;
+      console.log(`  ${tc.type}: handle=${ev.bytes32Hex.slice(0, 20)}...`);
+      expect(ev.bytes32Hex).toBeDefined();
+    }
+  });
+
+  for (const tc of encryptTestCases) {
+    it(`should encrypt ${tc.type}`, async () => {
+      const client = createFhevmEncryptClient({
+        chain: sepolia,
+        provider: config.provider,
+      });
+      await client.ready;
+
+      const result = await client.encrypt({
+        contractAddress: FHETestAddresses.testnet,
+        userAddress: config.wallet.address,
+        values: tc,
+      });
+
+      expect(result.externalEncryptedValue).toBeDefined();
+      expect(result.inputProof).toBeDefined();
+      expect(result.inputProof.startsWith("0x")).toBe(true);
+      console.log(
+        `  ${tc.type}: handle=${result.externalEncryptedValue.bytes32Hex.slice(0, 20)}... proof=${result.inputProof.length} chars`,
+      );
+    });
+  }
+});

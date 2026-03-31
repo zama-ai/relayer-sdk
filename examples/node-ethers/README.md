@@ -21,7 +21,7 @@ Without `.env.local`, a random wallet is used. The full flow still runs but decr
 ## Run
 
 ```bash
-npx tsx ./examples/node-ethers/test-run.ts
+npx tsx ./test-run.ts
 ```
 
 ## Notes

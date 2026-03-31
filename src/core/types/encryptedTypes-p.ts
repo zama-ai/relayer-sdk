@@ -79,16 +79,16 @@ export interface EncryptedValueBase {
 
 // Typed base
 export interface EncryptedValueOfTypeBase<
-  T extends FheType,
+  etype extends FheType,
 > extends EncryptedValueBase {
-  readonly fheTypeId: FheTypeToIdMap[T];
-  readonly fheType: T;
+  readonly fheTypeId: FheTypeToIdMap[etype];
+  readonly fheType: etype;
 }
 
 // Computed typed base
 export interface ComputedEncryptedValueOfTypeBase<
-  T extends FheType,
-> extends EncryptedValueOfTypeBase<T> {
+  etype extends FheType,
+> extends EncryptedValueOfTypeBase<etype> {
   readonly bytes32Hex: ComputedHandleBytes32Hex;
   readonly bytes32: ComputedHandleBytes32;
   readonly bytes32HexNo0x: ComputedHandleBytes32HexNo0x;
@@ -98,8 +98,8 @@ export interface ComputedEncryptedValueOfTypeBase<
 
 // External typed base
 export interface ExternalEncryptedValueOfTypeBase<
-  T extends FheType,
-> extends EncryptedValueOfTypeBase<T> {
+  etype extends FheType,
+> extends EncryptedValueOfTypeBase<etype> {
   readonly bytes32Hex: InputHandleBytes32Hex;
   readonly bytes32: InputHandleBytes32;
   readonly bytes32HexNo0x: InputHandleBytes32HexNo0x;

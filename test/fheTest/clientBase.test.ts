@@ -7,7 +7,10 @@ import {
 } from "@fhevm/sdk/ethers";
 import { sepolia } from "@fhevm/sdk/chains";
 import { ethers } from "ethers";
-import { getTestConfig, type FheTestConfig } from "./setup.js";
+import {
+  getEthersTestConfig,
+  type FheTestEthersConfig,
+} from "./ethers/setup.js";
 import {
   clearKeyCache,
   readKeyFromCache,
@@ -15,10 +18,10 @@ import {
 } from "./keyCache.js";
 
 describe("Phase 1 — createFhevmBaseClient", () => {
-  let config: FheTestConfig;
+  let config: FheTestEthersConfig;
 
   beforeAll(() => {
-    config = getTestConfig();
+    config = getEthersTestConfig();
     setFhevmRuntimeConfig({
       auth: {
         type: "ApiKeyHeader",

@@ -44,6 +44,7 @@ export type KmsUserDecryptEIP712Types = {
     { readonly name: "chainId"; readonly type: "uint256" },
     { readonly name: "verifyingContract"; readonly type: "address" },
   ];
+  // CRITICAL: Field order is authoritative — determines the EIP-712 type hash.
   readonly UserDecryptRequestVerification: readonly [
     { readonly name: "publicKey"; readonly type: "bytes" },
     { readonly name: "contractAddresses"; readonly type: "address[]" },
@@ -60,13 +61,14 @@ export type KmsDelegateUserDecryptEIP712Types = {
     { readonly name: "chainId"; readonly type: "uint256" },
     { readonly name: "verifyingContract"; readonly type: "address" },
   ];
+  // CRITICAL: Field order is authoritative — determines the EIP-712 type hash.
   readonly DelegatedUserDecryptRequestVerification: readonly [
     { readonly name: "publicKey"; readonly type: "bytes" },
     { readonly name: "contractAddresses"; readonly type: "address[]" },
+    { readonly name: "delegatorAddress"; readonly type: "address" },
     { readonly name: "startTimestamp"; readonly type: "uint256" },
     { readonly name: "durationDays"; readonly type: "uint256" },
     { readonly name: "extraData"; readonly type: "bytes" },
-    { readonly name: "delegatedAccount"; readonly type: "address" },
   ];
 };
 
@@ -94,7 +96,7 @@ export type KmsUserDecryptEIP712Message = Readonly<{
 
 export type KmsDelegatedUserDecryptEIP712Message = Prettify<
   KmsUserDecryptEIP712Message & {
-    readonly delegatedAccount: ChecksummedAddress;
+    readonly delegatorAddress: ChecksummedAddress;
   }
 >;
 

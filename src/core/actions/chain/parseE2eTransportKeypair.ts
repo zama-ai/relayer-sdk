@@ -11,7 +11,10 @@ import {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export type ParseE2eTransportKeypairParameters = unknown;
+export type ParseE2eTransportKeypairParameters = {
+  /** The serialized keypair — output of `serializeE2eTransportKeypair` or a previously parsed object. */
+  readonly serialized: string | Record<string, unknown>;
+};
 
 export type ParseE2eTransportKeypairReturnType = E2eTransportKeypair;
 
@@ -19,7 +22,11 @@ export async function parseE2eTransportKeypair(
   fhevm: Fhevm<FhevmChain, FhevmRuntime, OptionalNativeClient>,
   parameters: ParseE2eTransportKeypairParameters,
 ): Promise<ParseE2eTransportKeypairReturnType> {
-  return toE2eTransportKeypair(fhevm, parameters);
+  const parsed =
+    typeof parameters.serialized === "string"
+      ? (JSON.parse(parameters.serialized) as unknown)
+      : parameters.serialized;
+  return toE2eTransportKeypair(fhevm, parsed);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

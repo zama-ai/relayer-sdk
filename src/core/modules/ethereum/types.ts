@@ -49,6 +49,7 @@ export type RecoverTypedDataAddressModuleFunction = {
 ////////////////////////////////////////////////////////////////////////////////
 
 export type SignTypedDataParameters = {
+  readonly account: ChecksummedAddress;
   readonly domain: {
     readonly chainId: Uint256;
     readonly name: string;

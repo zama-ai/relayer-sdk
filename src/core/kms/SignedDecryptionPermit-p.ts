@@ -111,18 +111,30 @@ abstract class SignedDecryptionPermitBaseImpl {
   public get e2eTransportPublicKey(): BytesHex {
     return this.#eip712.message.publicKey;
   }
+}
 
-  public toJSON(): {
-    eip712: KmsUserDecryptEIP712 | KmsDelegatedUserDecryptEIP712;
-    signature: string;
-    signerAddress: string;
-  } {
-    return {
-      eip712: this.#eip712,
-      signature: this.#signature,
-      signerAddress: this.#signerAddress,
-    };
-  }
+////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Serializes a signed decryption permit to a plain object suitable for
+ * JSON serialization. Uses the public getters — does not access private fields.
+ *
+ * `toJSON()` is intentionally not on the class to prevent accidental
+ * serialization of sensitive data via `JSON.stringify(permit)`.
+ */
+export function serializeSignedDecryptionPermitToJSON(
+  permit: SignedDecryptionPermit,
+): {
+  eip712: KmsUserDecryptEIP712 | KmsDelegatedUserDecryptEIP712;
+  signature: string;
+  signerAddress: string;
+} {
+  assertIsSignedDecryptionPermit(permit, {});
+  return {
+    eip712: permit.eip712,
+    signature: permit.signature,
+    signerAddress: permit.signerAddress,
+  };
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -159,7 +171,7 @@ class SignedDelegatedDecryptionPermitImpl
   }
 
   public override get userAddress(): ChecksummedAddress {
-    return this.eip712.message.delegatedAccount;
+    return this.eip712.message.delegatorAddress;
   }
 
   public override get isDelegated(): true {
@@ -245,12 +257,12 @@ type SignDecryptionPermitCommonParameters = {
 
 export type SignSelfDecryptionPermitParameters =
   SignDecryptionPermitCommonParameters & {
-    readonly onBehalfOf?: undefined;
+    readonly delegatorAddress?: undefined;
   };
 
 export type SignDelegatedDecryptionPermitParameters =
   SignDecryptionPermitCommonParameters & {
-    readonly onBehalfOf: string;
+    readonly delegatorAddress: string;
   };
 
 export type SignDecryptionPermitParameters =
@@ -261,8 +273,8 @@ export type SignDecryptionPermitParameters =
  * Creates a signed decryption permit by constructing the EIP-712 typed data
  * and signing it with the provided signer.
  *
- * If `onBehalfOf` is provided, creates a delegated permit that allows the signer
- * to decrypt encrypted values belonging to the `onBehalfOf` account.
+ * If `delegatorAddress` is provided, creates a delegated permit that allows the signer
+ * to decrypt encrypted values belonging to the `delegatorAddress` account.
  * Otherwise, creates a standard permit where the signer decrypts their own values.
  *
  * The EIP-712 message includes the keypair's public key, allowing the gateway
@@ -290,24 +302,26 @@ export async function signDecryptionPermit(
     contractAddresses,
     startTimestamp,
     durationDays,
-    signerAddress,
+    signerAddress: signerAddressArg,
     e2eTransportKeypair,
     signer,
-    onBehalfOf,
+    delegatorAddress,
   } = parameters;
 
   assertIsE2eTransportKeypair(e2eTransportKeypair, {});
-  assertIsAddress(signerAddress, {});
+  assertIsAddress(signerAddressArg, {});
 
-  if (onBehalfOf !== undefined) {
-    assertIsAddress(onBehalfOf, {});
-    if (signerAddress.toLowerCase() === onBehalfOf.toLowerCase()) {
+  if (delegatorAddress !== undefined) {
+    assertIsAddress(delegatorAddress, {});
+    if (signerAddressArg.toLowerCase() === delegatorAddress.toLowerCase()) {
       throw new Error(
-        "signerAddress and onBehalfOf must be different. " +
+        "signerAddress and delegatorAddress must be different. " +
           "Use a non-delegated permit to decrypt your own values.",
       );
     }
   }
+
+  const signerAddress = addressToChecksummedAddress(signerAddressArg);
 
   const commonMessage = {
     verifyingContractAddressDecryption: context.chain.fhevm.gateway.contracts
@@ -321,21 +335,21 @@ export async function signDecryptionPermit(
   };
 
   const eip712 =
-    onBehalfOf !== undefined
+    delegatorAddress !== undefined
       ? createKmsDelegatedUserDecryptEIP712({
           ...commonMessage,
-          delegatedAccount: onBehalfOf,
+          delegatorAddress,
         })
       : createKmsUserDecryptEIP712(commonMessage);
 
-  const signature = await context.runtime.ethereum.signTypedData(
-    signer,
-    eip712,
-  );
+  const signature = await context.runtime.ethereum.signTypedData(signer, {
+    account: signerAddress,
+    ...eip712,
+  });
 
   return await createSignedDecryptionPermit(context, {
     signature,
-    signerAddress: addressToChecksummedAddress(signerAddress),
+    signerAddress,
     eip712,
   });
 }

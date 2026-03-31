@@ -12,7 +12,9 @@ import type { BytesHex } from "../../types/primitives.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export type SerializeE2eTransportKeypairParameters = E2eTransportKeypair;
+export type SerializeE2eTransportKeypairParameters = {
+  readonly e2eTransportKeypair: E2eTransportKeypair;
+};
 
 export type SerializeE2eTransportKeypairReturnType = {
   publicKey: BytesHex;
@@ -23,7 +25,7 @@ export function serializeE2eTransportKeypair(
   _fhevm: Fhevm<FhevmChain, FhevmRuntime, OptionalNativeClient>,
   parameters: SerializeE2eTransportKeypairParameters,
 ): SerializeE2eTransportKeypairReturnType {
-  return serializeE2eTransportKeypair_(parameters);
+  return serializeE2eTransportKeypair_(parameters.e2eTransportKeypair);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

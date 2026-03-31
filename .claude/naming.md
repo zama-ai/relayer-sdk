@@ -2,8 +2,53 @@
 
 ## Types
 
-- `<FunctionName>Parameters` — input type for a function
+- `<FunctionName>Parameters` — input type for a function. Must be an object with named fields, never a bare type:
+
+  ```ts
+  // Good — named fields in an object
+  export type EncryptParameters = {
+    readonly contractAddress: string;
+    readonly userAddress: string;
+    readonly values: TypedValueLike;
+  };
+
+  // Bad — bare type alias, no named fields
+  export type ParseE2eTransportKeypairParameters = unknown;
+  export type SerializeE2eTransportKeypairParameters = E2eTransportKeypair;
+  ```
+
 - `<FunctionName>ReturnType` — output type for a function
+
+## Generics
+
+- When a generic parameter represents an FHE type, use `etype` as the parameter name:
+
+  ```ts
+  // Good
+  type ClearValueType<etype extends FheType> = ...
+  function decrypt<etype extends FheType>(handle: EncryptedValue<etype>): ClearValueType<etype>
+
+  // Bad
+  type ClearValueType<T extends FheType> = ...
+  function decrypt<T extends FheType>(handle: EncryptedValue<T>): ClearValueType<T>
+  ```
+
+## Serialization
+
+- `serialize<Xxx>()` — returns a **plain object** (JSON-compatible, no class instances). The caller calls `JSON.stringify()` if they need a string.
+- `stringify<Xxx>()` — returns a **string**. Use this prefix only when the function generates a string directly.
+- `parse<Xxx>()` — accepts a plain object (or string) and returns a validated instance.
+- `Parse<Xxx>Parameters` must include a `readonly serialized: string | Record<string, unknown>` field. Additional fields are allowed:
+  ```ts
+  // Good
+  export type ParseSignedDecryptionPermitParameters = {
+    readonly serialized: string | Record<string, unknown>;
+    readonly e2eTransportKeypair: E2eTransportKeypair; // extra field
+  };
+
+  // Bad — missing `serialized` field
+  export type ParseE2eTransportKeypairParameters = unknown;
+  ```
 
 ## Functions
 
@@ -73,15 +118,15 @@
 - **Prefer `EncryptedValue` over `Handle` in public type names and parameters.**
   The term "handle" is established in FHE.sol and the FHEVM whitepaper, but
   `EncryptedValue` is more self-explanatory for newcomers (frontend devs, backend integrators).
-- Public type names: use `EncryptedValue<T>`, `ExternalEncryptedValue<T>`, `ClearValue<T>`
+- Public type names: use `EncryptedValue<etype>`, `ExternalEncryptedValue<etype>`, `ClearValue<etype>`
 - Public parameter names: use `encryptedValue`, `encryptedValues` — not `handle`
 - Typed variants (`Euint8`, `Ebool`, `ExternalEuint8`, `ClearBool`, etc.) follow Solidity naming
 - JSDoc and documentation may freely use "handle" to bridge to FHE.sol terminology:
   ```ts
   /** An encrypted FHE value (`handle` in FHE.sol / FHEVM whitepaper terminology). */
-  export type EncryptedValue<T extends FheType = FheType> = ...;
+  export type EncryptedValue<etype extends FheType = FheType> = ...;
   ```
-- A `Handle<T>` alias of `EncryptedValue<T>` is acceptable as a secondary re-export
+- A `Handle<etype>` alias of `EncryptedValue<etype>` is acceptable as a secondary re-export
   for developers familiar with FHE.sol, but `EncryptedValue` remains the primary name
 - Internal code (`-p` files) may use "handle" terminology freely
 

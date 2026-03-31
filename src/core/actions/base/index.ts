@@ -20,6 +20,12 @@ export {
 } from "./publicDecrypt.js";
 
 export {
+  type ReadPublicValueParameters,
+  type ReadPublicValueReturnType,
+  readPublicValue,
+} from "./readPublicValue.js";
+
+export {
   type CreateVerifiedInputProofFromRawBytesParameters,
   type CreateVerifiedInputProofFromRawBytesReturnType,
   createVerifiedInputProofFromRawBytes,

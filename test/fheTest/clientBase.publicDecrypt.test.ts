@@ -30,7 +30,7 @@ describe("Base client — public decrypt", () => {
       provider: config.provider,
     });
 
-    const allBytes32 = publicHandles.map((h) => h.bytes32);
+    const allBytes32 = publicHandles.map((h) => h.bytes32Hex);
     const proof = await client.publicDecrypt({
       encryptedValues: allBytes32,
     });
@@ -55,14 +55,14 @@ describe("Base client — public decrypt", () => {
   });
 
   for (const handle of publicHandles) {
-    it(`should public decrypt ${handle.fheType} (${handle.bytes32.slice(0, 10)}...)`, async () => {
+    it(`should public decrypt ${handle.fheType} (${handle.bytes32Hex.slice(0, 10)}...)`, async () => {
       const client = createFhevmBaseClient({
         chain: sepolia,
         provider: config.provider,
       });
 
       const publicDecryptionProof = await client.publicDecrypt({
-        encryptedValues: [handle.bytes32],
+        encryptedValues: [handle.bytes32Hex],
       });
 
       expect(publicDecryptionProof).toBeDefined();

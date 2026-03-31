@@ -416,21 +416,21 @@ function _assertMinimumEncryptionBitWidth(bw: number): void {
   );
 }
 
-export function bytesToClearValueType<T extends FheType>(
-  fheType: T,
+export function bytesToClearValueType<etype extends FheType>(
+  fheType: etype,
   bytes: Bytes,
-): ClearValueType<T> {
+): ClearValueType<etype> {
   const bn = bytesToBigInt(bytes);
   // needed to type narrowing
   const ft: FheType = fheType;
 
   switch (ft) {
     case "ebool":
-      return (bn !== 0n) as ClearValueType<T>;
+      return (bn !== 0n) as ClearValueType<etype>;
     case "eaddress":
       return asAddress(
         bigIntToBytesHex(bn, { byteLength: 20 }),
-      ) as ClearValueType<T>;
+      ) as ClearValueType<etype>;
     case "euint8":
     case "euint16":
     case "euint32": {
@@ -438,7 +438,7 @@ export function bytesToClearValueType<T extends FheType>(
         max: BigInt(FheTypeToMaxValue[ft]),
         subject: "value",
       });
-      return Number(bn) as ClearValueType<T>;
+      return Number(bn) as ClearValueType<etype>;
     }
     case "euint64":
     case "euint128":
@@ -447,7 +447,7 @@ export function bytesToClearValueType<T extends FheType>(
         max: BigInt(FheTypeToMaxValue[ft]),
         subject: "value",
       });
-      return bn as ClearValueType<T>;
+      return bn as ClearValueType<etype>;
     }
     default:
       return assertNever(ft, `Unknown fheTypeName: ${ft}`);
@@ -465,16 +465,16 @@ export function bytesToClearValueType<T extends FheType>(
  *
  * @throws If `value` is not the expected JS type or exceeds the type's range.
  */
-export function asClearValueType<T extends FheType>(
-  fheTypeName: T,
+export function asClearValueType<etype extends FheType>(
+  fheTypeName: etype,
   value: unknown,
   options?: { subject?: string } & ErrorMetadataParams,
-): ClearValueType<T> {
+): ClearValueType<etype> {
   switch (fheTypeName) {
     case "ebool":
-      return asBoolean(value, options) as ClearValueType<T>;
+      return asBoolean(value, options) as ClearValueType<etype>;
     case "eaddress":
-      return asAddress(value, options) as ClearValueType<T>;
+      return asAddress(value, options) as ClearValueType<etype>;
     case "euint8":
     case "euint16":
     case "euint32": {
@@ -482,7 +482,7 @@ export function asClearValueType<T extends FheType>(
         ...options,
         max: MAX_UINT_FOR_TYPE[fheTypeName],
       });
-      return value as ClearValueType<T>;
+      return value as ClearValueType<etype>;
     }
     case "euint64":
     case "euint128":
@@ -491,7 +491,7 @@ export function asClearValueType<T extends FheType>(
         ...options,
         max: MAX_UINT_FOR_TYPE[fheTypeName],
       });
-      return value as ClearValueType<T>;
+      return value as ClearValueType<etype>;
     }
     default:
       return assertNever(fheTypeName, `Unknown fheTypeName: ${fheTypeName}`);
@@ -509,17 +509,17 @@ export function asClearValueType<T extends FheType>(
  *
  * @throws If `value` cannot be converted or exceeds the type's range.
  */
-export function toClearValueType<T extends FheType>(
-  fheTypeName: T,
+export function toClearValueType<etype extends FheType>(
+  fheTypeName: etype,
   value: unknown,
   options?: { subject?: string } & ErrorMetadataParams,
-): ClearValueType<T> {
+): ClearValueType<etype> {
   switch (fheTypeName) {
     case "ebool":
-      return asBoolean(value, options) as ClearValueType<T>;
+      return asBoolean(value, options) as ClearValueType<etype>;
     case "eaddress":
       assertIsAddress(value, options ?? {});
-      return value as ClearValueType<T>;
+      return value as ClearValueType<etype>;
     case "euint8":
     case "euint16":
     case "euint32": {
@@ -527,7 +527,7 @@ export function toClearValueType<T extends FheType>(
         ...options,
         max: MAX_UINT_FOR_TYPE[fheTypeName],
       });
-      return Number(value) as ClearValueType<T>;
+      return Number(value) as ClearValueType<etype>;
     }
     case "euint64":
     case "euint128":
@@ -536,7 +536,7 @@ export function toClearValueType<T extends FheType>(
         ...options,
         max: MAX_UINT_FOR_TYPE[fheTypeName],
       });
-      return BigInt(value) as ClearValueType<T>;
+      return BigInt(value) as ClearValueType<etype>;
     }
     default:
       return assertNever(fheTypeName, `Unknown fheTypeName: ${fheTypeName}`);

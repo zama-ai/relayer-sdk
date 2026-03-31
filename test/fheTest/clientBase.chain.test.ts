@@ -6,15 +6,18 @@ import {
   setFhevmRuntimeConfig,
 } from "@fhevm/sdk/ethers";
 import { sepolia } from "@fhevm/sdk/chains";
-import { getTestConfig, type FheTestConfig } from "./setup.js";
+import {
+  getEthersTestConfig,
+  type FheTestEthersConfig,
+} from "./ethers/setup.js";
 import { resolveFhevmConfig } from "@fhevm/sdk/actions/host";
 import { safeJSONstringify } from "../../src/core/base/string.js";
 
 describe("Base client — chain resolution", () => {
-  let config: FheTestConfig;
+  let config: FheTestEthersConfig;
 
   beforeAll(() => {
-    config = getTestConfig();
+    config = getEthersTestConfig();
     setFhevmRuntimeConfig({
       auth: {
         type: "ApiKeyHeader",

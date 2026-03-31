@@ -1,9 +1,5 @@
-import type {
-  FheType,
-  ClearValueType,
-  FheTypeToValueTypeNameMap,
-} from "./fheType.js";
-import type { Bytes32, Bytes32Hex, Bytes32HexAble } from "./primitives.js";
+import type { FheType, FheTypeToValueTypeNameMap } from "./fheType.js";
+import type { TypedValueOfBase } from "./primitives.js";
 import type {
   ComputedEncryptedValueOfTypeBase,
   ExternalEncryptedValueOfTypeBase,
@@ -18,37 +14,37 @@ import type {
  * Either a {@link ComputedEncryptedValue} (verified, on-chain) or an
  * {@link ExternalEncryptedValue} (unverified input). Narrowable via `isExternal`.
  */
-export type EncryptedValue<T extends FheType = FheType> =
-  | ComputedEncryptedValue<T>
-  | ExternalEncryptedValue<T>;
+export type EncryptedValue<etype extends FheType = FheType> =
+  | ComputedEncryptedValue<etype>
+  | ExternalEncryptedValue<etype>;
 
 /** A computed encrypted value — verified on-chain, result of an FHE operation. */
-export type ComputedEncryptedValue<T extends FheType = FheType> = {
-  [K in T]: ComputedEncryptedValueOfTypeBase<K>;
-}[T];
+export type ComputedEncryptedValue<etype extends FheType = FheType> = {
+  [K in etype]: ComputedEncryptedValueOfTypeBase<K>;
+}[etype];
 
 /** An unverified encrypted value (`inputHandle` in `FHE.sol`). */
-export type ExternalEncryptedValue<T extends FheType = FheType> = {
-  [K in T]: ExternalEncryptedValueOfTypeBase<K>;
-}[T];
+export type ExternalEncryptedValue<etype extends FheType = FheType> = {
+  [K in etype]: ExternalEncryptedValueOfTypeBase<K>;
+}[etype];
 
 /**
  * Alias for {@link EncryptedValue} using `FHE.sol` terminology.
  * In `FHE.sol`, a `handle` is the `bytes32` reference to any encrypted value.
  */
-export type Handle<T extends FheType = FheType> = EncryptedValue<T>;
+export type Handle<etype extends FheType = FheType> = EncryptedValue<etype>;
 
 /**
  * Alias for {@link ExternalEncryptedValue} using `FHE.sol` terminology.
  * In `FHE.sol`, an `inputHandle` is an encrypted value that has not yet been
  * verified on-chain via `InputVerifier.sol`.
  */
-export type InputHandle<T extends FheType = FheType> =
-  ExternalEncryptedValue<T>;
+export type InputHandle<etype extends FheType = FheType> =
+  ExternalEncryptedValue<etype>;
 
 /** Alias for {@link ComputedEncryptedValue} using `FHE.sol` terminology. */
-export type ComputedHandle<T extends FheType = FheType> =
-  ComputedEncryptedValue<T>;
+export type ComputedHandle<etype extends FheType = FheType> =
+  ComputedEncryptedValue<etype>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Typed shortcuts
@@ -90,7 +86,14 @@ export type ExternalEaddress = ExternalEncryptedValue<"eaddress">;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-/** Accepts raw bytes or a parsed encrypted value. */
+/**
+ * Any value that can be interpreted as an encrypted value (bytes32 handle).
+ *
+ * - `Uint8Array` — raw 32-byte handle (`Bytes32`)
+ * - `string` — 0x-prefixed hex-encoded 32-byte handle (`Bytes32Hex`, e.g. `"0xabcd..."`)
+ * - `{ bytes32Hex: string }` — object with a hex-encoded handle property
+ * - `EncryptedValue` — an already-parsed encrypted value
+ */
 export type EncryptedValueLike =
   | Uint8Array
   | string
@@ -99,29 +102,41 @@ export type EncryptedValueLike =
 
 export type HandleLike = EncryptedValueLike;
 
+/**
+ * Any value that can be interpreted as an external encrypted value (bytes32 input handle).
+ * An input handle is a user-encrypted value that has not yet been verified on-chain via `InputVerifier.sol`.
+ *
+ * - `Uint8Array` — raw 32-byte handle (`Bytes32`)
+ * - `string` — 0x-prefixed hex-encoded 32-byte handle (`Bytes32Hex`, e.g. `"0xabcd..."`)
+ * - `{ bytes32Hex: string }` — object with a hex-encoded handle property
+ * - `ExternalEncryptedValue` — an already-parsed external encrypted value
+ */
 export type ExternalEncryptedValueLike =
-  | Bytes32
-  | Bytes32Hex
-  | Bytes32HexAble
+  | Uint8Array
+  | string
+  | { readonly bytes32Hex: string }
   | ExternalEncryptedValue;
 
 export type InputHandleLike = ExternalEncryptedValueLike;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export type ClearValueOfType<T extends FheType> = {
-  readonly value: ClearValueType<T>;
-  readonly encryptedValue: EncryptedValue<T>;
-  readonly fheType: T;
-  readonly valueType: ClearValueTypeName<T>;
+export type ClearValueOfFheType<etype extends FheType> = TypedValueOfBase<
+  ClearValueTypeName<etype>
+> & {
+  readonly encryptedValue: EncryptedValue<etype>;
 };
 
-export type ClearValue<T extends FheType = FheType> = {
-  [K in T]: ClearValueOfType<K>;
-}[T];
+/**
+ * The decrypted clear value of an FHE encrypted value.
+ * @typeParam T - The FHE type (e.g. `"euint8"`, `"ebool"`). Defaults to all types.
+ */
+export type ClearValue<etype extends FheType = FheType> = {
+  [K in etype]: ClearValueOfFheType<K>;
+}[etype];
 
-export type ClearValueTypeName<T extends FheType = FheType> =
-  FheTypeToValueTypeNameMap[T];
+export type ClearValueTypeName<etype extends FheType = FheType> =
+  FheTypeToValueTypeNameMap[etype];
 
 export type ClearBool = ClearValue<"ebool">;
 export type ClearUint8 = ClearValue<"euint8">;

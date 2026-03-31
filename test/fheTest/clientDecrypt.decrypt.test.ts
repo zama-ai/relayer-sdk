@@ -90,7 +90,7 @@ describe("Decrypt client — user decrypt", () => {
 
     const clearValues = await client.decrypt({
       encryptedValues: {
-        encryptedValue: handle.bytes32,
+        encryptedValue: handle.bytes32Hex,
         contractAddress: FHETestAddresses.testnet as ChecksummedAddress,
       },
       signedPermit,
@@ -129,7 +129,7 @@ describe("Decrypt client — user decrypt", () => {
     });
 
     const allEncryptedValues = publicHandles.map((h) => ({
-      encryptedValue: h.bytes32,
+      encryptedValue: h.bytes32Hex,
       contractAddress: FHETestAddresses.testnet as ChecksummedAddress,
     }));
 

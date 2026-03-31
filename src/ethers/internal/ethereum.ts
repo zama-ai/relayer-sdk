@@ -108,8 +108,8 @@ export async function readContract(
 // getChainId
 ////////////////////////////////////////////////////////////////////////////////
 
-export async function getChainId<T extends EthersT.ContractRunner>(
-  hostPublicClient: TrustedClient<T>,
+export async function getChainId(
+  hostPublicClient: TrustedClient<EthersT.ContractRunner>,
 ): Promise<GetChainIdReturnType> {
   const n = await getNetwork(hostPublicClient);
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-conversion
@@ -130,6 +130,20 @@ export async function signTypedData(
   if (typeof ethersSigner.signTypedData !== "function") {
     throw new Error("signer does not support signTypedData");
   }
+
+  // Skipped: Since viem does not check anything, do the same in ethers.
+  // Transfer responsibility to caller
+  // Keep code if needed
+  /*
+  
+      const signerAddress = await ethersSigner.getAddress();
+      if (signerAddress.toLowerCase() !== parameters.account.toLowerCase()) {
+        throw new Error(
+          `Signer address mismatch: expected ${parameters.account} but signer resolved to ${signerAddress}`,
+        );
+      }
+
+  */
 
   // ethers takes 3 separate args and filters types by primaryType
   const primaryTypeFields = types[primaryType];

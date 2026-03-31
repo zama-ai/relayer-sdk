@@ -41,7 +41,7 @@ export async function fetchDelegatedUserDecrypt(
     durationDays: payload.kmsDecryptEip712Message.durationDays,
     contractsChainId,
     contractAddresses: payload.kmsDecryptEip712Message.contractAddresses,
-    delegatorAddress: payload.kmsDecryptEip712Message.delegatedAccount,
+    delegatorAddress: payload.kmsDecryptEip712Message.delegatorAddress,
     delegateAddress: payload.kmsDecryptEip712Signer,
     signature: remove0x(payload.kmsDecryptEip712Signature) as Bytes65HexNo0x,
     extraData: payload.kmsDecryptEip712Message.extraData,

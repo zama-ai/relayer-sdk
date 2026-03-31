@@ -15,6 +15,22 @@
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Debug Client Decrypt Test",
+      "type": "node",
+      "runtimeVersion": "22",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/.bin/vitest",
+      "args": [
+        "run",
+        "--config",
+        "test/fheTest/vitest.config.ts",
+        "ethers/clientDecrypt.decrypt"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
     }
   ]
 }

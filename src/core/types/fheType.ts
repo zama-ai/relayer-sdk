@@ -11,6 +11,36 @@ import type {
   ValueTypeMap,
 } from "./primitives.js";
 
+export type FheTypeToValueTypeMap = {
+  ebool: "bool";
+  //euint4 has been deprecated
+  euint8: "uint8";
+  euint16: "uint16";
+  euint32: "uint32";
+  euint64: "uint64";
+  euint128: "uint128";
+  euint256: "uint256";
+  eaddress: "address";
+};
+
+// Compile-time proof that keys match FheType exactly.
+// Missing or extra keys will cause a TS error.
+type AssertFheTypeKeys<T extends Readonly<Record<FheType, unknown>>> = T;
+
+export type FheTypeToIdMap = AssertFheTypeKeys<
+  Readonly<{
+    ebool: 0;
+    //euint4: 1; has been deprecated
+    euint8: 2;
+    euint16: 3;
+    euint32: 4;
+    euint64: 5;
+    euint128: 6;
+    eaddress: 7;
+    euint256: 8;
+  }>
+>;
+
 /**
  * **FHE Type Mapping for Input Builders**
  * * Maps the **number of encrypted bits** used by a FHEVM primary type
@@ -32,73 +62,85 @@ import type {
  * | 160  | 7         | `eaddress`      | Used for encrypted Ethereum addresses. |
  * | 256  | 8         | `euint256`      | The maximum supported integer size. |
  */
-export type FheType = `e${keyof ValueTypeMap}`;
+// eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
+export type FheType = keyof FheTypeToValueTypeMap & string;
+
 export type EuintType = keyof UintToEuintMap;
 export type FheTypeId = FheTypeToIdMap[keyof FheTypeToIdMap];
 
+// Reverse of FheTypeToValueTypeMap: "bool" → "ebool", "uint8" → "euint8", etc.
 export type ValueTypeNameToFheTypeMap = {
-  [K in keyof ValueTypeMap]: `e${K}`;
+  [etype in FheType as FheTypeToValueTypeMap[etype]]: etype;
 };
 
+/**
+ * The JavaScript type of the decrypted (clear) value for a given FHE type.
+ *
+ * | FheType      | ClearValueType   |
+ * | ------------ | ---------------- |
+ * | `"ebool"`    | `boolean`        |
+ * | `"euint8"`   | `Uint8Number`    |
+ * | `"euint16"`  | `Uint16Number`   |
+ * | `"euint32"`  | `Uint32Number`   |
+ * | `"euint64"`  | `Uint64BigInt`   |
+ * | `"euint128"` | `Uint128BigInt`  |
+ * | `"euint256"` | `Uint256BigInt`  |
+ * | `"eaddress"` | `Address`        |
+ *
+ * @typeParam T - The FHE type. Defaults to the union of all clear value types.
+ */
+export type ClearValueType<etype extends FheType = FheType> =
+  ValueTypeMap[FheTypeToValueTypeMap[etype]];
+
+// Same as ClearValueType but as a full map: "ebool" → boolean, "euint8" → Uint8Number, etc.
 export type ClearValueTypeMap = {
-  [K in keyof ValueTypeMap as `e${K}`]: ValueTypeMap[K];
+  [etype in FheType]: ValueTypeMap[FheTypeToValueTypeMap[etype]];
 };
 
-export type ClearValueType<T extends FheType = FheType> = ClearValueTypeMap[T]; // the union
+// Same as FheTypeToValueTypeMap (kept for backward compat)
+export type FheTypeToValueTypeNameMap = FheTypeToValueTypeMap;
 
-export type FheTypeToValueTypeNameMap = {
-  [K in keyof ValueTypeMap as `e${K}`]: K;
-};
-
+// Uint-only subset: "uint8" → "euint8", etc.
 export type UintToEuintMap = {
-  [K in keyof UintValueTypeMap]: `e${K}`;
+  [etype in FheType as FheTypeToValueTypeMap[etype] extends keyof UintValueTypeMap
+    ? FheTypeToValueTypeMap[etype]
+    : never]: etype;
 };
 
+// Reverse: "euint8" → "uint8", etc.
 export type EuintToUintMap = {
-  [K in keyof UintToEuintMap as `e${K}`]: K;
+  [K in keyof UintToEuintMap as UintToEuintMap[K]]: K;
 };
 
 export type EuintToUintNormalizedMap = {
-  [K in keyof UintToEuintMap as `e${K}`]: UintNormalizedMap[K];
+  [K in keyof UintToEuintMap as UintToEuintMap[K]]: UintNormalizedMap[K];
 };
-
-export type FheTypeToIdMap = Readonly<{
-  ebool: 0;
-  //euint4: 1; has been deprecated
-  euint8: 2;
-  euint16: 3;
-  euint32: 4;
-  euint64: 5;
-  euint128: 6;
-  eaddress: 7;
-  euint256: 8;
-}>;
 
 export type FheTypeIdToNameMap = {
-  [K in keyof FheTypeToIdMap as FheTypeToIdMap[K]]: K;
+  [etype in keyof FheTypeToIdMap as FheTypeToIdMap[etype]]: etype;
 };
 
-// ebool is encrypted on 2 bits
-export type EncryptionBitsMap = Readonly<
-  { ebool: 2 } & {
-    [K in keyof Omit<ValueTypeBitsMap, "bool"> as `e${K}`]: ValueTypeBitsMap[K];
-  }
->;
+// ebool is encrypted on 2 bits (not 1)
+export type EncryptionBitsMap = Readonly<{
+  [etype in FheType]: etype extends "ebool"
+    ? 2
+    : ValueTypeBitsMap[FheTypeToValueTypeMap[etype]];
+}>;
 
 export type EncryptionBits = EncryptionBitsMap[keyof EncryptionBitsMap];
-export type EncryptionBitsOf<T extends keyof EncryptionBitsMap> =
-  EncryptionBitsMap[T];
+export type EncryptionBitsOf<etype extends keyof EncryptionBitsMap> =
+  EncryptionBitsMap[etype];
 
 export type FheTypeIdToEncryptionBitsMap = {
-  [K in keyof FheTypeToIdMap as FheTypeToIdMap[K]]: EncryptionBitsMap[K];
+  [etype in keyof FheTypeToIdMap as FheTypeToIdMap[etype]]: EncryptionBitsMap[etype];
 };
 
 export type EncryptionBitsToFheTypeIdMap = {
-  [K in keyof EncryptionBitsMap as EncryptionBitsMap[K]]: FheTypeToIdMap[K];
+  [etype in keyof EncryptionBitsMap as EncryptionBitsMap[etype]]: FheTypeToIdMap[etype];
 };
 
 export type EncryptionBitsToFheTypeMap = {
-  [K in keyof EncryptionBitsMap as EncryptionBitsMap[K]]: K;
+  [etype in keyof EncryptionBitsMap as EncryptionBitsMap[etype]]: etype;
 };
 
 export type SolidityPrimitiveTypeName = "bool" | "uint256" | "address";
