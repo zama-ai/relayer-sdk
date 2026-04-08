@@ -15,6 +15,10 @@ export class InputVerifier {
     'function eip712Domain() view returns (bytes1 fields, string name, string version, uint256 chainId, address verifyingContract, bytes32 salt, uint256[] extensions)',
   ] as const;
 
+  static readonly #constructorGuard: unique symbol = Symbol(
+    'InputVerifier.constructorGuard',
+  );
+
   static {
     Object.freeze(InputVerifier.#abi);
   }
@@ -24,12 +28,20 @@ export class InputVerifier {
   readonly #coprocessorSigners: ChecksummedAddress[];
   readonly #coprocessorSignerThreshold: number;
 
-  private constructor(params: {
-    address: ChecksummedAddress;
-    eip712Domain: CoprocessorEIP712DomainType;
-    coprocessorSigners: ChecksummedAddress[];
-    coprocessorSignerThreshold: number;
-  }) {
+  private constructor(
+    guard: symbol,
+    params: {
+      address: ChecksummedAddress;
+      eip712Domain: CoprocessorEIP712DomainType;
+      coprocessorSigners: ChecksummedAddress[];
+      coprocessorSignerThreshold: number;
+    },
+  ) {
+    if (guard !== InputVerifier.#constructorGuard) {
+      throw new Error(
+        'InputVerifier cannot be constructed directly. Use InputVerifier.loadFromChain() or createInstance() instead.',
+      );
+    }
     this.#address = params.address;
     this.#eip712Domain = { ...params.eip712Domain };
     this.#coprocessorSigners = [...params.coprocessorSigners];
@@ -144,7 +156,7 @@ export class InputVerifier {
       );
     }
 
-    const inputVerifier = new InputVerifier({
+    const inputVerifier = new InputVerifier(InputVerifier.#constructorGuard, {
       address: params.inputVerifierContractAddress,
       eip712Domain: eip712Domain,
       coprocessorSignerThreshold: Number(threshold),

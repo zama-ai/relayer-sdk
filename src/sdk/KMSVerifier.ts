@@ -15,6 +15,10 @@ export class KMSVerifier {
     'function eip712Domain() view returns (bytes1 fields, string name, string version, uint256 chainId, address verifyingContract, bytes32 salt, uint256[] extensions)',
   ] as const;
 
+  static readonly #constructorGuard: unique symbol = Symbol(
+    'KMSVerifier.constructorGuard',
+  );
+
   static {
     Object.freeze(KMSVerifier.#abi);
   }
@@ -25,12 +29,20 @@ export class KMSVerifier {
   readonly #kmsSigners: ChecksummedAddress[];
   readonly #kmsSignerThreshold: number;
 
-  private constructor(params: {
-    address: ChecksummedAddress;
-    eip712Domain: KmsEIP712DomainType;
-    kmsSigners: ChecksummedAddress[];
-    kmsSignerThreshold: number;
-  }) {
+  private constructor(
+    guard: symbol,
+    params: {
+      address: ChecksummedAddress;
+      eip712Domain: KmsEIP712DomainType;
+      kmsSigners: ChecksummedAddress[];
+      kmsSignerThreshold: number;
+    },
+  ) {
+    if (guard !== KMSVerifier.#constructorGuard) {
+      throw new Error(
+        'KMSVerifier cannot be constructed directly. Use KMSVerifier.loadFromChain() or createInstance() instead.',
+      );
+    }
     this.#address = params.address;
     this.#verifyingContractAddressDecryption =
       params.eip712Domain.verifyingContract;
@@ -139,7 +151,7 @@ export class KMSVerifier {
       );
     }
 
-    const kmsVerifier = new KMSVerifier({
+    const kmsVerifier = new KMSVerifier(KMSVerifier.#constructorGuard, {
       address: params.kmsContractAddress,
       eip712Domain: eip712Domain,
       kmsSignerThreshold: Number(kmsSignerThreshold),
