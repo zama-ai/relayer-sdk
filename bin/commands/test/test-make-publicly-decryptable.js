@@ -12,7 +12,6 @@ export async function testFHETestMakePubliclyDecryptableCommand(options) {
   const { config, provider, signer } = parseCommonOptions(options);
 
   logCLI('🚚 network: ' + config.name, options);
-  logCLI('🚀 route: v' + config.version, options);
   logCLI(`🍔 signer: ${signer.address}`);
 
   if (!FHETestAddresses[config.name]) {

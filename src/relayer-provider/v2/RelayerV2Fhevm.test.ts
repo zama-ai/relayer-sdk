@@ -43,7 +43,6 @@ describeIfFetchMock('RelayerV2Fhevm', () => {
   it('v2: createRelayerFhevm', async () => {
     const relayerFhevm = await createRelayerFhevm({
       ...TEST_CONFIG.v2.fhevmInstanceConfig,
-      defaultRelayerVersion: 2,
     });
     expect(relayerFhevm.version).toBe(2);
   });
@@ -53,7 +52,6 @@ describeIfFetchMock('RelayerV2Fhevm', () => {
   it('v2: getPublicKey().publicKeyId', async () => {
     const relayerFhevm = await createRelayerFhevm({
       ...TEST_CONFIG.v2.fhevmInstanceConfig,
-      defaultRelayerVersion: 2,
     });
     const pub_key = relayerFhevm.getPublicKeyBytes();
     expect(pub_key.id).toBe('fhe-public-key-data-id');
@@ -64,7 +62,6 @@ describeIfFetchMock('RelayerV2Fhevm', () => {
   it('v2: getPublicKey().publicKey', async () => {
     const relayerFhevm = await createRelayerFhevm({
       ...TEST_CONFIG.v2.fhevmInstanceConfig,
-      defaultRelayerVersion: 2,
     });
     const pub_key = relayerFhevm.getPublicKeyBytes();
     expect(pub_key.bytes).toStrictEqual(tfheCompactPublicKeyBytes);
@@ -75,7 +72,6 @@ describeIfFetchMock('RelayerV2Fhevm', () => {
   it('v2: getPublicParams().publicParamsId', async () => {
     const relayerFhevm = await createRelayerFhevm({
       ...TEST_CONFIG.v2.fhevmInstanceConfig,
-      defaultRelayerVersion: 2,
     });
     const pub_params = relayerFhevm.getPkeCrsBytesForCapacity(2048);
     expect(pub_params.id).toBe('crs-data-id');
@@ -86,7 +82,6 @@ describeIfFetchMock('RelayerV2Fhevm', () => {
   it('v2: getPublicParams().publicParams', async () => {
     const relayerFhevm = await createRelayerFhevm({
       ...TEST_CONFIG.v2.fhevmInstanceConfig,
-      defaultRelayerVersion: 2,
     });
     const pub_params = relayerFhevm.getPkeCrsBytesForCapacity(2048);
     expect(pub_params.bytes).toStrictEqual(tfheCompactPkeCrsBytes);
@@ -97,7 +92,6 @@ describeIfFetchMock('RelayerV2Fhevm', () => {
   it('v2: getPublicParams(123).publicParams', async () => {
     const relayerFhevm = await createRelayerFhevm({
       ...TEST_CONFIG.v2.fhevmInstanceConfig,
-      defaultRelayerVersion: 2,
     });
     expect(() => relayerFhevm.getPkeCrsBytesForCapacity(123)).toThrow(
       new TFHEError({
@@ -111,7 +105,6 @@ describeIfFetchMock('RelayerV2Fhevm', () => {
   it('v2: relayerProvider()', async () => {
     const relayerFhevm = await createRelayerFhevm({
       ...TEST_CONFIG.v2.fhevmInstanceConfig,
-      defaultRelayerVersion: 2,
     });
     expect(relayerFhevm instanceof RelayerV2Fhevm).toBe(true);
     const relayerFhevmV2 = relayerFhevm as RelayerV2Fhevm;
@@ -126,7 +119,6 @@ describeIfFetchMock('RelayerV2Fhevm', () => {
   it('v2: createRelayerFhevm from publicKey and publicParams', async () => {
     const relayerFhevm1 = await createRelayerFhevm({
       ...TEST_CONFIG.v2.fhevmInstanceConfig,
-      defaultRelayerVersion: 2,
     });
     const pub_key = relayerFhevm1.getPublicKeyBytes();
     const pub_params = relayerFhevm1.getPkeCrsBytesForCapacity(2048);
@@ -143,7 +135,6 @@ describeIfFetchMock('RelayerV2Fhevm', () => {
           publicParamsId: pub_params.id,
         },
       },
-      defaultRelayerVersion: 2,
     });
 
     expect(relayerFhevm2.getPublicKeyBytes()).toStrictEqual(

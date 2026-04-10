@@ -164,7 +164,6 @@ export const createInstance = async (
 ): Promise<FhevmInstance> => {
   const relayerFhevm = await createRelayerFhevm({
     ...config,
-    defaultRelayerVersion: 2,
   });
 
   const auth = config.auth;

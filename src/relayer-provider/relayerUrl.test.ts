@@ -24,60 +24,50 @@ describe('parseRelayerUrl', () => {
 
   describe('invalid inputs', () => {
     it('returns null for null input', () => {
-      expect(parseRelayerUrl(null, 1)).toBeNull();
-      expect(parseRelayerUrl(null, 2)).toBeNull();
+      expect(parseRelayerUrl(null)).toBeNull();
     });
 
     it('returns null for undefined input', () => {
-      expect(parseRelayerUrl(undefined, 1)).toBeNull();
-      expect(parseRelayerUrl(undefined, 2)).toBeNull();
+      expect(parseRelayerUrl(undefined)).toBeNull();
     });
 
     it('returns null for empty string', () => {
-      expect(parseRelayerUrl('', 1)).toBeNull();
-      expect(parseRelayerUrl('', 2)).toBeNull();
+      expect(parseRelayerUrl('')).toBeNull();
     });
 
     it('returns null for non-string input', () => {
-      expect(parseRelayerUrl(123, 1)).toBeNull();
-      expect(parseRelayerUrl({}, 1)).toBeNull();
-      expect(parseRelayerUrl([], 1)).toBeNull();
+      expect(parseRelayerUrl(123)).toBeNull();
+      expect(parseRelayerUrl({})).toBeNull();
+      expect(parseRelayerUrl([])).toBeNull();
     });
 
     it('returns null for invalid URL', () => {
-      expect(parseRelayerUrl('not-a-url', 1)).toBeNull();
-      expect(parseRelayerUrl('://missing-protocol', 1)).toBeNull();
+      expect(parseRelayerUrl('not-a-url')).toBeNull();
+      expect(parseRelayerUrl('://missing-protocol')).toBeNull();
     });
 
-    it('returns null for invalid fallback version (non-Zama URL)', () => {
-      expect(parseRelayerUrl('https://example.com', 0 as any)).toBeNull();
-      expect(parseRelayerUrl('https://example.com', 3 as any)).toBeNull();
-      expect(parseRelayerUrl('https://example.com', 'v1' as any)).toBeNull();
+    it('always returns v2 for non-Zama URLs', () => {
+      expect(parseRelayerUrl('https://example.com')).toStrictEqual({
+        url: 'https://example.com',
+        version: 2,
+      });
     });
 
-    it('returns null for invalid fallback version (Zama base URL)', () => {
-      expect(parseRelayerUrl(VALID_RELAYER_URL_BASE, 0 as any)).toBeNull();
-      expect(parseRelayerUrl(VALID_RELAYER_URL_BASE, 3 as any)).toBeNull();
-      expect(parseRelayerUrl(VALID_RELAYER_URL_BASE, 'v1' as any)).toBeNull();
+    it('ignores invalid fallback version for Zama base URL (always returns v2)', () => {
+      expect(parseRelayerUrl(VALID_RELAYER_URL_BASE)).toStrictEqual({
+        url: VALID_RELAYER_URL_V2,
+        version: 2,
+      });
     });
   });
 
   //////////////////////////////////////////////////////////////////////////////
-  // URL with explicit version
+  // Zama URLs with version suffix
   //////////////////////////////////////////////////////////////////////////////
 
-  describe('URL with explicit version', () => {
-    it('returns version 1 for URL ending with /v1', () => {
-      const result = parseRelayerUrl(VALID_RELAYER_URL_V1, 2);
-
-      expect(result).toStrictEqual({
-        url: VALID_RELAYER_URL_V1,
-        version: 1,
-      });
-    });
-
-    it('returns version 2 for URL ending with /v2', () => {
-      const result = parseRelayerUrl(VALID_RELAYER_URL_V2, 2);
+  describe('Zama URLs with version suffix', () => {
+    it('upgrades Zama v1 URL to v2', () => {
+      const result = parseRelayerUrl(VALID_RELAYER_URL_V1);
 
       expect(result).toStrictEqual({
         url: VALID_RELAYER_URL_V2,
@@ -85,42 +75,42 @@ describe('parseRelayerUrl', () => {
       });
     });
 
-    it('removes trailing slash before checking version', () => {
-      const result1 = parseRelayerUrl(`${VALID_RELAYER_URL_V1}/`, 2);
+    it('returns Zama v2 URL unchanged', () => {
+      const result = parseRelayerUrl(VALID_RELAYER_URL_V2);
+
+      expect(result).toStrictEqual({
+        url: VALID_RELAYER_URL_V2,
+        version: 2,
+      });
+    });
+
+    it('removes trailing slash from Zama URL before processing', () => {
+      const result1 = parseRelayerUrl(`${VALID_RELAYER_URL_V1}/`);
       expect(result1).toStrictEqual({
-        url: VALID_RELAYER_URL_V1,
-        version: 1,
+        url: VALID_RELAYER_URL_V2,
+        version: 2,
       });
 
-      const result2 = parseRelayerUrl(`${VALID_RELAYER_URL_V2}/`, 1);
+      const result2 = parseRelayerUrl(`${VALID_RELAYER_URL_V2}/`);
       expect(result2).toStrictEqual({
         url: VALID_RELAYER_URL_V2,
         version: 2,
       });
     });
 
-    it('explicit version overrides fallback version', () => {
-      expect(parseRelayerUrl(VALID_RELAYER_URL_V1, 2)?.version).toBe(1);
-      expect(parseRelayerUrl(VALID_RELAYER_URL_V2, 1)?.version).toBe(2);
+    it('Zama URLs ignore fallbackVersion (always return v2)', () => {
+      expect(parseRelayerUrl(VALID_RELAYER_URL_V1)?.version).toBe(2);
+      expect(parseRelayerUrl(VALID_RELAYER_URL_V2)?.version).toBe(2);
     });
   });
 
   //////////////////////////////////////////////////////////////////////////////
-  // URL without version (uses fallback)
+  // Zama base URL (no version suffix)
   //////////////////////////////////////////////////////////////////////////////
 
-  describe('URL without version (uses fallback)', () => {
-    it('appends fallback version 1 to URL', () => {
-      const result = parseRelayerUrl(VALID_RELAYER_URL_BASE, 1);
-
-      expect(result).toStrictEqual({
-        url: VALID_RELAYER_URL_V1,
-        version: 1,
-      });
-    });
-
-    it('appends fallback version 2 to URL', () => {
-      const result = parseRelayerUrl(VALID_RELAYER_URL_BASE, 2);
+  describe('Zama base URL (no version suffix)', () => {
+    it('appends /v2 to Zama base URL (ignores fallback v1)', () => {
+      const result = parseRelayerUrl(VALID_RELAYER_URL_BASE);
 
       expect(result).toStrictEqual({
         url: VALID_RELAYER_URL_V2,
@@ -128,23 +118,32 @@ describe('parseRelayerUrl', () => {
       });
     });
 
-    it('removes trailing slash before appending version', () => {
-      const result = parseRelayerUrl(`${VALID_RELAYER_URL_BASE}/`, 1);
+    it('appends /v2 to Zama base URL (ignores fallback v2)', () => {
+      const result = parseRelayerUrl(VALID_RELAYER_URL_BASE);
 
       expect(result).toStrictEqual({
-        url: VALID_RELAYER_URL_V1,
-        version: 1,
+        url: VALID_RELAYER_URL_V2,
+        version: 2,
+      });
+    });
+
+    it('removes trailing slash from Zama base URL before appending /v2', () => {
+      const result = parseRelayerUrl(`${VALID_RELAYER_URL_BASE}/`);
+
+      expect(result).toStrictEqual({
+        url: VALID_RELAYER_URL_V2,
+        version: 2,
       });
     });
   });
 
   //////////////////////////////////////////////////////////////////////////////
-  // relayerRouteVersion parameter
+  // Always returns version 2
   //////////////////////////////////////////////////////////////////////////////
 
-  describe('relayerRouteVersion parameter', () => {
-    it('non-Zama URL uses relayerRouteVersion over fallbackVersion', () => {
-      const result = parseRelayerUrl('https://custom-relayer.com', 1, 2);
+  describe('always returns version 2', () => {
+    it('returns non-Zama URL as-is with version 2', () => {
+      const result = parseRelayerUrl('https://custom-relayer.com');
 
       expect(result).toStrictEqual({
         url: 'https://custom-relayer.com',
@@ -152,17 +151,8 @@ describe('parseRelayerUrl', () => {
       });
     });
 
-    it('non-Zama URL uses relayerRouteVersion=1', () => {
-      const result = parseRelayerUrl('https://custom-relayer.com', 2, 1);
-
-      expect(result).toStrictEqual({
-        url: 'https://custom-relayer.com',
-        version: 1,
-      });
-    });
-
-    it('Zama base URL uses relayerRouteVersion to append version', () => {
-      const result = parseRelayerUrl(VALID_RELAYER_URL_BASE, 1, 2);
+    it('Zama base URL appends /v2 and returns version 2', () => {
+      const result = parseRelayerUrl(VALID_RELAYER_URL_BASE);
 
       expect(result).toStrictEqual({
         url: VALID_RELAYER_URL_V2,
@@ -170,33 +160,22 @@ describe('parseRelayerUrl', () => {
       });
     });
 
-    it('Zama base URL uses relayerRouteVersion=1 to append version', () => {
-      const result = parseRelayerUrl(VALID_RELAYER_URL_BASE, 2, 1);
-
-      expect(result).toStrictEqual({
-        url: VALID_RELAYER_URL_V1,
-        version: 1,
-      });
-    });
-
-    it('explicit URL version takes precedence over relayerRouteVersion', () => {
-      // URL has /v1, relayerRouteVersion is 2 - URL wins
-      const result1 = parseRelayerUrl(VALID_RELAYER_URL_V1, 2, 2);
+    it('Zama v1 URL is upgraded to v2; Zama v2 URL is returned unchanged', () => {
+      const result1 = parseRelayerUrl(VALID_RELAYER_URL_V1);
       expect(result1).toStrictEqual({
-        url: VALID_RELAYER_URL_V1,
-        version: 1,
+        url: VALID_RELAYER_URL_V2,
+        version: 2,
       });
 
-      // URL has /v2, relayerRouteVersion is 1 - URL wins
-      const result2 = parseRelayerUrl(VALID_RELAYER_URL_V2, 1, 1);
+      const result2 = parseRelayerUrl(VALID_RELAYER_URL_V2);
       expect(result2).toStrictEqual({
         url: VALID_RELAYER_URL_V2,
         version: 2,
       });
     });
 
-    it('undefined relayerRouteVersion falls back to fallbackVersion', () => {
-      const result = parseRelayerUrl(VALID_RELAYER_URL_BASE, 2, undefined);
+    it('Zama base URL defaults to version 2', () => {
+      const result = parseRelayerUrl(VALID_RELAYER_URL_BASE);
 
       expect(result).toStrictEqual({
         url: VALID_RELAYER_URL_V2,
@@ -211,25 +190,25 @@ describe('parseRelayerUrl', () => {
 
   describe('edge cases', () => {
     it('handles URL with port', () => {
-      const result = parseRelayerUrl('https://localhost:8080', 1);
+      const result = parseRelayerUrl('https://localhost:8080');
 
       expect(result).toStrictEqual({
         url: 'https://localhost:8080',
-        version: 1,
+        version: 2,
       });
     });
 
-    it('handles URL with port and explicit version', () => {
-      const result = parseRelayerUrl('https://localhost:8080/v2', 1);
+    it('non-Zama URL: /v2 in path does not affect version (uses fallbackVersion)', () => {
+      const result = parseRelayerUrl('https://localhost:8080/v2');
 
       expect(result).toStrictEqual({
         url: 'https://localhost:8080/v2',
-        version: 1,
+        version: 2,
       });
     });
 
-    it('handles http URL', () => {
-      const result = parseRelayerUrl('http://relayer.local/v1', 2);
+    it('non-Zama http URL: /v1 in path does not affect version (uses fallbackVersion)', () => {
+      const result = parseRelayerUrl('http://relayer.local/v1');
 
       expect(result).toStrictEqual({
         url: 'http://relayer.local/v1',
@@ -238,14 +217,14 @@ describe('parseRelayerUrl', () => {
     });
 
     it('does not match v1/v2 in the middle of path', () => {
-      let result = parseRelayerUrl('https://example.com/v1/api', 2);
+      let result = parseRelayerUrl('https://example.com/v1/api');
 
       expect(result).toStrictEqual({
         url: 'https://example.com/v1/api',
         version: 2,
       });
 
-      result = parseRelayerUrl('https://example.com.v1', 2);
+      result = parseRelayerUrl('https://example.com.v1');
 
       expect(result).toStrictEqual({
         url: 'https://example.com.v1',
@@ -254,16 +233,16 @@ describe('parseRelayerUrl', () => {
     });
 
     it('handles URL with query params (unusual but valid)', () => {
-      const result = parseRelayerUrl('https://example.com?foo=bar', 1);
+      const result = parseRelayerUrl('https://example.com?foo=bar');
 
       expect(result).toStrictEqual({
         url: 'https://example.com?foo=bar',
-        version: 1,
+        version: 2,
       });
     });
 
     it('handles URL with query params ending with v1 (unusual but valid)', () => {
-      const result = parseRelayerUrl('https://example.com?foo=barv1', 2);
+      const result = parseRelayerUrl('https://example.com?foo=barv1');
 
       expect(result).toStrictEqual({
         url: 'https://example.com?foo=barv1',

@@ -56,7 +56,7 @@ export async function loadFhevmPublicKeyConfig(
 
   const fhevm = await createRelayerFhevm({
     ...config.fhevmInstanceConfig,
-    defaultRelayerVersion: config.version,
+    defaultRelayerVersion: 2,
     ...instanceOptions,
   });
 

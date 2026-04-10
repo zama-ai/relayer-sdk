@@ -21,11 +21,7 @@ const mockKmsContextCache = {
 // npx jest --colors --passWithNoTests --coverage ./src/relayer/publicDecrypt.test.ts --collectCoverageFrom=./src/relayer/publicDecrypt.ts --testNamePattern=xxx
 // npx jest --colors --passWithNoTests --coverage ./src/relayer/publicDecrypt.test.ts --collectCoverageFrom=./src/relayer/publicDecrypt.ts
 
-const defaultRelayerVersion = 1;
-const relayerProvider = createRelayerProvider(
-  'https://test-fhevm-relayer',
-  defaultRelayerVersion,
-);
+const relayerProvider = createRelayerProvider('https://test-fhevm-relayer');
 const RELAYER_PUBLIC_DECRYPT_URL = relayerProvider.publicDecryptUrl;
 
 const dummyRelayerUserDecryptPayload: RelayerPublicDecryptPayload = {
@@ -42,7 +38,7 @@ describeIfFetchMock('publicDecrypt', () => {
   });
 
   it('relayerProvider', async () => {
-    expect(relayerProvider.version).toStrictEqual(1);
+    expect(relayerProvider.version).toStrictEqual(2);
     expect(relayerProvider.url).toStrictEqual('https://test-fhevm-relayer');
     expect(RELAYER_PUBLIC_DECRYPT_URL).toStrictEqual(
       'https://test-fhevm-relayer/public-decrypt',

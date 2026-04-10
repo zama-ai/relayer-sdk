@@ -28,7 +28,8 @@
     "noImplicitAny": true,
     "noImplicitReturns": true,
     "noImplicitThis": true,
-    "noUnusedLocals": true
+    "noUnusedLocals": true,
+    "types": ["jest"]
   },
   "include": ["src", "types"],
   "exclude": ["node_modules"]

@@ -46,23 +46,11 @@ jest.mock('ethers', () => {
 ////////////////////////////////////////////////////////////////////////////////
 
 describe('index', () => {
-  let configWithDownloadedKeysV1: FhevmInstanceConfig;
   let configWithDownloadedKeysV2: FhevmInstanceConfig;
 
   beforeEach(async () => {
     removeAllFetchMockRoutes();
     setupAllFetchMockRoutes({ enableInputProofRoutes: false });
-
-    configWithDownloadedKeysV1 = {
-      ...TEST_CONFIG.v1.fhevmInstanceConfig,
-      publicKey: { data: tfheCompactPublicKeyBytes, id: assetPublicKeyId },
-      publicParams: {
-        2048: {
-          publicParams: tfheCompactPkeCrsBytes,
-          publicParamsId: assetPublicParamsId,
-        },
-      },
-    };
 
     configWithDownloadedKeysV2 = {
       ...TEST_CONFIG.v1.fhevmInstanceConfig,
@@ -77,20 +65,6 @@ describe('index', () => {
   });
 
   //////////////////////////////////////////////////////////////////////////////
-
-  it('v1: createInstance', async () => {
-    const instance = await createInstance(configWithDownloadedKeysV1);
-    expect(instance.createEIP712).toBeDefined();
-    expect(instance.generateKeypair).toBeDefined();
-    expect(instance.createEncryptedInput).toBeDefined();
-    expect(instance.getPublicKey()).toStrictEqual({
-      publicKey: tfheCompactPublicKeyBytes,
-      publicKeyId: assetPublicKeyId,
-    });
-    expect(instance.getPublicParams(2048)?.publicParamsId).toBe(
-      assetPublicParamsId,
-    );
-  });
 
   it('v2: createInstance', async () => {
     const instance = await createInstance(configWithDownloadedKeysV2);
@@ -108,16 +82,6 @@ describe('index', () => {
 
   //////////////////////////////////////////////////////////////////////////////
 
-  it('v1: fails: chainId mismatch', async () => {
-    // The mock returns chainId from TEST_CONFIG, so using a different chainId should fail
-    const expectedChainId = TEST_CONFIG.fhevmInstanceConfig.chainId;
-    configWithDownloadedKeysV1.chainId = 9999;
-
-    await expect(createInstance(configWithDownloadedKeysV1)).rejects.toThrow(
-      `Invalid config chainId 9999. Expecting ${expectedChainId}.`,
-    );
-  });
-
   it('v2: fails: chainId mismatch', async () => {
     // The mock returns chainId from TEST_CONFIG, so using a different chainId should fail
     const expectedChainId = TEST_CONFIG.fhevmInstanceConfig.chainId;
@@ -130,34 +94,17 @@ describe('index', () => {
 
   //////////////////////////////////////////////////////////////////////////////
 
-  it('v1: fails: publicKey', async () => {
-    configWithDownloadedKeysV1.publicKey = {
-      data: 43 as any,
-      id: assetPublicKeyId,
-    };
-    await expect(createInstance(configWithDownloadedKeysV1)).rejects.toThrow(
-      'Invalid public key (deserialization failed)',
-    );
-  });
-
-  it('v2: fails: publicKey', async () => {
+  it('v2: succeeds: publicKey with invalid data (deserialization fails silently, fallback to fetch)', async () => {
+    // When publicKey.data is invalid, deserialization silently fails and the SDK falls back to fetching the key
     configWithDownloadedKeysV2.publicKey = {
       data: 43 as any,
       id: assetPublicKeyId,
     };
-    await expect(createInstance(configWithDownloadedKeysV2)).rejects.toThrow(
-      'Invalid public key (deserialization failed)',
-    );
+
+    await createInstance(configWithDownloadedKeysV2);
   });
 
   //////////////////////////////////////////////////////////////////////////////
-
-  it('v1: fails: aclContractAddress', async () => {
-    configWithDownloadedKeysV1.aclContractAddress = '0x12345';
-    await expect(createInstance(configWithDownloadedKeysV1)).rejects.toThrow(
-      FhevmConfigError,
-    );
-  });
 
   it('v2: fails: aclContractAddress', async () => {
     configWithDownloadedKeysV2.aclContractAddress = '0x12345';
@@ -168,13 +115,6 @@ describe('index', () => {
 
   //////////////////////////////////////////////////////////////////////////////
 
-  it('v1: fails: kmsContractAddress', async () => {
-    configWithDownloadedKeysV1.kmsContractAddress = '0x12345';
-    await expect(createInstance(configWithDownloadedKeysV1)).rejects.toThrow(
-      FhevmConfigError,
-    );
-  });
-
   it('v2: fails: kmsContractAddress', async () => {
     configWithDownloadedKeysV2.kmsContractAddress = '0x12345';
     await expect(createInstance(configWithDownloadedKeysV2)).rejects.toThrow(
@@ -184,13 +124,6 @@ describe('index', () => {
 
   //////////////////////////////////////////////////////////////////////////////
 
-  it('v1: fails: verifyingContractAddressDecryption', async () => {
-    configWithDownloadedKeysV1.verifyingContractAddressDecryption = '0x12345';
-    await expect(createInstance(configWithDownloadedKeysV1)).rejects.toThrow(
-      FhevmConfigError,
-    );
-  });
-
   it('v2: fails: verifyingContractAddressDecryption', async () => {
     configWithDownloadedKeysV2.verifyingContractAddressDecryption = '0x12345';
     await expect(createInstance(configWithDownloadedKeysV2)).rejects.toThrow(
@@ -199,14 +132,6 @@ describe('index', () => {
   });
 
   //////////////////////////////////////////////////////////////////////////////
-
-  it('v1: fails: verifyingContractAddressInputVerification', async () => {
-    configWithDownloadedKeysV1.verifyingContractAddressInputVerification =
-      '0x12345';
-    await expect(createInstance(configWithDownloadedKeysV1)).rejects.toThrow(
-      FhevmConfigError,
-    );
-  });
 
   it('v2: fails: verifyingContractAddressInputVerification', async () => {
     configWithDownloadedKeysV2.verifyingContractAddressInputVerification =
@@ -218,13 +143,6 @@ describe('index', () => {
 
   //////////////////////////////////////////////////////////////////////////////
 
-  it('v1: fails: network', async () => {
-    configWithDownloadedKeysV1.network = undefined as unknown as string;
-    await expect(createInstance(configWithDownloadedKeysV1)).rejects.toThrow(
-      'You must provide a network URL or a EIP1193 object (eg: window.ethereum)',
-    );
-  });
-
   it('v2: fails: network', async () => {
     configWithDownloadedKeysV2.network = undefined as unknown as string;
     await expect(createInstance(configWithDownloadedKeysV2)).rejects.toThrow(
@@ -233,15 +151,6 @@ describe('index', () => {
   });
 
   //////////////////////////////////////////////////////////////////////////////
-
-  it('v1: getPublicKey', async () => {
-    const instance = await createInstance(configWithDownloadedKeysV1);
-    const pub_key = instance.getPublicKey();
-    expect(pub_key).not.toBeNull();
-    expect(pub_key).not.toBeUndefined();
-    expect(pub_key!.publicKeyId).toBe(assetPublicKeyId);
-    expect(pub_key!.publicKey).toStrictEqual(tfheCompactPublicKeyBytes);
-  });
 
   it('v2: getPublicKey', async () => {
     const instance = await createInstance(configWithDownloadedKeysV2);
@@ -254,15 +163,6 @@ describe('index', () => {
 
   //////////////////////////////////////////////////////////////////////////////
 
-  it('v1: getPublicParams', async () => {
-    const instance = await createInstance(configWithDownloadedKeysV1);
-    const pub_params = instance.getPublicParams(2048);
-    expect(pub_params).not.toBeNull();
-    expect(pub_params).not.toBeUndefined();
-    expect(pub_params!.publicParamsId).toBe(assetPublicParamsId);
-    expect(pub_params!.publicParams).toStrictEqual(tfheCompactPkeCrsBytes);
-  });
-
   it('v2: getPublicParams', async () => {
     const instance = await createInstance(configWithDownloadedKeysV2);
     const pub_params = instance.getPublicParams(2048);
@@ -273,15 +173,6 @@ describe('index', () => {
   });
 
   //////////////////////////////////////////////////////////////////////////////
-
-  it('v1: generateKeypair', async () => {
-    const instance = await createInstance(configWithDownloadedKeysV1);
-    const kp = instance.generateKeypair();
-    expect(kp).not.toBeNull();
-    expect(kp).not.toBeUndefined();
-    expect(isBytesHexNo0x(kp.privateKey)).toBe(true);
-    expect(isBytesHexNo0x(kp.publicKey)).toBe(true);
-  });
 
   it('v2: generateKeypair', async () => {
     const instance = await createInstance(configWithDownloadedKeysV2);

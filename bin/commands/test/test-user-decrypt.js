@@ -5,16 +5,15 @@ import { FHETestAddresses } from './fheTest.js';
 import { ethers } from 'ethers';
 import { userDecrypt } from '../../userDecrypt.js';
 
-// npx . test user-decrypt --types euint32 --network devnet --version 2
-// npx . test user-decrypt --types euint32 --network testnet --version 1
-// npx . test user-decrypt --types euint32 --network testnet --version 2
-// npx . test user-decrypt --types euint32 --network mainnet --version 2
+// npx . test user-decrypt --types euint32 --network devnet
+// npx . test user-decrypt --types euint32 --network testnet
+// npx . test user-decrypt --types euint32 --network testnet
+// npx . test user-decrypt --types euint32 --network mainnet
 export async function testFHETestUserDecryptCommand(options) {
   const { config, provider, signer, zamaFhevmApiKey } =
     parseCommonOptions(options);
 
   logCLI('🚚 network: ' + config.name, options);
-  logCLI('🚀 route: v' + config.version, options);
   logCLI(`🍔 signer: ${signer.address}`);
 
   if (!FHETestAddresses[config.name]) {

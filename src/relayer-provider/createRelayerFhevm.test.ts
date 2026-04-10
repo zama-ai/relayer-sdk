@@ -11,50 +11,6 @@ const describeIfFetchMock =
   TEST_CONFIG.type === 'fetch-mock' ? describe : describe.skip;
 
 describeIfFetchMock('createRelayerProvider', () => {
-  it('v1: <SepoliaConfig.relayerUrl>', () => {
-    const SepoliaConfigeRelayerUrl = SepoliaConfig.relayerUrl!;
-    expect(SepoliaConfigeRelayerUrl).not.toBeNull();
-    expect(SepoliaConfigeRelayerUrl).not.toBeUndefined();
-
-    const defaultRelayerVersion = 1;
-    const relayerProvider = createRelayerProvider(
-      SepoliaConfigeRelayerUrl,
-      defaultRelayerVersion,
-    );
-    expect(relayerProvider.version).toBe(defaultRelayerVersion);
-    expect(relayerProvider.url).toBe(
-      `${SepoliaConfigeRelayerUrl}/v${defaultRelayerVersion}`,
-    );
-  });
-
-  it('v1: https://foo-relayer.org', () => {
-    const defaultRelayerVersion = 1;
-    const relayerProvider = createRelayerProvider(
-      'https://foo-relayer.org',
-      defaultRelayerVersion,
-    );
-    expect(relayerProvider.version).toBe(defaultRelayerVersion);
-    expect(relayerProvider.url).toBe(`https://foo-relayer.org`);
-  });
-
-  it('v1: https://foo-relayer.org/v1', () => {
-    const relayerProvider = createRelayerProvider(
-      'https://foo-relayer.org/v1',
-      1,
-    );
-    expect(relayerProvider.version).toBe(1);
-    expect(relayerProvider.url).toBe('https://foo-relayer.org/v1');
-  });
-
-  it('v1: https://foo-relayer.org/v2', () => {
-    const relayerProvider = createRelayerProvider(
-      'https://foo-relayer.org/v2',
-      1,
-    );
-    expect(relayerProvider.version).toBe(1);
-    expect(relayerProvider.url).toBe('https://foo-relayer.org/v2');
-  });
-
   it('v2: <SepoliaConfig.relayerUrl>/v2', () => {
     const SepoliaConfigeRelayerUrl = SepoliaConfig.relayerUrl!;
     expect(SepoliaConfigeRelayerUrl).not.toBeNull();
@@ -62,7 +18,6 @@ describeIfFetchMock('createRelayerProvider', () => {
 
     const relayerProvider = createRelayerProvider(
       `${SepoliaConfigeRelayerUrl}/v2`,
-      1,
     );
     expect(relayerProvider.version).toBe(2);
     expect(relayerProvider.url).toBe(`${SepoliaConfigeRelayerUrl}/v2`);

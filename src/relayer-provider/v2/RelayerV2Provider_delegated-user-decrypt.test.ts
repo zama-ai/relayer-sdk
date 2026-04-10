@@ -123,7 +123,7 @@ describeIfFetchMock('RelayerV2Provider - Delegated User Decrypt', () => {
 
   beforeEach(() => {
     fetchMock.removeRoutes();
-    relayerProvider = createRelayerProvider(TEST_CONFIG.v2.urls.base, 1);
+    relayerProvider = createRelayerProvider(TEST_CONFIG.v2.urls.base);
     expect(relayerProvider.version).toBe(2);
     expect(relayerProvider.url).toBe(TEST_CONFIG.v2.urls.base);
     expect(relayerProvider.delegatedUserDecryptUrl).toBe(
