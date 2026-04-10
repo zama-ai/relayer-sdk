@@ -25,11 +25,7 @@ const mockKmsContextCache = {
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-const defaultRelayerVersion = 1;
-const relayerProvider = createRelayerProvider(
-  TEST_CONFIG.relayerUrlBase,
-  defaultRelayerVersion,
-);
+const relayerProvider = createRelayerProvider(TEST_CONFIG.relayerUrlBase);
 const RELAYER_USER_DECRYPT_URL = relayerProvider.userDecryptUrl;
 
 const dummyRelayerUserDecryptPayload: RelayerUserDecryptPayload = {
@@ -142,7 +138,7 @@ describeIfFetchMock('fetchRelayerUserDecrypt', () => {
     });
 
     expect(RELAYER_USER_DECRYPT_URL).toBe(
-      `${TEST_CONFIG.relayerUrlBase}/v1/user-decrypt`,
+      `${TEST_CONFIG.relayerUrlBase}/v2/user-decrypt`,
     );
 
     fetchMock.postOnce(RELAYER_USER_DECRYPT_URL, response);

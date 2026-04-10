@@ -15,7 +15,6 @@ export async function testFHETestAddCommand(options) {
     parseCommonOptions(options);
 
   logCLI('🚚 network: ' + config.name, options);
-  logCLI('🚀 route: v' + config.version, options);
   logCLI(`🍔 signer: ${signer.address}`);
   logCLI(`🧀 value: ${BigInt(options.value)}`);
   logCLI(`🍉 type: ${options.type}`);

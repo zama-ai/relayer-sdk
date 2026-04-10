@@ -79,7 +79,7 @@ describeIfFetchMock('RelayerV2Provider', () => {
     fetchMock.removeRoutes();
     expect(TEST_CONFIG.type).toBe('fetch-mock');
 
-    const p = createRelayerProvider(TEST_CONFIG.v2.urls.base, 1);
+    const p = createRelayerProvider(TEST_CONFIG.v2.urls.base);
     if (!(p instanceof RelayerV2Provider)) {
       throw new Error(`Unable to create relayer provider`);
     }

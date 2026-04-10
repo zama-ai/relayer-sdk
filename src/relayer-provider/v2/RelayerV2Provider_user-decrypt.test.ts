@@ -111,7 +111,7 @@ describeIfFetchMock('RelayerV2Provider', () => {
 
   beforeEach(() => {
     fetchMock.removeRoutes();
-    relayerProvider = createRelayerProvider(TEST_CONFIG.v2.urls.base, 1);
+    relayerProvider = createRelayerProvider(TEST_CONFIG.v2.urls.base);
     expect(relayerProvider.version).toBe(2);
     expect(relayerProvider.url).toBe(TEST_CONFIG.v2.urls.base);
     expect(relayerProvider.userDecryptUrl).toBe(

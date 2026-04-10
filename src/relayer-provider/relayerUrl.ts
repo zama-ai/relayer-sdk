@@ -9,30 +9,25 @@ import {
 } from '../configs';
 
 /**
- * Parses a relayer URL and extracts or applies the API version.
+ * Parses and normalizes a relayer URL to its canonical v2 form.
  *
- * If the URL is not a Zama URL:
- *  - Returns the `relayerRouteVersion` if specified.
- *  - Otherwise returns the `fallbackVersion`.
+ * Returns `null` if `relayerUrl` is not a string or is not a valid URL.
+ * Trailing slashes are stripped before any processing.
  *
- * If the URL is a Zama URL:
- *  - If the URL ends with `/v1`, returns version 1 and the URL unchanged.
- *  - If the URL ends with `/v2`, returns version 2 and the URL unchanged.
- *  - If the URL does not end with a version suffix, appends the `relayerRouteVersion` if specified.
- *  - Otherwise, appends the `fallbackVersion` to the URL.
+ * **Non-Zama URLs** (custom/self-hosted relayers):
+ *  - Returned as-is (minus trailing slash) with `version: 2`.
  *
- * Trailing slashes are removed from the URL before processing.
+ * **Zama-hosted URLs** (Sepolia / Mainnet base, v1, or v2 URLs):
+ *  - v1 URLs are upgraded to their v2 equivalents.
+ *  - Base URLs (no version suffix) have `/v2` appended.
+ *  - v2 URLs are returned unchanged.
  *
  * @param relayerUrl - The relayer URL to parse
- * @param fallbackVersion - Version to use if URL doesn't specify one
- * @param relayerRouteVersion - Version to use if specified
- * @returns The normalized URL and version, or null if invalid
+ * @returns The normalized URL and `version: 2`, or `null` if the input is invalid
  */
 export function parseRelayerUrl(
   relayerUrl: unknown,
-  fallbackVersion: 1 | 2,
-  relayerRouteVersion?: 1 | 2,
-): { url: string; version: 1 | 2 } | null {
+): { url: string; version: 2 } | null {
   if (
     relayerUrl === undefined ||
     relayerUrl === null ||
@@ -54,30 +49,26 @@ export function parseRelayerUrl(
     MainnetRelayerUrlV1,
     MainnetRelayerUrlV2,
   ];
+
   const isZamaUrl = zamaUrls.includes(urlNoSlash);
   if (!isZamaUrl) {
-    if (relayerRouteVersion === 1 || relayerRouteVersion === 2) {
-      return {
-        url: urlNoSlash,
-        version: relayerRouteVersion,
-      };
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (fallbackVersion !== 1 && fallbackVersion !== 2) {
-      return null;
-    }
-
     return {
       url: urlNoSlash,
-      version: fallbackVersion,
+      version: 2,
     };
   }
 
-  if (urlNoSlash.endsWith('/v1')) {
+  if (urlNoSlash === SepoliaRelayerUrlV1) {
     return {
-      url: urlNoSlash,
-      version: 1,
+      url: SepoliaRelayerUrlV2,
+      version: 2,
+    };
+  }
+
+  if (urlNoSlash === MainnetRelayerUrlV1) {
+    return {
+      url: MainnetRelayerUrlV2,
+      version: 2,
     };
   }
 
@@ -88,19 +79,8 @@ export function parseRelayerUrl(
     };
   }
 
-  let version: 1 | 2;
-  if (relayerRouteVersion === 1 || relayerRouteVersion === 2) {
-    version = relayerRouteVersion;
-  } else {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (fallbackVersion !== 1 && fallbackVersion !== 2) {
-      return null;
-    }
-    version = fallbackVersion;
-  }
-
   return {
-    url: `${urlNoSlash}/v${version}`,
-    version,
+    url: `${urlNoSlash}/v2`,
+    version: 2,
   };
 }

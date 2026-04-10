@@ -1,7 +1,6 @@
 import fs from 'fs';
 import path from 'path';
 import { createRelayerEncryptedInput } from './sendEncryption';
-import { InvalidPropertyError } from '../errors/InvalidPropertyError';
 import {
   removeAllFetchMockRoutes,
   setupAllFetchMockRoutes,
@@ -41,7 +40,6 @@ jest.mock('ethers', () => {
 async function createFhevm(version: 1 | 2) {
   const relayerFhevm = await createRelayerFhevm({
     ...TEST_CONFIG[`v${version}`].fhevmInstanceConfig,
-    defaultRelayerVersion: 1,
   });
   return relayerFhevm;
 }
@@ -498,6 +496,7 @@ describeIfFetchMock('sendEncryption', () => {
       },
     });
     const fhevm = await createFhevm(version);
+    expect(fhevm.version).toBe(2);
 
     const input = createRelayerEncryptedInput({
       fhevm,
@@ -509,14 +508,18 @@ describeIfFetchMock('sendEncryption', () => {
     input.add128(BigInt(1));
 
     await expect(input.encrypt()).rejects.toThrow(
-      new InvalidPropertyError({
-        objName: 'fetchPostInputProof()',
-        property: 'signatures',
-        index: 0,
-        expectedType: 'Bytes65Hex',
-        type: 'string',
-      }),
+      RelayerV2ResponseInvalidBodyError,
     );
+
+    // await expect(input.encrypt()).rejects.toThrow(
+    //   new InvalidPropertyError({
+    //     objName: 'fetchPostInputProof()',
+    //     property: 'signatures',
+    //     index: 0,
+    //     expectedType: 'Bytes65Hex',
+    //     type: 'string',
+    //   }),
+    // );
   });
 
   it('v2: throws if incorrect handle', async () => {

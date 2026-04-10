@@ -87,7 +87,6 @@ describeIfFetchMock('RelayerV2Provider', () => {
     const SepoliaConfigeRelayerUrl = SepoliaConfig.relayerUrl!;
     relayerProvider = createRelayerProvider(
       `${SepoliaConfigeRelayerUrl}/v2`,
-      1,
     ) as RelayerV2Provider;
     expect(relayerProvider instanceof RelayerV2Provider).toBe(true);
     expect(relayerProvider.version).toBe(2);
@@ -333,7 +332,7 @@ describeIfFetchMock('RelayerV2Provider - Auth on GET requests', () => {
 ////////////////////////////////////////////////////////////////////////////////
 
 describeIfFetchMock('RelayerV2Provider - TFHEPkeParams Caching', () => {
-  const testRelayerUrlV1 = TEST_CONFIG.v1.fhevmInstanceConfig.relayerUrl;
+  const testRelayerUrlV2 = TEST_CONFIG.v2.fhevmInstanceConfig.relayerUrl;
   let mockTFHEPkeParamsFetch: jest.SpyInstance;
 
   beforeEach(() => {
@@ -355,14 +354,13 @@ describeIfFetchMock('RelayerV2Provider - TFHEPkeParams Caching', () => {
     let fetchCount = 0;
 
     // Mock the keyurl endpoint
-    fetchMock.get(`${testRelayerUrlV1}/keyurl`, () => {
+    fetchMock.get(`${testRelayerUrlV2}/keyurl`, () => {
       fetchCount++;
-      return relayerV1ResponseGetKeyUrl;
+      return relayerV2ResponseGetKeyUrl;
     });
 
     const provider = createRelayerProvider(
-      testRelayerUrlV1,
-      1,
+      testRelayerUrlV2,
     ) as RelayerV2Provider;
 
     // Make 3 concurrent calls
@@ -386,14 +384,13 @@ describeIfFetchMock('RelayerV2Provider - TFHEPkeParams Caching', () => {
   it('returns cached result on subsequent calls', async () => {
     let fetchCount = 0;
 
-    fetchMock.get(`${testRelayerUrlV1}/keyurl`, () => {
+    fetchMock.get(`${testRelayerUrlV2}/keyurl`, () => {
       fetchCount++;
-      return relayerV1ResponseGetKeyUrl;
+      return relayerV2ResponseGetKeyUrl;
     });
 
     const provider = createRelayerProvider(
-      testRelayerUrlV1,
-      1,
+      testRelayerUrlV2,
     ) as RelayerV2Provider;
 
     // First call
@@ -414,17 +411,16 @@ describeIfFetchMock('RelayerV2Provider - TFHEPkeParams Caching', () => {
   it('removes cache entry on failure and allows retry', async () => {
     let fetchCount = 0;
 
-    fetchMock.get(`${testRelayerUrlV1}/keyurl`, () => {
+    fetchMock.get(`${testRelayerUrlV2}/keyurl`, () => {
       fetchCount++;
       if (fetchCount === 1) {
         return { status: 500 };
       }
-      return relayerV1ResponseGetKeyUrl;
+      return relayerV2ResponseGetKeyUrl;
     });
 
     const provider = createRelayerProvider(
-      testRelayerUrlV1,
-      1,
+      testRelayerUrlV2,
     ) as RelayerV2Provider;
 
     // First call should fail
@@ -446,9 +442,9 @@ describeIfFetchMock('RelayerV2Provider - TFHEPkeParams Caching', () => {
     let fetchCount1 = 0;
     let fetchCount2 = 0;
 
-    fetchMock.get(`${testRelayerUrlV1}/keyurl`, () => {
+    fetchMock.get(`${testRelayerUrlV2}/keyurl`, () => {
       fetchCount1++;
-      return relayerV1ResponseGetKeyUrl;
+      return relayerV2ResponseGetKeyUrl;
     });
 
     fetchMock.get(`${testRelayerUrlV2}/keyurl`, () => {
@@ -462,37 +458,37 @@ describeIfFetchMock('RelayerV2Provider - TFHEPkeParams Caching', () => {
     );
 
     const provider1 = createRelayerProvider(
-      testRelayerUrlV1,
-      1,
+      testRelayerUrlV2,
     ) as RelayerV2Provider;
 
     const provider2 = createRelayerProvider(
       testRelayerUrlV2,
-      1,
     ) as RelayerV2Provider;
 
-    provider1.fetchTFHEPkeParams();
+    expect(provider1.version).toBe(2);
+    expect(provider2.version).toBe(2);
+
     // Fetch from both providers
     const [result1, result2] = await Promise.all([
       provider1.fetchTFHEPkeParams(),
       provider2.fetchTFHEPkeParams(),
     ]);
 
-    // Results should be different objects (different cache entries)
-    expect(result1).not.toBe(result2);
+    // Results should be equal (same cache entry)
+    expect(result1).toBe(result2);
 
-    // Each should have fetched once
+    // Only one fetch call should have been made to keyurl (shared cache)
     expect(fetchCount1).toBe(1);
-    expect(fetchCount2).toBe(1);
+    expect(fetchCount2).toBe(0);
 
     // Subsequent calls should use cache
     await provider1.fetchTFHEPkeParams();
     await provider2.fetchTFHEPkeParams();
 
     expect(fetchCount1).toBe(1);
-    expect(fetchCount2).toBe(1);
+    expect(fetchCount2).toBe(0);
 
-    // TFHEPkeParams.fetch should have been called twice (once per URL)
-    expect(mockTFHEPkeParamsFetch).toHaveBeenCalledTimes(2);
+    // TFHEPkeParams.fetch should have been called once
+    expect(mockTFHEPkeParamsFetch).toHaveBeenCalledTimes(1);
   });
 });

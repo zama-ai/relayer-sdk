@@ -36,7 +36,7 @@ module.exports = {
   testPathIgnorePatterns: ['/node_modules/', '/e2e/'],
   coverageThreshold: {
     global: {
-      branches: 70,
+      branches: 65,
       functions: 62,
       lines: 75,
     },

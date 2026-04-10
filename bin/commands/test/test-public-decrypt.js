@@ -15,15 +15,14 @@ import { safeJSONstringify } from '../../../lib/internal.js';
 // 0x9d430a3e950560ba22013ce885d6d90f0da36efdf1ff0000000000aa36a70600 euint128 308429577281045301472547520724787086512
 // 0xf6751d547a5c06123575aad93f22f76b7d841c4cacff0000000000aa36a70000 ebool false
 //
-// npx . test public-decrypt --types euint32 --network testnet --version 1
-// npx . test public-decrypt --types euint32 --network testnet --version 2
-// npx . test public-decrypt --types euint32 --network mainnet --version 2
+// npx . test public-decrypt --types euint32 --network testnet
+// npx . test public-decrypt --types euint32 --network testnet
+// npx . test public-decrypt --types euint32 --network mainnet
 export async function testFHETestPublicDecryptCommand(options) {
   const { config, provider, signer, zamaFhevmApiKey } =
     parseCommonOptions(options);
 
   logCLI('🚚 network: ' + config.name, options);
-  logCLI('🚀 route: v' + config.version, options);
   logCLI(`🍔 signer: ${signer.address}`, options);
 
   if (!FHETestAddresses[config.name]) {

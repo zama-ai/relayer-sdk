@@ -99,7 +99,6 @@ export function addCommonOptions(command) {
     .option('--rpc-url <rpc url>', 'The rpc url')
     .option('--relayer-url <relayer url>', 'The relayer url')
     .option('--mnemonic <word list>', 'Mnemonic word list')
-    .option('--version <route v1 or v2>', 'The default route version: 1|2')
     .option('--clear-cache', 'Clear the FHEVM public key cache')
     .option('--json', 'Ouput in JSON format')
     .option('--verbose', 'Verbose output')
@@ -111,7 +110,6 @@ export function addCommonOptions(command) {
  * @returns {{
  *   config: {
  *     name: 'testnet' | 'devnet' | 'mainnet',
- *     version: 1 | 2,
  *     walletAddress: string,
  *     userAddress: string,
  *     contractAddress: string,
@@ -138,17 +136,6 @@ export function parseCommonOptions(options) {
     throwError(`Invalid network name '${name}'.`);
   }
 
-  let version = options?.version ?? 1;
-  if (version === 'v1' || version === '1') {
-    version = 1;
-  }
-  if (version === 'v2' || version === '2') {
-    version = 2;
-  }
-  if (version !== 1 && version !== 2) {
-    throwError(`Invalid relayer route version '${version}'.`);
-  }
-
   let rpcUrl = options?.rpcUrl;
   if (!rpcUrl) {
     rpcUrl = getEnv('RPC_URL', `.env.${name}`);
@@ -165,15 +152,8 @@ export function parseCommonOptions(options) {
     throwError(`Missing relayer Url.`);
   }
 
-  if (version === 1) {
-    if (!relayerUrl.endsWith('/v1')) {
-      relayerUrl = relayerUrl + '/v1';
-    }
-  }
-  if (version === 2) {
-    if (!relayerUrl.endsWith('/v2')) {
-      relayerUrl = relayerUrl + '/v2';
-    }
+  if (!relayerUrl.endsWith('/v2')) {
+    relayerUrl = relayerUrl + '/v2';
   }
 
   let contractAddress = options?.contractAddress;
@@ -277,7 +257,6 @@ export function parseCommonOptions(options) {
 
   const config = {
     name: name,
-    version,
     walletAddress: wallet?.address,
     userAddress: userAddress ?? wallet?.address,
     contractAddress,

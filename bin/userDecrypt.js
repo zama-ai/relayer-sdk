@@ -47,12 +47,14 @@ export async function userDecrypt({
 
     const startTimeStamp = Math.floor(Date.now() / 1000);
     const durationDays = 1;
+    const extraData = await instance.getExtraData();
 
     const eip712 = instance.createEIP712(
       keypair.publicKey,
       contractAddresses,
       startTimeStamp,
       durationDays,
+      extraData,
     );
 
     const signature = await signer.signTypedData(
@@ -73,6 +75,7 @@ export async function userDecrypt({
       signer.address,
       startTimeStamp,
       durationDays,
+      extraData,
       {
         timeout,
         //signal: abortController.signal,
