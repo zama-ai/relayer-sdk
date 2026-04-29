@@ -121,7 +121,7 @@ export class CoprocessorSignersVerifier implements ICoprocessorSignersVerifier {
           duplicateAddress: address,
         });
       }
-      addressMap.add(address);
+      addressMap.add(address.toLowerCase());
     });
 
     for (const address of recoveredAddresses) {
