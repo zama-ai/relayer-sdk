@@ -128,7 +128,7 @@ export class KmsSignersVerifier implements IKmsSignersVerifier {
           duplicateAddress: address,
         });
       }
-      addressMap.add(address);
+      addressMap.add(address.toLowerCase());
     });
 
     for (const address of recoveredAddresses) {
