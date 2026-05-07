@@ -93,10 +93,10 @@
     "ethers": "^6.15.0",
     "fetch-retry": "^6.0.0",
     "keccak": "^3.0.4",
-    "node-tfhe": "1.5.4",
-    "node-tkms": "0.13.10",
-    "tfhe": "1.5.4",
-    "tkms": "0.13.10",
+    "node-tfhe": "1.6.1",
+    "node-tkms": "0.13.20-0",
+    "tfhe": "1.6.1",
+    "tkms": "0.13.20-0",
     "wasm-feature-detect": "^1.8.0"
   },
   "devDependencies": {
