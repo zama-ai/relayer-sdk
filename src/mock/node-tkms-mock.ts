@@ -162,6 +162,7 @@ export function process_user_decryption_resp_from_js(
   agg_resp: any,
   enc_pk: PublicEncKeyMlKem512Mock,
   enc_sk: PrivateEncKeyMlKem512Mock,
+  threshold: number | null | undefined,
   verify: boolean,
 ): TypedPlaintextMock[] {
   return [];

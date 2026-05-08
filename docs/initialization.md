@@ -71,9 +71,10 @@ const instance = await createInstance({
 });
 ```
 
+<!-- commented out, since the doc page does not exist (anymore?)
 {% hint style="info" %}
 For more information on the Relayer's part, please refer to [the Relayer SDK documentation](https://docs.zama.org/protocol/relayer-sdk-guides).
-{% endhint %}
+{% endhint %} -->
 
 # Network Configuration
 
