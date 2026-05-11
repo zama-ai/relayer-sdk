@@ -71,11 +71,6 @@ const instance = await createInstance({
 });
 ```
 
-<!-- commented out, since the doc page does not exist (anymore?)
-{% hint style="info" %}
-For more information on the Relayer's part, please refer to [the Relayer SDK documentation](https://docs.zama.org/protocol/relayer-sdk-guides).
-{% endhint %} -->
-
 # Network Configuration
 
 The `network` property in `FhevmInstanceConfig` is required and specifies how the SDK connects to the FHEVM host chain. It accepts two types of values:
