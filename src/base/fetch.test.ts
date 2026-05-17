@@ -35,8 +35,23 @@ describe('fetchBytes', () => {
 
   //////////////////////////////////////////////////////////////////////////////
 
-  it('fetches bytes using bytes method when available', async () => {
+  it('normalizes bytes method output when it returns an ArrayBuffer', async () => {
     const testData = new Uint8Array([1, 2, 3, 4, 5]);
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      bytes: jest.fn().mockResolvedValue(testData.buffer),
+    });
+
+    const response = await fetch('https://example.com/data');
+    const result = await getResponseBytes(response);
+
+    expect(result).toBeInstanceOf(Uint8Array);
+    expect(result).toEqual(testData);
+  });
+
+  it('normalizes bytes method output when it returns an ArrayBufferView', async () => {
+    const buffer = new Uint8Array([0, 1, 2, 3, 4, 5]).buffer;
+    const testData = new DataView(buffer, 1, 4);
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
       bytes: jest.fn().mockResolvedValue(testData),
@@ -45,7 +60,8 @@ describe('fetchBytes', () => {
     const response = await fetch('https://example.com/data');
     const result = await getResponseBytes(response);
 
-    expect(result).toEqual(testData);
+    expect(result).toBeInstanceOf(Uint8Array);
+    expect(result).toEqual(new Uint8Array([1, 2, 3, 4]));
   });
 });
 
