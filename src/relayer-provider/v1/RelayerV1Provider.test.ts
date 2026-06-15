@@ -69,24 +69,6 @@ describeIfFetchMock('RelayerV1Provider - Auth on GET requests', () => {
     fetchMock.removeRoutes();
   });
 
-  it('v1:keyurl: GET request includes BearerToken auth header', async () => {
-    fetchMock.get(`${relayerUrlV1}/keyurl`, relayerV1ResponseGetKeyUrl);
-
-    const auth: Auth = {
-      __type: 'BearerToken',
-      token: 'test-bearer-token',
-    };
-
-    const provider = new RelayerV1Provider({ relayerUrl: relayerUrlV1, auth });
-    await provider.fetchGetKeyUrl();
-
-    const lastCall = fetchMock.callHistory.lastCall();
-    expect(lastCall).toBeDefined();
-    // Note: fetch-mock normalizes header keys to lowercase
-    const headers = lastCall!.options.headers as Record<string, string>;
-    expect(headers['authorization']).toBe('Bearer test-bearer-token');
-  });
-
   it('v1:keyurl: GET request includes ApiKeyHeader auth header', async () => {
     fetchMock.get(`${relayerUrlV1}/keyurl`, relayerV1ResponseGetKeyUrl);
 

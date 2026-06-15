@@ -370,17 +370,6 @@ export type RelayerErrorDetailType = {
 ////////////////////////////////////////////////////////////////////////////////
 
 /**
- * Bearer Token Authentication
- */
-export type BearerToken = {
-  __type: 'BearerToken';
-  /**
-   * The Bearer token.
-   */
-  token: string;
-};
-
-/**
  * Custom header authentication
  */
 export type ApiKeyHeader = {
@@ -395,19 +384,4 @@ export type ApiKeyHeader = {
   value: string;
 };
 
-/**
- * Custom cookie authentication
- */
-export type ApiKeyCookie = {
-  __type: 'ApiKeyCookie';
-  /**
-   * The cookie name. The default value is `x-api-key`.
-   */
-  cookie?: string;
-  /**
-   * The API key.
-   */
-  value: string;
-};
-
-export type Auth = BearerToken | ApiKeyHeader | ApiKeyCookie;
+export type Auth = ApiKeyHeader;
