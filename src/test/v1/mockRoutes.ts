@@ -70,29 +70,12 @@ export function setupV1RoutesInputProof(params?: {
         | undefined;
 
       switch (auth.__type) {
-        case 'BearerToken': {
-          const hAuthorization = headers?.['Authorization'];
-          if (hAuthorization !== `Bearer ${auth.token}`) {
-            return { status: 401 };
-          }
-          break;
-        }
-
         case 'ApiKeyHeader': {
           if (headers?.[auth.header || 'x-api-key'] !== auth.value) {
             return { status: 401 };
           }
           break;
         }
-
-        case 'ApiKeyCookie':
-          if (
-            headers?.['Cookie'] !==
-            `${auth.cookie || 'x-api-key'}=${auth.value};`
-          ) {
-            return { status: 401 };
-          }
-          break;
       }
     }
 
