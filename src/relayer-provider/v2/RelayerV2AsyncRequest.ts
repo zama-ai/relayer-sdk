@@ -577,7 +577,6 @@ export class RelayerV2AsyncRequest {
         }
         // RelayerV2ResponseFailed
         // RelayerV2ApiError429
-        // falls through
         case 429: {
           // Retry
           // Rate Limit error (Cloudflare/Kong/Relayer), reason in message
@@ -954,7 +953,6 @@ export class RelayerV2AsyncRequest {
           // not recognised as terminating).
           break;
         }
-        // falls through
         case 404: {
           // Abort
           // Wrong jobId, incorrect format or unknown value etc.
