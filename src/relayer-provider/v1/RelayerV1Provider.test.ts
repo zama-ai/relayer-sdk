@@ -119,3 +119,48 @@ describeIfFetchMock('RelayerV1Provider - Auth on GET requests', () => {
     expect(headers['x-api-key']).toBeUndefined();
   });
 });
+
+////////////////////////////////////////////////////////////////////////////////
+// Error message surfacing (401 / 403)
+////////////////////////////////////////////////////////////////////////////////
+
+describeIfFetchMock('RelayerV1Provider - error message surfacing', () => {
+  const relayerUrlV1 = `${SepoliaConfig.relayerUrl!}/v1`;
+
+  beforeEach(() => {
+    fetchMock.removeRoutes();
+  });
+
+  it('v1: surfaces a 403 (edge/gateway) error message', async () => {
+    // Cloudflare/Kong style flat `{ message, label }` body.
+    fetchMock.get(`${relayerUrlV1}/keyurl`, {
+      status: 403,
+      body: {
+        message: 'Unauthorized. Missing or invalid Zama API Key',
+        label: 'unauthorized',
+      },
+    });
+
+    const provider = new RelayerV1Provider({ relayerUrl: relayerUrlV1 });
+    await expect(provider.fetchGetKeyUrl()).rejects.toThrow(
+      'Unauthorized. Missing or invalid Zama API Key',
+    );
+  });
+
+  it('v1: surfaces a 401 relayer error message', async () => {
+    fetchMock.get(`${relayerUrlV1}/keyurl`, {
+      status: 401,
+      body: {
+        error: {
+          message: 'API key not passed via x-api-key header',
+          label: 'unauthorized',
+        },
+      },
+    });
+
+    const provider = new RelayerV1Provider({ relayerUrl: relayerUrlV1 });
+    await expect(provider.fetchGetKeyUrl()).rejects.toThrow(
+      'API key not passed via x-api-key header',
+    );
+  });
+});

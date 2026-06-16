@@ -234,8 +234,11 @@ describeIfFetchMock('RelayerV2Provider', () => {
         'Expected fetchGetKeyUrl to throw an error, but it did not.',
       );
     } catch (e) {
-      // Error message
-      expect(String(e)).toStrictEqual('Error: HTTP error! status: 404');
+      // Error message — the message provided by the relayer/intermediary
+      // (here Kong's "no Route matched with those values") is now surfaced.
+      expect(String(e)).toStrictEqual(
+        'Error: HTTP error! status: 404 no Route matched with those values',
+      );
 
       // Error cause
       const cause = getErrorCause(e) as any;

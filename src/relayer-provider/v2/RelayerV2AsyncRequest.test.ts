@@ -383,3 +383,75 @@ describeIfFetchMock('RelayerV2AsyncRequest - Auth on GET requests', () => {
     expect(getHeaders['x-api-key']).toBeUndefined();
   });
 });
+
+////////////////////////////////////////////////////////////////////////////////
+// Auth error message surfacing (401 / 403)
+////////////////////////////////////////////////////////////////////////////////
+
+describeIfFetchMock('RelayerV2AsyncRequest - auth error surfacing', () => {
+  beforeEach(() => {
+    fetchMock.removeRoutes();
+    fetchMock.callHistory.clear();
+  });
+
+  afterAll(async () => {
+    await fetchMock.callHistory.flush(true);
+  });
+
+  it('v2: 401 surfaces the relayer-provided error message', async () => {
+    fetchMock.post(requestUrl, {
+      status: 401,
+      body: {
+        error: {
+          label: 'unauthorized',
+          message: 'API key not passed via x-api-key header',
+        },
+      },
+    });
+
+    const relayerRequest = new RelayerV2AsyncRequest({
+      relayerOperation: 'INPUT_PROOF',
+      url: requestUrl,
+      payload,
+    });
+
+    await expect(relayerRequest.run()).rejects.toThrow(
+      'API key not passed via x-api-key header',
+    );
+  });
+
+  it('v2: 403 (edge/gateway) surfaces the provided error message', async () => {
+    // Cloudflare/Kong style flat `{ message, label }` body.
+    fetchMock.post(requestUrl, {
+      status: 403,
+      body: {
+        message: 'Unauthorized. Missing or invalid Zama API Key',
+        label: 'unauthorized',
+      },
+    });
+
+    const relayerRequest = new RelayerV2AsyncRequest({
+      relayerOperation: 'INPUT_PROOF',
+      url: requestUrl,
+      payload,
+    });
+
+    await expect(relayerRequest.run()).rejects.toThrow(
+      'Unauthorized. Missing or invalid Zama API Key',
+    );
+  });
+
+  it('v2: 401 without a body falls back to the default message', async () => {
+    fetchMock.post(requestUrl, { status: 401 });
+
+    const relayerRequest = new RelayerV2AsyncRequest({
+      relayerOperation: 'INPUT_PROOF',
+      url: requestUrl,
+      payload,
+    });
+
+    await expect(relayerRequest.run()).rejects.toThrow(
+      'Unauthorized, missing or invalid Zama Fhevm API Key.',
+    );
+  });
+});

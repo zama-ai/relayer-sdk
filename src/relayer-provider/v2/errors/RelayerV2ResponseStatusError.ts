@@ -15,6 +15,11 @@ export type RelayerV2ResponseStatusErrorType = RelayerV2ResponseStatusError & {
 export type RelayerV2ResponseStatusErrorParams = Prettify<
   Omit<RelayerV2ResponseErrorBaseParams, keyof RelayerErrorBaseParams> & {
     state: RelayerV2AsyncRequestState;
+    /**
+     * Optional message provided by the relayer or an intermediary
+     * (e.g. Cloudflare/Kong) for the unexpected status, surfaced as `Details:`.
+     */
+    details?: string | undefined;
   }
 >;
 
