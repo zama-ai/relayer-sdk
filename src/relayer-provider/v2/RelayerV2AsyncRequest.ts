@@ -55,7 +55,11 @@ import {
   assertIsRelayerV2GetResponseQueued,
   assertIsRelayerV2PostResponseQueued,
 } from './guards/RelayerV2ResponseQueued';
-import { isNonEmptyString, safeJSONstringify } from '@base/string';
+import {
+  isNonEmptyString,
+  isRecordStringProperty,
+  safeJSONstringify,
+} from '@base/string';
 import { sdkName, version } from '../../_version';
 import { RelayerV2TimeoutError } from './errors/RelayerV2TimeoutError';
 import { RelayerV2AbortError } from './errors/RelayerV2AbortError';
@@ -483,6 +487,13 @@ export class RelayerV2AsyncRequest {
 
       // At this stage: `terminated` is guaranteed to be `false`.
 
+      // 403 is not part of the relayer's typed response set — it is an
+      // edge/gateway rejection (e.g. Cloudflare/Kong). Surface its body message
+      // before narrowing to the relayer status union.
+      if (response.status === 403) {
+        await this._throwForbiddenError(response);
+      }
+
       const responseStatus: RelayerV2PostResponseStatus =
         response.status as RelayerV2PostResponseStatus;
 
@@ -558,11 +569,14 @@ export class RelayerV2AsyncRequest {
         // RelayerV2ApiError401
         // falls through
         case 401: {
-          this._throwUnauthorizedError(responseStatus);
+          await this._throwUnauthorizedError(response, responseStatus);
+          // `_throwUnauthorizedError` always throws; `break` only satisfies the
+          // compiler's switch fallthrough check (awaiting a `Promise<never>` is
+          // not recognised as terminating).
+          break;
         }
         // RelayerV2ResponseFailed
         // RelayerV2ApiError429
-        // falls through
         case 429: {
           // Retry
           // Rate Limit error (Cloudflare/Kong/Relayer), reason in message
@@ -706,6 +720,13 @@ export class RelayerV2AsyncRequest {
       const response = await this._fetchGet();
 
       // At this stage: `terminated` is guaranteed to be `false`.
+
+      // 403 is not part of the relayer's typed response set — it is an
+      // edge/gateway rejection (e.g. Cloudflare/Kong). Surface its body message
+      // before narrowing to the relayer status union.
+      if (response.status === 403) {
+        await this._throwForbiddenError(response);
+      }
 
       const responseStatus: RelayerV2GetResponseStatus =
         response.status as RelayerV2GetResponseStatus;
@@ -926,9 +947,12 @@ export class RelayerV2AsyncRequest {
         }
         // falls through
         case 401: {
-          this._throwUnauthorizedError(responseStatus);
+          await this._throwUnauthorizedError(response, responseStatus);
+          // `_throwUnauthorizedError` always throws; `break` only satisfies the
+          // compiler's switch fallthrough check (awaiting a `Promise<never>` is
+          // not recognised as terminating).
+          break;
         }
-        // falls through
         case 404: {
           // Abort
           // Wrong jobId, incorrect format or unknown value etc.
@@ -1578,16 +1602,95 @@ export class RelayerV2AsyncRequest {
    * Throws an unauthorized error for 401 responses.
    * @throws {RelayerV2ResponseApiError} Always throws with 'unauthorized' label.
    */
-  private _throwUnauthorizedError(
+  private async _throwUnauthorizedError(
+    response: Response,
     status: Extract<RelayerFailureStatus, 401>,
-  ): never {
+  ): Promise<never> {
+    // Surface the message provided by the relayer or an intermediary
+    // (e.g. Kong) instead of assuming the reason for the 401.
+    const { message } = await this._readResponseErrorMessage(response);
     this._throwRelayerV2ResponseApiError({
       status,
       relayerApiError: {
         label: 'unauthorized',
-        message: 'Unauthorized, missing or invalid Zama Fhevm API Key.',
+        message: isNonEmptyString(message)
+          ? message
+          : 'Unauthorized, missing or invalid Zama Fhevm API Key.',
       },
     });
+  }
+
+  /**
+   * Throws a 403 error.
+   *
+   * 403 is not part of the relayer's typed response set — it indicates the
+   * request was blocked by an edge/gateway (e.g. Cloudflare or Kong) before
+   * reaching the relayer, most commonly because of a missing or invalid
+   * `x-api-key` header. Surface the message provided by the intermediary
+   * instead of a generic "unexpected status".
+   * @throws {RelayerV2ResponseStatusError} Always throws.
+   */
+  private async _throwForbiddenError(response: Response): Promise<never> {
+    const { message } = await this._readResponseErrorMessage(response);
+    throw new RelayerV2ResponseStatusError({
+      fetchMethod: this._fetchMethod!,
+      status: 403,
+      url: this._url,
+      jobId: this._jobId,
+      operation: this._relayerOperation,
+      elapsed: this._elapsed,
+      retryCount: this._retryCount,
+      state: { ...this._state },
+      ...(isNonEmptyString(message) ? { details: message } : {}),
+    });
+  }
+
+  /**
+   * Best-effort extraction of the error message and label provided by the
+   * relayer or an intermediary (e.g. Cloudflare or Kong). The body may be a
+   * relayer JSON error (`{ error: { message, label } }`), a flat
+   * `{ message, label }`, or plain text. Never throws — returns `{}` when
+   * nothing usable can be read.
+   */
+  private async _readResponseErrorMessage(
+    response: Response,
+  ): Promise<{ message?: string | undefined; label?: string | undefined }> {
+    let text: string;
+    try {
+      text = await response.text();
+    } catch {
+      return {};
+    }
+
+    if (!isNonEmptyString(text)) {
+      return {};
+    }
+
+    try {
+      const json: unknown = JSON.parse(text);
+      // Relayer errors are nested under `error`; edge/gateway errors
+      // (Cloudflare/Kong) are usually flat `{ message, label }`.
+      const err: unknown =
+        typeof json === 'object' && json !== null && 'error' in json
+          ? (json as { error: unknown }).error
+          : json;
+
+      const message = isRecordStringProperty(err, 'message')
+        ? err.message
+        : undefined;
+      const label = isRecordStringProperty(err, 'label')
+        ? err.label
+        : undefined;
+
+      if (message !== undefined || label !== undefined) {
+        return { message, label };
+      }
+    } catch {
+      // Body was not JSON — relayer/edge errors that carry a message are JSON,
+      // so there is nothing usable to surface.
+    }
+
+    return {};
   }
 
   /**
