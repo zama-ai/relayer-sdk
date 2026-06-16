@@ -1,5 +1,6 @@
 import type { RelayerOperation } from '@relayer-provider/types/public-api';
 import type { RelayerV1ProviderErrorCause } from '@relayer-provider/v1/types';
+import { isNonEmptyString, isRecordStringProperty } from '@base/string';
 
 export function getErrorCause(e: unknown): object | undefined {
   if (e instanceof Error && typeof e.cause === 'object' && e.cause !== null) {
@@ -52,6 +53,13 @@ export async function throwRelayerResponseError(
   operation: RelayerOperation,
   response: Response,
 ): Promise<never> {
+  // Read the body once, up front, so we can both preserve it in the error cause
+  // and surface any message the relayer or an intermediary (e.g. Cloudflare or
+  // Kong) provided — instead of assuming the reason for the failure. This
+  // matters for auth failures: e.g. a 403 edge block for a missing `x-api-key`
+  // header carries a useful message that was previously discarded.
+  const { responseJson, serverMessage } = await readRelayerErrorBody(response);
+
   let message: string;
 
   // Special case for 429
@@ -72,18 +80,15 @@ export async function throwRelayerResponseError(
         break;
       }
       default: {
-        const responseText = await response.text();
-        message = `Relayer didn't response correctly. Bad status ${response.statusText}. Content: ${responseText}`;
+        message = `Relayer didn't response correctly. Bad status ${response.statusText}.`;
         break;
       }
     }
   }
 
-  let responseJson;
-  try {
-    responseJson = await response.json();
-  } catch {
-    responseJson = '';
+  // Surface the relayer/intermediary message when present.
+  if (isNonEmptyString(serverMessage)) {
+    message = `${message} ${serverMessage}`;
   }
 
   const cause: RelayerV1ProviderErrorCause = {
@@ -99,6 +104,47 @@ export async function throwRelayerResponseError(
   throw new Error(message, {
     cause,
   });
+}
+
+/**
+ * Best-effort read of a relayer error response body. Returns the parsed JSON
+ * (or raw text) for the error cause, plus the message provided by the relayer
+ * or an intermediary (Cloudflare/Kong). The body may be a relayer JSON error
+ * (`{ error: { message } }`), a flat `{ message }`, or plain text. Never throws.
+ */
+async function readRelayerErrorBody(
+  response: Response,
+): Promise<{ responseJson: unknown; serverMessage: string | undefined }> {
+  let responseText = '';
+  try {
+    responseText = await response.text();
+  } catch {
+    return { responseJson: '', serverMessage: undefined };
+  }
+
+  if (!isNonEmptyString(responseText)) {
+    return { responseJson: '', serverMessage: undefined };
+  }
+
+  try {
+    const parsed: unknown = JSON.parse(responseText);
+    // Relayer errors may be nested under `error`; edge/gateway errors
+    // (Cloudflare/Kong) are usually flat `{ message, label }`.
+    const err: unknown =
+      typeof parsed === 'object' && parsed !== null && 'error' in parsed
+        ? (parsed as { error: unknown }).error
+        : parsed;
+    const serverMessage = isRecordStringProperty(err, 'message')
+      ? err.message
+      : undefined;
+    return { responseJson: parsed, serverMessage };
+  } catch {
+    // Body was not JSON — surface the raw text (truncated to stay readable).
+    return {
+      responseJson: responseText,
+      serverMessage: responseText.slice(0, 512),
+    };
+  }
 }
 
 export function throwRelayerJSONError(
