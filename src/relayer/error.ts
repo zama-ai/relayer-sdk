@@ -139,11 +139,9 @@ async function readRelayerErrorBody(
       : undefined;
     return { responseJson: parsed, serverMessage };
   } catch {
-    // Body was not JSON — surface the raw text (truncated to stay readable).
-    return {
-      responseJson: responseText,
-      serverMessage: responseText.slice(0, 512),
-    };
+    // Body was not JSON — relayer/edge errors that carry a message are JSON,
+    // so preserve the previous behaviour (no surfaced message, empty cause).
+    return { responseJson: '', serverMessage: undefined };
   }
 }
 

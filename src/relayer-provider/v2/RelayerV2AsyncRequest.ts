@@ -1688,11 +1688,11 @@ export class RelayerV2AsyncRequest {
         return { message, label };
       }
     } catch {
-      // Body was not JSON — fall back to the raw text below.
+      // Body was not JSON — relayer/edge errors that carry a message are JSON,
+      // so there is nothing usable to surface.
     }
 
-    // Truncate to keep the surfaced error readable.
-    return { message: text.slice(0, 512) };
+    return {};
   }
 
   /**
