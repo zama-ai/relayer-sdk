@@ -91,6 +91,30 @@ export default [
     external: ['ethers', 'fetch-retry', 'node-tfhe', 'node-tkms', 'keccak'],
   },
   {
+    input: 'src/core.ts',
+    output: {
+      file: 'lib/core.cjs',
+      name: 'relayer-sdk-core',
+      format: 'cjs',
+    },
+    plugins: [...nodePlugins],
+    // Suppress warning
+    // https://rollupjs.org/troubleshooting/#warning-treating-module-as-external-dependency
+    external: ['ethers', 'fetch-retry', 'keccak'],
+  },
+  {
+    input: 'src/core.ts',
+    output: {
+      file: 'lib/core.js',
+      name: 'relayer-sdk-core',
+      format: 'es',
+    },
+    plugins: [...nodePlugins],
+    // Suppress warning
+    // https://rollupjs.org/troubleshooting/#warning-treating-module-as-external-dependency
+    external: ['ethers', 'fetch-retry', 'keccak'],
+  },
+  {
     input: 'src/node.ts',
     output: {
       file: 'lib/node.js',
