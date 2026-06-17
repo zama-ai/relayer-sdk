@@ -369,6 +369,7 @@ export const userDecryptRequest =
         tkmsUserDecryptResults,
         pubKey,
         privKey,
+        undefined,
         true,
       );
       const listBigIntDecryptions = decryption.map(
@@ -518,6 +519,7 @@ export const delegatedUserDecryptRequest =
         tkmsUserDecryptResults,
         pubKey,
         privKey,
+        undefined,
         true,
       );
       const listBigIntDecryptions = decryption.map(

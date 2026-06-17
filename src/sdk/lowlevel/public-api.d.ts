@@ -200,6 +200,7 @@ export interface TKMSType {
     agg_resp: any,
     enc_pk: WasmObject,
     enc_sk: WasmObject,
+    threshold: number | null | undefined,
     verify: boolean,
   ): TypedPlaintextWasmType[];
   ml_kem_pke_keygen(): WasmObject;
