@@ -11,6 +11,7 @@ import {
 } from '@sdk/lowlevel/constants';
 import { fetchRelayerV1Get } from './fetchRelayerV1';
 import { isNonEmptyString, removeSuffix } from '@base/string';
+import { getResponseBytes } from '@base/fetch';
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 type CachedKey = {
@@ -77,13 +78,7 @@ export async function getKeysFromRelayer(
       );
     }
 
-    let publicKey: Uint8Array;
-    if (typeof publicKeyResponse.bytes === 'function') {
-      // bytes is not widely supported yet
-      publicKey = await publicKeyResponse.bytes();
-    } else {
-      publicKey = new Uint8Array(await publicKeyResponse.arrayBuffer());
-    }
+    const publicKey = await getResponseBytes(publicKeyResponse);
 
     const publicParamsUrl = data.response.crs['2048'].urls[0];
     const publicParamsId = data.response.crs['2048'].data_id;
@@ -95,15 +90,7 @@ export async function getKeysFromRelayer(
       );
     }
 
-    let publicParams2048: Uint8Array;
-    if (typeof publicParams2048Response.bytes === 'function') {
-      // bytes is not widely supported yet
-      publicParams2048 = await publicParams2048Response.bytes();
-    } else {
-      publicParams2048 = new Uint8Array(
-        await publicParams2048Response.arrayBuffer(),
-      );
-    }
+    const publicParams2048 = await getResponseBytes(publicParams2048Response);
 
     let pub_key;
     try {
