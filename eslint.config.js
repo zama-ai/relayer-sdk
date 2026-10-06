@@ -66,6 +66,9 @@ export default [
       '@typescript-eslint/prefer-nullish-coalescing': 'off',
       '@typescript-eslint/prefer-for-of': 'off',
       '@typescript-eslint/prefer-nullish-coalescing': 'off',
+      // The SDK still uses its own deprecated public API internally
+      // (`createInstance`, `FhevmInstance`, `FhevmInstanceConfig`).
+      '@typescript-eslint/no-deprecated': 'warn',
 
       // Require explicit return types
       '@typescript-eslint/explicit-function-return-type': [

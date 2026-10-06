@@ -86,6 +86,9 @@ export {
 // FhevmInstance
 ////////////////////////////////////////////////////////////////////////////////
 
+/**
+ * @deprecated `FhevmInstance` is deprecated. Use the `@zama-fhe/sdk` package instead.
+ */
 export interface FhevmInstance {
   config: FhevmConfigType;
   createEncryptedInput(
@@ -148,9 +151,26 @@ export interface FhevmInstance {
 // createInstance
 ////////////////////////////////////////////////////////////////////////////////
 
+let createInstanceDeprecationWarned = false;
+
+function printCreateInstanceDeprecationWarning(): void {
+  if (createInstanceDeprecationWarned) {
+    return;
+  }
+  createInstanceDeprecationWarned = true;
+  console.warn(
+    '`createInstance` is deprecated. Use the `@zama-fhe/sdk` package instead.',
+  );
+}
+
+/**
+ * @deprecated `createInstance` is deprecated. Use the `@zama-fhe/sdk` package instead.
+ */
 export const createInstance = async (
   config: FhevmInstanceConfig,
 ): Promise<FhevmInstance> => {
+  printCreateInstanceDeprecationWarning();
+
   const relayerFhevm = await createRelayerFhevm({
     ...config,
     defaultRelayerVersion: 2,
