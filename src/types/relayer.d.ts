@@ -17,6 +17,9 @@ export type PublicParams<T> = {
   2048: { publicParams: T; publicParamsId: string };
 };
 
+/**
+ * @deprecated `FhevmInstanceConfig` is deprecated. Use the `@zama-fhe/sdk` package instead.
+ */
 export type FhevmInstanceConfig = Prettify<
   {
     verifyingContractAddressDecryption: string;
