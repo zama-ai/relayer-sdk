@@ -19,7 +19,7 @@
 ## Deprecation notice
 
 > [!WARNING]
-> **`@zama-fhe/relayer-sdk` is deprecated. Please migrate to the Zama SDK**, the default SDK for the Zama Protocol. The Relayer SDK will no longer be maintained from **14 December 2026**: after that date it will not receive bug fixes or security patches.
+> **`@zama-fhe/relayer-sdk` is deprecated. Please migrate to the Zama SDK**, the default SDK for the Zama Protocol. The Relayer SDK will no longer be maintained from **6 November 2026**.
 
 ### Migrate to the Zama SDK
 
@@ -37,16 +37,14 @@ npm install @zama-fhe/react-sdk @tanstack/react-query
 ```
 
 - 📒 **Documentation:** [docs.zama.org/protocol/sdk](https://docs.zama.org/protocol/sdk)
-- 🚀 **Quick start:** [docs.zama.org/protocol/sdk/getting-started/quick-start](https://docs.zama.org/protocol/sdk/getting-started/quick-start)
+- 🚀 **Quick start:** [Get started with the Zama SDK](https://docs.zama.org/protocol/sdk/getting-started/quick-start)
 - 💻 **Source code:** [github.com/zama-ai/sdk](https://github.com/zama-ai/sdk)
 
 ### What this means for you
 
-- No new features will be added to the Relayer SDK. All new features and fixes land in the Zama SDK.
-- Until 14 December 2026, we will only ship critical security fixes for the Relayer SDK.
-- From 14 December 2026, the Relayer SDK will no longer be maintained.
+- Until 6 November 2026, the Relayer SDK only receives dependency security updates: no new features, bug fixes, or protocol updates.
+- From 6 November 2026, it will no longer be maintained.
 - Existing installs keep working: the package stays available on npm, so your current builds will not break immediately.
-- This repository stays public for reference, but we no longer accept pull requests for it.
 - We recommend migrating as soon as possible.
 
 ### Need help?
