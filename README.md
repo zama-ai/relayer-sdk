@@ -8,7 +8,7 @@
 
 <hr/>
 <p align="center">
-  <a href="https://docs.zama.org/protocol/sdk">📒 Read the Zama SDK documentation</a> | <a href="https://docs.zama.org/protocol/zama-protocol-litepaper">📃 Read white paper</a> | <a href="https://zama.ai/community">💛 Community support</a>
+  <a href="https://docs.zama.org/protocol/zama-protocol-litepaper">📃 Read white paper</a> | <a href="https://docs.zama.org/protocol/sdk">📒 Read the Zama SDK documentation</a> | <a href="https://zama.ai/community">💛 Community support</a>
 </p>
 <p align="center">
 <!-- Version badge using shields.io -->
