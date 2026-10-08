@@ -23,9 +23,9 @@
 
 ### Migrate to the Zama SDK
 
-| Package                                                                    | Use it for                                                                             |
-| -------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| [`@zama-fhe/sdk`](https://www.npmjs.com/package/@zama-fhe/sdk)             | Core TypeScript SDK for any JavaScript/TypeScript app. Works with viem or ethers.      |
+| Package                                                                    | Use it for                                                                                  |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| [`@zama-fhe/sdk`](https://www.npmjs.com/package/@zama-fhe/sdk)             | Core TypeScript SDK for any JavaScript/TypeScript app. Works with viem or ethers.           |
 | [`@zama-fhe/react-sdk`](https://www.npmjs.com/package/@zama-fhe/react-sdk) | React hooks built on top of the core SDK. Use this if you are building a React/Next.js app. |
 
 ```bash
